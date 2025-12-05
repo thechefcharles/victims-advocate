@@ -1,4 +1,5 @@
 // app/page.tsx
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -34,30 +35,36 @@ export default function Home() {
           </p>
 
           <div className="grid gap-3 sm:grid-cols-3 mt-4">
-            <button className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-left text-sm hover:bg-emerald-500/20 transition">
-              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
-                Start Here
-              </div>
-              <div className="mt-1 text-slate-100">
-                I need help <span className="font-semibold">right now</span>
-              </div>
-              <p className="mt-1 text-xs text-slate-300">
-                Step-by-step checklist for the hours and days after a shooting.
-              </p>
-            </button>
+<Link
+  href="/start"
+  className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-left text-sm hover:bg-emerald-500/20 transition block"
+>
+  <div className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+    Start Here
+  </div>
+  <div className="mt-1 text-slate-100">
+    I need help <span className="font-semibold">right now</span>
+  </div>
+  <p className="mt-1 text-xs text-slate-300">
+    Step-by-step checklist for the hours and days after a shooting.
+  </p>
+</Link>
 
-            <button className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-left text-sm hover:bg-sky-500/20 transition">
-              <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
-                Money & Bills
-              </div>
-              <div className="mt-1 text-slate-100">
-                Victims compensation & emergency funds
-              </div>
-              <p className="mt-1 text-xs text-slate-300">
-                Learn what costs can be covered and what documents you&apos;ll
-                need.
-              </p>
-            </button>
+<Link
+  href="/compensation"
+  className="rounded-xl border border-sky-500/40 bg-sky-500/10 px-4 py-3 text-left text-sm hover:bg-sky-500/20 transition block"
+>
+  <div className="text-xs font-semibold uppercase tracking-wide text-sky-300">
+    Money & Bills
+  </div>
+  <div className="mt-1 text-slate-100">
+    Victims compensation & emergency funds
+  </div>
+  <p className="mt-1 text-xs text-slate-300">
+    Learn what costs can be covered and what documents you&apos;ll
+    need.
+  </p>
+</Link>
 
             <button className="rounded-xl border border-fuchsia-500/40 bg-fuchsia-500/10 px-4 py-3 text-left text-sm hover:bg-fuchsia-500/20 transition">
               <div className="text-xs font-semibold uppercase tracking-wide text-fuchsia-300">
