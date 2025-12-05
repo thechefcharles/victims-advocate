@@ -102,9 +102,12 @@ const makeEmptyApplication = (): CompensationApplication => ({
 
 export default function CompensationIntakePage() {
   const [step, setStep] = useState<IntakeStep>("victim");
+  const [maxStepIndex, setMaxStepIndex] = useState(0); // 0=victim,1=applicant,2=crime,3=summary
   const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
+
+  const stepOrder: IntakeStep[] = ["victim", "applicant", "crime", "summary"];
 
   const victim = app.victim;
   const applicant = app.applicant;
@@ -143,6 +146,8 @@ export default function CompensationIntakePage() {
       return;
     }
     setStep("applicant");
+    setMaxStepIndex((prev) => Math.max(prev, 1));
+    
   };
 
   const handleNextFromApplicant = () => {
@@ -167,6 +172,7 @@ export default function CompensationIntakePage() {
       }));
     }
     setStep("crime");
+    setMaxStepIndex((prev) => Math.max(prev, 2));
   };
 
   const handleNextFromCrime = () => {
@@ -182,6 +188,7 @@ export default function CompensationIntakePage() {
       return;
     }
     setStep("summary");
+     setMaxStepIndex((prev) => Math.max(prev, 3));
   };
 
   const handleBack = () => {
@@ -209,12 +216,32 @@ export default function CompensationIntakePage() {
         </header>
 
         {/* Step indicator */}
-        <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-          <StepBadge label="Victim" active={step === "victim"} />
-          <StepBadge label="Applicant" active={step === "applicant"} />
-          <StepBadge label="Crime & incident" active={step === "crime"} />
-          <StepBadge label="Summary" active={step === "summary"} />
-        </div>
+<div className="flex flex-wrap gap-2 text-xs text-slate-300">
+  <StepBadge
+    label="Victim"
+    active={step === "victim"}
+    disabled={false}
+    onClick={() => setStep("victim")}
+  />
+  <StepBadge
+    label="Applicant"
+    active={step === "applicant"}
+    disabled={maxStepIndex < 1}
+    onClick={() => maxStepIndex >= 1 && setStep("applicant")}
+  />
+  <StepBadge
+    label="Crime & incident"
+    active={step === "crime"}
+    disabled={maxStepIndex < 2}
+    onClick={() => maxStepIndex >= 2 && setStep("crime")}
+  />
+  <StepBadge
+    label="Summary"
+    active={step === "summary"}
+    disabled={maxStepIndex < 3}
+    onClick={() => maxStepIndex >= 3 && setStep("summary")}
+  />
+</div>
 
         {/* Step content */}
         {step === "victim" && (
@@ -296,17 +323,34 @@ export default function CompensationIntakePage() {
   );
 }
 
-function StepBadge({ label, active }: { label: string; active: boolean }) {
+function StepBadge({
+  label,
+  active,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  const baseClasses =
+    "px-2 py-1 rounded-full border text-[11px] transition";
+  const stateClasses = disabled
+    ? "border-slate-800 bg-slate-900 text-slate-500 cursor-not-allowed opacity-60"
+    : active
+    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200 cursor-pointer"
+    : "border-slate-700 bg-slate-900 text-slate-400 hover:border-emerald-400 hover:text-emerald-200 cursor-pointer";
+
   return (
-    <div
-      className={`px-2 py-1 rounded-full border text-[11px] ${
-        active
-          ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-          : "border-slate-700 bg-slate-900 text-slate-400"
-      }`}
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
+      className={`${baseClasses} ${stateClasses}`}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
