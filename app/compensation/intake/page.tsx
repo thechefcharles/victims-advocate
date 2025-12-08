@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react"; // 👈 ADD THIS
+import { useState, useEffect } from "react"; // 👈 ADD useEffect
 
 import type {
   VictimInfo,
@@ -11,7 +11,7 @@ import type {
   LossesClaimed,
   MedicalInfo,
   EmploymentInfo,
-  FuneralInfo, // 👈 ADD THIS
+  FuneralInfo,
 } from "../../../lib/compensationSchema";
 
 type IntakeStep =
@@ -23,7 +23,9 @@ type IntakeStep =
   | "employment"
   | "funeral"
   | "summary";
-  
+
+const STORAGE_KEY = "nxtstps_compensation_intake_v1"; // 👈 HERE
+
 const emptyVictim: VictimInfo = {
   firstName: "",
   lastName: "",
@@ -115,11 +117,55 @@ const makeEmptyApplication = (): CompensationApplication => ({
 
 export default function CompensationIntakePage() {
   const [step, setStep] = useState<IntakeStep>("victim");
-// 0=victim,1=applicant,2=crime,3=losses,4=medical,5=employment,6=funeral,7=summary
-const [maxStepIndex, setMaxStepIndex] = useState(0);
-const [app, setApp] = useState<CompensationApplication>(
+  // 0=victim,1=applicant,2=crime,3=losses,4=medical,5=employment,6=funeral,7=summary
+  const [maxStepIndex, setMaxStepIndex] = useState(0);
+  const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
+
+  // Load saved intake on first mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      const parsed = JSON.parse(raw) as {
+        app?: CompensationApplication;
+        step?: IntakeStep;
+        maxStepIndex?: number;
+      };
+
+      if (parsed.app) {
+        setApp(parsed.app);
+      }
+      if (parsed.step) {
+        setStep(parsed.step);
+      }
+      if (typeof parsed.maxStepIndex === "number") {
+        setMaxStepIndex(parsed.maxStepIndex);
+      }
+    } catch (err) {
+      console.error("Failed to load compensation intake from localStorage", err);
+    }
+  }, []);
+
+    // Save whenever the application or step changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const payload = {
+        app,
+        step,
+        maxStepIndex,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.error("Failed to save compensation intake to localStorage", err);
+    }
+  }, [app, step, maxStepIndex]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -1120,23 +1166,22 @@ function MedicalForm({
           onChange={(v) => updatePrimary({ providerName: v })}
         />
         <div className="grid gap-3 sm:grid-cols-3">
-          <Field
-            label="City"
-            value={primary.city}
-            onChange={(v) => updatePrimary({ city: v })}
-          />
-          <Field
-            label="Provider phone"
-            value={primary.phone}
-            onChange={(v) => updatePrimary({ phone: v })}
-          />
-          <Field
-            label="Dates of service (if known)"
-            value={primary.serviceDates}
-            onChange={(v) => updatePrimary({ serviceDates: v })}
-          />
-        </div>
         <Field
+            label="City"
+            value={primary.city || ""}
+            onChange={(v) => updatePrimary({ city: v })}
+        />
+        <Field
+            label="Provider phone"
+            value={primary.phone || ""}
+            onChange={(v) => updatePrimary({ phone: v })}
+        />
+        <Field
+            label="Dates of service (if known)"
+            value={primary.serviceDates || ""}
+            onChange={(v) => updatePrimary({ serviceDates: v })}
+        />
+        </div>        <Field
           label="Approximate total amount of this bill"
           placeholder="For example: 2500"
           value={primary.amountOfBill?.toString() ?? ""}
