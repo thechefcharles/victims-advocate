@@ -7,9 +7,10 @@ import type {
   AdvocateContact,
   CompensationApplication,
   CrimeInfo,
+  LossesClaimed,
 } from "../../../lib/compensationSchema";
 
-type IntakeStep = "victim" | "applicant" | "crime" | "summary";
+type IntakeStep = "victim" | "applicant" | "crime" | "losses" | "summary";
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -102,16 +103,16 @@ const makeEmptyApplication = (): CompensationApplication => ({
 
 export default function CompensationIntakePage() {
   const [step, setStep] = useState<IntakeStep>("victim");
-  const [maxStepIndex, setMaxStepIndex] = useState(0); // 0=victim,1=applicant,2=crime,3=summary
+  // 0=victim,1=applicant,2=crime,3=losses,4=summary
+  const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
 
-  const stepOrder: IntakeStep[] = ["victim", "applicant", "crime", "summary"];
-
   const victim = app.victim;
   const applicant = app.applicant;
   const crime = app.crime;
+  const losses = app.losses;
 
   const updateVictim = (patch: Partial<VictimInfo>) => {
     setApp((prev) => ({ ...prev, victim: { ...prev.victim, ...patch } }));
@@ -131,6 +132,13 @@ export default function CompensationIntakePage() {
     }));
   };
 
+  const updateLosses = (patch: Partial<LossesClaimed>) => {
+    setApp((prev) => ({
+      ...prev,
+      losses: { ...prev.losses, ...patch },
+    }));
+  };
+
   const handleNextFromVictim = () => {
     if (
       !victim.firstName.trim() ||
@@ -147,7 +155,6 @@ export default function CompensationIntakePage() {
     }
     setStep("applicant");
     setMaxStepIndex((prev) => Math.max(prev, 1));
-    
   };
 
   const handleNextFromApplicant = () => {
@@ -187,14 +194,27 @@ export default function CompensationIntakePage() {
       );
       return;
     }
+    setStep("losses");
+    setMaxStepIndex((prev) => Math.max(prev, 3));
+  };
+
+  const handleNextFromLosses = () => {
+    const anySelected = Object.values(losses).some(Boolean);
+    if (!anySelected) {
+      alert(
+        "Please select at least one type of expense or loss you are asking for help with."
+      );
+      return;
+    }
     setStep("summary");
-     setMaxStepIndex((prev) => Math.max(prev, 3));
+    setMaxStepIndex((prev) => Math.max(prev, 4));
   };
 
   const handleBack = () => {
     if (step === "applicant") setStep("victim");
     else if (step === "crime") setStep("applicant");
-    else if (step === "summary") setStep("crime");
+    else if (step === "losses") setStep("crime");
+    else if (step === "summary") setStep("losses");
   };
 
   return (
@@ -206,7 +226,7 @@ export default function CompensationIntakePage() {
             Guided Intake · Early Draft
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">
-            Tell us about the victim, the applicant, and the incident
+            Tell us about the victim, the incident, and what you need help with
           </h1>
           <p className="text-sm text-slate-300">
             We&apos;ll move slowly through the same sections that appear in the
@@ -216,32 +236,38 @@ export default function CompensationIntakePage() {
         </header>
 
         {/* Step indicator */}
-<div className="flex flex-wrap gap-2 text-xs text-slate-300">
-  <StepBadge
-    label="Victim"
-    active={step === "victim"}
-    disabled={false}
-    onClick={() => setStep("victim")}
-  />
-  <StepBadge
-    label="Applicant"
-    active={step === "applicant"}
-    disabled={maxStepIndex < 1}
-    onClick={() => maxStepIndex >= 1 && setStep("applicant")}
-  />
-  <StepBadge
-    label="Crime & incident"
-    active={step === "crime"}
-    disabled={maxStepIndex < 2}
-    onClick={() => maxStepIndex >= 2 && setStep("crime")}
-  />
-  <StepBadge
-    label="Summary"
-    active={step === "summary"}
-    disabled={maxStepIndex < 3}
-    onClick={() => maxStepIndex >= 3 && setStep("summary")}
-  />
-</div>
+        <div className="flex flex-wrap gap-2 text-xs text-slate-300">
+          <StepBadge
+            label="Victim"
+            active={step === "victim"}
+            disabled={false}
+            onClick={() => setStep("victim")}
+          />
+          <StepBadge
+            label="Applicant"
+            active={step === "applicant"}
+            disabled={maxStepIndex < 1}
+            onClick={() => maxStepIndex >= 1 && setStep("applicant")}
+          />
+          <StepBadge
+            label="Crime & incident"
+            active={step === "crime"}
+            disabled={maxStepIndex < 2}
+            onClick={() => maxStepIndex >= 2 && setStep("crime")}
+          />
+          <StepBadge
+            label="Losses & money"
+            active={step === "losses"}
+            disabled={maxStepIndex < 3}
+            onClick={() => maxStepIndex >= 3 && setStep("losses")}
+          />
+          <StepBadge
+            label="Summary"
+            active={step === "summary"}
+            disabled={maxStepIndex < 4}
+            onClick={() => maxStepIndex >= 4 && setStep("summary")}
+          />
+        </div>
 
         {/* Step content */}
         {step === "victim" && (
@@ -256,8 +282,17 @@ export default function CompensationIntakePage() {
           <CrimeForm crime={crime} onChange={updateCrime} />
         )}
 
+        {step === "losses" && (
+          <LossesForm losses={losses} onChange={updateLosses} />
+        )}
+
         {step === "summary" && (
-          <SummaryView victim={victim} applicant={applicant} crime={crime} />
+          <SummaryView
+            victim={victim}
+            applicant={applicant}
+            crime={crime}
+            losses={losses}
+          />
         )}
 
         {/* Nav buttons */}
@@ -297,6 +332,16 @@ export default function CompensationIntakePage() {
               onClick={handleNextFromCrime}
               className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
             >
+              Continue to Losses →
+            </button>
+          )}
+
+          {step === "losses" && (
+            <button
+              type="button"
+              onClick={handleNextFromLosses}
+              className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+            >
               Review Summary →
             </button>
           )}
@@ -305,7 +350,9 @@ export default function CompensationIntakePage() {
             <button
               type="button"
               onClick={() =>
-                alert("Next step (later): losses claimed & documentation.")
+                alert(
+                  "Next (future phase): details for each loss type and document upload."
+                )
               }
               className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
             >
@@ -692,15 +739,209 @@ function CrimeForm({
   );
 }
 
+function LossesForm({
+  losses,
+  onChange,
+}: {
+  losses: LossesClaimed;
+  onChange: (patch: Partial<LossesClaimed>) => void;
+}) {
+  const toggle = (key: keyof LossesClaimed) => {
+    onChange({ [key]: !losses[key] } as Partial<LossesClaimed>);
+  };
+
+  return (
+    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-slate-50">
+        What do you need help paying for?
+      </h2>
+      <p className="text-xs text-slate-300">
+        This section lists the types of expenses and losses that may be covered
+        by Crime Victims Compensation. Choose everything that applies. You&apos;ll
+        have a chance later to enter details and upload documents.
+      </p>
+
+      <div className="grid gap-4 md:grid-cols-2 text-xs">
+        <div className="space-y-2">
+          <h3 className="font-semibold text-slate-100">
+            Medical, counseling, basic needs
+          </h3>
+          <Checkbox
+            label="Medical / hospital bills"
+            checked={losses.medicalHospital}
+            onChange={() => toggle("medicalHospital")}
+          />
+          <Checkbox
+            label="Dental care"
+            checked={losses.dental}
+            onChange={() => toggle("dental")}
+          />
+          <Checkbox
+            label="Counseling / therapy"
+            checked={losses.counseling}
+            onChange={() => toggle("counseling")}
+          />
+          <Checkbox
+            label="Transportation to medical or court"
+            checked={losses.transportation}
+            onChange={() => toggle("transportation")}
+          />
+          <Checkbox
+            label="Accessibility costs (wheelchair ramps, etc.)"
+            checked={losses.accessibilityCosts}
+            onChange={() => toggle("accessibilityCosts")}
+          />
+          <Checkbox
+            label="Temporary lodging / hotel"
+            checked={losses.temporaryLodging}
+            onChange={() => toggle("temporaryLodging")}
+          />
+          <Checkbox
+            label="Relocation costs (moving for safety)"
+            checked={losses.relocationCosts}
+            onChange={() => toggle("relocationCosts")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="font-semibold text-slate-100">
+            Work, income, and support
+          </h3>
+          <Checkbox
+            label="Loss of earnings (missed work)"
+            checked={losses.lossOfEarnings}
+            onChange={() => toggle("lossOfEarnings")}
+          />
+          <Checkbox
+            label="Loss of support to dependents"
+            checked={losses.lossOfSupport}
+            onChange={() => toggle("lossOfSupport")}
+          />
+          <Checkbox
+            label="Loss of future earnings"
+            checked={losses.lossOfFutureEarnings}
+            onChange={() => toggle("lossOfFutureEarnings")}
+          />
+          <Checkbox
+            label="Replacement service loss (services victim used to provide)"
+            checked={losses.replacementServiceLoss}
+            onChange={() => toggle("replacementServiceLoss")}
+          />
+          <Checkbox
+            label="Tuition / school-related costs"
+            checked={losses.tuition}
+            onChange={() => toggle("tuition")}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="font-semibold text-slate-100">
+            Funeral, burial, and property
+          </h3>
+          <Checkbox
+            label="Funeral / burial / cremation"
+            checked={losses.funeralBurial}
+            onChange={() => toggle("funeralBurial")}
+          />
+          <Checkbox
+            label="Headstone"
+            checked={losses.headstone}
+            onChange={() => toggle("headstone")}
+          />
+          <Checkbox
+            label="Crime scene cleanup"
+            checked={losses.crimeSceneCleanup}
+            onChange={() => toggle("crimeSceneCleanup")}
+          />
+          <Checkbox
+            label="Towing and storage of vehicle"
+            checked={losses.towingStorage}
+            onChange={() => toggle("towingStorage")}
+          />
+          <Checkbox
+            label="Doors, locks, windows (security repairs)"
+            checked={losses.doors || losses.locks || losses.windows}
+            onChange={() =>
+              onChange({
+                doors: !losses.doors,
+                locks: !losses.locks,
+                windows: !losses.windows,
+              })
+            }
+          />
+        </div>
+
+        <div className="space-y-2">
+          <h3 className="font-semibold text-slate-100">
+            Personal items & other
+          </h3>
+          <Checkbox
+            label="Clothing or bedding taken as evidence"
+            checked={losses.clothing || losses.bedding}
+            onChange={() =>
+              onChange({
+                clothing: !losses.clothing,
+                bedding: !losses.bedding,
+              })
+            }
+          />
+          <Checkbox
+            label="Prosthetic appliances, eyeglasses, hearing aids"
+            checked={
+              losses.prostheticAppliances ||
+              losses.eyeglassesContacts ||
+              losses.hearingAids
+            }
+            onChange={() =>
+              onChange({
+                prostheticAppliances: !losses.prostheticAppliances,
+                eyeglassesContacts: !losses.eyeglassesContacts,
+                hearingAids: !losses.hearingAids,
+              })
+            }
+          />
+          <Checkbox
+            label="Replacement costs for necessary items"
+            checked={losses.replacementCosts}
+            onChange={() => toggle("replacementCosts")}
+          />
+          <Checkbox
+            label="Legal fees"
+            checked={losses.legalFees}
+            onChange={() => toggle("legalFees")}
+          />
+          <Checkbox
+            label="Tattoo removal (human trafficking cases)"
+            checked={losses.tattooRemoval}
+            onChange={() => toggle("tattooRemoval")}
+          />
+        </div>
+      </div>
+
+      <p className="text-[11px] text-slate-400">
+        Choosing an item here does not guarantee payment, but it tells the
+        program what you are asking to be considered. In later steps we&apos;ll
+        connect each choice to specific documents and amounts.
+      </p>
+    </section>
+  );
+}
+
 function SummaryView({
   victim,
   applicant,
   crime,
+  losses,
 }: {
   victim: VictimInfo;
   applicant: ApplicantInfo;
   crime: CrimeInfo;
+  losses: LossesClaimed;
 }) {
+  const selectedLosses = Object.entries(losses)
+    .filter(([_, v]) => v)
+    .map(([k]) => k);
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-sm">
       <h2 className="text-lg font-semibold text-slate-50">Quick summary</h2>
@@ -758,6 +999,24 @@ function SummaryView({
         <p>Reported to: {crime.reportingAgency || "—"}</p>
         <p>Police report #: {crime.policeReportNumber || "—"}</p>
       </div>
+
+      <div className="space-y-1.5 text-xs">
+        <h3 className="font-semibold text-slate-100">
+          Losses you&apos;re asking to be considered
+        </h3>
+        {selectedLosses.length === 0 ? (
+          <p className="text-slate-300">
+            You haven&apos;t selected any yet. Go back to &quot;Losses & money&quot;
+            to choose what this program should review.
+          </p>
+        ) : (
+          <ul className="list-disc list-inside text-slate-300">
+            {selectedLosses.map((key) => (
+              <li key={key}>{key}</li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }
@@ -785,6 +1044,28 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
       />
+    </label>
+  );
+}
+
+function Checkbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+      />
+      <span>{label}</span>
     </label>
   );
 }
