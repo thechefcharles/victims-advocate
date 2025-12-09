@@ -26,7 +26,17 @@ type IntakeStep =
   | "funeral"
   | "summary";
 
-const STORAGE_KEY = "nxtstps_compensation_intake_v1"; // 👈 HERE
+const STORAGE_KEY = "nxtstps_compensation_intake_v1";
+const CASES_STORAGE_KEY = "nxtstps_cases_v1"; // 👈 NEW
+
+type CaseStatus = "draft" | "ready_for_review";
+
+interface SavedCase {
+  id: string;
+  createdAt: string;
+  status: CaseStatus;
+  application: CompensationApplication;
+}
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -278,6 +288,46 @@ const handleDownloadPdf = async () => {
     setMaxStepIndex((prev) => Math.max(prev, 1));
   };
 
+  const handleSaveCase = () => {
+  if (typeof window === "undefined") return;
+
+  // Make sure certification is at least mostly complete
+  if (
+    !certification.applicantSignatureName ||
+    !certification.applicantSignatureDate ||
+    !certification.acknowledgesSubrogation ||
+    !certification.acknowledgesRelease ||
+    !certification.acknowledgesPerjury
+  ) {
+    alert(
+      "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements."
+    );
+    return;
+  }
+
+  try {
+    const raw = localStorage.getItem(CASES_STORAGE_KEY);
+    const existing: SavedCase[] = raw ? JSON.parse(raw) : [];
+
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+    const newCase: SavedCase = {
+      id,
+      createdAt: new Date().toISOString(),
+      status: "ready_for_review",
+      application: app,
+    };
+
+    const updated = [...existing, newCase];
+    localStorage.setItem(CASES_STORAGE_KEY, JSON.stringify(updated));
+
+    alert("Your case has been saved for an advocate to review.");
+  } catch (err) {
+    console.error("Failed to save case", err);
+    alert("Something went wrong saving this case. Please try again.");
+  }
+};
+
   const handleNextFromApplicant = () => {
     if (applicant.isSameAsVictim) {
       setApp((prev) => ({
@@ -513,9 +563,10 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     medical={medical}
     employment={employment}
     funeral={funeral}
-    certification={certification}               // 👈 ADD
+    certification={certification}
     onChangeCertification={updateCertification}
-    onDownloadSummaryPdf={handleDownloadPdf}  // 👈 ADD
+    onDownloadSummaryPdf={handleDownloadPdf}
+    onSaveCase={handleSaveCase} // 👈 NEW
   />
 )}
 
@@ -2151,6 +2202,7 @@ function SummaryView({
   certification,
   onChangeCertification,
   onDownloadSummaryPdf,
+  onSaveCase,
 }: {
   victim: VictimInfo;
   applicant: ApplicantInfo;
@@ -2161,9 +2213,10 @@ function SummaryView({
   funeral: FuneralInfo;
   certification: CertificationInfo;
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
-  onDownloadSummaryPdf: () => void; // 👈 ADD
+  onDownloadSummaryPdf: () => void;
+  onSaveCase: () => void; // 👈 NEW
 }) {
-              const selectedLosses = Object.entries(losses)
+                  const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
 
@@ -2347,6 +2400,8 @@ const primaryFuneralPayer = funeral.payments?.[0];
   )}
 </div>
 
+
+
       <div className="flex flex-wrap gap-2 justify-end">
         <button
           type="button"
@@ -2355,14 +2410,15 @@ const primaryFuneralPayer = funeral.payments?.[0];
         >
           Download summary PDF
         </button>
-        <a
-          href="/compensation/documents"
-          className="inline-flex items-center rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] text-emerald-200 hover:bg-emerald-500/20 transition"
+        <button
+          type="button"
+          onClick={onSaveCase}
+          className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
         >
-          Go to document upload →
-        </a>
+          Save as case for advocate review
+        </button>
       </div>
-      
+            
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">
