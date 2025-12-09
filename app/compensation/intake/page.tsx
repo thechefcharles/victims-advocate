@@ -229,6 +229,36 @@ const funeral = app.funeral; // 👈 ADD THIS
     certification: { ...prev.certification, ...patch },
   }));
 };
+
+const handleDownloadPdf = async () => {
+  try {
+    const res = await fetch("/api/compensation/summary-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(app),
+    });
+
+    if (!res.ok) {
+      alert("There was an issue generating the PDF. Please try again.");
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "nxtstps_cvc_summary.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error downloading summary PDF", err);
+    alert("Something went wrong generating the PDF.");
+  }
+};
   
   const handleNextFromVictim = () => {
     if (
@@ -474,7 +504,8 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     employment={employment}
     funeral={funeral}
     certification={certification}               // 👈 ADD
-    onChangeCertification={updateCertification}  // 👈 ADD
+    onChangeCertification={updateCertification}
+    onDownloadSummaryPdf={handleDownloadPdf}  // 👈 ADD
   />
 )}
 
@@ -2109,6 +2140,7 @@ function SummaryView({
   funeral,
   certification,
   onChangeCertification,
+  onDownloadSummaryPdf,
 }: {
   victim: VictimInfo;
   applicant: ApplicantInfo;
@@ -2119,8 +2151,9 @@ function SummaryView({
   funeral: FuneralInfo;
   certification: CertificationInfo;
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
+  onDownloadSummaryPdf: () => void; // 👈 ADD
 }) {
-            const selectedLosses = Object.entries(losses)
+              const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
 
@@ -2303,6 +2336,23 @@ const primaryFuneralPayer = funeral.payments?.[0];
     </p>
   )}
 </div>
+
+      <div className="flex flex-wrap gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onDownloadSummaryPdf}
+          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+        >
+          Download summary PDF
+        </button>
+        <a
+          href="/compensation/documents"
+          className="inline-flex items-center rounded-lg border border-emerald-500/60 bg-emerald-500/10 px-3 py-1.5 text-[11px] text-emerald-200 hover:bg-emerald-500/20 transition"
+        >
+          Go to document upload →
+        </a>
+      </div>
+      
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">
