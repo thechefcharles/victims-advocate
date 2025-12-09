@@ -408,6 +408,16 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
             Illinois Crime Victims Compensation application, but in plain
             language. You can pause any time.
           </p>
+
+        <p className="text-[11px] text-slate-500">
+  Need more context about this program?{" "}
+  <a
+    href="/knowledge/compensation"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    Learn how Illinois CVC works.
+  </a>
+</p>
         </header>
 
         {/* Step indicator */}

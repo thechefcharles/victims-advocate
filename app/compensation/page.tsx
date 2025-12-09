@@ -67,6 +67,16 @@ export default function CompensationPage() {
             documents.
           </p>
 
+          <p className="text-[11px] text-slate-500 mt-2">
+  Want to understand the program first?{" "}
+  <a
+    href="/knowledge/compensation"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    Read the plain-language guide to Illinois CVC.
+  </a>
+</p>
+
           <div className="flex flex-wrap gap-3 items-center">
             <Link
               href="/compensation/intake"
