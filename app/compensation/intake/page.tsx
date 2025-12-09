@@ -8,10 +8,12 @@ import type {
   AdvocateContact,
   CompensationApplication,
   CrimeInfo,
+  CourtInfo,  
   LossesClaimed,
   MedicalInfo,
   EmploymentInfo,
   FuneralInfo,
+  CertificationInfo,
 } from "../../../lib/compensationSchema";
 
 type IntakeStep =
@@ -113,6 +115,11 @@ const makeEmptyApplication = (): CompensationApplication => ({
   funeral: {
     payments: [],
   },
+  certification: {
+    acknowledgesSubrogation: false,
+    acknowledgesRelease: false,
+    acknowledgesPerjury: false,
+  },
 });
 
 export default function CompensationIntakePage() {
@@ -170,6 +177,8 @@ export default function CompensationIntakePage() {
 const victim = app.victim;
 const applicant = app.applicant;
 const crime = app.crime;
+const certification = app.certification;
+const court = app.court; // 👈 ADD THIS // 👈 ADD THIS
 const losses = app.losses;
 const medical = app.medical;
 const employment = app.employment; // 👈 ADD THIS
@@ -200,6 +209,13 @@ const funeral = app.funeral; // 👈 ADD THIS
     }));
   };
 
+  const updateCourt = (patch: Partial<CourtInfo>) => {
+  setApp((prev) => ({
+    ...prev,
+    court: { ...prev.court, ...patch },
+  }));
+};
+
   const updateMedical = (patch: Partial<MedicalInfo>) => {
     setApp((prev) => ({
       ...prev,
@@ -207,6 +223,12 @@ const funeral = app.funeral; // 👈 ADD THIS
     }));
   };
 
+  const updateCertification = (patch: Partial<CertificationInfo>) => {
+  setApp((prev) => ({
+    ...prev,
+    certification: { ...prev.certification, ...patch },
+  }));
+};
   
   const handleNextFromVictim = () => {
     if (
@@ -419,7 +441,12 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
   <ApplicantForm applicant={applicant} onChange={updateApplicant} />
 )}
 
-{step === "crime" && <CrimeForm crime={crime} onChange={updateCrime} />}
+{step === "crime" && (
+  <>
+    <CrimeForm crime={crime} onChange={updateCrime} />
+    <CourtForm court={court} onChange={updateCourt} />
+  </>
+)}
 
 {step === "losses" && (
   <LossesForm losses={losses} onChange={updateLosses} />
@@ -446,6 +473,8 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     medical={medical}
     employment={employment}
     funeral={funeral}
+    certification={certification}               // 👈 ADD
+    onChangeCertification={updateCertification}  // 👈 ADD
   />
 )}
 
@@ -673,6 +702,115 @@ function VictimForm({
           onChange={(v) => onChange({ alternatePhone: v })}
         />
       </div>
+
+            <div className="space-y-3 pt-3 border-t border-slate-800">
+        <p className="text-[11px] text-slate-400">
+          The following questions are used for civil rights reporting and do
+          not affect eligibility. You can skip any that you do not wish to
+          answer.
+        </p>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <Field
+            label="Gender identity (optional)"
+            value={victim.genderIdentity ?? ""}
+            onChange={(v) => onChange({ genderIdentity: v })}
+            placeholder="Male, female, non-binary, etc."
+          />
+          <Field
+            label="Race (optional)"
+            value={victim.race ?? ""}
+            onChange={(v) => onChange({ race: v })}
+            placeholder="e.g. Black, White, Asian, etc."
+          />
+          <Field
+            label="Ethnicity (optional)"
+            value={victim.ethnicity ?? ""}
+            onChange={(v) => onChange({ ethnicity: v })}
+            placeholder="e.g. Hispanic/Latino, Not Hispanic"
+          />
+        </div>
+
+        <div className="space-y-2 text-xs">
+          <p className="text-slate-200">Does the victim have a disability?</p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => onChange({ hasDisability: true })}
+              className={`px-3 py-1 rounded-full border text-[11px] ${
+                victim.hasDisability
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChange({ hasDisability: false, disabilityType: null })
+              }
+              className={`px-3 py-1 rounded-full border text-[11px] ${
+                victim.hasDisability === false
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              No
+            </button>
+          </div>
+
+          {victim.hasDisability && (
+            <div className="grid gap-2 sm:grid-cols-4 mt-2">
+              <button
+                type="button"
+                onClick={() => onChange({ disabilityType: "physical" })}
+                className={`px-2 py-1 rounded-full border text-[11px] ${
+                  victim.disabilityType === "physical"
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                Physical
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ disabilityType: "mental" })}
+                className={`px-2 py-1 rounded-full border text-[11px] ${
+                  victim.disabilityType === "mental"
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                Mental
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ disabilityType: "developmental" })}
+                className={`px-2 py-1 rounded-full border text-[11px] ${
+                  victim.disabilityType === "developmental"
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                Developmental
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ disabilityType: "other" })}
+                className={`px-2 py-1 rounded-full border text-[11px] ${
+                  victim.disabilityType === "other"
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                Other
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
     </section>
   );
 }
@@ -790,6 +928,42 @@ function ApplicantForm({
               value={applicant.cellPhone ?? ""}
               onChange={(v) => onChange({ cellPhone: v })}
             />
+          </div>
+                    <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+            <p className="text-slate-200">
+              If the victim is a minor or an incapacitated adult, do you have
+              legal guardianship for them?
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => onChange({ hasLegalGuardianship: true })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${
+                  applicant.hasLegalGuardianship
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ hasLegalGuardianship: false })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${
+                  applicant.hasLegalGuardianship === false
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                No / Not sure
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              If you are not the legal guardian but are helping with the
+              application, the Attorney General&apos;s office may still contact you
+              for information, but they may also need to contact a parent or
+              legal guardian.
+            </p>
           </div>
         </div>
       )}
@@ -919,6 +1093,256 @@ function CrimeForm({
           />
         </div>
       )}
+
+            <div className="space-y-2 text-xs pt-2 border-t border-slate-800">
+        <p className="text-slate-200">
+          Was a sexual assault evidence collection kit performed at a hospital?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ sexualAssaultKitPerformed: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              crime.sexualAssaultKitPerformed
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ sexualAssaultKitPerformed: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              crime.sexualAssaultKitPerformed === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+      </div>
+
+    </section>
+  );
+}
+
+function CourtForm({
+  court,
+  onChange,
+}: {
+  court: CourtInfo;
+  onChange: (patch: Partial<CourtInfo>) => void;
+}) {
+  return (
+    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
+      <h2 className="text-lg font-semibold text-slate-50">
+        Court & restitution information
+      </h2>
+      <p className="text-xs text-slate-300">
+        If there is a criminal case, you can share what you know. It&apos;s okay
+        if you don&apos;t know all of these details — answer what you can.
+      </p>
+
+      <div className="space-y-2 text-xs">
+        <p className="text-slate-200">Was the offender arrested?</p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ offenderArrested: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.offenderArrested
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ offenderArrested: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.offenderArrested === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-xs">
+        <p className="text-slate-200">Has the offender been charged in court?</p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ offenderCharged: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.offenderCharged
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ offenderCharged: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.offenderCharged === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-xs">
+        <p className="text-slate-200">
+          Have you been required to testify in the criminal case?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ applicantTestified: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.applicantTestified
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ applicantTestified: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.applicantTestified === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+      </div>
+
+      <Field
+        label="Criminal case number (if known)"
+        value={court.criminalCaseNumber ?? ""}
+        onChange={(v) => onChange({ criminalCaseNumber: v })}
+      />
+
+      <Field
+        label="What was the outcome of the criminal case? (if known)"
+        placeholder="For example: convicted, case dismissed, plea deal, still pending..."
+        value={court.criminalCaseOutcome ?? ""}
+        onChange={(v) => onChange({ criminalCaseOutcome: v })}
+      />
+
+      <div className="space-y-2 text-xs">
+        <p className="text-slate-200">
+          Has the court ordered the offender to pay restitution (money directly
+          to you or on your behalf)?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ restitutionOrdered: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.restitutionOrdered
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ restitutionOrdered: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.restitutionOrdered === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+
+        {court.restitutionOrdered && (
+          <Field
+            label="If yes, how much (approximate)?"
+            placeholder="For example: 5000"
+            value={court.restitutionAmount?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                restitutionAmount: v
+                  ? Number(v.replace(/[^0-9.]/g, ""))
+                  : undefined,
+              })
+            }
+          />
+        )}
+      </div>
+
+      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
+        <p className="text-slate-200">
+          Has the offender been involved in a human trafficking court
+          proceeding related to this incident?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ humanTraffickingCaseFiled: true })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.humanTraffickingCaseFiled
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ humanTraffickingCaseFiled: false })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              court.humanTraffickingCaseFiled === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+
+        {court.humanTraffickingCaseFiled && (
+          <>
+            <Field
+              label="Human trafficking case number (if known)"
+              value={court.humanTraffickingCaseNumber ?? ""}
+              onChange={(v) =>
+                onChange({ humanTraffickingCaseNumber: v })
+              }
+            />
+            <Field
+              label="Outcome of the human trafficking case (if known)"
+              value={court.humanTraffickingCaseOutcome ?? ""}
+              onChange={(v) =>
+                onChange({ humanTraffickingCaseOutcome: v })
+              }
+            />
+          </>
+        )}
+      </div>
     </section>
   );
 }
@@ -1193,6 +1617,45 @@ function MedicalForm({
         />
       </div>
 
+            <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+        <p className="text-slate-200">
+          Do you have health insurance, public aid, or other programs that may
+          pay some of these bills?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ hasOtherSources: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              medical.hasOtherSources
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ hasOtherSources: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              medical.hasOtherSources === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+
+        {medical.hasOtherSources && (
+          <Field
+            label="Briefly list any insurance or programs (Medical Card, Medicare, private insurance, etc.)"
+            value={medical.otherInsuranceDescription || ""}
+            onChange={(v) => onChange({ otherInsuranceDescription: v })}
+          />
+        )}
+      </div>
+
       <p className="text-[11px] text-slate-400">
         The official application allows you to list many providers. In a later
         version, we&apos;ll let you add more here, or your advocate can attach a
@@ -1276,6 +1739,48 @@ function EmploymentForm({
             }
           />
         </div>
+              <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+        <p className="text-slate-200">
+          After the crime, did you receive sick time, vacation, personal time,
+          disability, or other paid benefits from this employer?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ receivedSickOrVacationOrDisability: true })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              employment.receivedSickOrVacationOrDisability
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onChange({ receivedSickOrVacationOrDisability: false })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              employment.receivedSickOrVacationOrDisability === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+
+        {employment.receivedSickOrVacationOrDisability && (
+          <Field
+            label="If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)..."
+            value={employment.benefitNotes || ""}
+            onChange={(v) => onChange({ benefitNotes: v })}
+          />
+        )}
+      </div>
       </div>
 
       <p className="text-[11px] text-slate-400">
@@ -1348,6 +1853,36 @@ function FuneralForm({
             onChange={(v) =>
               onChange({
                 funeralBillTotal: v
+                  ? Number(v.replace(/[^0-9.]/g, ""))
+                  : undefined,
+              })
+            }
+          />
+        </div>
+      </div>
+
+            <div className="space-y-3 pt-3 border-t border-slate-800">
+        <h3 className="text-xs font-semibold text-slate-100">
+          Cemetery information (if applicable)
+        </h3>
+        <Field
+          label="Name of cemetery"
+          value={funeral.cemeteryName ?? ""}
+          onChange={(v) => onChange({ cemeteryName: v })}
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Cemetery phone"
+            value={funeral.cemeteryPhone ?? ""}
+            onChange={(v) => onChange({ cemeteryPhone: v })}
+          />
+          <Field
+            label="Total cemetery bill (approximate)"
+            placeholder="For example: 2000"
+            value={funeral.cemeteryBillTotal?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                cemeteryBillTotal: v
                   ? Number(v.replace(/[^0-9.]/g, ""))
                   : undefined,
               })
@@ -1440,6 +1975,121 @@ function FuneralForm({
         )}
       </div>
 
+            <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+        <p className="text-slate-200">
+          Did the victim have a life insurance policy that paid out after their death?
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => onChange({ lifeInsurancePolicyExists: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              funeral.lifeInsurancePolicyExists
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ lifeInsurancePolicyExists: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${
+              funeral.lifeInsurancePolicyExists === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            No / Not sure
+          </button>
+        </div>
+
+        {funeral.lifeInsurancePolicyExists && (
+          <div className="space-y-2">
+            <Field
+              label="Life insurance company"
+              value={funeral.lifeInsuranceCompany ?? ""}
+              onChange={(v) => onChange({ lifeInsuranceCompany: v })}
+            />
+            <Field
+              label="Name of beneficiary"
+              value={funeral.lifeInsuranceBeneficiary ?? ""}
+              onChange={(v) => onChange({ lifeInsuranceBeneficiary: v })}
+            />
+            <Field
+              label="Beneficiary phone"
+              value={funeral.lifeInsuranceBeneficiaryPhone ?? ""}
+              onChange={(v) =>
+                onChange({ lifeInsuranceBeneficiaryPhone: v })
+              }
+            />
+            <Field
+              label="Amount paid (approximate)"
+              placeholder="For example: 10000"
+              value={funeral.lifeInsuranceAmountPaid?.toString() ?? ""}
+              onChange={(v) =>
+                onChange({
+                  lifeInsuranceAmountPaid: v
+                    ? Number(v.replace(/[^0-9.]/g, ""))
+                    : undefined,
+                })
+              }
+            />
+          </div>
+        )}
+      </div>
+
+            <div className="space-y-3 pt-3 border-t border-slate-800">
+        <h3 className="text-xs font-semibold text-slate-100">
+          Dependents who relied on the victim&apos;s income
+        </h3>
+        <p className="text-[11px] text-slate-300">
+          If anyone depended on the victim financially (children, spouse, others),
+          you can list one here. In a later version you&apos;ll be able to add more.
+        </p>
+
+        {(() => {
+          const dep =
+            funeral.dependents && funeral.dependents.length > 0
+              ? funeral.dependents[0]
+              : { name: "", relationshipToVictim: "", dateOfBirth: "", guardianNamePhone: "" };
+
+          const updateDep = (patch: Partial<typeof dep>) => {
+            const updated = { ...dep, ...patch };
+            const deps = [...(funeral.dependents ?? [])];
+            deps[0] = updated;
+            onChange({ dependents: deps });
+          };
+
+          return (
+            <div className="space-y-3">
+              <Field
+                label="Dependent name"
+                value={dep.name}
+                onChange={(v) => updateDep({ name: v })}
+              />
+              <Field
+                label="Relationship to victim"
+                placeholder="Child, spouse, partner, etc."
+                value={dep.relationshipToVictim ?? ""}
+                onChange={(v) => updateDep({ relationshipToVictim: v })}
+              />
+              <Field
+                label="Dependent date of birth"
+                type="date"
+                value={dep.dateOfBirth ?? ""}
+                onChange={(v) => updateDep({ dateOfBirth: v })}
+              />
+              <Field
+                label="Guardian name & phone (if minor)"
+                value={dep.guardianNamePhone ?? ""}
+                onChange={(v) => updateDep({ guardianNamePhone: v })}
+              />
+            </div>
+          );
+        })()}
+      </div>
+
       <p className="text-[11px] text-slate-400">
         The official application also asks about dependents of the victim and
         ongoing loss of support. In a later version, you&apos;ll be able to add
@@ -1457,6 +2107,8 @@ function SummaryView({
   medical,
   employment,
   funeral,
+  certification,
+  onChangeCertification,
 }: {
   victim: VictimInfo;
   applicant: ApplicantInfo;
@@ -1465,8 +2117,10 @@ function SummaryView({
   medical: MedicalInfo;
   employment: EmploymentInfo;
   funeral: FuneralInfo;
+  certification: CertificationInfo;
+  onChangeCertification: (patch: Partial<CertificationInfo>) => void;
 }) {
-          const selectedLosses = Object.entries(losses)
+            const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
 
@@ -1649,6 +2303,190 @@ const primaryFuneralPayer = funeral.payments?.[0];
     </p>
   )}
 </div>
+
+      <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
+        <h3 className="font-semibold text-slate-100">
+          Certification & authorization
+        </h3>
+        <p className="text-[11px] text-slate-300">
+          On the official Illinois Crime Victims Compensation application, you
+          must certify that the information is true, understand that certain
+          payments may need to be repaid if you recover money from other
+          sources, and authorize the Attorney General&apos;s office to request
+          records needed to review your claim.
+        </p>
+
+        <div className="space-y-2 mt-2">
+          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!certification.acknowledgesSubrogation}
+              onChange={(e) =>
+                onChangeCertification({
+                  acknowledgesSubrogation: e.target.checked,
+                })
+              }
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+            />
+            <span>
+              I understand that if I receive money from the offender, a civil
+              lawsuit, insurance, or another government program for the same
+              expenses, I may need to repay some or all of what I receive from
+              this program.
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!certification.acknowledgesRelease}
+              onChange={(e) =>
+                onChangeCertification({
+                  acknowledgesRelease: e.target.checked,
+                })
+              }
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+            />
+            <span>
+              I authorize the Attorney General&apos;s office to request medical,
+              law enforcement, employment, and insurance records needed to
+              process this claim.
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={!!certification.acknowledgesPerjury}
+              onChange={(e) =>
+                onChangeCertification({
+                  acknowledgesPerjury: e.target.checked,
+                })
+              }
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+            />
+            <span>
+              I certify that the information I have provided is true, accurate,
+              and complete to the best of my knowledge, and I understand that
+              false statements may be punishable by law.
+            </span>
+          </label>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 mt-3">
+          <Field
+            label="Applicant signature (type your full name)"
+            value={certification.applicantSignatureName ?? ""}
+            onChange={(v) =>
+              onChangeCertification({ applicantSignatureName: v })
+            }
+          />
+          <Field
+            label="Date"
+            type="date"
+            value={certification.applicantSignatureDate ?? ""}
+            onChange={(v) =>
+              onChangeCertification({ applicantSignatureDate: v })
+            }
+          />
+        </div>
+
+        <div className="space-y-2 mt-3">
+          <p className="text-[11px] text-slate-200">
+            Are you being represented by an attorney for this Crime Victims
+            Compensation claim?
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                onChangeCertification({ representedByAttorney: true })
+              }
+              className={`px-3 py-1 rounded-full border text-[11px] ${
+                certification.representedByAttorney
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onChangeCertification({ representedByAttorney: false })
+              }
+              className={`px-3 py-1 rounded-full border text-[11px] ${
+                certification.representedByAttorney === false
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              No
+            </button>
+          </div>
+
+          {certification.representedByAttorney && (
+            <div className="grid gap-3 sm:grid-cols-2 mt-2">
+              <Field
+                label="Attorney name"
+                value={certification.attorneyName ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyName: v })
+                }
+              />
+              <Field
+                label="ARDC number (if known)"
+                value={certification.attorneyArdc ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyArdc: v })
+                }
+              />
+              <Field
+                label="Attorney address"
+                value={certification.attorneyAddress ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyAddress: v })
+                }
+              />
+              <Field
+                label="City"
+                value={certification.attorneyCity ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyCity: v })
+                }
+              />
+              <Field
+                label="State"
+                value={certification.attorneyState ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyState: v })
+                }
+              />
+              <Field
+                label="ZIP"
+                value={certification.attorneyZip ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyZip: v })
+                }
+              />
+              <Field
+                label="Phone"
+                value={certification.attorneyPhone ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyPhone: v })
+                }
+              />
+              <Field
+                label="Email"
+                value={certification.attorneyEmail ?? ""}
+                onChange={(v) =>
+                  onChangeCertification({ attorneyEmail: v })
+                }
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
     </section>
   );
