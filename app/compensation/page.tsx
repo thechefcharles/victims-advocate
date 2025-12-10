@@ -88,6 +88,15 @@ export default function CompensationPage() {
               Approximate time: 15–25 minutes. You don&apos;t need every
               document ready to begin.
             </span>
+              <p className="text-xs text-slate-400 mt-4">
+              Advocates:  
+              <a
+                href="/admin/cases"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2 ml-1"
+              >
+                View all saved cases →
+              </a>
+            </p>
           </div>
         </section>
 

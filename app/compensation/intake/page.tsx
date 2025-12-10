@@ -29,13 +29,27 @@ type IntakeStep =
 const STORAGE_KEY = "nxtstps_compensation_intake_v1";
 const CASES_STORAGE_KEY = "nxtstps_cases_v1"; // 👈 NEW
 
+
+
+const DOCS_STORAGE_KEY = "nxtstps_docs_v1"; // 👈 NEW
+
 type CaseStatus = "draft" | "ready_for_review";
+
+interface UploadedDoc {
+  id: string;
+  type: string;
+  description: string;
+  fileName: string;
+  fileSize: number;
+  lastModified: number;
+}
 
 interface SavedCase {
   id: string;
   createdAt: string;
   status: CaseStatus;
   application: CompensationApplication;
+  documents: UploadedDoc[]; // 👈 NEW
 }
 
 const emptyVictim: VictimInfo = {
@@ -288,10 +302,9 @@ const handleDownloadPdf = async () => {
     setMaxStepIndex((prev) => Math.max(prev, 1));
   };
 
-  const handleSaveCase = () => {
+const handleSaveCase = () => {
   if (typeof window === "undefined") return;
 
-  // Make sure certification is at least mostly complete
   if (
     !certification.applicantSignatureName ||
     !certification.applicantSignatureDate ||
@@ -306,8 +319,11 @@ const handleDownloadPdf = async () => {
   }
 
   try {
-    const raw = localStorage.getItem(CASES_STORAGE_KEY);
-    const existing: SavedCase[] = raw ? JSON.parse(raw) : [];
+    const rawCases = localStorage.getItem(CASES_STORAGE_KEY);
+    const existing: SavedCase[] = rawCases ? JSON.parse(rawCases) : [];
+
+    const rawDocs = localStorage.getItem(DOCS_STORAGE_KEY);
+    const docs: UploadedDoc[] = rawDocs ? JSON.parse(rawDocs) : [];
 
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -316,6 +332,7 @@ const handleDownloadPdf = async () => {
       createdAt: new Date().toISOString(),
       status: "ready_for_review",
       application: app,
+      documents: docs,
     };
 
     const updated = [...existing, newCase];
@@ -2402,23 +2419,30 @@ const primaryFuneralPayer = funeral.payments?.[0];
 
 
 
-      <div className="flex flex-wrap gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onDownloadSummaryPdf}
-          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
-        >
-          Download summary PDF
-        </button>
-        <button
-          type="button"
-          onClick={onSaveCase}
-          className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
-        >
-          Save as case for advocate review
-        </button>
-      </div>
-            
+<div className="flex flex-wrap gap-2 justify-end">
+  <button
+    type="button"
+    onClick={onDownloadSummaryPdf}
+    className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+  >
+    Download summary PDF
+  </button>
+
+  <button
+    type="button"
+    onClick={onSaveCase}
+    className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+  >
+    Save as case for advocate review
+  </button>
+
+  <a
+    href="/admin/cases"
+    className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
+  >
+    View saved cases →
+  </a>
+</div>
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">

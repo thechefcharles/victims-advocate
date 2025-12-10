@@ -1,0 +1,430 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+
+const CASES_STORAGE_KEY = "nxtstps_cases_v1";
+
+type CaseStatus = "draft" | "ready_for_review";
+
+interface UploadedDoc {
+  id: string;
+  type: string;
+  description: string;
+  fileName: string;
+  fileSize: number;
+  lastModified: number;
+}
+
+interface SavedCase {
+  id: string;
+  createdAt: string;
+  status: CaseStatus;
+  application: any; // we know this matches CompensationApplication shape
+  documents?: UploadedDoc[];
+}
+
+export default function CaseDetailPage() {
+  const params = useParams<{ id: string }>();
+  const caseId = params.id;
+
+  const [loadedCase, setLoadedCase] = useState<SavedCase | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = localStorage.getItem(CASES_STORAGE_KEY);
+      const parsed: SavedCase[] = raw ? JSON.parse(raw) : [];
+      const found = parsed.find((c) => c.id === caseId) || null;
+      setLoadedCase(found);
+    } catch (err) {
+      console.error("Failed to load cases", err);
+      setLoadedCase(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [caseId]);
+
+  const handleDownloadSummaryPdf = async () => {
+    if (!loadedCase) return;
+    try {
+      const res = await fetch("/api/compensation/summary-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loadedCase.application),
+      });
+
+      if (!res.ok) {
+        alert("There was an issue generating the PDF. Please try again.");
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "nxtstps_cvc_summary.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading summary PDF", err);
+      alert("Something went wrong generating the PDF.");
+    }
+  };
+
+  const formatDate = (iso?: string) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleString("en-US");
+  };
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+        <div className="max-w-3xl mx-auto">Loading case…</div>
+      </main>
+    );
+  }
+
+  if (!loadedCase) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <header className="space-y-2">
+            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+              Admin · Case Not Found
+            </p>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Case could not be found
+            </h1>
+          </header>
+          <p className="text-sm text-slate-300">
+            This case ID does not exist in local storage. It may have been
+            removed or saved in a different browser.
+          </p>
+          <a
+            href="/admin/cases"
+            className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 transition"
+          >
+            ← Back to all cases
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  const app = loadedCase.application;
+  const victim = app.victim || {};
+  const applicant = app.applicant || {};
+  const crime = app.crime || {};
+  const losses = app.losses || {};
+  const medical = app.medical || {};
+  const employment = app.employment || {};
+  const funeral = app.funeral || {};
+  const certification = app.certification || {};
+  const docs: UploadedDoc[] = loadedCase.documents || [];
+
+  const selectedLossTypes = Object.entries(losses)
+    .filter(([_, v]) => v)
+    .map(([k]) => k);
+
+  const primaryProvider = medical.providers?.[0];
+  const primaryJob = employment.employmentHistory?.[0];
+  const primaryFuneralPayer = funeral.payments?.[0];
+
+  const docTypeCounts: Record<string, number> = {};
+  docs.forEach((d) => {
+    docTypeCounts[d.type] = (docTypeCounts[d.type] || 0) + 1;
+  });
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <div className="max-w-5xl mx-auto space-y-6">
+        <header className="space-y-2">
+          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+            Admin · Case Detail
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold">
+            {victim.firstName || victim.lastName
+              ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
+              : "Unknown victim"}
+          </h1>
+          <p className="text-sm text-slate-300">
+            Case ID:{" "}
+            <span className="font-mono text-[11px] text-slate-400">
+              {loadedCase.id}
+            </span>
+          </p>
+          <p className="text-[11px] text-slate-500">
+            Created: {formatDate(loadedCase.createdAt)} · Status:{" "}
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 ${
+                loadedCase.status === "ready_for_review"
+                  ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
+                  : "bg-slate-800 text-slate-300 border border-slate-600"
+              }`}
+            >
+              {loadedCase.status === "ready_for_review"
+                ? "Ready for review"
+                : "Draft"}
+            </span>
+          </p>
+
+          <div className="flex flex-wrap gap-2 mt-2">
+            <a
+              href="/admin/cases"
+              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
+            >
+              ← Back to all cases
+            </a>
+            <button
+              type="button"
+              onClick={handleDownloadSummaryPdf}
+              className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+            >
+              Download summary PDF
+            </button>
+          </div>
+        </header>
+
+        {/* Victim & applicant */}
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+          <h2 className="text-sm font-semibold text-slate-50">
+            Victim & applicant
+          </h2>
+          <p className="text-slate-200">
+            Victim: {victim.firstName || "—"} {victim.lastName || ""}
+          </p>
+          <p className="text-slate-300">
+            DOB: {victim.dateOfBirth || "—"} · City:{" "}
+            {victim.city || "—"}, {victim.state || "—"}
+          </p>
+          {applicant.isSameAsVictim ? (
+            <p className="text-slate-300">
+              Applicant is the same as the victim.
+            </p>
+          ) : (
+            <>
+              <p className="text-slate-200">
+                Applicant: {applicant.firstName || "—"}{" "}
+                {applicant.lastName || ""}
+              </p>
+              <p className="text-slate-300">
+                Relationship: {applicant.relationshipToVictim || "—"} · Phone:{" "}
+                {applicant.cellPhone || "—"}
+              </p>
+            </>
+          )}
+        </section>
+
+        {/* Crime */}
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+          <h2 className="text-sm font-semibold text-slate-50">Crime</h2>
+          <p className="text-slate-300">
+            Date of crime: {crime.dateOfCrime || "—"}
+          </p>
+          <p className="text-slate-300">
+            Location: {crime.crimeAddress || "—"}, {crime.crimeCity || "—"}
+            {crime.crimeCounty ? ` (${crime.crimeCounty})` : ""}
+          </p>
+          <p className="text-slate-300">
+            Reported to: {crime.reportingAgency || "—"} · Police report #:{" "}
+            {crime.policeReportNumber || "—"}
+          </p>
+          {crime.crimeDescription && (
+            <p className="text-slate-300">
+              Description: {crime.crimeDescription}
+            </p>
+          )}
+          {crime.injuryDescription && (
+            <p className="text-slate-300">
+              Injuries: {crime.injuryDescription}
+            </p>
+          )}
+        </section>
+
+        {/* Losses */}
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+          <h2 className="text-sm font-semibold text-slate-50">
+            Losses claimed
+          </h2>
+          {selectedLossTypes.length === 0 ? (
+            <p className="text-slate-300">No losses selected.</p>
+          ) : (
+            <p className="text-slate-300">{selectedLossTypes.join(", ")}</p>
+          )}
+        </section>
+
+        {/* Medical / Employment / Funeral */}
+        <section className="grid gap-4 md:grid-cols-3 text-xs">
+          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-slate-50">
+              Medical / counseling
+            </h2>
+            {primaryProvider && primaryProvider.providerName ? (
+              <>
+                <p className="text-slate-300">
+                  Provider: {primaryProvider.providerName}
+                </p>
+                <p className="text-slate-300">
+                  City: {primaryProvider.city || "—"} · Phone:{" "}
+                  {primaryProvider.phone || "—"}
+                </p>
+                <p className="text-slate-300">
+                  Dates: {primaryProvider.serviceDates || "—"}
+                </p>
+                <p className="text-slate-300">
+                  Bill:{" "}
+                  {primaryProvider.amountOfBill != null
+                    ? `$${primaryProvider.amountOfBill}`
+                    : "—"}
+                </p>
+              </>
+            ) : (
+              <p className="text-slate-300">No provider entered.</p>
+            )}
+          </div>
+
+          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-slate-50">
+              Work & income
+            </h2>
+            {primaryJob && primaryJob.employerName ? (
+              <>
+                <p className="text-slate-300">
+                  Employer: {primaryJob.employerName}
+                </p>
+                <p className="text-slate-300">
+                  Phone: {primaryJob.employerPhone || "—"}
+                </p>
+                <p className="text-slate-300">
+                  Net monthly wages:{" "}
+                  {primaryJob.netMonthlyWages != null
+                    ? `$${primaryJob.netMonthlyWages}`
+                    : "—"}
+                </p>
+              </>
+            ) : (
+              <p className="text-slate-300">No employment info entered.</p>
+            )}
+          </div>
+
+          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-slate-50">
+              Funeral / burial
+            </h2>
+            {funeral.funeralHomeName || funeral.funeralBillTotal ? (
+              <>
+                <p className="text-slate-300">
+                  Funeral home: {funeral.funeralHomeName || "—"}
+                </p>
+                <p className="text-slate-300">
+                  Phone: {funeral.funeralHomePhone || "—"}
+                </p>
+                <p className="text-slate-300">
+                  Total bill:{" "}
+                  {funeral.funeralBillTotal != null
+                    ? `$${funeral.funeralBillTotal}`
+                    : "—"}
+                </p>
+                {primaryFuneralPayer && primaryFuneralPayer.payerName ? (
+                  <p className="text-slate-300">
+                    Payer: {primaryFuneralPayer.payerName} (
+                    {primaryFuneralPayer.relationshipToVictim ||
+                      "relationship not set"}
+                    ) · Amount:{" "}
+                    {primaryFuneralPayer.amountPaid != null
+                      ? `$${primaryFuneralPayer.amountPaid}`
+                      : "—"}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="text-slate-300">No funeral information entered.</p>
+            )}
+          </div>
+        </section>
+
+        {/* Documents */}
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+          <h2 className="text-sm font-semibold text-slate-50">
+            Documents attached
+          </h2>
+          {docs.length === 0 ? (
+            <p className="text-slate-300">No documents attached.</p>
+          ) : (
+            <>
+              <p className="text-slate-300">
+                {docs.length} document{docs.length > 1 ? "s" : ""} attached.
+              </p>
+              {Object.keys(docTypeCounts).length > 0 && (
+                <p className="text-[11px] text-slate-400">
+                  By type:{" "}
+                  {Object.entries(docTypeCounts)
+                    .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
+                    .join(", ")}
+                </p>
+              )}
+              <ul className="divide-y divide-slate-800 mt-2">
+                {docs.map((d) => (
+                  <li
+                    key={d.id}
+                    className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
+                  >
+                    <div className="space-y-0.5">
+                      <p className="font-semibold text-slate-100">
+                        {d.type.replace(/_/g, " ")}
+                      </p>
+                      <p className="text-slate-300">{d.fileName}</p>
+                      {d.description && (
+                        <p className="text-[11px] text-slate-400">
+                          {d.description}
+                        </p>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Added:{" "}
+                      {new Date(d.lastModified).toLocaleDateString("en-US")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+
+        {/* Certification */}
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5">
+          <h2 className="text-sm font-semibold text-slate-50">
+            Certification snapshot
+          </h2>
+          <p className="text-slate-300">
+            Signature: {certification.applicantSignatureName || "—"} · Date:{" "}
+            {certification.applicantSignatureDate || "—"}
+          </p>
+          <p className="text-[11px] text-slate-400">
+            Subrogation acknowledged:{" "}
+            {certification.acknowledgesSubrogation ? "Yes" : "No / not marked"}
+            ; Release acknowledged:{" "}
+            {certification.acknowledgesRelease ? "Yes" : "No / not marked"};{" "}
+            Perjury warning acknowledged:{" "}
+            {certification.acknowledgesPerjury ? "Yes" : "No / not marked"}
+          </p>
+        </section>
+
+        <p className="text-[11px] text-slate-500">
+          This is a local prototype of the advocate case view. In a production
+          version, cases and documents would be stored in a secure backend and
+          include workflow tools, notes, and activity logs.
+        </p>
+      </div>
+    </main>
+  );
+}

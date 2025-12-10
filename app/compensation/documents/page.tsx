@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type DocumentType =
   | "police_report"
@@ -20,10 +20,33 @@ interface UploadedDoc {
   lastModified: number;
 }
 
+const DOCS_STORAGE_KEY = "nxtstps_docs_v1";
+
 export default function DocumentsPage() {
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [selectedType, setSelectedType] = useState<DocumentType>("police_report");
   const [description, setDescription] = useState("");
+
+    useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(DOCS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed: UploadedDoc[] = JSON.parse(raw);
+      setDocs(parsed);
+    } catch (err) {
+      console.error("Failed to load docs from localStorage", err);
+    }
+  }, []);
+
+    useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(DOCS_STORAGE_KEY, JSON.stringify(docs));
+    } catch (err) {
+      console.error("Failed to save docs to localStorage", err);
+    }
+  }, [docs]);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;

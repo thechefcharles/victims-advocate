@@ -6,6 +6,15 @@ const CASES_STORAGE_KEY = "nxtstps_cases_v1";
 
 type CaseStatus = "draft" | "ready_for_review";
 
+interface UploadedDoc {
+  id: string;
+  type: string;
+  description: string;
+  fileName: string;
+  fileSize: number;
+  lastModified: number;
+}
+
 interface SavedCase {
   id: string;
   createdAt: string;
@@ -26,6 +35,7 @@ interface SavedCase {
     };
     losses?: Record<string, boolean>;
   };
+  documents?: UploadedDoc[]; // 👈 NEW
 }
 
 export default function CasesPage() {
@@ -89,10 +99,11 @@ export default function CasesPage() {
                   <th className="text-left py-2 pr-3 font-normal">
                     Created
                   </th>
-                  <th className="text-left py-2 pr-3 font-normal">Status</th>
-                  <th className="text-left py-2 pr-3 font-normal">
+                    <th className="text-left py-2 pr-3 font-normal">Status</th>
+                    <th className="text-left py-2 pr-3 font-normal">Docs</th>
+                    <th className="text-left py-2 pr-3 font-normal">
                     Losses selected
-                  </th>
+                    </th>
                 </tr>
               </thead>
               <tbody>
@@ -103,6 +114,17 @@ export default function CasesPage() {
                   const selectedLossTypes = Object.entries(losses)
                     .filter(([_, val]) => val)
                     .map(([key]) => key);
+                    const docList = c.documents || [];
+                    const docCount = docList.length;
+
+                    // Optional: quick breakdown by type
+                    const typeCounts: Record<string, number> = {};
+                    for (const d of docList) {
+                    typeCounts[d.type] = (typeCounts[d.type] || 0) + 1;
+                    }
+                    const typeSummary = Object.entries(typeCounts)
+                    .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
+                    .join(", ");
 
                   return (
                     <tr
@@ -111,16 +133,18 @@ export default function CasesPage() {
                     >
                       <td className="py-2 pr-3 align-top">
                         <div className="space-y-0.5">
-                          <div className="font-semibold text-slate-100">
+                        <a
+                            href={`/admin/cases/${c.id}`}
+                            className="font-semibold text-slate-100 hover:text-emerald-300 hover:underline underline-offset-2"
+                        >
                             {(v.firstName || "") +
-                              (v.firstName || v.lastName ? " " : "") +
-                              (v.lastName || "") || "Unknown victim"}
-                          </div>
-                          <div className="text-[11px] text-slate-400">
+                            (v.firstName || v.lastName ? " " : "") +
+                            (v.lastName || "") || "Unknown victim"}
+                        </a>
+                        <div className="text-[11px] text-slate-400">
                             DOB: {v.dateOfBirth || "—"}
-                          </div>
                         </div>
-                      </td>
+                        </div>                      </td>
                       <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
                         {v.city || cr.crimeCity || "—"}
                         {v.state || cr.crimeCounty
@@ -133,24 +157,31 @@ export default function CasesPage() {
                       <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
                         {formatDate(c.createdAt)}
                       </td>
-                      <td className="py-2 pr-3 align-top text-[11px]">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 ${
-                            c.status === "ready_for_review"
-                              ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
-                              : "bg-slate-800 text-slate-300 border border-slate-600"
-                          }`}
-                        >
-                          {c.status === "ready_for_review"
-                            ? "Ready for review"
-                            : "Draft"}
-                        </span>
-                      </td>
-                      <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                        {selectedLossTypes.length === 0
-                          ? "None"
-                          : selectedLossTypes.join(", ")}
-                      </td>
+                    <td className="py-2 pr-3 align-top text-[11px]">
+                    <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 ${
+                        c.status === "ready_for_review"
+                            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
+                            : "bg-slate-800 text-slate-300 border border-slate-600"
+                        }`}
+                    >
+                        {c.status === "ready_for_review" ? "Ready for review" : "Draft"}
+                    </span>
+                    </td>
+
+                    <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
+                    {docCount === 0
+                        ? "No docs"
+                        : `${docCount} doc${docCount > 1 ? "s" : ""}${
+                            typeSummary ? ` – ${typeSummary}` : ""
+                        }`}
+                    </td>
+
+                    <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
+                    {selectedLossTypes.length === 0
+                        ? "None"
+                        : selectedLossTypes.join(", ")}
+                    </td>
                     </tr>
                   );
                 })}
