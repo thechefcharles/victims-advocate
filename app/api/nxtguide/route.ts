@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import type { CompensationApplication } from "@/lib/compensationSchema";
+import { supabaseServer } from "@/lib/supabaseServer";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       | "summary";
 
     const application = body.application as CompensationApplication | undefined;
+    const caseId = (body.caseId || null) as string | null;
 
     if (!messages || messages.length === 0) {
       return NextResponse.json(
@@ -39,8 +41,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Build a summary of missing fields for the current step, if we have application data
     let missingSummary = "";
+    let advocateCaseSummary = "";
+
+    // 🟢 Intake context missing-field summary
     if (
       contextRoute.startsWith("/compensation/intake") &&
       application &&
@@ -49,11 +53,19 @@ export async function POST(req: Request) {
       missingSummary = buildMissingSummary(contextStep, application);
     }
 
-    // Build a system prompt that encodes tone, limitations, and awareness
+    // 🟢 Advocate case + docs summary
+    if (contextRoute.startsWith("/admin/cases") && caseId) {
+      const { caseSummary, error } = await buildAdvocateCaseSummary(caseId);
+      if (!error && caseSummary) {
+        advocateCaseSummary = caseSummary;
+      }
+    }
+
     const systemPrompt = buildSystemPrompt(
       contextRoute,
       contextStep,
-      missingSummary
+      missingSummary,
+      advocateCaseSummary
     );
 
     const completion = await openai.chat.completions.create({
@@ -85,14 +97,15 @@ export async function POST(req: Request) {
 function buildSystemPrompt(
   route: string,
   step: string | null,
-  missingSummary: string
+  missingSummary: string,
+  advocateCaseSummary: string
 ) {
   let contextHint = "";
 
   if (route.startsWith("/compensation/intake")) {
     contextHint = `The user is on the guided intake page. The current intake step is "${step}". When they are confused, explain what that section is for, what typical required information looks like, and what comes before/after.`;
   } else if (route.startsWith("/admin/cases")) {
-    contextHint = `The user is likely an advocate looking at saved cases. Help them understand how NxtStps supports reviewing and organizing cases.`;
+    contextHint = `The user is likely an advocate looking at a specific saved case. Help them understand what appears to be completed, what might be missing, and how NxtStps supports reviewing and organizing cases.`;
   } else if (route === "/") {
     contextHint = `The user is on the homepage considering whether and how to start. Explain what NxtStps does, who it's for, and what "Get Started" will do.`;
   } else {
@@ -103,6 +116,10 @@ function buildSystemPrompt(
     ? `\n\nFor the current intake step, here is a summary of information that appears to be missing or incomplete:\n${missingSummary}\n\nUse this information to gently guide the user on what they might still need to fill in, but do not scold or blame them.`
     : "";
 
+  const advocateText = advocateCaseSummary
+    ? `\n\nAdvocate case context (for /admin/cases):\n${advocateCaseSummary}\n\nUse this to help advocates understand what is present and what might be missing, in plain, non-blaming language. Do not treat this as a legal determination; it's just a helpful overview.`
+    : "";
+
   return `
 You are NxtGuide, the multilingual, trauma-informed digital advocate for NxtStps.
 
@@ -111,15 +128,17 @@ NxtStps is a platform that helps victims of violent crime, their families, and a
 - Never blame, never rush, always validate.
 - Help people understand what the website does and where to click next.
 - Help people understand forms, documents, and the compensation process.
+- For advocates, help them quickly see what appears to be present vs. missing in a case, but remind them this is just guidance, not a legal or eligibility decision.
 - Never give legal advice, medical advice, or emergency instructions.
 - Never guarantee outcomes or eligibility; decisions are made by state agencies.
 
 CURRENT CONTEXT:
 - Current route: ${route}
-- Current intake step: ${step ?? "unknown or not in intake"}
+- Current intake step (if applicable): ${step ?? "unknown or not in intake"}
 
 ${contextHint}
 ${missingText}
+${advocateText}
 
 SAFETY & DISCLAIMERS:
 - You are NOT an attorney, doctor, therapist, or emergency responder.
@@ -134,11 +153,8 @@ TONE & STYLE:
 - If the user is confused about the site, explain which buttons/links do what in simple UI language (“click ‘Start Application’ at the top”, “look for the ‘Documents’ step in your intake” etc.).
 
 NAVIGATION & WEBSITE HELP:
-- If the user asks “where do I…” or “how do I…”, respond with specific directions based on the route/step:
-  - On the homepage ("/"): suggest "Get Started" to open the guided intake.
-  - On "/compensation/intake": explain which section they're in and what the next steps are.
-  - On "/compensation/documents": explain how to upload documents and what types are helpful.
-  - On "/admin/cases": explain that this is where advocates can view saved cases.
+- If the user asks “where do I…” or “how do I…”, respond with specific directions based on the route/step.
+- On the advocate side ("/admin/cases"), assist with understanding what information and documents appear to be present vs missing, but do not speak as if you are the state agency.
 
 LIMITS:
 - If you don't know something or it's outside the NxtStps scope, say so honestly and gently.
@@ -149,13 +165,13 @@ Your goal is to make the user feel:
 - Oriented (“I know where I am and what this page is for”)
 - In control (“I can move at my own pace”)
 - Supported (“I don’t have to figure this alone”)
-- Informed (“I understand what this step means and what comes next”).
+- Informed (“I understand what this step or case needs and what comes next”).
 
 Always answer in the same language the user is using, as best as you can infer.
 `;
 }
 
-// Simple helper: describe missing or incomplete info for the current intake step
+// 🔹 Missing fields for intake (unchanged from last step)
 function buildMissingSummary(
   step: string,
   app: CompensationApplication
@@ -221,7 +237,6 @@ function buildMissingSummary(
   }
 
   if (step === "summary") {
-    // very light: certification checks
     if (!app.certification.applicantSignatureName) {
       missing.push("- Applicant signature name");
     }
@@ -237,4 +252,142 @@ function buildMissingSummary(
   return `Based on the current application data, the following items may still be missing or incomplete on this step:\n${missing.join(
     "\n"
   )}`;
+}
+
+// 🔹 Advocate case + docs summary
+async function buildAdvocateCaseSummary(caseId: string): Promise<{
+  caseSummary: string | null;
+  error?: string;
+}> {
+  try {
+    const { data: caseRow, error: caseError } = await supabaseServer
+      .from("cases")
+      .select("*")
+      .eq("id", caseId)
+      .single();
+
+    if (caseError || !caseRow) {
+      console.error("[NxtGuide] Case fetch error:", caseError);
+      return { caseSummary: null, error: "Case not found" };
+    }
+
+    const { data: docs, error: docsError } = await supabaseServer
+      .from("documents")
+      .select("*")
+      .eq("case_id", caseId);
+
+    if (docsError) {
+      console.error("[NxtGuide] Documents fetch error:", docsError);
+      return { caseSummary: null, error: "Documents fetch error" };
+    }
+
+    const app = caseRow.application as CompensationApplication;
+    const status = caseRow.status as string;
+    const stateCode = caseRow.state_code as string;
+
+    const docCountsByType: Record<string, number> = {};
+    (docs || []).forEach((d: any) => {
+      const t = d.doc_type || "other";
+      docCountsByType[t] = (docCountsByType[t] || 0) + 1;
+    });
+
+    const lines: string[] = [];
+
+    lines.push(
+      `Case ${caseId} (status: ${status}, state: ${stateCode}). High-level view:`
+    );
+
+    const victimName = `${app.victim.firstName} ${app.victim.lastName}`.trim();
+    lines.push(
+      `- Victim: ${victimName || "unknown"}; city: ${
+        app.victim.city || "unknown"
+      }`
+    );
+
+    const selectedLosses = Object.entries(app.losses)
+      .filter(([_, v]) => v)
+      .map(([k]) => k);
+    if (selectedLosses.length > 0) {
+      lines.push(
+        `- Losses selected in the application: ${selectedLosses.join(", ")}.`
+      );
+    } else {
+      lines.push(`- No losses selected yet in the application.`);
+    }
+
+    // Check relevant docs vs losses
+    const missingDocHints: string[] = [];
+
+    // Police reports
+    const hasPoliceDocs =
+      (docCountsByType["police_report"] || 0) > 0 ||
+      (docCountsByType["incident_report"] || 0) > 0;
+    if (!hasPoliceDocs) {
+      missingDocHints.push(
+        "- No police report or incident report documents detected. If available, these are often important."
+      );
+    }
+
+    // Medical bills
+    if (app.losses.medicalHospital || app.losses.counseling) {
+      const hasMedDocs =
+        (docCountsByType["medical_bill"] || 0) > 0 ||
+        (docCountsByType["hospital_bill"] || 0) > 0;
+      if (!hasMedDocs) {
+        missingDocHints.push(
+          "- Application asks for medical/counseling help, but no medical or hospital bills detected yet."
+        );
+      }
+    }
+
+    // Funeral
+    if (app.losses.funeralBurial || app.losses.headstone) {
+      const hasFuneralDocs =
+        (docCountsByType["funeral_bill"] || 0) > 0 ||
+        (docCountsByType["cemetery_bill"] || 0) > 0;
+      if (!hasFuneralDocs) {
+        missingDocHints.push(
+          "- Application asks for funeral/headstone help, but no funeral or cemetery invoices detected yet."
+        );
+      }
+    }
+
+    // Lost earnings
+    if (app.losses.lossOfEarnings) {
+      const hasWageDocs = (docCountsByType["wage_proof"] || 0) > 0;
+      if (!hasWageDocs) {
+        missingDocHints.push(
+          "- Application asks for loss of earnings, but no wage proof documents (pay stubs, employer letters) detected yet."
+        );
+      }
+    }
+
+    lines.push(
+      `- Documents attached (by type): ${
+        Object.keys(docCountsByType).length > 0
+          ? Object.entries(docCountsByType)
+              .map(([t, n]) => `${t} (${n})`)
+              .join(", ")
+          : "none yet"
+      }.`
+    );
+
+    if (missingDocHints.length > 0) {
+      lines.push(
+        `- Potential document gaps to be aware of (not legal determinations):`
+      );
+      missingDocHints.forEach((m) => lines.push(`  ${m}`));
+    } else {
+      lines.push(
+        `- No obvious document gaps based on selected losses and available doc types.`
+      );
+    }
+
+    return {
+      caseSummary: lines.join("\n"),
+    };
+  } catch (err) {
+    console.error("[NxtGuide] Unexpected error building advocate summary:", err);
+    return { caseSummary: null, error: "Unexpected error" };
+  }
 }

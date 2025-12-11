@@ -321,6 +321,40 @@ const handleDownloadPdf = async () => {
     setMaxStepIndex((prev) => Math.max(prev, 1));
   };
 
+  const handleDownloadOfficialIlPdf = async () => {
+  try {
+    const res = await fetch("/api/compensation/official-pdf/il", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // We send the whole application object so the backend can fill the form
+      body: JSON.stringify({ application: app }),
+    });
+
+    if (!res.ok) {
+      console.error("IL official PDF error:", await res.text());
+      alert(
+        "There was an issue generating the official Illinois form. Please try again."
+      );
+      return;
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Illinois_CVC_Application_Filled.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error downloading IL official PDF", err);
+    alert("Something went wrong creating the official form.");
+  }
+};
+
 const handleSaveCase = async () => {
   if (
     !certification.applicantSignatureName ||
@@ -670,7 +704,8 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     certification={certification}
     onChangeCertification={updateCertification}
     onDownloadSummaryPdf={handleDownloadPdf}
-    onSaveCase={handleSaveCase} // 👈 NEW
+    onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}  // 👈 ADD THIS
+    onSaveCase={handleSaveCase}
   />
 )}
 
@@ -2442,6 +2477,7 @@ function SummaryView({
   certification,
   onChangeCertification,
   onDownloadSummaryPdf,
+  onDownloadOfficialIlPdf,   // 👈 ADD THIS
   onSaveCase,
 }: {
   victim: VictimInfo;
@@ -2454,9 +2490,10 @@ function SummaryView({
   certification: CertificationInfo;
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
   onDownloadSummaryPdf: () => void;
-  onSaveCase: () => void; // 👈 NEW
+  onDownloadOfficialIlPdf: () => void;   // 👈 ADD THIS
+  onSaveCase: () => void;
 }) {
-                  const selectedLosses = Object.entries(losses)
+                    const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
 
@@ -2649,6 +2686,14 @@ const primaryFuneralPayer = funeral.payments?.[0];
     className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
   >
     Download summary PDF
+  </button>
+
+  <button
+    type="button"
+    onClick={onDownloadOfficialIlPdf}
+    className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+  >
+    Download official Illinois CVC form
   </button>
 
   <button
