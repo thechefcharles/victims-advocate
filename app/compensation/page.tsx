@@ -97,6 +97,16 @@ export default function CompensationPage() {
                 View all saved cases →
               </a>
             </p>
+
+            <p className="text-[11px] text-slate-500 mt-2">
+  Are you an advocate or case manager?{" "}
+  <a
+    href="/admin/cases"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    Open your case dashboard →
+  </a>
+</p>
           </div>
         </section>
 

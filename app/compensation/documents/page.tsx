@@ -48,24 +48,54 @@ export default function DocumentsPage() {
     }
   }, [docs]);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
+const handleFiles = (files: FileList | null) => {
+  if (!files) return;
 
-    const newDocs: UploadedDoc[] = [];
-    Array.from(files).forEach((file) => {
-      newDocs.push({
-        id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
-        type: selectedType,
-        description: description.trim(),
-        fileName: file.name,
-        fileSize: file.size,
-        lastModified: file.lastModified,
+  const uploads: UploadedDoc[] = [];
+
+  Array.from(files).forEach((file) => {
+    const localDoc: UploadedDoc = {
+      id: `${file.name}-${file.lastModified}-${Math.random()
+        .toString(36)
+        .slice(2)}`,
+      type: selectedType,
+      description: description.trim(),
+      fileName: file.name,
+      fileSize: file.size,
+      lastModified: file.lastModified,
+    };
+
+    // Update local UI immediately
+    uploads.push(localDoc);
+
+    // Kick off background upload to Supabase via API
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("docType", selectedType);
+    formData.append("description", description);
+
+    fetch("/api/compensation/upload-document", {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          console.error("Upload failed", await res.text());
+          return;
+        }
+        const { document } = await res.json();
+        console.log("Stored document in Supabase:", document);
+        // In the future, you can sync your local docs state with `document`
+      })
+      .catch((err) => {
+        console.error("Error uploading document", err);
       });
-    });
+  });
 
-    setDocs((prev) => [...prev, ...newDocs]);
-    setDescription("");
-  };
+  // Update local UI list
+  setDocs((prev) => [...prev, ...uploads]);
+  setDescription("");
+};
 
   const humanTypeLabel = (type: DocumentType) => {
     switch (type) {

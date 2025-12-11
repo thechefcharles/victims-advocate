@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react"; // 👈 ADD useEffect
+import { useRouter } from "next/navigation";
 
 import type {
   VictimInfo,
@@ -24,6 +25,7 @@ type IntakeStep =
   | "medical"
   | "employment"
   | "funeral"
+  | "documents"
   | "summary";
 
 const STORAGE_KEY = "nxtstps_compensation_intake_v1";
@@ -147,26 +149,30 @@ const makeEmptyApplication = (): CompensationApplication => ({
 });
 
 export default function CompensationIntakePage() {
+  const router = useRouter();
   const [step, setStep] = useState<IntakeStep>("victim");
-  // 0=victim,1=applicant,2=crime,3=losses,4=medical,5=employment,6=funeral,7=summary
   const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
 
-  // Load saved intake on first mount
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  const [loadedFromStorage, setLoadedFromStorage] = useState(false);
 
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+// 🟢 1. Load saved intake once on mount
+useEffect(() => {
+  if (typeof window === "undefined") return;
 
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    console.log("[INTAKE] load effect: raw from localStorage =", raw);
+    if (raw) {
       const parsed = JSON.parse(raw) as {
         app?: CompensationApplication;
         step?: IntakeStep;
         maxStepIndex?: number;
       };
+
+      console.log("[INTAKE] parsed from localStorage:", parsed);
 
       if (parsed.app) {
         setApp(parsed.app);
@@ -177,26 +183,31 @@ export default function CompensationIntakePage() {
       if (typeof parsed.maxStepIndex === "number") {
         setMaxStepIndex(parsed.maxStepIndex);
       }
-    } catch (err) {
-      console.error("Failed to load compensation intake from localStorage", err);
     }
-  }, []);
+  } catch (err) {
+    console.error("Failed to load saved intake from localStorage", err);
+  } finally {
+    // ✅ Only now do we consider storage "loaded"
+    setLoadedFromStorage(true);
+  }
+}, []);
 
-    // Save whenever the application or step changes
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+// 🟡 2. Auto-save whenever the application or step changes
+useEffect(() => {
+  if (typeof window === "undefined") return;
+  if (!loadedFromStorage) {
+    // Don't overwrite anything until we've attempted to load
+    return;
+  }
 
-    try {
-      const payload = {
-        app,
-        step,
-        maxStepIndex,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    } catch (err) {
-      console.error("Failed to save compensation intake to localStorage", err);
-    }
-  }, [app, step, maxStepIndex]);
+  try {
+    const payload = { app, step, maxStepIndex };
+    console.log("[INTAKE] save effect: saving payload =", payload);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (err) {
+    console.error("Failed to save compensation intake to localStorage", err);
+  }
+}, [loadedFromStorage, app, step, maxStepIndex]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -302,9 +313,7 @@ const handleDownloadPdf = async () => {
     setMaxStepIndex((prev) => Math.max(prev, 1));
   };
 
-const handleSaveCase = () => {
-  if (typeof window === "undefined") return;
-
+const handleSaveCase = async () => {
   if (
     !certification.applicantSignatureName ||
     !certification.applicantSignatureDate ||
@@ -319,29 +328,31 @@ const handleSaveCase = () => {
   }
 
   try {
-    const rawCases = localStorage.getItem(CASES_STORAGE_KEY);
-    const existing: SavedCase[] = rawCases ? JSON.parse(rawCases) : [];
+    console.log("Saving case with application:", app);
 
-    const rawDocs = localStorage.getItem(DOCS_STORAGE_KEY);
-    const docs: UploadedDoc[] = rawDocs ? JSON.parse(rawDocs) : [];
+    const res = await fetch("/api/compensation/cases", {
+      // 👈 IMPORTANT: this path must match app/api/compensation/cases/route.ts
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(app),
+    });
 
-    const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    if (!res.ok) {
+      const text = await res.text();
+      console.error("Save case failed:", res.status, text);
+      alert("There was a problem saving your case. Please check the console.");
+      return;
+    }
 
-    const newCase: SavedCase = {
-      id,
-      createdAt: new Date().toISOString(),
-      status: "ready_for_review",
-      application: app,
-      documents: docs,
-    };
-
-    const updated = [...existing, newCase];
-    localStorage.setItem(CASES_STORAGE_KEY, JSON.stringify(updated));
+    const json = await res.json();
+    console.log("Saved case response:", json);
 
     alert("Your case has been saved for an advocate to review.");
+    // optional: navigate to /admin/cases
+    // window.location.href = "/admin/cases";
   } catch (err) {
-    console.error("Failed to save case", err);
-    alert("Something went wrong saving this case. Please try again.");
+    console.error("Error calling /api/compensation/cases", err);
+    alert("Something went wrong saving your case. See console for details.");
   }
 };
 
@@ -498,45 +509,51 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
   <StepBadge
     label="Applicant"
     active={step === "applicant"}
-    disabled={maxStepIndex < 1}
-    onClick={() => maxStepIndex >= 1 && setStep("applicant")}
+    disabled={false}
+    onClick={() => setStep("applicant")}
   />
   <StepBadge
     label="Crime & incident"
     active={step === "crime"}
-    disabled={maxStepIndex < 2}
-    onClick={() => maxStepIndex >= 2 && setStep("crime")}
+    disabled={false}
+    onClick={() => setStep("crime")}
   />
   <StepBadge
     label="Losses & money"
     active={step === "losses"}
-    disabled={maxStepIndex < 3}
-    onClick={() => maxStepIndex >= 3 && setStep("losses")}
+    disabled={false}
+    onClick={() => setStep("losses")}
   />
-<StepBadge
-  label="Medical & counseling"
-  active={step === "medical"}
-  disabled={maxStepIndex < 4}
-  onClick={() => maxStepIndex >= 4 && setStep("medical")}
-/>
-<StepBadge
-  label="Work & income"
-  active={step === "employment"}
-  disabled={maxStepIndex < 5}
-  onClick={() => maxStepIndex >= 5 && setStep("employment")}
-/>
-<StepBadge
-  label="Funeral & dependents"
-  active={step === "funeral"}
-  disabled={maxStepIndex < 6}
-  onClick={() => maxStepIndex >= 6 && setStep("funeral")}
-/>
-<StepBadge
-  label="Summary"
-  active={step === "summary"}
-  disabled={maxStepIndex < 7}
-  onClick={() => maxStepIndex >= 7 && setStep("summary")}
-/>
+  <StepBadge
+    label="Medical & counseling"
+    active={step === "medical"}
+    disabled={false}
+    onClick={() => setStep("medical")}
+  />
+  <StepBadge
+    label="Work & income"
+    active={step === "employment"}
+    disabled={false}
+    onClick={() => setStep("employment")}
+  />
+  <StepBadge
+    label="Funeral & dependents"
+    active={step === "funeral"}
+    disabled={false}
+    onClick={() => setStep("funeral")}
+  />
+  <StepBadge
+    label="Documents"
+    active={step === "documents"}
+    disabled={false}
+    onClick={() => setStep("documents")}   // 👈 NEW TAB
+  />
+  <StepBadge
+    label="Summary"
+    active={step === "summary"}
+    disabled={false}
+    onClick={() => setStep("summary")}
+  />
 </div>
 
         {/* Step content */}
@@ -571,6 +588,8 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
   <FuneralForm funeral={funeral} onChange={updateFuneral} />
 )}
 
+{step === "documents" && <DocumentsStep />}
+
 {step === "summary" && (
   <SummaryView
     victim={victim}
@@ -587,98 +606,134 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
   />
 )}
 
-        {/* Nav buttons */}
+        {/* Nav buttons + primary actions */}
         <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={step === "victim"}
-            className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
-          >
-            ← Back
-          </button>
-
-          {step === "victim" && (
+          {/* Left side: Back + Save & Exit */}
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleNextFromVictim}
-              className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              onClick={handleBack}
+              disabled={step === "victim"}
+              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
             >
-              Continue to Applicant →
+              ← Back
             </button>
-          )}
 
-          {step === "applicant" && (
             <button
               type="button"
-              onClick={handleNextFromApplicant}
-              className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              onClick={() => {
+                try {
+                  if (typeof window !== "undefined") {
+                    const payload = { app, step, maxStepIndex };
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+                  }
+                } catch (err) {
+                  console.error("Error saving intake before exit", err);
+                }
+                router.push("/");
+              }}
+              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition"
             >
-              Continue to Crime Details →
+              Save &amp; Exit
             </button>
-          )}
+          </div>
 
-          {step === "crime" && (
-            <button
-              type="button"
-              onClick={handleNextFromCrime}
-              className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-            >
-              Continue to Losses →
-            </button>
-          )}
+          {/* Right side: step-specific primary button */}
+          <div className="flex items-center">
+            {step === "victim" && (
+              <button
+                type="button"
+                onClick={handleNextFromVictim}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Applicant →
+              </button>
+            )}
 
-          {step === "losses" && (
-            <button
-              type="button"
-              onClick={handleNextFromLosses}
-              className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-            >
-              Continue to Medical →
-            </button>
-          )}
+            {step === "applicant" && (
+              <button
+                type="button"
+                onClick={handleNextFromApplicant}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Crime Details →
+              </button>
+            )}
 
-{step === "medical" && (
-  <button
-    type="button"
-    onClick={handleNextFromMedical}
-    className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-  >
-    Continue to Work & income →
-  </button>
-)}
+            {step === "crime" && (
+              <button
+                type="button"
+                onClick={handleNextFromCrime}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Losses →
+              </button>
+            )}
 
-{step === "employment" && (
-  <button
-    type="button"
-    onClick={handleNextFromEmployment}
-    className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-  >
-    Continue to Funeral & dependents →
-  </button>
-)}
+            {step === "losses" && (
+              <button
+                type="button"
+                onClick={handleNextFromLosses}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Medical →
+              </button>
+            )}
 
-{step === "funeral" && (
-  <button
-    type="button"
-    onClick={handleNextFromFuneral}
-    className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-  >
-    Review Summary →
-  </button>
-)}
+            {step === "medical" && (
+              <button
+                type="button"
+                onClick={handleNextFromMedical}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Work &amp; income →
+              </button>
+            )}
 
-{step === "summary" && (
-  <button
-    type="button"
-    onClick={() =>
-      alert("Next (future phase): document upload and PDF generation.")
-    }
-    className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-  >
-    Looks good – continue
-  </button>
-)}
+            {step === "employment" && (
+              <button
+                type="button"
+                onClick={handleNextFromEmployment}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Continue to Funeral &amp; dependents →
+              </button>
+            )}
+
+            {step === "funeral" && (
+              <button
+                type="button"
+                onClick={handleNextFromFuneral}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Go to Documents →
+              </button>
+            )}
+
+            {step === "documents" && (
+              <button
+                type="button"
+                onClick={() => setStep("summary")}
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Go to Summary →
+              </button>
+            )}
+
+            {step === "summary" && (
+              <button
+                type="button"
+                onClick={() =>
+                  alert(
+                    "Next (future phase): document upload and PDF generation."
+                  )
+                }
+                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              >
+                Looks good – continue
+              </button>
+            )}
+          </div>
         </div>
 
         <p className="text-[11px] text-slate-500">
@@ -2678,5 +2733,38 @@ function Checkbox({
       />
       <span>{label}</span>
     </label>
+  );
+}
+
+function DocumentsStep() {
+  return (
+    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
+      <h2 className="text-lg font-semibold text-slate-50">
+        Upload police reports, bills, and other documents
+      </h2>
+      <p className="text-slate-300">
+        Supporting documents help the Attorney General&apos;s office understand
+        your case and verify the costs you&apos;re asking to be covered.
+        You can upload:
+      </p>
+      <ul className="list-disc list-inside text-slate-300 space-y-1">
+        <li>Police reports or incident numbers</li>
+        <li>Hospital and medical bills</li>
+        <li>Funeral and cemetery invoices</li>
+        <li>Pay stubs or letters from employers</li>
+        <li>Any other proof of expenses related to the crime</li>
+      </ul>
+      <p className="text-[11px] text-slate-400">
+        Uploading documents does not submit your application. You&apos;ll have a
+        chance to review everything on the Summary page before sending anything
+        to the state.
+      </p>
+      <a
+        href="/compensation/documents"
+        className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Go to document upload page →
+      </a>
+    </section>
   );
 }

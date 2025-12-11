@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-const CASES_STORAGE_KEY = "nxtstps_cases_v1";
-
-type CaseStatus = "draft" | "ready_for_review";
+type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
 interface UploadedDoc {
   id: string;
@@ -20,7 +18,7 @@ interface SavedCase {
   id: string;
   createdAt: string;
   status: CaseStatus;
-  application: any; // we know this matches CompensationApplication shape
+  application: any; // matches CompensationApplication shape
   documents?: UploadedDoc[];
 }
 
@@ -31,19 +29,56 @@ export default function CaseDetailPage() {
   const [loadedCase, setLoadedCase] = useState<SavedCase | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load case + docs from API instead of localStorage
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/compensation/cases/${caseId}`);
+        if (!res.ok) {
+          console.error("Failed to fetch case", await res.text());
+          setLoadedCase(null);
+          return;
+        }
 
-    try {
-      const raw = localStorage.getItem(CASES_STORAGE_KEY);
-      const parsed: SavedCase[] = raw ? JSON.parse(raw) : [];
-      const found = parsed.find((c) => c.id === caseId) || null;
-      setLoadedCase(found);
-    } catch (err) {
-      console.error("Failed to load cases", err);
-      setLoadedCase(null);
-    } finally {
-      setLoading(false);
+        const json = await res.json();
+        const caseRow = json.case;
+        const docs = (json.documents ?? []) as any[];
+
+        if (!caseRow) {
+          setLoadedCase(null);
+          return;
+        }
+
+        const mappedCase: SavedCase = {
+          id: caseRow.id,
+          createdAt: caseRow.created_at ?? new Date().toISOString(),
+          status: (caseRow.status || "ready_for_review") as CaseStatus,
+          application: caseRow.application,
+          documents: docs.map((d) => ({
+            id: d.id,
+            type: d.doc_type || "other",
+            description: d.description ?? "",
+            fileName: d.file_name,
+            fileSize: d.file_size,
+            lastModified:
+              typeof d.lastModified === "number"
+                ? d.lastModified
+                : Date.parse(d.created_at || new Date().toISOString()),
+          })),
+        };
+
+        setLoadedCase(mappedCase);
+      } catch (err) {
+        console.error("Failed to load case from API", err);
+        setLoadedCase(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (caseId) {
+      load();
     }
   }, [caseId]);
 
@@ -87,7 +122,7 @@ export default function CaseDetailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <main className=" min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
         <div className="max-w-3xl mx-auto">Loading case…</div>
       </main>
     );
@@ -106,8 +141,8 @@ export default function CaseDetailPage() {
             </h1>
           </header>
           <p className="text-sm text-slate-300">
-            This case ID does not exist in local storage. It may have been
-            removed or saved in a different browser.
+            This case ID could not be loaded from the server. It may have been
+            removed or you may be using a different environment.
           </p>
           <a
             href="/admin/cases"
@@ -124,7 +159,7 @@ export default function CaseDetailPage() {
   const victim = app.victim || {};
   const applicant = app.applicant || {};
   const crime = app.crime || {};
-  const losses = app.losses || {};
+  const losses = app.losse || app.losses || {};
   const medical = app.medical || {};
   const employment = app.employment || {};
   const funeral = app.funeral || {};
@@ -141,7 +176,9 @@ export default function CaseDetailPage() {
 
   const docTypeCounts: Record<string, number> = {};
   docs.forEach((d) => {
-    docTypeCounts[d.type] = (docTypeCounts[d.type] || 0) + 1;
+    docTypeCounts[d.type] = (d.type && docTypeCounts[d.type]
+      ? docTypeCounts[d.type]
+      : 0) + 1;
   });
 
   return (
@@ -151,7 +188,7 @@ export default function CaseDetailPage() {
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
             Admin · Case Detail
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold">
+          <h1 className="text-2xl sm:px-auto text-slate-200">
             {victim.firstName || victim.lastName
               ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
               : "Unknown victim"}
@@ -173,7 +210,7 @@ export default function CaseDetailPage() {
             >
               {loadedCase.status === "ready_for_review"
                 ? "Ready for review"
-                : "Draft"}
+                : loadedCase.status}
             </span>
           </p>
 
@@ -203,8 +240,8 @@ export default function CaseDetailPage() {
             Victim: {victim.firstName || "—"} {victim.lastName || ""}
           </p>
           <p className="text-slate-300">
-            DOB: {victim.dateOfBirth || "—"} · City:{" "}
-            {victim.city || "—"}, {victim.state || "—"}
+            DOB: {victim.dateOfBirth || "—"} · City: {victim.city || "—"},{" "}
+            {victim.state || "—"}
           </p>
           {applicant.isSameAsVictim ? (
             <p className="text-slate-300">
@@ -217,8 +254,8 @@ export default function CaseDetailPage() {
                 {applicant.lastName || ""}
               </p>
               <p className="text-slate-300">
-                Relationship: {applicant.relationshipToVictim || "—"} · Phone:{" "}
-                {applicant.cellPhone || "—"}
+                Relationship: {applicant.relationshipToVictim || "Not provided"}
+                · Phone: {applicant.cellPhone || "—"}
               </p>
             </>
           )}
@@ -329,102 +366,103 @@ export default function CaseDetailPage() {
                   Phone: {funeral.funeralHomePhone || "—"}
                 </p>
                 <p className="text-slate-300">
-                  Total bill:{" "}
+                  Total funeral bill:{" "}
                   {funeral.funeralBillTotal != null
                     ? `$${funeral.funeralBillTotal}`
                     : "—"}
-                </p>
-                {primaryFuneralPayer && primaryFuneralPayer.payerName ? (
-                  <p className="text-slate-300">
-                    Payer: {primaryFuneralPayer.payerName} (
-                    {primaryFuneralPayer.relationshipToVictim ||
-                      "relationship not set"}
-                    ) · Amount:{" "}
-                    {primaryFuneralPayer.amountPaid != null
-                      ? `$${primaryFuneralPayer.amountPaid}`
-                      : "—"}
-                  </p>
-                ) : null}
-              </>
-            ) : (
-              <p className="text-slate-300">No funeral information entered.</p>
-            )}
-          </div>
-        </section>
-
-        {/* Documents */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
-          <h2 className="text-sm font-semibold text-slate-50">
-            Documents attached
-          </h2>
-          {docs.length === 0 ? (
-            <p className="text-slate-300">No documents attached.</p>
-          ) : (
-            <>
-              <p className="text-slate-300">
-                {docs.length} document{docs.length > 1 ? "s" : ""} attached.
               </p>
-              {Object.keys(docTypeCounts).length > 0 && (
-                <p className="text-[11px] text-slate-400">
-                  By type:{" "}
-                  {Object.entries(docTypeCounts)
-                    .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
-                    .join(", ")}
+              {primaryFuneralPayer && primaryFuneralPayer.payerName ? (
+                <p className="text-slate-300">
+                  Payer: {primaryFuneralPayer.payerName} (
+                  {primaryFuneralPayer.relationshipToVictim || "relationship not set"}
+                  ) · Amount:{" "}
+                  {primaryFuneralPayer.amountPaid != null
+                    ? `$${primaryFuneralPayer.amountPaid}`
+                    : "—"}
                 </p>
-              )}
-              <ul className="divide-y divide-slate-800 mt-2">
-                {docs.map((d) => (
-                  <li
-                    key={d.id}
-                    className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
-                  >
-                    <div className="space-y-0.5">
-                      <p className="font-semibold text-slate-100">
-                        {d.type.replace(/_/g, " ")}
-                      </p>
-                      <p className="text-slate-300">{d.fileName}</p>
-                      {d.description && (
-                        <p className="text-[11px] text-slate-400">
-                          {d.description}
-                        </p>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-500">
-                      Added:{" "}
-                      {new Date(d.lastModified).toLocaleDateString("en-US")}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              ) : null}
             </>
+          ) : (
+            <p className="text-slate-300">No funeral information entered.</p>
           )}
-        </section>
+        </div>
+      </section>
 
-        {/* Certification */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5">
-          <h2 className="text-sm font-semibold text-slate-50">
-            Certification snapshot
-          </h2>
-          <p className="text-slate-300">
-            Signature: {certification.applicantSignatureName || "—"} · Date:{" "}
-            {certification.applicantSignatureDate || "—"}
-          </p>
-          <p className="text-[11px] text-slate-400">
-            Subrogation acknowledged:{" "}
-            {certification.acknowledgesSubrogation ? "Yes" : "No / not marked"}
-            ; Release acknowledged:{" "}
-            {certification.acknowledgesRelease ? "Yes" : "No / not marked"};{" "}
-            Perjury warning acknowledged:{" "}
-            {certification.acknowledgesPerjury ? "Yes" : "No / not marked"}
-          </p>
-        </section>
+      {/* Documents */}
+      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+        <h2 className="text-sm font-semibold text-slate-50">
+          Documents attached
+        </h2>
+        {docs.length === 0 ? (
+          <p className="text-slate-300">No documents attached.</p>
+        ) : (
+          <>
+            <p className="text-slate-300">
+              {docs.length} document{docs.length > 1 ? "s" : ""} attached.
+            </p>
+            {Object.keys(docTypeCounts).length > 0 && (
+              <p className="text-[11px] text-slate-400">
+                By type:{" "}
+                {Object.entries(docTypeCounts)
+                  .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
+                  .join(", ")}
+              </p>
+            )}
+            <ul className="divide-y divide-slate-800 mt-2">
+              {docs.map((d) => (
+                <li
+                  key={d.id}
+                  className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
+                >
+                  <div className="space-y-0.5">
+                    <p className="font-semibold text-slate-100">
+                      {d.type.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-slate-300">{d.fileName}</p>
+                    {d.description && (
+                      <p className="text-[11px] text-slate-400">
+                        {d.description}
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Added:{" "}
+                    {new Date(d.lastModified).toLocaleDateString("en-US")}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
 
-        <p className="text-[11px] text-slate-500">
-          This is a local prototype of the advocate case view. In a production
-          version, cases and documents would be stored in a secure backend and
-          include workflow tools, notes, and activity logs.
+      {/* Certification */}
+      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5">
+        <h2 className="text-sm font-semibold text-slate-50">
+          Certification snapshot
+        </h2>
+        <p className="text-slate-300">
+          Signature: {certification.applicantSignatureName || "—"} · Date:{" "}
+          {certification.applicantSignatureDate || "—"}
         </p>
-      </div>
-    </main>
-  );
+        <p className="text-[11px] text-slate-400">
+          Subrogation acknowledged:{" "}
+          {certification.acknowledgesSubrogation ? "Yes" : "No / not marked"};
+          {" · "}
+          Release acknowledged:{" "}
+          {certification.acknowledgesRelease ? "Yes" : "No / not marked"};
+          {" · "}
+          Perjury warning acknowledged:{" "}
+          {certification.acknowledgesPerjury ? "Yes" : "No / not marked"}
+        </p>
+      </section>
+
+      <p className="text-[11px] text-slate-500">
+        This view reads from your Supabase backend. In a production version,
+        cases, documents, and notes would be available to authorized advocates
+        across your organization with full audit logging and permissions.
+      </p>
+    </div>
+  </main>
+);
 }

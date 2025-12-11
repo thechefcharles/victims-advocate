@@ -34,6 +34,16 @@ export default function Home() {
             costs, counseling, food, and more.
           </p>
 
+          <p className="text-xs text-slate-400 mt-4">
+  Advocates:{" "}
+  <a
+    href="/admin/cases"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    View saved cases →
+  </a>
+</p>
+
           <div className="grid gap-3 sm:grid-cols-3 mt-4">
 <Link
   href="/start"

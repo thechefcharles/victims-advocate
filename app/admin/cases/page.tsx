@@ -1,60 +1,41 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { CompensationApplication } from "@/lib/compensationSchema";
 
-const CASES_STORAGE_KEY = "nxtstps_cases_v1";
+type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
-type CaseStatus = "draft" | "ready_for_review";
-
-interface UploadedDoc {
+interface ApiCaseRow {
   id: string;
-  type: string;
-  description: string;
-  fileName: string;
-  fileSize: number;
-  lastModified: number;
-}
-
-interface SavedCase {
-  id: string;
-  createdAt: string;
+  created_at: string;
   status: CaseStatus;
-  application: {
-    victim?: {
-      firstName?: string;
-      lastName?: string;
-      dateOfBirth?: string;
-      city?: string;
-      state?: string;
-    };
-    crime?: {
-      dateOfCrime?: string;
-      crimeCity?: string;
-      crimeCounty?: string;
-      reportingAgency?: string;
-    };
-    losses?: Record<string, boolean>;
-  };
-  documents?: UploadedDoc[]; // 👈 NEW
+  application: any;
 }
 
 export default function CasesPage() {
-  const [cases, setCases] = useState<SavedCase[]>([]);
+  const [cases, setCases] = useState<ApiCaseRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const raw = localStorage.getItem(CASES_STORAGE_KEY);
-      const parsed: SavedCase[] = raw ? JSON.parse(raw) : [];
-      // sort newest first
-      parsed.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setCases(parsed);
-    } catch (err) {
-      console.error("Failed to load saved cases", err);
-    }
+    const load = async () => {
+      try {
+        const res = await fetch("/api/compensation/cases");
+        if (!res.ok) {
+          console.error("Failed to fetch cases", await res.text());
+          setCases([]);
+          return;
+        }
+        const json = await res.json();
+        setCases(json.cases ?? []);
+      } catch (err) {
+        console.error("Error fetching cases", err);
+        setCases([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
   }, []);
 
   const formatDate = (iso?: string) => {
@@ -64,27 +45,35 @@ export default function CasesPage() {
     return d.toLocaleDateString("en-US");
   };
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+        <div className="max-w-5xl mx-auto">Loading cases…</div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            Admin · Cases (Local Prototype)
+            Admin · Cases (Supabase)
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">
             Saved compensation cases
           </h1>
           <p className="text-sm text-slate-300">
-            This page shows cases that have been saved from the guided intake
-            on this browser. In a future version, cases will be stored in a
-            secure backend and shared across advocates and organizations.
+            These cases are loaded from your Supabase database (not
+            localStorage). Each one includes the full application and any
+            attached documents.
           </p>
         </header>
 
         {cases.length === 0 ? (
           <p className="text-xs text-slate-400">
-            No cases saved yet. Complete an intake and click &quot;Save as
-            case&quot; on the summary screen to see it appear here.
+            No cases saved yet. Complete an intake and click &quot;Save as case&quot;
+            on the summary screen to see it appear here.
           </p>
         ) : (
           <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
@@ -99,32 +88,13 @@ export default function CasesPage() {
                   <th className="text-left py-2 pr-3 font-normal">
                     Created
                   </th>
-                    <th className="text-left py-2 pr-3 font-normal">Status</th>
-                    <th className="text-left py-2 pr-3 font-normal">Docs</th>
-                    <th className="text-left py-2 pr-3 font-normal">
-                    Losses selected
-                    </th>
+                  <th className="text-left py-2 pr-3 font-normal">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {cases.map((c) => {
                   const v = c.application.victim || {};
                   const cr = c.application.crime || {};
-                  const losses = c.application.losses || {};
-                  const selectedLossTypes = Object.entries(losses)
-                    .filter(([_, val]) => val)
-                    .map(([key]) => key);
-                    const docList = c.documents || [];
-                    const docCount = docList.length;
-
-                    // Optional: quick breakdown by type
-                    const typeCounts: Record<string, number> = {};
-                    for (const d of docList) {
-                    typeCounts[d.type] = (typeCounts[d.type] || 0) + 1;
-                    }
-                    const typeSummary = Object.entries(typeCounts)
-                    .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
-                    .join(", ");
 
                   return (
                     <tr
@@ -133,18 +103,19 @@ export default function CasesPage() {
                     >
                       <td className="py-2 pr-3 align-top">
                         <div className="space-y-0.5">
-                        <a
+                          <a
                             href={`/admin/cases/${c.id}`}
                             className="font-semibold text-slate-100 hover:text-emerald-300 hover:underline underline-offset-2"
-                        >
+                          >
                             {(v.firstName || "") +
-                            (v.firstName || v.lastName ? " " : "") +
-                            (v.lastName || "") || "Unknown victim"}
-                        </a>
-                        <div className="text-[11px] text-slate-400">
+                              (v.firstName || v.lastName ? " " : "") +
+                              (v.lastName || "") || "Unknown victim"}
+                          </a>
+                          <div className="text-[11px] text-slate-400">
                             DOB: {v.dateOfBirth || "—"}
+                          </div>
                         </div>
-                        </div>                      </td>
+                      </td>
                       <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
                         {v.city || cr.crimeCity || "—"}
                         {v.state || cr.crimeCounty
@@ -155,33 +126,19 @@ export default function CasesPage() {
                         {cr.dateOfCrime || "—"}
                       </td>
                       <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                        {formatDate(c.createdAt)}
+                        {formatDate(c.created_at)}
                       </td>
-                    <td className="py-2 pr-3 align-top text-[11px]">
-                    <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 ${
-                        c.status === "ready_for_review"
-                            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
-                            : "bg-slate-800 text-slate-300 border border-slate-600"
-                        }`}
-                    >
-                        {c.status === "ready_for_review" ? "Ready for review" : "Draft"}
-                    </span>
-                    </td>
-
-                    <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                    {docCount === 0
-                        ? "No docs"
-                        : `${docCount} doc${docCount > 1 ? "s" : ""}${
-                            typeSummary ? ` – ${typeSummary}` : ""
-                        }`}
-                    </td>
-
-                    <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                    {selectedLossTypes.length === 0
-                        ? "None"
-                        : selectedLossTypes.join(", ")}
-                    </td>
+                      <td className="py-2 pr-3 align-top text-[11px]">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 ${
+                            c.status === "ready_for_review"
+                              ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
+                              : "bg-slate-800 text-slate-300 border border-slate-600"
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
                     </tr>
                   );
                 })}
@@ -191,9 +148,9 @@ export default function CasesPage() {
         )}
 
         <p className="text-[11px] text-slate-500">
-          This is a local prototype view. In a production version, cases would
-          be loaded from a secure database and include document previews,
-          internal notes, and workflow tools for advocates.
+          This view reads from your Supabase backend. In a production version,
+          advocates would see only the cases they are authorized to access,
+          governed by role-based permissions and RLS.
         </p>
       </div>
     </main>
