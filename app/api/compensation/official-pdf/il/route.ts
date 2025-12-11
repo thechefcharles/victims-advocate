@@ -91,16 +91,18 @@ for (const [fieldName, getter] of Object.entries(IL_CVC_FIELD_MAP)) {
 
 // Optional: update appearances & flatten
 form.updateFieldAppearances();
-const pdfBytes = await pdfDoc.save();
 
-    return new NextResponse(pdfBytes, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition":
-          'attachment; filename="Illinois_CVC_Application_Filled.pdf"',
-      },
-    });
+const pdfBytes = await pdfDoc.save();
+const pdfBuffer = Buffer.from(pdfBytes); // ✅ convert Uint8Array -> Buffer
+
+return new NextResponse(pdfBuffer, {
+  status: 200,
+  headers: {
+    "Content-Type": "application/pdf",
+    "Content-Disposition":
+      'attachment; filename="Illinois_CVC_Application_Filled.pdf"',
+  },
+});
   } catch (err) {
     console.error("[IL PDF] Error generating official CVC PDF:", err);
     return NextResponse.json(
