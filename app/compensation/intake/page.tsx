@@ -1288,6 +1288,12 @@ function CrimeForm({
         </div>
       </div>
 
+      {/* Inline uploader for crime-related documents */}
+      <InlineDocumentUploader
+        contextLabel="the crime and incident (police reports, witness statements)"
+        defaultDocType="police_report"
+      />
+
     </section>
   );
 }
@@ -1825,6 +1831,11 @@ function MedicalForm({
         version, we&apos;ll let you add more here, or your advocate can attach a
         full list.
       </p>
+      {/* Inline uploader for medical / counseling bills */}
+      <InlineDocumentUploader
+        contextLabel="medical and counseling bills"
+        defaultDocType="medical_bill"
+      />
     </section>
   );
 }
@@ -1953,6 +1964,11 @@ function EmploymentForm({
         received. In a later version, you&apos;ll be able to add more jobs and
         details here.
       </p>
+      {/* Inline uploader for wage / income documents */}
+      <InlineDocumentUploader
+        contextLabel="work and income (pay stubs, employer letters)"
+        defaultDocType="wage_proof"
+      />
     </section>
   );
 }
@@ -2259,6 +2275,11 @@ function FuneralForm({
         ongoing loss of support. In a later version, you&apos;ll be able to add
         each dependent here and link them to loss-of-support claims.
       </p>
+      {/* Inline uploader for funeral / cemetery / life insurance docs */}
+      <InlineDocumentUploader
+        contextLabel="funeral, burial, and dependents"
+        defaultDocType="funeral_bill"
+      />
     </section>
   );
 }
@@ -2766,5 +2787,84 @@ function DocumentsStep() {
         Go to document upload page →
       </a>
     </section>
+  );
+}
+
+function InlineDocumentUploader({
+  contextLabel,
+  defaultDocType,
+}: {
+  contextLabel: string;
+  defaultDocType: string;
+}) {
+  const [description, setDescription] = useState("");
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach(async (file) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("docType", defaultDocType);
+      formData.append("description", description);
+
+      try {
+        const res = await fetch("/api/compensation/upload-document", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) {
+          console.error(
+            `[UPLOAD] Failed for ${defaultDocType}`,
+            await res.text()
+          );
+          alert("There was an issue uploading that file. Please try again.");
+          return;
+        }
+
+        const json = await res.json();
+        console.log("[UPLOAD] Stored document:", json.document);
+      } catch (err) {
+        console.error("[UPLOAD] Error uploading document", err);
+        alert("Something went wrong uploading that file.");
+      }
+    });
+
+    // Clear description after upload
+    setDescription("");
+  };
+
+  return (
+    <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
+      <h3 className="font-semibold text-slate-100">
+        Attach documents related to {contextLabel}
+      </h3>
+      <p className="text-[11px] text-slate-400">
+        These uploads are optional, but they can help the Attorney General&apos;s
+        office review this part of your application more quickly.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-[2fr,3fr]">
+        <label className="block text-[11px] text-slate-200 space-y-1">
+          <span>Short description (optional)</span>
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g. Police report from CPD, case #..."
+            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+          />
+        </label>
+        <label className="block text-[11px] text-slate-200 space-y-1">
+          <span>Upload file(s)</span>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => handleFiles(e.target.files)}
+            className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-slate-950 hover:file:bg-emerald-400"
+          />
+        </label>
+      </div>
+    </div>
   );
 }
