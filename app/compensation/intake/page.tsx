@@ -385,6 +385,7 @@ const handleSaveCase = async () => {
           messages: newMessages,
           currentRoute: "/compensation/intake",
           currentStep: step,
+          application: app,
         }),
       });
 
