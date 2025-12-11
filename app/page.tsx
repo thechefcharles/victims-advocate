@@ -17,6 +17,74 @@ type Audience = (typeof audiences)[number];
 export default function HomePage() {
   const [activeAudience, setActiveAudience] = useState<Audience>("Victims");
 
+  // 🔹 NxtGuide chat state
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<
+    { role: "user" | "assistant"; content: string }[]
+  >([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  // 🔹 NxtGuide chat submit handler
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+
+    const newMessages = [
+      ...chatMessages,
+      { role: "user" as const, content: trimmed },
+    ];
+    setChatMessages(newMessages);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const res = await fetch("/api/nxtguide", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: newMessages,
+          currentRoute: "/",
+          currentStep: null,
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("NxtGuide error:", await res.text());
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Sorry, I had trouble responding just now. Please try again in a moment.",
+          },
+        ]);
+        return;
+      }
+
+      const json = await res.json();
+      const reply = (json.reply as string) || "";
+
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: reply },
+      ]);
+    } catch (err) {
+      console.error("NxtGuide error:", err);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I ran into a technical problem while trying to respond. Please try again shortly.",
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50">
       {/* Top nav */}
@@ -97,12 +165,7 @@ export default function HomePage() {
               </Link>
               <button
                 type="button"
-                // TODO: wire to NxtGuide chat when ready
-                onClick={() =>
-                  alert(
-                    "Chatbot coming soon. For now, start the guided intake and we’ll walk you through step by step."
-                  )
-                }
+                onClick={() => setChatOpen(true)}
                 className="inline-flex items-center rounded-full border border-slate-600 bg-transparent px-4 py-2 text-xs font-medium text-slate-100 hover:bg-slate-900/70 transition"
               >
                 Speak with our advocate chatbot
@@ -433,6 +496,87 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* 🔹 NxtGuide floating chat widget */}
+      <div className="fixed bottom-4 right-4 z-40">
+        {chatOpen ? (
+          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-[#0A2239]">
+              <div className="text-[11px]">
+                <div className="font-semibold text-slate-50">NxtGuide</div>
+                <div className="text-slate-300">
+                  Trauma-informed virtual advocate
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setChatOpen(false)}
+                className="text-slate-400 hover:text-slate-200 text-xs"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-[11px]">
+              {chatMessages.length === 0 && (
+                <p className="text-slate-400">
+                  You can ask me things like:
+                  <br />
+                  • “What is this site for?”
+                  <br />
+                  • “Where do I start my application?”
+                  <br />
+                  • “What documents will I need?”
+                </p>
+              )}
+              {chatMessages.map((m, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${
+                    m.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
+                      m.role === "user"
+                        ? "bg-[#1C8C8C] text-slate-950"
+                        : "bg-slate-900 text-slate-100 border border-slate-700"
+                    } text-[11px] whitespace-pre-wrap`}
+                  >
+                    {m.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <p className="text-[11px] text-slate-400">
+                  NxtGuide is typing…
+                </p>
+              )}
+            </div>
+
+            <form onSubmit={handleChatSubmit} className="border-t border-slate-800 p-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask NxtGuide anything..."
+                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
+              />
+            </form>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setChatOpen(true)}
+            className="inline-flex items-center rounded-full bg-[#1C8C8C] px-3 py-2 text-[11px] font-semibold text-slate-950 shadow-md shadow-black/40 hover:bg-[#21a3a3] transition"
+          >
+            Need help?
+            <span className="ml-1 text-[10px] text-slate-900/80">
+              Chat with NxtGuide
+            </span>
+          </button>
+        )}
+      </div>
     </main>
   );
 }
