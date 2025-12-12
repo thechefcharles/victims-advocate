@@ -39,6 +39,7 @@ export interface ApplicantInfo {
   relationshipToVictim?: string;
   seekingOwnExpenses?: boolean;
   descriptionOfExpensesSought?: string;
+  hasLegalGuardianship?: boolean; // for minor/incapacitated victims
 }
 
 export interface AdvocateContact {
@@ -171,6 +172,7 @@ export interface EmploymentInfo {
   isApplyingForLossOfEarnings: boolean;
   employmentHistory: EmploymentRecord[];
   receivedSickOrVacationOrDisability?: boolean;
+  benefitNotes?: string; // e.g. "2 weeks sick pay, 3 days vacation"
 }
 
 // SECTION 6 – Funeral (simplified)
@@ -180,13 +182,56 @@ export interface FuneralPayment {
   amountPaid: number;
 }
 
+export interface Dependent {
+  name: string;
+  relationshipToVictim?: string;
+  dateOfBirth?: string; // "YYYY-MM-DD"
+  guardianNamePhone?: string;
+}
+
 export interface FuneralInfo {
   funeralHomeName?: string;
   funeralHomePhone?: string;
   funeralBillTotal?: number;
   payments: FuneralPayment[];
+
+  // Cemetery
+  cemeteryName?: string;
+  cemeteryPhone?: string;
+  cemeteryBillTotal?: number;
+
+  // Chicago ESVF (funeral fund)
   receivedChicagoESVF?: boolean;
   esvfAmount?: number;
+
+  // Life insurance / death benefits
+  lifeInsurancePolicyExists?: boolean;
+  lifeInsuranceCompany?: string;
+  lifeInsuranceBeneficiary?: string;
+  lifeInsuranceBeneficiaryPhone?: string;
+  lifeInsuranceAmountPaid?: number;
+
+  // Loss of support dependents
+  dependents?: Dependent[];
+}
+
+export interface CertificationInfo {
+  acknowledgesSubrogation?: boolean;
+  acknowledgesRelease?: boolean;
+  acknowledgesPerjury?: boolean;
+
+  applicantSignatureName?: string;
+  applicantSignatureDate?: string; // "YYYY-MM-DD"
+
+  representedByAttorney?: boolean;
+  attorneyName?: string;
+  attorneyArdc?: string;
+  attorneyAddress?: string;
+  attorneyCity?: string;
+  attorneyState?: string;
+  attorneyZip?: string;
+  attorneyPhone?: string;
+  attorneyEmail?: string;
 }
 
 // Top-level application object
@@ -201,4 +246,5 @@ export interface CompensationApplication {
   medical: MedicalInfo;
   employment: EmploymentInfo;
   funeral: FuneralInfo;
+  certification: CertificationInfo;
 }

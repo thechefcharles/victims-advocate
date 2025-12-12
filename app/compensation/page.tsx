@@ -67,6 +67,16 @@ export default function CompensationPage() {
             documents.
           </p>
 
+          <p className="text-[11px] text-slate-500 mt-2">
+  Want to understand the program first?{" "}
+  <a
+    href="/knowledge/compensation"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    Read the plain-language guide to Illinois CVC.
+  </a>
+</p>
+
           <div className="flex flex-wrap gap-3 items-center">
             <Link
               href="/compensation/intake"
@@ -78,6 +88,25 @@ export default function CompensationPage() {
               Approximate time: 15–25 minutes. You don&apos;t need every
               document ready to begin.
             </span>
+              <p className="text-xs text-slate-400 mt-4">
+              Advocates:  
+              <a
+                href="/admin/cases"
+                className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2 ml-1"
+              >
+                View all saved cases →
+              </a>
+            </p>
+
+            <p className="text-[11px] text-slate-500 mt-2">
+  Are you an advocate or case manager?{" "}
+  <a
+    href="/admin/cases"
+    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
+  >
+    Open your case dashboard →
+  </a>
+</p>
           </div>
         </section>
 
