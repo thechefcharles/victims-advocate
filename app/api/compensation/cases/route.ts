@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
-const DEV_USER_ID = process.env.DEV_SUPABASE_USER_ID!;
+function getDevUserId() {
+  const id = process.env.DEV_SUPABASE_USER_ID;
+  if (!id) throw new Error("Missing DEV_SUPABASE_USER_ID");
+  return id;
+}
 
 export async function GET() {
   try {
+    const supabaseServer = getSupabaseServer();
+    const DEV_USER_ID = getDevUserId();
+
     const { data, error } = await supabaseServer
       .from("cases")
       .select("*")
@@ -33,6 +40,9 @@ export async function GET() {
 // POST /api/compensation/cases  → create case + attach docs
 export async function POST(req: Request) {
   try {
+    const supabaseServer = getSupabaseServer();
+    const DEV_USER_ID = getDevUserId();
+
     const application = (await req.json()) as CompensationApplication;
 
     // 1) Insert the new case
@@ -49,10 +59,7 @@ export async function POST(req: Request) {
 
     if (caseError || !newCase) {
       console.error("Error inserting case", caseError);
-      return NextResponse.json(
-        { error: "Failed to save case" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to save case" }, { status: 500 });
     }
 
     // 2) Attach any unassigned documents from this user to the new case
@@ -75,10 +82,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ case: newCase }, { status: 201 });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in POST /api/compensation/cases", err);
     return NextResponse.json(
-      { error: "Invalid request body" },
+      { error: err?.message || "Invalid request body" },
       { status: 400 }
     );
   }

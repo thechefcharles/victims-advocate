@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(req: Request, context: RouteParams) {
-  const { id } = await context.params; // 👈 IMPORTANT
+  const supabaseServer = getSupabaseServer(); // ✅ create client here (runtime)
+
+  const { id } = await context.params;
 
   console.log("GET /api/compensation/cases/[id] called with id:", id);
 
@@ -51,13 +53,7 @@ export async function GET(req: Request, context: RouteParams) {
       documents: docs ?? [],
     });
   } catch (err) {
-    console.error(
-      "Unexpected error in GET /api/compensation/cases/[id]:",
-      err
-    );
-    return NextResponse.json(
-      { error: "Unexpected error" },
-      { status: 500 }
-    );
+    console.error("Unexpected error in GET /api/compensation/cases/[id]:", err);
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
 }

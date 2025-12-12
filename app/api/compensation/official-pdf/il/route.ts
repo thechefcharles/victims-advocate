@@ -4,7 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-import { supabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
 export const runtime = "nodejs";
@@ -15,8 +15,10 @@ type RequestBody =
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as RequestBody;
+    const supabaseServer = getSupabaseServer(); // ✅ runtime-safe
 
+    const body = (await req.json()) as RequestBody;
+    
     let appData: CompensationApplication | null = null;
 
     // Option 1: direct application from intake
