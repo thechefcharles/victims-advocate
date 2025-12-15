@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { CompensationApplication } from "@/lib/compensationSchema";
+import { supabase } from "@/lib/supabaseClient";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -19,7 +20,19 @@ export default function CasesPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/compensation/cases");
+const { data: sessionData } = await supabase.auth.getSession();
+const accessToken = sessionData.session?.access_token;
+
+if (!accessToken) {
+  console.error("No session token; redirecting to login");
+  window.location.href = "/login";
+  return;
+}
+
+const res = await fetch("/api/compensation/cases", {
+  method: "GET",
+  headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+});
         if (!res.ok) {
           console.error("Failed to fetch cases", await res.text());
           setCases([]);

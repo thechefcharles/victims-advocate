@@ -4,7 +4,7 @@ import { PDFDocument } from "pdf-lib";
 import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ type RequestBody =
 
 export async function POST(req: Request) {
   try {
-    const supabaseServer = getSupabaseServer(); // ✅ runtime-safe
+    const supabaseAdmin = getSupabaseAdmin(); // ✅ runtime-safe
 
     const body = (await req.json()) as RequestBody;
     
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
 
     // Option 2: caseId → load from Supabase
     if (!appData && "caseId" in body) {
-      const { data, error } = await supabaseServer
+      const { data, error } = await supabaseAdmin
         .from("cases")
         .select("application")
         .eq("id", body.caseId)

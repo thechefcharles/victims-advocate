@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react"; // 👈 ADD useEffect
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import { useSearchParams } from "next/navigation";
 
 import type {
   VictimInfo,
@@ -28,31 +30,9 @@ type IntakeStep =
   | "documents"
   | "summary";
 
-const STORAGE_KEY = "nxtstps_compensation_intake_v1";
-const CASES_STORAGE_KEY = "nxtstps_cases_v1"; // 👈 NEW
-
-
-
-const DOCS_STORAGE_KEY = "nxtstps_docs_v1"; // 👈 NEW
-
-type CaseStatus = "draft" | "ready_for_review";
-
-interface UploadedDoc {
-  id: string;
-  type: string;
-  description: string;
-  fileName: string;
-  fileSize: number;
-  lastModified: number;
-}
-
-interface SavedCase {
-  id: string;
-  createdAt: string;
-  status: CaseStatus;
-  application: CompensationApplication;
-  documents: UploadedDoc[]; // 👈 NEW
-}
+const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
+const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
+const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -148,8 +128,21 @@ const makeEmptyApplication = (): CompensationApplication => ({
   },
 });
 
-export default function CompensationIntakePage() {
-  const router = useRouter();
+function CompensationIntakeInner() {
+    const router = useRouter();
+  const searchParams = useSearchParams();
+const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
+
+
+  useEffect(() => {
+  (async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      router.push("/login");
+    }
+  })();
+}, [router]);
+
   const [step, setStep] = useState<IntakeStep>("victim");
   const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(
@@ -157,6 +150,16 @@ export default function CompensationIntakePage() {
   );
 
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
+const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
+const [saveToast, setSaveToast] = useState<string | null>(null);
+const [saveNowLoading, setSaveNowLoading] = useState(false);
+const creatingCaseRef = useRef(false);
+
+
+// per-user storage key (null until user is known)
+const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
 
   // 🔵 NxtGuide chat state (ADD THIS HERE)
   const [chatOpen, setChatOpen] = useState(false);
@@ -166,13 +169,73 @@ export default function CompensationIntakePage() {
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
 
+  useEffect(() => {
+  (async () => {
+    const { data } = await supabase.auth.getUser();
+    setUserId(data.user?.id ?? null);
+  })();
+}, []);
+
+// ✅ If URL has ?case=..., load that case from Supabase instead of localStorage
+useEffect(() => {
+  if (!caseId) return;
+
+  (async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to load case:", await res.text());
+        alert("Could not load that case (no access or not found).");
+        router.push("/");
+        return;
+      }
+
+      const json = await res.json();
+      setCanEdit(!!json.access?.can_edit);
+
+      const rawApp = json.case.application;
+      const loadedApp = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
+
+      setApp(loadedApp);
+      setStep("victim");
+      setMaxStepIndex(0);
+      setLoadedFromStorage(true);
+
+      // ✅ always set active case pointer (don’t rely on userId state)
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (uid) localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`, caseId);
+    } catch (err) {
+      console.error("Unexpected error loading case from API:", err);
+      alert("Something went wrong loading that case.");
+      router.push("/");
+    }
+  })();
+}, [caseId, router]);
+
+
 // 🟢 1. Load saved intake once on mount
 useEffect(() => {
   if (typeof window === "undefined") return;
+  if (caseId) return; // ✅ ADD THIS
+  if (!storageKey) return; // ✅ wait until we know which user
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    console.log("[INTAKE] load effect: raw from localStorage =", raw);
+    const raw = localStorage.getItem(storageKey);
+    console.log("[INTAKE] load effect: key =", storageKey, "raw =", raw);
+
     if (raw) {
       const parsed = JSON.parse(raw) as {
         app?: CompensationApplication;
@@ -180,42 +243,171 @@ useEffect(() => {
         maxStepIndex?: number;
       };
 
-      console.log("[INTAKE] parsed from localStorage:", parsed);
-
-      if (parsed.app) {
-        setApp(parsed.app);
-      }
-      if (parsed.step) {
-        setStep(parsed.step);
-      }
-      if (typeof parsed.maxStepIndex === "number") {
-        setMaxStepIndex(parsed.maxStepIndex);
-      }
+      if (parsed.app) setApp(parsed.app);
+      if (parsed.step) setStep(parsed.step);
+      if (typeof parsed.maxStepIndex === "number") setMaxStepIndex(parsed.maxStepIndex);
+    } else {
+      // ✅ no saved draft for THIS user → start fresh
+      setApp(makeEmptyApplication());
+      setStep("victim");
+      setMaxStepIndex(0);
     }
   } catch (err) {
     console.error("Failed to load saved intake from localStorage", err);
   } finally {
-    // ✅ Only now do we consider storage "loaded"
     setLoadedFromStorage(true);
   }
-}, []);
+}, [storageKey, caseId]);
+
+// ✅ Auto-create a draft case on first load (so we always have a caseId)
+useEffect(() => {
+  if (caseId) return;
+  if (!userId) return;
+  if (!loadedFromStorage) return;
+
+  if (creatingCaseRef.current) return;
+  creatingCaseRef.current = true;
+
+  (async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+
+      // ✅ IMPORTANT: your /api/compensation/cases POST currently expects the BODY to be the application object
+      const res = await fetch("/api/compensation/cases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(app), // ✅ FIXED (was {status, application})
+      });
+
+      if (!res.ok) {
+        console.error("Auto-create case failed:", await res.text());
+        setSaveToast("Couldn’t start application. Try refresh.");
+        setTimeout(() => setSaveToast(null), 2500);
+        return;
+      }
+
+      const json = await res.json();
+      const newCaseId = json?.case?.id;
+
+      if (!newCaseId) {
+        console.error("Auto-create case returned no id:", json);
+        setSaveToast("Created, but missing case ID.");
+        setTimeout(() => setSaveToast(null), 2500);
+        return;
+      }
+
+      // ✅ move into case-linked mode
+localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, newCaseId);
+router.replace(`/compensation/intake?case=${newCaseId}`);
+      setSaveToast("Application started");
+      setTimeout(() => setSaveToast(null), 1500);
+      return;
+    } catch (e) {
+      console.error("Auto-create case error:", e);
+      setSaveToast("Couldn’t start application. Try refresh.");
+      setTimeout(() => setSaveToast(null), 2500);
+    }
+    // ✅ DO NOT set creatingCaseRef.current back to false (prevents double-create in dev)
+  })();
+}, [caseId, userId, loadedFromStorage, router, app]);
+
+// ✅ Remember the most recent active case for this user (used by "Resume Application")
+useEffect(() => {
+  if (!userId || !caseId) return;
+  localStorage.setItem(`nxtstps_active_case_${userId}`, caseId);
+}, [userId, caseId]);
+
+useEffect(() => {
+  if (!userId) return;
+
+  try {
+    localStorage.setItem(
+      `${PROGRESS_KEY_PREFIX}${userId}`,
+      JSON.stringify({
+        caseId: caseId ?? null,
+        step,
+        maxStepIndex,
+        updatedAt: Date.now(),
+      })
+    );
+  } catch (e) {
+    console.warn("Failed to store intake progress", e);
+  }
+}, [userId, caseId, step, maxStepIndex]);
+
+useEffect(() => {
+  const order: IntakeStep[] = [
+    "victim",
+    "applicant",
+    "crime",
+    "losses",
+    "medical",
+    "employment",
+    "funeral",
+    "documents",
+    "summary",
+  ];
+
+  const idx = Math.max(0, order.indexOf(step));
+  setMaxStepIndex((prev) => Math.max(prev, idx));
+}, [step]);
 
 // 🟡 2. Auto-save whenever the application or step changes
 useEffect(() => {
   if (typeof window === "undefined") return;
-  if (!loadedFromStorage) {
-    // Don't overwrite anything until we've attempted to load
-    return;
-  }
+  if (caseId) return; // ✅ ADD THIS
+  if (!loadedFromStorage) return;
+  if (!storageKey) return;
 
   try {
     const payload = { app, step, maxStepIndex };
-    console.log("[INTAKE] save effect: saving payload =", payload);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(storageKey, JSON.stringify(payload));
   } catch (err) {
     console.error("Failed to save compensation intake to localStorage", err);
   }
-}, [loadedFromStorage, app, step, maxStepIndex]);
+}, [caseId, loadedFromStorage, storageKey, app, step, maxStepIndex]);
+
+// ✅ Case-mode autosave: when ?case=... exists, save edits to Supabase via PATCH
+useEffect(() => {
+  if (!caseId) return;                 // only in case-link mode
+  if (!loadedFromStorage) return;      // wait until case has loaded
+  if (!canEdit) return;
+  if (savingCase) return;                // view-only advocates shouldn't save
+
+  const timeout = setTimeout(async () => {
+    try {
+      setSavingCase(true);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ application: app }),
+      });
+
+      if (!res.ok) {
+        console.error("PATCH case save failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("Failed to autosave case to Supabase", err);
+    } finally {
+      setSavingCase(false);
+    }
+  }, 800); // debounce: prevents spam while typing
+
+  return () => clearTimeout(timeout);
+}, [caseId, loadedFromStorage, canEdit, app]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -302,6 +494,53 @@ const handleDownloadPdf = async () => {
     alert("Something went wrong generating the PDF.");
   }
 };
+
+const handleSaveNow = async () => {
+  // If this user is viewing a case but can't edit, don't allow saving
+  if (caseId && !canEdit) {
+    setSaveToast("View-only access. You can’t save changes.");
+    setTimeout(() => setSaveToast(null), 2000);
+    return;
+  }
+
+  // If there is no caseId (shouldn’t happen after “case created on start”),
+  // you can either block or fallback. I’m blocking with a clear message:
+  if (!caseId) {
+    setSaveToast("No case loaded yet. Start the application first.");
+    setTimeout(() => setSaveToast(null), 2000);
+    return;
+  }
+
+  try {
+    setSaveNowLoading(true);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Not logged in");
+
+    const res = await fetch(`/api/compensation/cases/${caseId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ application: app }),
+    });
+
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    setSaveToast("Application saved");
+    setTimeout(() => setSaveToast(null), 2000);
+  } catch (e) {
+    console.error("Save now failed:", e);
+    setSaveToast("Couldn’t save. Try again.");
+    setTimeout(() => setSaveToast(null), 2500);
+  } finally {
+    setSaveNowLoading(false);
+  }
+};
   
   const handleNextFromVictim = () => {
     if (
@@ -372,12 +611,17 @@ const handleSaveCase = async () => {
   try {
     console.log("Saving case with application:", app);
 
-    const res = await fetch("/api/compensation/cases", {
-      // 👈 IMPORTANT: this path must match app/api/compensation/cases/route.ts
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(app),
-    });
+const { data: sessionData } = await supabase.auth.getSession();
+const accessToken = sessionData.session?.access_token;
+
+const res = await fetch("/api/compensation/cases", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  body: JSON.stringify(app),
+});
 
     if (!res.ok) {
       const text = await res.text();
@@ -386,12 +630,18 @@ const handleSaveCase = async () => {
       return;
     }
 
-    const json = await res.json();
-    console.log("Saved case response:", json);
+const json = await res.json();
+console.log("Saved case response:", json);
 
-    alert("Your case has been saved for an advocate to review.");
-    // optional: navigate to /admin/cases
-    // window.location.href = "/admin/cases";
+const newCaseId = json?.case?.id;
+
+if (!newCaseId) {
+  alert("Saved, but no case ID was returned. Check the API response.");
+  return;
+}
+
+// ✅ redirect into case-linked mode
+router.push(`/compensation/intake?case=${newCaseId}`);
   } catch (err) {
     console.error("Error calling /api/compensation/cases", err);
     alert("Something went wrong saving your case. See console for details.");
@@ -694,6 +944,7 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
 
 {step === "summary" && (
   <SummaryView
+    caseId={caseId} // ✅ ADD THIS LINE
     victim={victim}
     applicant={applicant}
     crime={crime}
@@ -704,140 +955,132 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     certification={certification}
     onChangeCertification={updateCertification}
     onDownloadSummaryPdf={handleDownloadPdf}
-    onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}  // 👈 ADD THIS
+    onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}
     onSaveCase={handleSaveCase}
   />
 )}
 
-        {/* Nav buttons + primary actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-          {/* Left side: Back + Save & Exit */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={step === "victim"}
-              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
-            >
-              ← Back
-            </button>
+{/* Nav buttons + primary actions */}
+<div className="flex flex-col gap-3 pt-4 border-t border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+{/* Left side: Back + Save */}
+<div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={handleBack}
+    disabled={step === "victim"}
+    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
+  >
+    ← Back
+  </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                try {
-                  if (typeof window !== "undefined") {
-                    const payload = { app, step, maxStepIndex };
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-                  }
-                } catch (err) {
-                  console.error("Error saving intake before exit", err);
-                }
-                router.push("/");
-              }}
-              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition"
-            >
-              Save &amp; Exit
-            </button>
-          </div>
+  <button
+    type="button"
+    onClick={handleSaveNow}
+    disabled={saveNowLoading || !caseId || !canEdit}
+    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+    title={!caseId ? "Creating your case..." : !canEdit ? "View-only access" : ""}
+  >
+    {saveNowLoading ? "Saving..." : "Save"}
+  </button>
 
-          {/* Right side: step-specific primary button */}
-          <div className="flex items-center">
-            {step === "victim" && (
-              <button
-                type="button"
-                onClick={handleNextFromVictim}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Applicant →
-              </button>
-            )}
+  {caseId && canEdit && savingCase && (
+    <span className="text-[11px] text-slate-400">Auto-saving…</span>
+  )}
+</div>
 
-            {step === "applicant" && (
-              <button
-                type="button"
-                onClick={handleNextFromApplicant}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Crime Details →
-              </button>
-            )}
+  {/* Right side: step-specific primary button */}
+  <div className="flex items-center justify-end">
+    {step === "victim" && (
+      <button
+        type="button"
+        onClick={handleNextFromVictim}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Applicant →
+      </button>
+    )}
 
-            {step === "crime" && (
-              <button
-                type="button"
-                onClick={handleNextFromCrime}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Losses →
-              </button>
-            )}
+    {step === "applicant" && (
+      <button
+        type="button"
+        onClick={handleNextFromApplicant}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Crime Details →
+      </button>
+    )}
 
-            {step === "losses" && (
-              <button
-                type="button"
-                onClick={handleNextFromLosses}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Medical →
-              </button>
-            )}
+    {step === "crime" && (
+      <button
+        type="button"
+        onClick={handleNextFromCrime}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Losses →
+      </button>
+    )}
 
-            {step === "medical" && (
-              <button
-                type="button"
-                onClick={handleNextFromMedical}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Work &amp; income →
-              </button>
-            )}
+    {step === "losses" && (
+      <button
+        type="button"
+        onClick={handleNextFromLosses}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Medical →
+      </button>
+    )}
 
-            {step === "employment" && (
-              <button
-                type="button"
-                onClick={handleNextFromEmployment}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Funeral &amp; dependents →
-              </button>
-            )}
+    {step === "medical" && (
+      <button
+        type="button"
+        onClick={handleNextFromMedical}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Work &amp; income →
+      </button>
+    )}
 
-            {step === "funeral" && (
-              <button
-                type="button"
-                onClick={handleNextFromFuneral}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Go to Documents →
-              </button>
-            )}
+    {step === "employment" && (
+      <button
+        type="button"
+        onClick={handleNextFromEmployment}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Funeral &amp; dependents →
+      </button>
+    )}
 
-            {step === "documents" && (
-              <button
-                type="button"
-                onClick={() => setStep("summary")}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Go to Summary →
-              </button>
-            )}
+    {step === "funeral" && (
+      <button
+        type="button"
+        onClick={handleNextFromFuneral}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Go to Documents →
+      </button>
+    )}
 
-            {step === "summary" && (
-              <button
-                type="button"
-                onClick={() =>
-                  alert(
-                    "Next (future phase): document upload and PDF generation."
-                  )
-                }
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Looks good – continue
-              </button>
-            )}
-          </div>
-        </div>
+    {step === "documents" && (
+      <button
+        type="button"
+        onClick={() => setStep("summary")}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Go to Summary →
+      </button>
+    )}
+
+    {step === "summary" && (
+      <button
+        type="button"
+        onClick={() => setSaveToast("You're already in the final review. Use Save if needed.")}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Review complete
+      </button>
+    )}
+  </div>
+</div>
 
         <p className="text-[11px] text-slate-500">
           You are not submitting anything to the state yet. This is preparing a
@@ -922,6 +1165,11 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
           </button>
         )}
       </div>
+      {saveToast && (
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full border border-slate-700 bg-slate-950/90 px-4 py-2 text-xs text-slate-100 shadow-lg">
+    {saveToast}
+  </div>
+)}
       
     </main>
   );
@@ -1475,6 +1723,7 @@ function CrimeForm({
         contextLabel="the crime and incident (police reports, witness statements)"
         defaultDocType="police_report"
       />
+    
 
     </section>
   );
@@ -2467,6 +2716,7 @@ function FuneralForm({
 }
 
 function SummaryView({
+  caseId, // ✅ ADD THIS
   victim,
   applicant,
   crime,
@@ -2477,9 +2727,10 @@ function SummaryView({
   certification,
   onChangeCertification,
   onDownloadSummaryPdf,
-  onDownloadOfficialIlPdf,   // 👈 ADD THIS
+  onDownloadOfficialIlPdf,
   onSaveCase,
 }: {
+  caseId: string | null; // ✅ ADD THIS
   victim: VictimInfo;
   applicant: ApplicantInfo;
   crime: CrimeInfo;
@@ -2490,9 +2741,67 @@ function SummaryView({
   certification: CertificationInfo;
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
   onDownloadSummaryPdf: () => void;
-  onDownloadOfficialIlPdf: () => void;   // 👈 ADD THIS
+  onDownloadOfficialIlPdf: () => void;
   onSaveCase: () => void;
 }) {
+
+    const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteCanEdit, setInviteCanEdit] = useState(true);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+
+const handleInvite = async () => {
+  setInviteLoading(true);
+  setInviteResult(null);
+
+  try {
+    // ✅ use the prop (already passed in)
+    if (!caseId) {
+      setInviteResult(
+        "Save this as a case first so we can generate a secure invite link."
+      );
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setInviteResult("You must be logged in to invite an advocate.");
+      return;
+    }
+
+    const res = await fetch("/api/case-access/invite", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        caseId, // ✅ now this is the prop
+        advocateEmail: inviteEmail,
+        canEdit: inviteCanEdit,
+      }),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      setInviteResult(text);
+      return;
+    }
+
+    const json = JSON.parse(text);
+    setInviteResult(
+      `✅ Access granted.\nShare this link with the advocate:\n${json.shareUrl}`
+    );
+  } catch (e: any) {
+    setInviteResult(e?.message || "Unexpected error inviting advocate.");
+  } finally {
+    setInviteLoading(false);
+  }
+};
+
                     const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
@@ -2696,6 +3005,7 @@ const primaryFuneralPayer = funeral.payments?.[0];
     Download official Illinois CVC form
   </button>
 
+{!caseId && (
   <button
     type="button"
     onClick={onSaveCase}
@@ -2703,6 +3013,18 @@ const primaryFuneralPayer = funeral.payments?.[0];
   >
     Save as case for advocate review
   </button>
+)}
+
+  <button
+  type="button"
+  onClick={() => {
+    setInviteResult(null);
+    setInviteOpen(true);
+  }}
+  className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+>
+  Invite advocate
+</button>
 
   <a
     href="/admin/cases"
@@ -2711,6 +3033,69 @@ const primaryFuneralPayer = funeral.payments?.[0];
     View saved cases →
   </a>
 </div>
+
+{inviteOpen && (
+  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
+    <div className="flex items-center justify-between">
+      <div className="font-semibold text-slate-100">Invite an advocate</div>
+      <button
+        type="button"
+        onClick={() => setInviteOpen(false)}
+        className="text-slate-400 hover:text-slate-200"
+      >
+        ✕
+      </button>
+    </div>
+
+    <p className="text-[11px] text-slate-400">
+      The advocate must already have an account using this email.
+    </p>
+
+    <label className="block space-y-1">
+      <span className="text-slate-300">Advocate email</span>
+      <input
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+        placeholder="advocate@example.com"
+        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+      />
+    </label>
+
+    <label className="flex items-center gap-2 text-slate-300">
+      <input
+        type="checkbox"
+        checked={inviteCanEdit}
+        onChange={(e) => setInviteCanEdit(e.target.checked)}
+      />
+      Allow this advocate to edit
+    </label>
+
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={handleInvite}
+        disabled={inviteLoading || !inviteEmail.trim()}
+        className="rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition"
+      >
+        {inviteLoading ? "Inviting…" : "Send invite"}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setInviteOpen(false)}
+        className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
+      >
+        Close
+      </button>
+    </div>
+
+    {inviteResult && (
+      <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
+{inviteResult}
+      </pre>
+    )}
+  </div>
+)}
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">
@@ -2994,39 +3379,46 @@ function InlineDocumentUploader({
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach(async (file) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("docType", defaultDocType);
-      formData.append("description", description);
+    // ✅ Use Promise.all (async-safe). Avoid async forEach.
+    await Promise.all(
+      Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("docType", defaultDocType);
+        formData.append("description", description);
 
-      try {
-        const res = await fetch("/api/compensation/upload-document", {
-          method: "POST",
-          body: formData,
-        });
+        try {
+          // 🔐 Get the logged-in user's access token
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
 
-        if (!res.ok) {
-          console.error(
-            `[UPLOAD] Failed for ${defaultDocType}`,
-            await res.text()
-          );
-          alert("There was an issue uploading that file. Please try again.");
-          return;
+          const res = await fetch("/api/compensation/upload-document", {
+            method: "POST",
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.error(`[UPLOAD] Failed for ${defaultDocType}`, text);
+            alert("There was an issue uploading that file. Please try again.");
+            return;
+          }
+
+          const json = await res.json();
+          console.log("[UPLOAD] Stored document:", json.document);
+        } catch (err) {
+          console.error("[UPLOAD] Error uploading document", err);
+          alert("Something went wrong uploading that file.");
         }
+      })
+    );
 
-        const json = await res.json();
-        console.log("[UPLOAD] Stored document:", json.document);
-      } catch (err) {
-        console.error("[UPLOAD] Error uploading document", err);
-        alert("Something went wrong uploading that file.");
-      }
-    });
-
-    // Clear description after upload
+    // ✅ Clear description after uploads finish
     setDescription("");
   };
 
+  // ✅ IMPORTANT: Component return is OUTSIDE handleFiles
   return (
     <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
       <h3 className="font-semibold text-slate-100">
@@ -3036,6 +3428,7 @@ function InlineDocumentUploader({
         These uploads are optional, but they can help the Attorney General&apos;s
         office review this part of your application more quickly.
       </p>
+
       <div className="grid gap-2 sm:grid-cols-[2fr,3fr]">
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Short description (optional)</span>
@@ -3047,6 +3440,7 @@ function InlineDocumentUploader({
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </label>
+
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Upload file(s)</span>
           <input
@@ -3058,5 +3452,20 @@ function InlineDocumentUploader({
         </label>
       </div>
     </div>
+  );
+}
+
+export default function CompensationIntakePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+          <div className="max-w-3xl mx-auto">Loading…</div>
+          
+        </main>
+      }
+    >
+      <CompensationIntakeInner />
+    </Suspense>
   );
 }

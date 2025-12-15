@@ -1,17 +1,48 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
-export const runtime = "nodejs"; // ✅ storage upload + fs-safe if ever needed
-
-const DEV_USER_ID = process.env.DEV_SUPABASE_USER_ID!;
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const supabaseServer = getSupabaseServer(); // ✅ create per-request
+    // ✅ 1) Require Authorization Bearer token
+    const authHeader = req.headers.get("authorization") || "";
+    const accessToken = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
 
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "Unauthorized (missing token)" },
+        { status: 401 }
+      );
+    }
+
+    // ✅ 2) Verify token using anon client
+    const supabaseAnon = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: authData, error: authError } =
+      await supabaseAnon.auth.getUser(accessToken);
+
+    if (authError || !authData.user) {
+      console.error("[UPLOAD] auth error:", authError);
+      return NextResponse.json(
+        { error: "Unauthorized (invalid token)" },
+        { status: 401 }
+      );
+    }
+
+    const userId = authData.user.id;
+    console.log("[UPLOAD] userId:", userId);
+
+    // ✅ 3) Parse form data
     const formData = await req.formData();
-
     const file = formData.get("file");
+
     if (!(file instanceof File)) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
@@ -26,11 +57,14 @@ export async function POST(req: Request) {
       ? file.name.substring(file.name.lastIndexOf(".") + 1)
       : "bin";
 
-    const storagePath = `${DEV_USER_ID}/unassigned/${Date.now()}-${Math.random()
+    // ✅ 4) Upload to storage using service role (admin)
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const storagePath = `${userId}/unassigned/${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${ext}`;
 
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from("case-documents")
       .upload(storagePath, file, {
         cacheControl: "3600",
@@ -40,14 +74,18 @@ export async function POST(req: Request) {
 
     if (uploadError) {
       console.error("Supabase storage upload error", uploadError);
-      return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to upload file" },
+        { status: 500 }
+      );
     }
 
-    const { data, error: insertError } = await supabaseServer
+    // ✅ 5) Insert document row owned by this userId
+    const { data, error: insertError } = await supabaseAdmin
       .from("documents")
       .insert({
         case_id: null,
-        uploaded_by_user_id: DEV_USER_ID,
+        uploaded_by_user_id: userId,
         doc_type: docType,
         description,
         file_name: file.name,
@@ -60,12 +98,21 @@ export async function POST(req: Request) {
 
     if (insertError) {
       console.error("Supabase documents insert error", insertError);
-      return NextResponse.json({ error: "Failed to save document metadata" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to save document metadata", details: insertError },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ document: data });
-  } catch (err) {
-    console.error("Error in upload-document route", err);
-    return NextResponse.json({ error: "Unexpected error processing upload" }, { status: 500 });
+  } catch (err: any) {
+    console.error("❌ Error in upload-document route", err);
+    return NextResponse.json(
+      {
+        error: "Unexpected error processing upload",
+        details: err?.message ?? String(err),
+      },
+      { status: 500 }
+    );
   }
 }

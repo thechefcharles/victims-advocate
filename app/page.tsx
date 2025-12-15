@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import AuthPanel from "@/components/AuthPanel";
 
 const audiences = [
   "Victims",
@@ -25,7 +26,6 @@ export default function HomePage() {
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
 
-  // 🔹 NxtGuide chat submit handler
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = chatInput.trim();
@@ -87,90 +87,19 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50">
-      {/* Top nav */}
-      <header className="border-b border-slate-800 bg-gradient-to-b from-[#0A2239] to-[#020b16]/95">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-[#1C8C8C] flex items-center justify-center text-xs font-bold tracking-wide">
-              N
-            </div>
-            <div className="text-sm">
-              <div className="font-semibold tracking-[0.14em] uppercase text-slate-200">
-                NxtStps
-              </div>
-              <div className="text-[11px] text-slate-400">
-                Victim Support · Made Simple
-              </div>
-            </div>
-          </div>
-
-          <nav className="hidden items-center gap-4 text-xs text-slate-200 sm:flex">
-            <Link
-              href="/compensation/intake"
-              className="rounded-full border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-3 py-1.5 font-medium hover:bg-[#1C8C8C]/20"
-            >
-              Start Application
-            </Link>
-            <Link
-              href="/admin/cases"
-              className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
-            >
-              Advocate Dashboard
-            </Link>
-          </nav>
-        </div>
-      </header>
-
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 space-y-16">
-        {/* HERO SECTION */}
+        {/* HERO */}
         <section className="grid gap-10 md:grid-cols-[3fr,2fr] items-center">
           <div className="space-y-5">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-slate-400">
-              Trauma-Informed · AI-Powered · State-Aligned
-            </p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-50">
-              Victim support, made simple.
-              <br />
-              <span className="text-[#F2C94C]">
-                Your benefits. Your rights. One clear path.
-              </span>
+              Crime Victim Support
             </h1>
+
             <p className="max-w-xl text-sm sm:text-base text-slate-200">
-              NxtStps guides you step-by-step through crime victim compensation,
-              explains your options in plain language, and helps you avoid the
-              paperwork mistakes that cause delays and denials.
+              Apply for victim compensation today.
             </p>
 
-            {/* Progress bar visual */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Guided Application Progress</span>
-                <span>Step 1 of 3</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div className="h-full w-1/3 bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]" />
-              </div>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link
-                href="/compensation/intake"
-                className="inline-flex items-center rounded-full bg-[#1C8C8C] px-5 py-2 text-sm font-semibold text-slate-950 shadow-md shadow-black/30 hover:bg-[#21a3a3] transition"
-              >
-                Get Started
-                <span className="ml-2 text-xs text-slate-900/80">
-                  Start your application →
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setChatOpen(true)}
-                className="inline-flex items-center rounded-full border border-slate-600 bg-transparent px-4 py-2 text-xs font-medium text-slate-100 hover:bg-slate-900/70 transition"
-              >
-                Speak with our advocate chatbot
-              </button>
-            </div>
+            <AuthPanel />
 
             <p className="text-[11px] text-slate-500 max-w-md">
               NxtStps is a supportive tool. It does not replace legal advice,
@@ -179,7 +108,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Right-hand abstract “device” / illustration */}
+          {/* Right-hand preview card (unchanged) */}
           <div className="relative">
             <div className="absolute -inset-8 bg-gradient-to-tr from-[#1C8C8C]/10 via-[#F2C94C]/5 to-transparent blur-3xl opacity-80 pointer-events-none" />
             <div className="relative rounded-3xl border border-slate-700 bg-gradient-to-b from-[#0A2239] to-[#020b16] p-5 shadow-lg shadow-black/40 space-y-4">
@@ -191,6 +120,7 @@ export default function HomePage() {
                   Draft preview
                 </span>
               </div>
+
               <ol className="space-y-2 text-xs">
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#1C8C8C] text-[10px] font-bold text-slate-950">
@@ -205,6 +135,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </li>
+
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#F2C94C] text-[10px] font-bold text-slate-950">
                     2
@@ -219,6 +150,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </li>
+
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-slate-200">
                     3
@@ -234,6 +166,7 @@ export default function HomePage() {
                   </div>
                 </li>
               </ol>
+
               <div className="mt-4 rounded-2xl bg-slate-900/70 p-3 text-[11px] text-slate-300">
                 “You don&apos;t have to figure this out alone. NxtStps walks with
                 you, step by step, at your pace.”
@@ -497,7 +430,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* 🔹 NxtGuide floating chat widget */}
+{/* NxtGuide widget (unchanged) */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
           <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
@@ -580,6 +513,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
