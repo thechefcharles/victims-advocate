@@ -66,7 +66,7 @@ export default function TopNav() {
 
         {/* Right: actions */}
         <nav className="flex items-center gap-3 text-xs text-slate-200">
-          {/* Primary CTA: Start vs Resume */}
+          {/* Primary CTA */}
           {authed ? (
             hasDraft ? (
               <Link
@@ -96,10 +96,10 @@ export default function TopNav() {
           {authed ? (
             <>
               <Link
-                href="/dashboard"
+                href="/advocate"
                 className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
               >
-                Dashboard
+                Advocate
               </Link>
 
               <button

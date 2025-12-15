@@ -46,21 +46,22 @@ export async function GET(req: Request) {
   } catch (err: any) {
     console.error("Unexpected error in GET /api/compensation/cases:", err);
     const msg = err?.message ?? "Unexpected error";
-    return NextResponse.json({ error: msg }, { status: msg.includes("Unauthorized") ? 401 : 500 });
+    return NextResponse.json(
+      { error: msg },
+      { status: msg.includes("Unauthorized") ? 401 : 500 }
+    );
   }
 }
 
 export async function POST(req: Request) {
   try {
     const userId = await requireUserId(req);
-
-    // 🔍 ADD THIS LINE RIGHT HERE
     console.log("[CASES POST] resolved userId =", userId);
 
     const supabaseAdmin = getSupabaseAdmin();
-
     const application = (await req.json()) as CompensationApplication;
 
+    // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
@@ -80,7 +81,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // Attach unassigned documents from this user to the new case
+    // 2) NEW: Create owner access row (permission foundation)
+    const { error: accessError } = await supabaseAdmin
+      .from("case_access")
+      .insert({
+        case_id: newCase.id,
+        user_id: userId,
+        role: "owner",
+        can_view: true,
+        can_edit: true,
+      });
+
+    if (accessError) {
+      console.error("Error inserting case_access owner row", accessError);
+      // We do NOT fail the case creation. Return a warning.
+      // (You can fix permissions later without losing the case.)
+    }
+
+    // 3) Attach any unassigned documents from this user to the new case
     const { error: attachError } = await supabaseAdmin
       .from("documents")
       .update({ case_id: newCase.id })
@@ -94,12 +112,23 @@ export async function POST(req: Request) {
           case: newCase,
           warning:
             "Case saved, but failed to attach some documents. You may need to re-upload them.",
+          permissionWarning: accessError
+            ? "Case saved, but permission row failed to create."
+            : null,
         },
         { status: 201 }
       );
     }
 
-    return NextResponse.json({ case: newCase }, { status: 201 });
+    return NextResponse.json(
+      {
+        case: newCase,
+        permissionWarning: accessError
+          ? "Case saved, but permission row failed to create."
+          : null,
+      },
+      { status: 201 }
+    );
   } catch (err: any) {
     console.error("Error in POST /api/compensation/cases", err);
     const msg = err?.message ?? "Invalid request body";

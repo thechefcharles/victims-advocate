@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"; // 👈 ADD useEffect
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useSearchParams } from "next/navigation";
 
 import type {
   VictimInfo,
@@ -151,6 +152,9 @@ const makeEmptyApplication = (): CompensationApplication => ({
 
 export default function CompensationIntakePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
+
 
   useEffect(() => {
   (async () => {
@@ -169,6 +173,9 @@ export default function CompensationIntakePage() {
 
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
+const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
+
 
 // per-user storage key (null until user is known)
 const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
@@ -188,9 +195,60 @@ const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
   })();
 }, []);
 
+// ✅ If URL has ?case=..., load that case from Supabase instead of localStorage
+useEffect(() => {
+  if (!caseId) return; // only runs when caseId exists
+
+  (async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.error("Failed to load case:", await res.text());
+        alert("Could not load that case (no access or not found).");
+        router.push("/");
+        return;
+      }
+
+      const json = await res.json();
+      setCanEdit(!!json.access?.can_edit);
+
+      // Your DB currently stores application as a stringified JSON
+      const loadedApp =
+        typeof json.case.application === "string"
+          ? JSON.parse(json.case.application)
+          : json.case.application;
+
+      setApp(loadedApp);
+      setStep("victim");
+      setMaxStepIndex(0);
+
+      // IMPORTANT: mark as loaded so we don't block the UI
+      setLoadedFromStorage(true);
+    } catch (err) {
+      console.error("Unexpected error loading case from API:", err);
+      alert("Something went wrong loading that case.");
+      router.push("/");
+    }
+  })();
+}, [caseId, router]);
+
+
 // 🟢 1. Load saved intake once on mount
 useEffect(() => {
   if (typeof window === "undefined") return;
+  if (caseId) return; // ✅ ADD THIS
   if (!storageKey) return; // ✅ wait until we know which user
 
   try {
@@ -218,11 +276,12 @@ useEffect(() => {
   } finally {
     setLoadedFromStorage(true);
   }
-}, [storageKey]);
+}, [storageKey, caseId]);
 
 // 🟡 2. Auto-save whenever the application or step changes
 useEffect(() => {
   if (typeof window === "undefined") return;
+  if (caseId) return; // ✅ ADD THIS
   if (!loadedFromStorage) return;
   if (!storageKey) return;
 
@@ -232,7 +291,43 @@ useEffect(() => {
   } catch (err) {
     console.error("Failed to save compensation intake to localStorage", err);
   }
-}, [loadedFromStorage, storageKey, app, step, maxStepIndex]);
+}, [caseId, loadedFromStorage, storageKey, app, step, maxStepIndex]);
+
+// ✅ Case-mode autosave: when ?case=... exists, save edits to Supabase via PATCH
+useEffect(() => {
+  if (!caseId) return;                 // only in case-link mode
+  if (!loadedFromStorage) return;      // wait until case has loaded
+  if (!canEdit) return;                // view-only advocates shouldn't save
+
+  const timeout = setTimeout(async () => {
+    try {
+      setSavingCase(true);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ application: app }),
+      });
+
+      if (!res.ok) {
+        console.error("PATCH case save failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("Failed to autosave case to Supabase", err);
+    } finally {
+      setSavingCase(false);
+    }
+  }, 800); // debounce: prevents spam while typing
+
+  return () => clearTimeout(timeout);
+}, [caseId, loadedFromStorage, canEdit, app]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -746,19 +841,22 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
 
             <button
               type="button"
-              onClick={() => {
-                try {
-                  if (typeof window !== "undefined") {
-                    const payload = { app, step, maxStepIndex };
-if (storageKey) {
-  localStorage.setItem(storageKey, JSON.stringify(payload));
-}
-                  }
-                } catch (err) {
-                  console.error("Error saving intake before exit", err);
-                }
-                router.push("/");
-              }}
+onClick={() => {
+  try {
+    if (typeof window !== "undefined") {
+      const payload = { app, step, maxStepIndex };
+
+      // ✅ Only save local draft if we're NOT in case-link mode
+      if (!caseId && storageKey) {
+        localStorage.setItem(storageKey, JSON.stringify(payload));
+      }
+    }
+  } catch (err) {
+    console.error("Error saving intake before exit", err);
+  }
+
+  router.push("/");
+}}
               className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition"
             >
               Save &amp; Exit
