@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 const audiences = [
   "Victims",
@@ -16,6 +18,13 @@ type Audience = (typeof audiences)[number];
 
 export default function HomePage() {
   const [activeAudience, setActiveAudience] = useState<Audience>("Victims");
+
+    const router = useRouter();
+
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  router.push("/login");
+};
 
   // 🔹 NxtGuide chat state
   const [chatOpen, setChatOpen] = useState(false);
@@ -88,38 +97,6 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50">
       {/* Top nav */}
-      <header className="border-b border-slate-800 bg-gradient-to-b from-[#0A2239] to-[#020b16]/95">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-xl bg-[#1C8C8C] flex items-center justify-center text-xs font-bold tracking-wide">
-              N
-            </div>
-            <div className="text-sm">
-              <div className="font-semibold tracking-[0.14em] uppercase text-slate-200">
-                NxtStps
-              </div>
-              <div className="text-[11px] text-slate-400">
-                Victim Support · Made Simple
-              </div>
-            </div>
-          </div>
-
-          <nav className="hidden items-center gap-4 text-xs text-slate-200 sm:flex">
-            <Link
-              href="/compensation/intake"
-              className="rounded-full border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-3 py-1.5 font-medium hover:bg-[#1C8C8C]/20"
-            >
-              Start Application
-            </Link>
-            <Link
-              href="/admin/cases"
-              className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
-            >
-              Advocate Dashboard
-            </Link>
-          </nav>
-        </div>
-      </header>
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 space-y-16">
         {/* HERO SECTION */}

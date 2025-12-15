@@ -29,7 +29,7 @@ type IntakeStep =
   | "documents"
   | "summary";
 
-const STORAGE_KEY = "nxtstps_compensation_intake_v1";
+const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
 const CASES_STORAGE_KEY = "nxtstps_cases_v1"; // 👈 NEW
 
 
@@ -158,6 +158,10 @@ export default function CompensationIntakePage() {
   );
 
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+// per-user storage key (null until user is known)
+const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
 
   // 🔵 NxtGuide chat state (ADD THIS HERE)
   const [chatOpen, setChatOpen] = useState(false);
@@ -167,13 +171,22 @@ export default function CompensationIntakePage() {
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
 
+  useEffect(() => {
+  (async () => {
+    const { data } = await supabase.auth.getUser();
+    setUserId(data.user?.id ?? null);
+  })();
+}, []);
+
 // 🟢 1. Load saved intake once on mount
 useEffect(() => {
   if (typeof window === "undefined") return;
+  if (!storageKey) return; // ✅ wait until we know which user
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    console.log("[INTAKE] load effect: raw from localStorage =", raw);
+    const raw = localStorage.getItem(storageKey);
+    console.log("[INTAKE] load effect: key =", storageKey, "raw =", raw);
+
     if (raw) {
       const parsed = JSON.parse(raw) as {
         app?: CompensationApplication;
@@ -181,42 +194,35 @@ useEffect(() => {
         maxStepIndex?: number;
       };
 
-      console.log("[INTAKE] parsed from localStorage:", parsed);
-
-      if (parsed.app) {
-        setApp(parsed.app);
-      }
-      if (parsed.step) {
-        setStep(parsed.step);
-      }
-      if (typeof parsed.maxStepIndex === "number") {
-        setMaxStepIndex(parsed.maxStepIndex);
-      }
+      if (parsed.app) setApp(parsed.app);
+      if (parsed.step) setStep(parsed.step);
+      if (typeof parsed.maxStepIndex === "number") setMaxStepIndex(parsed.maxStepIndex);
+    } else {
+      // ✅ no saved draft for THIS user → start fresh
+      setApp(makeEmptyApplication());
+      setStep("victim");
+      setMaxStepIndex(0);
     }
   } catch (err) {
     console.error("Failed to load saved intake from localStorage", err);
   } finally {
-    // ✅ Only now do we consider storage "loaded"
     setLoadedFromStorage(true);
   }
-}, []);
+}, [storageKey]);
 
 // 🟡 2. Auto-save whenever the application or step changes
 useEffect(() => {
   if (typeof window === "undefined") return;
-  if (!loadedFromStorage) {
-    // Don't overwrite anything until we've attempted to load
-    return;
-  }
+  if (!loadedFromStorage) return;
+  if (!storageKey) return;
 
   try {
     const payload = { app, step, maxStepIndex };
-    console.log("[INTAKE] save effect: saving payload =", payload);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    localStorage.setItem(storageKey, JSON.stringify(payload));
   } catch (err) {
     console.error("Failed to save compensation intake to localStorage", err);
   }
-}, [loadedFromStorage, app, step, maxStepIndex]);
+}, [loadedFromStorage, storageKey, app, step, maxStepIndex]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -734,7 +740,9 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
                 try {
                   if (typeof window !== "undefined") {
                     const payload = { app, step, maxStepIndex };
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+if (storageKey) {
+  localStorage.setItem(storageKey, JSON.stringify(payload));
+}
                   }
                 } catch (err) {
                   console.error("Error saving intake before exit", err);
