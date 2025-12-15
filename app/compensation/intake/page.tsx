@@ -151,6 +151,16 @@ const makeEmptyApplication = (): CompensationApplication => ({
 
 export default function CompensationIntakePage() {
   const router = useRouter();
+
+  useEffect(() => {
+  (async () => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      router.push("/login");
+    }
+  })();
+}, [router]);
+
   const [step, setStep] = useState<IntakeStep>("victim");
   const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(

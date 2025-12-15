@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useRouter } from "next/navigation";
+import AuthPanel from "@/components/AuthPanel";
 
 const audiences = [
   "Victims",
@@ -18,13 +17,6 @@ type Audience = (typeof audiences)[number];
 
 export default function HomePage() {
   const [activeAudience, setActiveAudience] = useState<Audience>("Victims");
-
-    const router = useRouter();
-
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  router.push("/login");
-};
 
   // 🔹 NxtGuide chat state
   const [chatOpen, setChatOpen] = useState(false);
@@ -117,6 +109,7 @@ const handleLogout = async () => {
               explains your options in plain language, and helps you avoid the
               paperwork mistakes that cause delays and denials.
             </p>
+            <AuthPanel />
 
             {/* Progress bar visual */}
             <div className="space-y-2">
@@ -130,24 +123,6 @@ const handleLogout = async () => {
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link
-                href="/compensation/intake"
-                className="inline-flex items-center rounded-full bg-[#1C8C8C] px-5 py-2 text-sm font-semibold text-slate-950 shadow-md shadow-black/30 hover:bg-[#21a3a3] transition"
-              >
-                Get Started
-                <span className="ml-2 text-xs text-slate-900/80">
-                  Start your application →
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={() => setChatOpen(true)}
-                className="inline-flex items-center rounded-full border border-slate-600 bg-transparent px-4 py-2 text-xs font-medium text-slate-100 hover:bg-slate-900/70 transition"
-              >
-                Speak with our advocate chatbot
-              </button>
-            </div>
 
             <p className="text-[11px] text-slate-500 max-w-md">
               NxtStps is a supportive tool. It does not replace legal advice,

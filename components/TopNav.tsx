@@ -8,16 +8,34 @@ import { supabase } from "@/lib/supabaseClient";
 export default function TopNav() {
   const router = useRouter();
   const [authed, setAuthed] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
 
   useEffect(() => {
-    // initial
-    supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
-    });
+    const check = async () => {
+      const { data } = await supabase.auth.getSession();
+      const session = data.session;
 
-    // live updates
+      setAuthed(!!session);
+
+      if (session?.user?.id) {
+        const key = `nxtstps_compensation_intake_v1_${session.user.id}`;
+        setHasDraft(!!localStorage.getItem(key));
+      } else {
+        setHasDraft(false);
+      }
+    };
+
+    check();
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthed(!!session);
+
+      if (session?.user?.id) {
+        const key = `nxtstps_compensation_intake_v1_${session.user.id}`;
+        setHasDraft(!!localStorage.getItem(key));
+      } else {
+        setHasDraft(false);
+      }
     });
 
     return () => sub.subscription.unsubscribe();
@@ -48,13 +66,33 @@ export default function TopNav() {
 
         {/* Right: actions */}
         <nav className="flex items-center gap-3 text-xs text-slate-200">
-          <Link
-            href="/compensation/intake"
-            className="rounded-full border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-3 py-1.5 font-medium hover:bg-[#1C8C8C]/20"
-          >
-            Start Application
-          </Link>
+          {/* Primary CTA: Start vs Resume */}
+          {authed ? (
+            hasDraft ? (
+              <Link
+                href="/compensation/intake"
+                className="rounded-full border border-emerald-500 bg-emerald-500/10 px-3 py-1.5 text-emerald-300 hover:bg-emerald-500/20"
+              >
+                Resume Draft
+              </Link>
+            ) : (
+              <Link
+                href="/compensation/intake"
+                className="rounded-full border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-3 py-1.5 font-medium hover:bg-[#1C8C8C]/20"
+              >
+                Start Application
+              </Link>
+            )
+          ) : (
+            <Link
+              href="/login"
+              className="rounded-full border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-3 py-1.5 font-medium hover:bg-[#1C8C8C]/20"
+            >
+              Start Application
+            </Link>
+          )}
 
+          {/* Secondary actions */}
           {authed ? (
             <>
               <Link
