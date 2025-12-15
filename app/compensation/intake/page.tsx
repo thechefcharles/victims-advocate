@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"; // 👈 ADD useEffect
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSearchParams } from "next/navigation";
@@ -150,8 +150,8 @@ const makeEmptyApplication = (): CompensationApplication => ({
   },
 });
 
-export default function CompensationIntakePage() {
-  const router = useRouter();
+function CompensationIntakeInner() {
+    const router = useRouter();
   const searchParams = useSearchParams();
 const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
 
@@ -1597,6 +1597,7 @@ function CrimeForm({
         contextLabel="the crime and incident (police reports, witness statements)"
         defaultDocType="police_report"
       />
+    
 
     </section>
   );
@@ -3189,5 +3190,19 @@ function InlineDocumentUploader({
         </label>
       </div>
     </div>
+  );
+}
+
+export default function CompensationIntakePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+          <div className="max-w-3xl mx-auto">Loading…</div>
+        </main>
+      }
+    >
+      <CompensationIntakeInner />
+    </Suspense>
   );
 }

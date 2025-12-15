@@ -87,7 +87,8 @@ export default function AdvocateDashboardPage() {
 
         {cases.length === 0 ? (
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-300">
-            No cases yet. Ask a victim to invite you, or add access in the database.
+            No cases yet. Ask a victim to invite you, or add access in the
+            database.
           </div>
         ) : (
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
@@ -142,7 +143,8 @@ export default function AdvocateDashboardPage() {
         )}
 
         <p className="text-[11px] text-slate-500">
-          Opening a case takes you into the same guided intake flow, with permission-based editing.
+          Opening a case takes you into the same guided intake flow, with
+          permission-based editing.
         </p>
       </div>
     </main>
