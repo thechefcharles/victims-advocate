@@ -225,10 +225,12 @@ useEffect(() => {
       setCanEdit(!!json.access?.can_edit);
 
       // Your DB currently stores application as a stringified JSON
-      const loadedApp =
-        typeof json.case.application === "string"
-          ? JSON.parse(json.case.application)
-          : json.case.application;
+const rawApp = json.case.application;
+
+const loadedApp =
+  typeof rawApp === "string"
+    ? JSON.parse(rawApp) // old broken rows (string inside jsonb)
+    : rawApp;            // correct jsonb object
 
       setApp(loadedApp);
       setStep("victim");
@@ -297,7 +299,8 @@ useEffect(() => {
 useEffect(() => {
   if (!caseId) return;                 // only in case-link mode
   if (!loadedFromStorage) return;      // wait until case has loaded
-  if (!canEdit) return;                // view-only advocates shouldn't save
+  if (!canEdit) return;
+  if (savingCase) return;                // view-only advocates shouldn't save
 
   const timeout = setTimeout(async () => {
     try {
@@ -503,12 +506,18 @@ const res = await fetch("/api/compensation/cases", {
       return;
     }
 
-    const json = await res.json();
-    console.log("Saved case response:", json);
+const json = await res.json();
+console.log("Saved case response:", json);
 
-    alert("Your case has been saved for an advocate to review.");
-    // optional: navigate to /admin/cases
-    // window.location.href = "/admin/cases";
+const newCaseId = json?.case?.id;
+
+if (!newCaseId) {
+  alert("Saved, but no case ID was returned. Check the API response.");
+  return;
+}
+
+// ✅ redirect into case-linked mode
+router.push(`/compensation/intake?case=${newCaseId}`);
   } catch (err) {
     console.error("Error calling /api/compensation/cases", err);
     alert("Something went wrong saving your case. See console for details.");
@@ -811,6 +820,7 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
 
 {step === "summary" && (
   <SummaryView
+    caseId={caseId} // ✅ ADD THIS LINE
     victim={victim}
     applicant={applicant}
     crime={crime}
@@ -821,7 +831,7 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
     certification={certification}
     onChangeCertification={updateCertification}
     onDownloadSummaryPdf={handleDownloadPdf}
-    onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}  // 👈 ADD THIS
+    onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}
     onSaveCase={handleSaveCase}
   />
 )}
@@ -2590,6 +2600,7 @@ function FuneralForm({
 }
 
 function SummaryView({
+  caseId, // ✅ ADD THIS
   victim,
   applicant,
   crime,
@@ -2600,9 +2611,10 @@ function SummaryView({
   certification,
   onChangeCertification,
   onDownloadSummaryPdf,
-  onDownloadOfficialIlPdf,   // 👈 ADD THIS
+  onDownloadOfficialIlPdf,
   onSaveCase,
 }: {
+  caseId: string | null; // ✅ ADD THIS
   victim: VictimInfo;
   applicant: ApplicantInfo;
   crime: CrimeInfo;
@@ -2613,9 +2625,67 @@ function SummaryView({
   certification: CertificationInfo;
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
   onDownloadSummaryPdf: () => void;
-  onDownloadOfficialIlPdf: () => void;   // 👈 ADD THIS
+  onDownloadOfficialIlPdf: () => void;
   onSaveCase: () => void;
 }) {
+
+    const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteCanEdit, setInviteCanEdit] = useState(true);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteResult, setInviteResult] = useState<string | null>(null);
+
+const handleInvite = async () => {
+  setInviteLoading(true);
+  setInviteResult(null);
+
+  try {
+    // ✅ use the prop (already passed in)
+    if (!caseId) {
+      setInviteResult(
+        "Save this as a case first so we can generate a secure invite link."
+      );
+      return;
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+
+    if (!token) {
+      setInviteResult("You must be logged in to invite an advocate.");
+      return;
+    }
+
+    const res = await fetch("/api/case-access/invite", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        caseId, // ✅ now this is the prop
+        advocateEmail: inviteEmail,
+        canEdit: inviteCanEdit,
+      }),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      setInviteResult(text);
+      return;
+    }
+
+    const json = JSON.parse(text);
+    setInviteResult(
+      `✅ Access granted.\nShare this link with the advocate:\n${json.shareUrl}`
+    );
+  } catch (e: any) {
+    setInviteResult(e?.message || "Unexpected error inviting advocate.");
+  } finally {
+    setInviteLoading(false);
+  }
+};
+
                     const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
@@ -2819,6 +2889,7 @@ const primaryFuneralPayer = funeral.payments?.[0];
     Download official Illinois CVC form
   </button>
 
+{!caseId && (
   <button
     type="button"
     onClick={onSaveCase}
@@ -2826,6 +2897,18 @@ const primaryFuneralPayer = funeral.payments?.[0];
   >
     Save as case for advocate review
   </button>
+)}
+
+  <button
+  type="button"
+  onClick={() => {
+    setInviteResult(null);
+    setInviteOpen(true);
+  }}
+  className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+>
+  Invite advocate
+</button>
 
   <a
     href="/admin/cases"
@@ -2834,6 +2917,69 @@ const primaryFuneralPayer = funeral.payments?.[0];
     View saved cases →
   </a>
 </div>
+
+{inviteOpen && (
+  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
+    <div className="flex items-center justify-between">
+      <div className="font-semibold text-slate-100">Invite an advocate</div>
+      <button
+        type="button"
+        onClick={() => setInviteOpen(false)}
+        className="text-slate-400 hover:text-slate-200"
+      >
+        ✕
+      </button>
+    </div>
+
+    <p className="text-[11px] text-slate-400">
+      The advocate must already have an account using this email.
+    </p>
+
+    <label className="block space-y-1">
+      <span className="text-slate-300">Advocate email</span>
+      <input
+        value={inviteEmail}
+        onChange={(e) => setInviteEmail(e.target.value)}
+        placeholder="advocate@example.com"
+        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+      />
+    </label>
+
+    <label className="flex items-center gap-2 text-slate-300">
+      <input
+        type="checkbox"
+        checked={inviteCanEdit}
+        onChange={(e) => setInviteCanEdit(e.target.checked)}
+      />
+      Allow this advocate to edit
+    </label>
+
+    <div className="flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={handleInvite}
+        disabled={inviteLoading || !inviteEmail.trim()}
+        className="rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition"
+      >
+        {inviteLoading ? "Inviting…" : "Send invite"}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setInviteOpen(false)}
+        className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
+      >
+        Close
+      </button>
+    </div>
+
+    {inviteResult && (
+      <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
+{inviteResult}
+      </pre>
+    )}
+  </div>
+)}
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">

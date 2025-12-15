@@ -124,7 +124,7 @@ export async function PATCH(req: Request, context: RouteParams) {
   let body: any = null;
   try {
     body = await req.json();
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
@@ -133,11 +133,15 @@ export async function PATCH(req: Request, context: RouteParams) {
     return NextResponse.json({ error: "Missing application" }, { status: 400 });
   }
 
+  // ✅ Store consistently (your DB is currently storing stringified JSON)
+  const applicationToStore =
+    typeof application === "string" ? application : JSON.stringify(application);
+
   // ✅ Update case
   const { data: updated, error: updateError } = await supabaseAdmin
     .from("cases")
     .update({
-      application, // jsonb or text: supabase will handle jsonb fine
+      application: applicationToStore,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)
