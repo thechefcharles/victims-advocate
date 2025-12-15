@@ -3,13 +3,16 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
-function getUserIdFromAuthHeader(req: Request) {
+// UPDATED: allow status coming from client
+type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
+
+function getToken(req: Request) {
   const authHeader = req.headers.get("authorization") || "";
   return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 }
 
 async function requireUserId(req: Request): Promise<string> {
-  const token = getUserIdFromAuthHeader(req);
+  const token = getToken(req);
   if (!token) throw new Error("Unauthorized (missing token)");
 
   const supabaseAnon = createClient(
@@ -59,16 +62,33 @@ export async function POST(req: Request) {
     console.log("[CASES POST] resolved userId =", userId);
 
     const supabaseAdmin = getSupabaseAdmin();
-    const application = (await req.json()) as CompensationApplication;
+
+    // UPDATED: accept either:
+    // 1) { application: <app>, status?: "draft"|"ready_for_review"|... }
+    // 2) <app> directly (old client calls)
+    const body = await req.json().catch(() => null);
+    if (!body) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const application: CompensationApplication = (body?.application ?? body) as CompensationApplication;
+
+    // UPDATED: default draft (this enables “auto create case on load”)
+    const status: CaseStatus = (body?.status ?? "draft") as CaseStatus;
+
+    // OPTIONAL (recommended): only allow ready_for_review when explicitly requested
+    // (we are NOT hard-blocking here, just ensuring status is one of our allowed values)
+    const allowed: CaseStatus[] = ["draft", "ready_for_review", "submitted", "closed"];
+    const finalStatus: CaseStatus = allowed.includes(status) ? status : "draft";
 
     // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
         owner_user_id: userId,
-        status: "ready_for_review",
+        status: finalStatus,
         state_code: "IL",
-        application,
+        application, // jsonb is perfect
       })
       .select("*")
       .single();
@@ -81,7 +101,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2) NEW: Create owner access row (permission foundation)
+    // 2) Create owner access row
     const { error: accessError } = await supabaseAdmin
       .from("case_access")
       .insert({
@@ -94,8 +114,7 @@ export async function POST(req: Request) {
 
     if (accessError) {
       console.error("Error inserting case_access owner row", accessError);
-      // We do NOT fail the case creation. Return a warning.
-      // (You can fix permissions later without losing the case.)
+      // do not fail case creation
     }
 
     // 3) Attach any unassigned documents from this user to the new case

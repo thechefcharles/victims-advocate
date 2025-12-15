@@ -5,17 +5,24 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 
-const DRAFT_KEY_PREFIX = "nxtstps_compensation_intake_v1_";
+const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 
 export default function DashboardPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasDraft, setHasDraft] = useState(false);
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const readActiveCase = (id: string | null) => {
+    if (!id) return null;
+    return localStorage.getItem(`${ACTIVE_CASE_KEY_PREFIX}${id}`);
+  };
+
   useEffect(() => {
+    let mounted = true;
+
     const run = async () => {
       const { data } = await supabase.auth.getSession();
       const session = data.session;
@@ -28,25 +35,44 @@ export default function DashboardPage() {
       const id = session.user.id;
       const em = session.user.email ?? null;
 
+      if (!mounted) return;
+
       setUserId(id);
       setEmail(em);
-
-      const key = `${DRAFT_KEY_PREFIX}${id}`;
-      setHasDraft(!!localStorage.getItem(key));
-
+      setActiveCaseId(readActiveCase(id));
       setLoading(false);
     };
 
     run();
-  }, [router]);
+
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || !e.key.startsWith(ACTIVE_CASE_KEY_PREFIX)) return;
+
+      const currentUserId = userId;
+      if (!currentUserId) return;
+
+      const expectedKey = `${ACTIVE_CASE_KEY_PREFIX}${currentUserId}`;
+      if (e.key === expectedKey) {
+        setActiveCaseId(readActiveCase(currentUserId));
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("storage", onStorage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, userId]);
 
   const handleStartFresh = () => {
     if (!userId) return;
 
-    const key = `${DRAFT_KEY_PREFIX}${userId}`;
-    localStorage.removeItem(key);
+    localStorage.removeItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`);
+    setActiveCaseId(null);
 
-    setHasDraft(false);
+    // This will trigger Intake auto-create case on load
     router.push("/compensation/intake");
   };
 
@@ -62,6 +88,10 @@ export default function DashboardPage() {
       </main>
     );
   }
+
+  const resumeHref = activeCaseId
+    ? `/compensation/intake?case=${activeCaseId}`
+    : "/compensation/intake";
 
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
@@ -82,24 +112,24 @@ export default function DashboardPage() {
           </h2>
 
           <p className="text-[11px] text-slate-400">
-            {hasDraft
-              ? "You have a saved draft. You can continue where you left off or start over."
+            {activeCaseId
+              ? "You have an in-progress application. You can resume or start fresh."
               : "You haven’t started an application yet."}
           </p>
 
           <div className="flex flex-wrap gap-2">
             <Link
-              href="/compensation/intake"
+              href={resumeHref}
               className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                hasDraft
+                activeCaseId
                   ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
                   : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
               }`}
             >
-              {hasDraft ? "Resume application" : "Start application"}
+              {activeCaseId ? "Resume application" : "Start application"}
             </Link>
 
-            {hasDraft && (
+            {activeCaseId && (
               <button
                 type="button"
                 onClick={handleStartFresh}
@@ -126,8 +156,8 @@ export default function DashboardPage() {
         </div>
 
         <p className="text-[11px] text-slate-500 pt-4">
-          You can safely leave at any time. Your draft is only saved to your
-          account.
+          Your application is saved to your account. You can safely leave and
+          come back later.
         </p>
       </div>
     </main>

@@ -4,89 +4,36 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-const DRAFT_KEY_PREFIX = "nxtstps_compensation_intake_v1_";
-
-const STEPS = [
-  "victim",
-  "applicant",
-  "crime",
-  "losses",
-  "medical",
-  "employment",
-  "funeral",
-  "documents",
-  "summary",
-] as const;
-
-type IntakeStep = (typeof STEPS)[number];
-
-function getDraftProgress(userId: string) {
-  const key = `${DRAFT_KEY_PREFIX}${userId}`;
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as {
-      step?: IntakeStep;
-      maxStepIndex?: number;
-    };
-
-    const step = parsed.step ?? "victim";
-    const currentIndex = Math.max(0, STEPS.indexOf(step));
-    const maxIndex =
-      typeof parsed.maxStepIndex === "number"
-        ? Math.max(parsed.maxStepIndex, currentIndex)
-        : currentIndex;
-
-    return {
-      currentIndex,
-      maxIndex,
-      total: STEPS.length,
-      label: step,
-    };
-  } catch {
-    return null;
-  }
-}
+const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 
 export default function AuthPanel() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasDraft, setHasDraft] = useState(false);
-  const [progress, setProgress] = useState<null | {
-    currentIndex: number;
-    maxIndex: number;
-    total: number;
-    label: string;
-  }>(null);
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
 
-  const refreshDraft = (id: string | null) => {
-    if (!id) {
-      setHasDraft(false);
-      setProgress(null);
-      return;
-    }
-
-    const key = `${DRAFT_KEY_PREFIX}${id}`;
-    const exists = !!localStorage.getItem(key);
-    setHasDraft(exists);
-    setProgress(exists ? getDraftProgress(id) : null);
+  const readActiveCase = (id: string | null) => {
+    if (!id) return null;
+    return localStorage.getItem(`${ACTIVE_CASE_KEY_PREFIX}${id}`);
   };
 
   useEffect(() => {
-    const run = async () => {
+    let mounted = true;
+
+    const syncFromSession = async () => {
       const { data } = await supabase.auth.getSession();
       const session = data.session;
 
       const id = session?.user?.id ?? null;
       const em = session?.user?.email ?? null;
 
+      if (!mounted) return;
+
       setUserId(id);
       setEmail(em);
-      refreshDraft(id);
+      setActiveCaseId(readActiveCase(id));
     };
 
-    run();
+    syncFromSession();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       const id = session?.user?.id ?? null;
@@ -94,32 +41,37 @@ export default function AuthPanel() {
 
       setUserId(id);
       setEmail(em);
-      refreshDraft(id);
+      setActiveCaseId(readActiveCase(id));
     });
 
-    // If another tab updates the draft, reflect it
     const onStorage = (e: StorageEvent) => {
-      if (!userId) return;
-      if (e.key === `${DRAFT_KEY_PREFIX}${userId}`) {
-        refreshDraft(userId);
+      // Only respond to our active case keys
+      if (!e.key || !e.key.startsWith(ACTIVE_CASE_KEY_PREFIX)) return;
+
+      // If this user is logged in, and their pointer changed, refresh it.
+      // We can safely use localStorage read here.
+      const currentUserId = userId; // state snapshot
+      if (!currentUserId) return;
+
+      const expectedKey = `${ACTIVE_CASE_KEY_PREFIX}${currentUserId}`;
+      if (e.key === expectedKey) {
+        setActiveCaseId(readActiveCase(currentUserId));
       }
     };
+
     window.addEventListener("storage", onStorage);
 
     return () => {
+      mounted = false;
       sub.subscription.unsubscribe();
       window.removeEventListener("storage", onStorage);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const percent =
-    progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
-
-  const prettyLabel = (label: string) =>
-    label
-      .replace(/_/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+  const href = activeCaseId
+    ? `/compensation/intake?case=${activeCaseId}`
+    : "/compensation/intake";
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-3">
@@ -128,40 +80,16 @@ export default function AuthPanel() {
           <div className="text-[11px] text-slate-400">Signed in as</div>
           <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-          {/* ✅ Personal progress (only when draft exists) */}
-          {hasDraft && progress && (
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Your application progress</span>
-                <span>
-                  Step {progress.maxIndex + 1} of {progress.total}
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-              <div className="text-[11px] text-slate-500">
-                Current section:{" "}
-                <span className="text-slate-300">
-                  {prettyLabel(progress.label)}
-                </span>
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-wrap gap-2 pt-2">
             <Link
-              href="/compensation/intake"
+              href={href}
               className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                hasDraft
+                activeCaseId
                   ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
                   : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
               }`}
             >
-              {hasDraft ? "Resume application" : "Start application"}
+              {activeCaseId ? "Resume application" : "Start application"}
             </Link>
 
             <Link
@@ -171,6 +99,12 @@ export default function AuthPanel() {
               Learn how it works
             </Link>
           </div>
+
+          {activeCaseId && (
+            <p className="text-[11px] text-slate-500">
+              You have an in-progress application saved to your account.
+            </p>
+          )}
         </>
       ) : (
         <>

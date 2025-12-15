@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSearchParams } from "next/navigation";
@@ -31,30 +31,6 @@ type IntakeStep =
   | "summary";
 
 const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
-const CASES_STORAGE_KEY = "nxtstps_cases_v1"; // 👈 NEW
-
-
-
-const DOCS_STORAGE_KEY = "nxtstps_docs_v1"; // 👈 NEW
-
-type CaseStatus = "draft" | "ready_for_review";
-
-interface UploadedDoc {
-  id: string;
-  type: string;
-  description: string;
-  fileName: string;
-  fileSize: number;
-  lastModified: number;
-}
-
-interface SavedCase {
-  id: string;
-  createdAt: string;
-  status: CaseStatus;
-  application: CompensationApplication;
-  documents: UploadedDoc[]; // 👈 NEW
-}
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -175,6 +151,9 @@ const caseId = searchParams.get("case"); // ✅ if present, we load case from Su
   const [userId, setUserId] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
+const [saveToast, setSaveToast] = useState<string | null>(null);
+const [saveNowLoading, setSaveNowLoading] = useState(false);
+const creatingCaseRef = useRef(false);
 
 
 // per-user storage key (null until user is known)
@@ -238,6 +217,8 @@ const loadedApp =
 
       // IMPORTANT: mark as loaded so we don't block the UI
       setLoadedFromStorage(true);
+      if (userId) localStorage.setItem(`nxtstps_active_case_${userId}`, caseId);
+
     } catch (err) {
       console.error("Unexpected error loading case from API:", err);
       alert("Something went wrong loading that case.");
@@ -279,6 +260,69 @@ useEffect(() => {
     setLoadedFromStorage(true);
   }
 }, [storageKey, caseId]);
+
+// ✅ Auto-create a draft case on first load (so we always have a caseId)
+useEffect(() => {
+  if (caseId) return;
+  if (!userId) return;
+  if (!loadedFromStorage) return;
+
+  if (creatingCaseRef.current) return;
+  creatingCaseRef.current = true;
+
+  (async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+
+      // ✅ IMPORTANT: your /api/compensation/cases POST currently expects the BODY to be the application object
+      const res = await fetch("/api/compensation/cases", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(app), // ✅ FIXED (was {status, application})
+      });
+
+      if (!res.ok) {
+        console.error("Auto-create case failed:", await res.text());
+        setSaveToast("Couldn’t start application. Try refresh.");
+        setTimeout(() => setSaveToast(null), 2500);
+        return;
+      }
+
+      const json = await res.json();
+      const newCaseId = json?.case?.id;
+
+      if (!newCaseId) {
+        console.error("Auto-create case returned no id:", json);
+        setSaveToast("Created, but missing case ID.");
+        setTimeout(() => setSaveToast(null), 2500);
+        return;
+      }
+
+      // ✅ move into case-linked mode
+localStorage.setItem(`nxtstps_active_case_${userId}`, newCaseId);
+router.replace(`/compensation/intake?case=${newCaseId}`);
+      setSaveToast("Application started");
+      setTimeout(() => setSaveToast(null), 1500);
+      return;
+    } catch (e) {
+      console.error("Auto-create case error:", e);
+      setSaveToast("Couldn’t start application. Try refresh.");
+      setTimeout(() => setSaveToast(null), 2500);
+    }
+    // ✅ DO NOT set creatingCaseRef.current back to false (prevents double-create in dev)
+  })();
+}, [caseId, userId, loadedFromStorage, router,]); // ✅ keep app here so draft includes what user typed
+
+// ✅ Remember the most recent active case for this user (used by "Resume Application")
+useEffect(() => {
+  if (!userId || !caseId) return;
+  localStorage.setItem(`nxtstps_active_case_${userId}`, caseId);
+}, [userId, caseId]);
 
 // 🟡 2. Auto-save whenever the application or step changes
 useEffect(() => {
@@ -415,6 +459,53 @@ const handleDownloadPdf = async () => {
   } catch (err) {
     console.error("Error downloading summary PDF", err);
     alert("Something went wrong generating the PDF.");
+  }
+};
+
+const handleSaveNow = async () => {
+  // If this user is viewing a case but can't edit, don't allow saving
+  if (caseId && !canEdit) {
+    setSaveToast("View-only access. You can’t save changes.");
+    setTimeout(() => setSaveToast(null), 2000);
+    return;
+  }
+
+  // If there is no caseId (shouldn’t happen after “case created on start”),
+  // you can either block or fallback. I’m blocking with a clear message:
+  if (!caseId) {
+    setSaveToast("No case loaded yet. Start the application first.");
+    setTimeout(() => setSaveToast(null), 2000);
+    return;
+  }
+
+  try {
+    setSaveNowLoading(true);
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) throw new Error("Not logged in");
+
+    const res = await fetch(`/api/compensation/cases/${caseId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ application: app }),
+    });
+
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    setSaveToast("Application saved");
+    setTimeout(() => setSaveToast(null), 2000);
+  } catch (e) {
+    console.error("Save now failed:", e);
+    setSaveToast("Couldn’t save. Try again.");
+    setTimeout(() => setSaveToast(null), 2500);
+  } finally {
+    setSaveNowLoading(false);
   }
 };
   
@@ -836,140 +927,127 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
   />
 )}
 
-        {/* Nav buttons + primary actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-          {/* Left side: Back + Save & Exit */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={step === "victim"}
-              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
-            >
-              ← Back
-            </button>
+{/* Nav buttons + primary actions */}
+<div className="flex flex-col gap-3 pt-4 border-t border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+{/* Left side: Back + Save */}
+<div className="flex items-center gap-2">
+  <button
+    type="button"
+    onClick={handleBack}
+    disabled={step === "victim"}
+    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
+  >
+    ← Back
+  </button>
 
-            <button
-              type="button"
-onClick={() => {
-  try {
-    if (typeof window !== "undefined") {
-      const payload = { app, step, maxStepIndex };
+  <button
+    type="button"
+    onClick={handleSaveNow}
+    disabled={saveNowLoading || !caseId || !canEdit}
+    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+    title={!caseId ? "Creating your case..." : !canEdit ? "View-only access" : ""}
+  >
+    {saveNowLoading ? "Saving..." : "Save"}
+  </button>
 
-      // ✅ Only save local draft if we're NOT in case-link mode
-      if (!caseId && storageKey) {
-        localStorage.setItem(storageKey, JSON.stringify(payload));
-      }
-    }
-  } catch (err) {
-    console.error("Error saving intake before exit", err);
-  }
+  {caseId && canEdit && savingCase && (
+    <span className="text-[11px] text-slate-400">Auto-saving…</span>
+  )}
+</div>
 
-  router.push("/");
-}}
-              className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition"
-            >
-              Save &amp; Exit
-            </button>
-          </div>
+  {/* Right side: step-specific primary button */}
+  <div className="flex items-center justify-end">
+    {step === "victim" && (
+      <button
+        type="button"
+        onClick={handleNextFromVictim}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Applicant →
+      </button>
+    )}
 
-          {/* Right side: step-specific primary button */}
-          <div className="flex items-center">
-            {step === "victim" && (
-              <button
-                type="button"
-                onClick={handleNextFromVictim}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Applicant →
-              </button>
-            )}
+    {step === "applicant" && (
+      <button
+        type="button"
+        onClick={handleNextFromApplicant}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Crime Details →
+      </button>
+    )}
 
-            {step === "applicant" && (
-              <button
-                type="button"
-                onClick={handleNextFromApplicant}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Crime Details →
-              </button>
-            )}
+    {step === "crime" && (
+      <button
+        type="button"
+        onClick={handleNextFromCrime}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Losses →
+      </button>
+    )}
 
-            {step === "crime" && (
-              <button
-                type="button"
-                onClick={handleNextFromCrime}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Losses →
-              </button>
-            )}
+    {step === "losses" && (
+      <button
+        type="button"
+        onClick={handleNextFromLosses}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Medical →
+      </button>
+    )}
 
-            {step === "losses" && (
-              <button
-                type="button"
-                onClick={handleNextFromLosses}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Medical →
-              </button>
-            )}
+    {step === "medical" && (
+      <button
+        type="button"
+        onClick={handleNextFromMedical}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Work &amp; income →
+      </button>
+    )}
 
-            {step === "medical" && (
-              <button
-                type="button"
-                onClick={handleNextFromMedical}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Work &amp; income →
-              </button>
-            )}
+    {step === "employment" && (
+      <button
+        type="button"
+        onClick={handleNextFromEmployment}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Continue to Funeral &amp; dependents →
+      </button>
+    )}
 
-            {step === "employment" && (
-              <button
-                type="button"
-                onClick={handleNextFromEmployment}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Continue to Funeral &amp; dependents →
-              </button>
-            )}
+    {step === "funeral" && (
+      <button
+        type="button"
+        onClick={handleNextFromFuneral}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Go to Documents →
+      </button>
+    )}
 
-            {step === "funeral" && (
-              <button
-                type="button"
-                onClick={handleNextFromFuneral}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Go to Documents →
-              </button>
-            )}
+    {step === "documents" && (
+      <button
+        type="button"
+        onClick={() => setStep("summary")}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Go to Summary →
+      </button>
+    )}
 
-            {step === "documents" && (
-              <button
-                type="button"
-                onClick={() => setStep("summary")}
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Go to Summary →
-              </button>
-            )}
-
-            {step === "summary" && (
-              <button
-                type="button"
-                onClick={() =>
-                  alert(
-                    "Next (future phase): document upload and PDF generation."
-                  )
-                }
-                className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-              >
-                Looks good – continue
-              </button>
-            )}
-          </div>
-        </div>
+    {step === "summary" && (
+      <button
+        type="button"
+        onClick={() => setSaveToast("You're already in the final review. Use Save if needed.")}
+        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+      >
+        Review complete
+      </button>
+    )}
+  </div>
+</div>
 
         <p className="text-[11px] text-slate-500">
           You are not submitting anything to the state yet. This is preparing a
@@ -1054,6 +1132,11 @@ onClick={() => {
           </button>
         )}
       </div>
+      {saveToast && (
+  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full border border-slate-700 bg-slate-950/90 px-4 py-2 text-xs text-slate-100 shadow-lg">
+    {saveToast}
+  </div>
+)}
       
     </main>
   );
@@ -3345,6 +3428,7 @@ export default function CompensationIntakePage() {
       fallback={
         <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
           <div className="max-w-3xl mx-auto">Loading…</div>
+          
         </main>
       }
     >
