@@ -17,13 +17,40 @@ export default function LoginForm() {
     setErr(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-    setLoading(false);
-    if (error) return setErr(error.message);
+      if (error) {
+        setErr(error.message);
+        return;
+      }
 
-    router.push("/dashboard");
-    router.refresh();
+      // NEW: read role (so we can route later)
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+
+      let role: string | null = null;
+      if (uid) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", uid)
+          .single();
+
+        role = profile?.role ?? null;
+      }
+
+      // For now: send both to dashboard.
+      // Later you can branch:
+      // if (role === "advocate") router.push("/dashboard"); else router.push("/dashboard");
+      router.push("/dashboard");
+      router.refresh();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,8 +81,15 @@ export default function LoginForm() {
       </button>
 
       <div className="text-sm opacity-80 flex gap-4">
-        <a className="underline" href="/signup">Create account</a>
-        <a className="underline" href="/forgot-password">Forgot password</a>
+        <a className="underline" href="/signup">
+          Create account
+        </a>
+        <a className="underline" href="/signup/advocate">
+          Create Victim Advocate account
+        </a>
+        <a className="underline" href="/forgot-password">
+          Forgot password
+        </a>
       </div>
     </form>
   );

@@ -28,6 +28,8 @@ export default function HomePage() {
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (chatLoading) return;
+
     const trimmed = chatInput.trim();
     if (!trimmed) return;
 
@@ -35,6 +37,7 @@ export default function HomePage() {
       ...chatMessages,
       { role: "user" as const, content: trimmed },
     ];
+
     setChatMessages(newMessages);
     setChatInput("");
     setChatLoading(true);
@@ -108,7 +111,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Right-hand preview card (unchanged) */}
+          {/* Right-hand preview card */}
           <div className="relative">
             <div className="absolute -inset-8 bg-gradient-to-tr from-[#1C8C8C]/10 via-[#F2C94C]/5 to-transparent blur-3xl opacity-80 pointer-events-none" />
             <div className="relative rounded-3xl border border-slate-700 bg-gradient-to-b from-[#0A2239] to-[#020b16] p-5 shadow-lg shadow-black/40 space-y-4">
@@ -188,7 +191,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* WHAT NXTSTPS HELPS WITH (FEATURE TILES) */}
+        {/* WHAT NXTSTPS HELPS WITH */}
         <section className="space-y-4">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="text-xl sm:text-2xl font-semibold text-slate-50">
@@ -234,7 +237,6 @@ export default function HomePage() {
             agencies.
           </p>
 
-          {/* Tabs on desktop, stacked buttons on mobile */}
           <div className="flex flex-wrap gap-2 text-[11px]">
             {audiences.map((aud) => (
               <button
@@ -264,9 +266,7 @@ export default function HomePage() {
               <ul className="space-y-1.5">
                 <li>• Streamline caseloads with automated workflows.</li>
                 <li>• Reduce incomplete submissions and preventable errors.</li>
-                <li>
-                  • Maintain trauma-informed care while saving significant time.
-                </li>
+                <li>• Maintain trauma-informed care while saving significant time.</li>
               </ul>
             )}
             {activeAudience === "Case Managers" && (
@@ -278,10 +278,7 @@ export default function HomePage() {
             )}
             {activeAudience === "Community Organizations" && (
               <ul className="space-y-1.5">
-                <li>
-                  • Centralize victim-support work across outreach, advocacy,
-                  and admin teams.
-                </li>
+                <li>• Centralize victim-support work across outreach and advocacy.</li>
                 <li>• Improve internal coordination and warm hand-offs.</li>
                 <li>• Access aggregate reporting to strengthen funding.</li>
               </ul>
@@ -290,10 +287,7 @@ export default function HomePage() {
               <ul className="space-y-1.5">
                 <li>• Simplify bill submission and verification workflows.</li>
                 <li>• Reduce burden on social workers and billing teams.</li>
-                <li>
-                  • Help patients access financial assistance quickly and
-                  accurately.
-                </li>
+                <li>• Help patients access financial assistance quickly.</li>
               </ul>
             )}
             {activeAudience === "Government Departments" && (
@@ -306,7 +300,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* TRANSPARENCY & EFFICIENCY PROMISE */}
+        {/* TRANSPARENCY */}
         <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-3">
           <p className="text-sm sm:text-base font-semibold text-slate-50">
             Victim services should be fast, clear, and fair.
@@ -324,28 +318,7 @@ export default function HomePage() {
           </ul>
         </section>
 
-        {/* REAL EXAMPLES OF DENIAL PREVENTION */}
-        <section className="space-y-4">
-          <h2 className="text-xl sm:text-2xl font-semibold text-slate-50">
-            Real examples of denial prevention
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3 text-xs">
-            <MiniCard
-              title="Missing police report?"
-              body="NxtStps detects when a police report number is missing or doesn&apos;t match your story, and helps you fix it before you submit."
-            />
-            <MiniCard
-              title="Medical receipt mismatch?"
-              body="We compare the bills you upload with what you enter so that amounts, dates, and providers line up cleanly for reviewers."
-            />
-            <MiniCard
-              title="Not sure if you&apos;re eligible?"
-              body="We walk through key eligibility rules in plain language and flag where you may need more information or support."
-            />
-          </div>
-        </section>
-
-        {/* STATE SELECTOR + SAFETY / PRIVACY */}
+        {/* STATE + PRIVACY */}
         <section className="grid gap-6 md:grid-cols-[2fr,3fr] items-start">
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
             <h3 className="text-sm font-semibold text-slate-50">
@@ -381,7 +354,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* MULTILINGUAL SUPPORT BANNER */}
+        {/* MULTILINGUAL */}
         <section className="rounded-2xl border border-[#1C8C8C]/40 bg-[#1C8C8C]/10 px-4 py-3 text-[11px] text-slate-50 flex flex-wrap items-center justify-between gap-2">
           <p>
             <span className="font-semibold">Multilingual support.</span> NxtStps
@@ -411,8 +384,8 @@ export default function HomePage() {
             <Link href="/compensation" className="hover:text-slate-200">
               For Victims
             </Link>
-            <Link href="/admin/cases" className="hover:text-slate-200">
-              For Advocates
+            <Link href="/dashboard" className="hover:text-slate-200">
+              My cases
             </Link>
             <Link href="/privacy" className="hover:text-slate-200">
               Privacy &amp; Security
@@ -430,7 +403,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-{/* NxtGuide widget (unchanged) */}
+      {/* NxtGuide widget */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
           <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
@@ -481,19 +454,21 @@ export default function HomePage() {
                 </div>
               ))}
               {chatLoading && (
-                <p className="text-[11px] text-slate-400">
-                  NxtGuide is typing…
-                </p>
+                <p className="text-[11px] text-slate-400">NxtGuide is typing…</p>
               )}
             </div>
 
-            <form onSubmit={handleChatSubmit} className="border-t border-slate-800 p-2">
+            <form
+              onSubmit={handleChatSubmit}
+              className="border-t border-slate-800 p-2"
+            >
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask NxtGuide anything..."
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
+                disabled={chatLoading}
+                placeholder={chatLoading ? "Thinking…" : "Ask NxtGuide anything..."}
+                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C] disabled:opacity-60"
               />
             </form>
           </div>
@@ -514,7 +489,6 @@ export default function HomePage() {
   );
 }
 
-
 function Badge({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/70 px-2.5 py-1 text-[11px] text-slate-300">
@@ -523,13 +497,7 @@ function Badge({ children }: { children: React.ReactNode }) {
   );
 }
 
-function FeatureCard({
-  title,
-  body,
-}: {
-  title: string;
-  body: string;
-}) {
+function FeatureCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="h-full rounded-2xl border border-slate-800 bg-slate-950/70 p-4 shadow-sm shadow-black/30">
       <h3 className="text-sm font-semibold text-slate-50 mb-1.5">{title}</h3>
@@ -538,13 +506,7 @@ function FeatureCard({
   );
 }
 
-function MiniCard({
-  title,
-  body,
-}: {
-  title: string;
-  body: string;
-}) {
+function MiniCard({ title, body }: { title: string; body: string }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
       <h3 className="text-xs font-semibold text-slate-50 mb-1">{title}</h3>

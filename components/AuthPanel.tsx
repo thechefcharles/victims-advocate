@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
@@ -28,13 +28,33 @@ type ProgressPayload = {
   updatedAt?: number;
 };
 
+type ProfileRole = "victim" | "advocate";
+
 function prettyLabel(label: string) {
   return label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function safeJsonParse<T>(raw: string | null): T | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function safeGetItem(key: string) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
 }
 
 export default function AuthPanel() {
   const [email, setEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [role, setRole] = useState<ProfileRole>("victim");
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [progress, setProgress] = useState<null | {
@@ -43,50 +63,74 @@ export default function AuthPanel() {
     label: string;
   }>(null);
 
-  const refresh = (id: string | null) => {
+  const userIdRef = useRef<string | null>(null);
+
+  const refresh = useCallback((id: string | null) => {
     if (!id) {
       setActiveCaseId(null);
       setProgress(null);
       return;
     }
 
-    // active case pointer
     const activeKey = `${ACTIVE_CASE_KEY_PREFIX}${id}`;
-    const active = localStorage.getItem(activeKey);
-    setActiveCaseId(active);
+    let active: string | null = safeGetItem(activeKey);
 
-    // progress payload
     const progKey = `${PROGRESS_KEY_PREFIX}${id}`;
-    const raw = localStorage.getItem(progKey);
-    if (!raw) {
+    const parsed = safeJsonParse<ProgressPayload>(safeGetItem(progKey));
+
+    if (!active && parsed?.caseId) active = parsed.caseId;
+    setActiveCaseId(active ?? null);
+
+    if (!parsed) {
       setProgress(null);
       return;
     }
 
-    try {
-      const parsed = JSON.parse(raw) as ProgressPayload;
+    const step = parsed.step ?? "victim";
+    const currentIndex = Math.max(0, STEPS.indexOf(step));
+    const maxIndex =
+      typeof parsed.maxStepIndex === "number"
+        ? Math.max(parsed.maxStepIndex, currentIndex)
+        : currentIndex;
 
-      // fallback: if active case pointer missing but progress has caseId, use it
-      if (!active && parsed.caseId) setActiveCaseId(parsed.caseId);
-
-      const step = parsed.step ?? "victim";
-      const currentIndex = Math.max(0, STEPS.indexOf(step));
-      const maxIndex =
-        typeof parsed.maxStepIndex === "number"
-          ? Math.max(parsed.maxStepIndex, currentIndex)
-          : currentIndex;
-
-      setProgress({
-        maxIndex,
-        total: STEPS.length,
-        label: step,
-      });
-    } catch {
-      setProgress(null);
-    }
-  };
+    setProgress({
+      maxIndex,
+      total: STEPS.length,
+      label: step,
+    });
+  }, []);
 
   useEffect(() => {
+    let mounted = true;
+
+const loadRole = async (session: any) => {
+  const uid = session?.user?.id as string | undefined;
+  if (!uid) {
+    setRole("victim");
+    return;
+  }
+
+  // ✅ PRIMARY: auth metadata role (fast + reliable)
+  const metaRole = (session.user.user_metadata?.role as ProfileRole) ?? "victim";
+  const resolved: ProfileRole = metaRole === "advocate" ? "advocate" : "victim";
+  setRole(resolved);
+
+  // ✅ SECONDARY: best-effort confirm from profiles (may fail due to RLS)
+  try {
+    const { data: prof, error } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", uid)
+      .maybeSingle();
+
+    if (!error && prof?.role) {
+      setRole(prof.role === "advocate" ? "advocate" : "victim");
+    }
+  } catch {
+    // ignore
+  }
+};
+
     const run = async () => {
       const { data } = await supabase.auth.getSession();
       const session = data.session;
@@ -94,40 +138,68 @@ export default function AuthPanel() {
       const id = session?.user?.id ?? null;
       const em = session?.user?.email ?? null;
 
+      if (!mounted) return;
+
+      userIdRef.current = id;
       setUserId(id);
       setEmail(em);
+
+await loadRole(session);
+
       refresh(id);
+      // ✅ If advocate, never show victim progress/start/resume
+const metaRole = (session?.user?.user_metadata?.role as ProfileRole) ?? "victim";
+if (metaRole === "advocate") {
+  setProgress(null);
+  setActiveCaseId(null);
+}
     };
 
     run();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, session) => {
       const id = session?.user?.id ?? null;
       const em = session?.user?.email ?? null;
 
+      userIdRef.current = id;
       setUserId(id);
       setEmail(em);
+
+await loadRole(session);
+
       refresh(id);
+      // ✅ If advocate, never show victim progress/start/resume
+const metaRole = (session?.user?.user_metadata?.role as ProfileRole) ?? "victim";
+if (metaRole === "advocate") {
+  setProgress(null);
+  setActiveCaseId(null);
+}
     });
 
     const onStorage = (e: StorageEvent) => {
-      if (!userId) return;
-      const key1 = `${ACTIVE_CASE_KEY_PREFIX}${userId}`;
-      const key2 = `${PROGRESS_KEY_PREFIX}${userId}`;
+      const uid = userIdRef.current;
+      if (!uid) return;
 
-      if (e.key && (e.key === key1 || e.key === key2)) {
-        refresh(userId);
+      const key1 = `${ACTIVE_CASE_KEY_PREFIX}${uid}`;
+      const key2 = `${PROGRESS_KEY_PREFIX}${uid}`;
+
+      if (e.key === key1 || e.key === key2) {
+        refresh(uid);
       }
     };
 
     window.addEventListener("storage", onStorage);
+
     return () => {
+      mounted = false;
       sub.subscription.unsubscribe();
       window.removeEventListener("storage", onStorage);
     };
-  }, [userId]);
+  }, [refresh]);
 
-  const percent = progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
+  const percent = useMemo(() => {
+    return progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
+  }, [progress]);
 
   const resumeHref = activeCaseId
     ? `/compensation/intake?case=${activeCaseId}`
@@ -138,61 +210,104 @@ export default function AuthPanel() {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-3">
       {userId ? (
-        <>
-          <div className="text-[11px] text-slate-400">Signed in as</div>
-          <div className="text-sm font-semibold text-slate-100">{email}</div>
+        role === "advocate" ? (
+          <>
+<div className="text-[11px] text-slate-400">
+  Signed in as {role === "advocate" ? "Advocate" : "Victim"}
+</div>
+            <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-          {/* Progress bar (only when authed) */}
-          {progress && (
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Your application progress</span>
-                <span>
-                  Step {progress.maxIndex + 1} of {progress.total}
-                </span>
-              </div>
+            <div className="flex flex-wrap gap-2 pt-3">
+              <Link
+                href="/dashboard"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+              >
+                Go to My clients →
+              </Link>
 
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-
-              <div className="text-[11px] text-slate-500">
-                Current section:{" "}
-                <span className="text-slate-300">{prettyLabel(progress.label)}</span>
-              </div>
+              <Link
+                href="/knowledge/compensation"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                Learn how it works
+              </Link>
             </div>
-          )}
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Link
-              href={resumeHref}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                activeCaseId
-                  ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
-                  : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-              }`}
-            >
-              {ctaLabel}
-            </Link>
+            <p className="text-[11px] text-slate-500">
+              Advocates don’t fill out applications here — victims share cases with you for review.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="text-[11px] text-slate-400">Signed in as</div>
+            <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-            <Link
-              href="/dashboard"
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-            >
-              Dashboard
-            </Link>
+              {role === "victim" && progress && (
+                <div className="pt-2 space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Your application progress</span>
+                  <span>
+                    Step {progress.maxIndex + 1} of {progress.total}
+                  </span>
+                </div>
 
-            <Link
-              href="/knowledge/compensation"
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-            >
-              Learn how it works
-            </Link>
-          </div>
-        </>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+
+                <div className="text-[11px] text-slate-500">
+                  Current section:{" "}
+                  <span className="text-slate-300">
+                    {prettyLabel(progress.label)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+<div className="flex flex-wrap gap-2 pt-2">
+  {role === "victim" ? (
+    <>
+      <Link
+        href={resumeHref}
+        className={`rounded-full px-4 py-2 text-xs font-semibold ${
+          activeCaseId
+            ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
+            : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+        }`}
+      >
+        {activeCaseId ? "Resume application" : "Start application"}
+      </Link>
+
+      <Link
+        href="/dashboard"
+        className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+      >
+        My cases
+      </Link>
+    </>
+  ) : (
+    <>
+      <Link
+        href="/dashboard"
+        className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+      >
+        View my clients
+      </Link>
+    </>
+  )}
+
+  <Link
+    href="/knowledge/compensation"
+    className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+  >
+    Learn how it works
+  </Link>
+</div>
+          </>
+        )
       ) : (
         <InlineLoginCard />
       )}
@@ -223,10 +338,8 @@ function InlineLoginCard() {
         return;
       }
 
-      // Optional: persist preference (Supabase manages session; this is just UI state)
       if (!remember) {
-        // If you want "remember me" to actually change persistence, we'd handle that
-        // via Supabase client config. For now this is a UI checkbox.
+        // UI only for now
       }
     } finally {
       setLoading(false);
@@ -288,21 +401,23 @@ function InlineLoginCard() {
           {loading ? "Signing in…" : "Sign in"}
         </button>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <span>
-            New here?{" "}
-            <Link
-              href="/signup"
-              className="underline underline-offset-2 hover:text-slate-200"
-            >
-              Create an account
-            </Link>
-          </span>
+        <div className="flex items-start justify-between gap-4 text-[11px] text-slate-400">
+          <div className="flex flex-col gap-1">
+            <div>
+              New here?{" "}
+              <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
+                Create victim account
+              </Link>
+            </div>
+            <div>
+              Work as an advocate?{" "}
+              <Link href="/signup/advocate" className="underline underline-offset-2 hover:text-slate-200">
+                Create victim advocate account
+              </Link>
+            </div>
+          </div>
 
-          <Link
-            href="/help"
-            className="underline underline-offset-2 hover:text-slate-200"
-          >
+          <Link href="/help" className="underline underline-offset-2 hover:text-slate-200">
             Need help?
           </Link>
         </div>
