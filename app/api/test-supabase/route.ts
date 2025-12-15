@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const supabaseServer = getSupabaseServer();
+    const supabaseAdmin = getSupabaseAdmin();
 
-    const { data, error } = await supabaseServer.from("cases").select("*");
+    const { data, error } = await supabaseAdmin.from("cases").select("*");
 
     return NextResponse.json({
       success: !error,

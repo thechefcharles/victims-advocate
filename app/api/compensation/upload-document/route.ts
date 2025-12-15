@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseRouteAuth } from "@/lib/supabaseRoute";
 
-export const runtime = "nodejs"; // ✅ storage upload + fs-safe if ever needed
-
-const DEV_USER_ID = process.env.DEV_SUPABASE_USER_ID!;
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const supabaseServer = getSupabaseServer(); // ✅ create per-request
+    const supabaseAuth = getSupabaseRouteAuth();
+    const { data: authData } = await supabaseAuth.auth.getUser();
+    console.log("[UPLOAD] auth user:", authData.user?.id);
+
+    if (!authData.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = authData.user.id;
+    const supabaseAdmin = getSupabaseAdmin();
 
     const formData = await req.formData();
 
@@ -26,11 +34,11 @@ export async function POST(req: Request) {
       ? file.name.substring(file.name.lastIndexOf(".") + 1)
       : "bin";
 
-    const storagePath = `${DEV_USER_ID}/unassigned/${Date.now()}-${Math.random()
+    const storagePath = `${userId}/unassigned/${Date.now()}-${Math.random()
       .toString(36)
       .slice(2)}.${ext}`;
 
-    const { error: uploadError } = await supabaseServer.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from("case-documents")
       .upload(storagePath, file, {
         cacheControl: "3600",
@@ -43,11 +51,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
     }
 
-    const { data, error: insertError } = await supabaseServer
+    const { data, error: insertError } = await supabaseAdmin
       .from("documents")
       .insert({
         case_id: null,
-        uploaded_by_user_id: DEV_USER_ID,
+        uploaded_by_user_id: userId,
         doc_type: docType,
         description,
         file_name: file.name,
@@ -64,8 +72,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ document: data });
-  } catch (err) {
-    console.error("Error in upload-document route", err);
-    return NextResponse.json({ error: "Unexpected error processing upload" }, { status: 500 });
-  }
+} catch (err: any) {
+  console.error("Error in upload-document route", err);
+  return NextResponse.json(
+    { error: "Unexpected error processing upload", details: err?.message ?? String(err) },
+    { status: 500 }
+  );
+}
 }

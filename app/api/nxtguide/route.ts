@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs"; // ✅ safest for OpenAI + server + Supabase
 
@@ -28,7 +28,7 @@ type IntakeStep =
 
 export async function POST(req: Request) {
   try {
-    const supabaseServer = getSupabaseServer(); // ✅ per-request client
+    const supabaseAdmin = getSupabaseAdmin(); // ✅ per-request client
 
     const body = await req.json().catch(() => null);
     if (!body) {
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 
     // ✅ Advocate case summary (case + docs)
     if (contextRoute.startsWith("/admin/cases") && caseId) {
-      const { caseSummary } = await buildAdvocateCaseSummary(supabaseServer, caseId);
+      const { caseSummary } = await buildAdvocateCaseSummary(supabaseAdmin, caseId);
       if (caseSummary) advocateCaseSummary = caseSummary;
     }
 
@@ -99,11 +99,11 @@ export async function POST(req: Request) {
 ------------------------------ */
 
 async function buildAdvocateCaseSummary(
-  supabaseServer: ReturnType<typeof getSupabaseServer>,
+  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
   caseId: string
 ): Promise<{ caseSummary: string | null; error?: string }> {
   try {
-    const { data: caseRow, error: caseError } = await supabaseServer
+    const { data: caseRow, error: caseError } = await supabaseAdmin
       .from("cases")
       .select("*")
       .eq("id", caseId)
@@ -113,7 +113,7 @@ async function buildAdvocateCaseSummary(
       return { caseSummary: null, error: "Case not found" };
     }
 
-    const { data: docs, error: docsError } = await supabaseServer
+    const { data: docs, error: docsError } = await supabaseAdmin
       .from("documents")
       .select("*")
       .eq("case_id", caseId);

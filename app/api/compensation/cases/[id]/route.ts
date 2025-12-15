@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 export async function GET(req: Request, context: RouteParams) {
-  const supabaseServer = getSupabaseServer(); // ✅ create client here (runtime)
+  const supabaseAdmin = getSupabaseAdmin(); // ✅ create client here (runtime)
 
   const { id } = await context.params;
 
@@ -18,7 +18,7 @@ export async function GET(req: Request, context: RouteParams) {
   }
 
   try {
-    const { data: caseRow, error: caseError } = await supabaseServer
+    const { data: caseRow, error: caseError } = await supabaseAdmin
       .from("cases")
       .select("*")
       .eq("id", id)
@@ -34,7 +34,7 @@ export async function GET(req: Request, context: RouteParams) {
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
 
-    const { data: docs, error: docsError } = await supabaseServer
+    const { data: docs, error: docsError } = await supabaseAdmin
       .from("documents")
       .select("*")
       .eq("case_id", id)

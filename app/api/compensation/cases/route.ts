@@ -1,22 +1,23 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabaseServer";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSupabaseRouteAuth } from "@/lib/supabaseRoute";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-
-function getDevUserId() {
-  const id = process.env.DEV_SUPABASE_USER_ID;
-  if (!id) throw new Error("Missing DEV_SUPABASE_USER_ID");
-  return id;
-}
 
 export async function GET() {
   try {
-    const supabaseServer = getSupabaseServer();
-    const DEV_USER_ID = getDevUserId();
+    const supabaseAuth = getSupabaseRouteAuth();
+    const { data: authData } = await supabaseAuth.auth.getUser();
 
-    const { data, error } = await supabaseServer
+    if (!authData.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    const { data, error } = await supabaseAdmin
       .from("cases")
       .select("*")
-      .eq("owner_user_id", DEV_USER_ID)
+      .eq("owner_user_id", authData.user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -37,19 +38,23 @@ export async function GET() {
   }
 }
 
-// POST /api/compensation/cases  → create case + attach docs
 export async function POST(req: Request) {
   try {
-    const supabaseServer = getSupabaseServer();
-    const DEV_USER_ID = getDevUserId();
+    const supabaseAuth = getSupabaseRouteAuth();
+    const { data: authData } = await supabaseAuth.auth.getUser();
 
+    if (!authData.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const supabaseAdmin = getSupabaseAdmin();
     const application = (await req.json()) as CompensationApplication;
 
-    // 1) Insert the new case
-    const { data: newCase, error: caseError } = await supabaseServer
+    // 1) Insert the new case owned by THIS victim
+    const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
-        owner_user_id: DEV_USER_ID,
+        owner_user_id: authData.user.id,
         status: "ready_for_review",
         state_code: "IL",
         application,
@@ -62,11 +67,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Failed to save case" }, { status: 500 });
     }
 
-    // 2) Attach any unassigned documents from this user to the new case
-    const { error: attachError } = await supabaseServer
+    // 2) Attach any unassigned documents from THIS victim to the new case
+    const { error: attachError } = await supabaseAdmin
       .from("documents")
       .update({ case_id: newCase.id })
-      .eq("uploaded_by_user_id", DEV_USER_ID)
+      .eq("uploaded_by_user_id", authData.user.id)
       .is("case_id", null);
 
     if (attachError) {
