@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"; // 👈 ADD useEffect
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 import type {
   VictimInfo,
@@ -372,12 +373,17 @@ const handleSaveCase = async () => {
   try {
     console.log("Saving case with application:", app);
 
-    const res = await fetch("/api/compensation/cases", {
-      // 👈 IMPORTANT: this path must match app/api/compensation/cases/route.ts
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(app),
-    });
+const { data: sessionData } = await supabase.auth.getSession();
+const accessToken = sessionData.session?.access_token;
+
+const res = await fetch("/api/compensation/cases", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+  },
+  body: JSON.stringify(app),
+});
 
     if (!res.ok) {
       const text = await res.text();
@@ -2994,39 +3000,46 @@ function InlineDocumentUploader({
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach(async (file) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("docType", defaultDocType);
-      formData.append("description", description);
+    // ✅ Use Promise.all (async-safe). Avoid async forEach.
+    await Promise.all(
+      Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("docType", defaultDocType);
+        formData.append("description", description);
 
-      try {
-        const res = await fetch("/api/compensation/upload-document", {
-          method: "POST",
-          body: formData,
-        });
+        try {
+          // 🔐 Get the logged-in user's access token
+          const { data: sessionData } = await supabase.auth.getSession();
+          const accessToken = sessionData.session?.access_token;
 
-        if (!res.ok) {
-          console.error(
-            `[UPLOAD] Failed for ${defaultDocType}`,
-            await res.text()
-          );
-          alert("There was an issue uploading that file. Please try again.");
-          return;
+          const res = await fetch("/api/compensation/upload-document", {
+            method: "POST",
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            body: formData,
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            console.error(`[UPLOAD] Failed for ${defaultDocType}`, text);
+            alert("There was an issue uploading that file. Please try again.");
+            return;
+          }
+
+          const json = await res.json();
+          console.log("[UPLOAD] Stored document:", json.document);
+        } catch (err) {
+          console.error("[UPLOAD] Error uploading document", err);
+          alert("Something went wrong uploading that file.");
         }
+      })
+    );
 
-        const json = await res.json();
-        console.log("[UPLOAD] Stored document:", json.document);
-      } catch (err) {
-        console.error("[UPLOAD] Error uploading document", err);
-        alert("Something went wrong uploading that file.");
-      }
-    });
-
-    // Clear description after upload
+    // ✅ Clear description after uploads finish
     setDescription("");
   };
 
+  // ✅ IMPORTANT: Component return is OUTSIDE handleFiles
   return (
     <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
       <h3 className="font-semibold text-slate-100">
@@ -3036,6 +3049,7 @@ function InlineDocumentUploader({
         These uploads are optional, but they can help the Attorney General&apos;s
         office review this part of your application more quickly.
       </p>
+
       <div className="grid gap-2 sm:grid-cols-[2fr,3fr]">
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Short description (optional)</span>
@@ -3047,6 +3061,7 @@ function InlineDocumentUploader({
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </label>
+
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Upload file(s)</span>
           <input
