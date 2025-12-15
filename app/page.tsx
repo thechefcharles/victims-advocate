@@ -111,17 +111,6 @@ export default function HomePage() {
             </p>
             <AuthPanel />
 
-            {/* Progress bar visual */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Guided Application Progress</span>
-                <span>Step 1 of 3</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div className="h-full w-1/3 bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]" />
-              </div>
-            </div>
-
             {/* CTAs */}
 
             <p className="text-[11px] text-slate-500 max-w-md">
