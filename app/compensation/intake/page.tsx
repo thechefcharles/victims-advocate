@@ -31,6 +31,8 @@ type IntakeStep =
   | "summary";
 
 const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
+const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
+const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -176,7 +178,7 @@ const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
 
 // ✅ If URL has ?case=..., load that case from Supabase instead of localStorage
 useEffect(() => {
-  if (!caseId) return; // only runs when caseId exists
+  if (!caseId) return;
 
   (async () => {
     try {
@@ -203,22 +205,18 @@ useEffect(() => {
       const json = await res.json();
       setCanEdit(!!json.access?.can_edit);
 
-      // Your DB currently stores application as a stringified JSON
-const rawApp = json.case.application;
-
-const loadedApp =
-  typeof rawApp === "string"
-    ? JSON.parse(rawApp) // old broken rows (string inside jsonb)
-    : rawApp;            // correct jsonb object
+      const rawApp = json.case.application;
+      const loadedApp = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
 
       setApp(loadedApp);
       setStep("victim");
       setMaxStepIndex(0);
-
-      // IMPORTANT: mark as loaded so we don't block the UI
       setLoadedFromStorage(true);
-      if (userId) localStorage.setItem(`nxtstps_active_case_${userId}`, caseId);
 
+      // ✅ always set active case pointer (don’t rely on userId state)
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (uid) localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`, caseId);
     } catch (err) {
       console.error("Unexpected error loading case from API:", err);
       alert("Something went wrong loading that case.");
@@ -304,7 +302,7 @@ useEffect(() => {
       }
 
       // ✅ move into case-linked mode
-localStorage.setItem(`nxtstps_active_case_${userId}`, newCaseId);
+localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, newCaseId);
 router.replace(`/compensation/intake?case=${newCaseId}`);
       setSaveToast("Application started");
       setTimeout(() => setSaveToast(null), 1500);
@@ -316,13 +314,48 @@ router.replace(`/compensation/intake?case=${newCaseId}`);
     }
     // ✅ DO NOT set creatingCaseRef.current back to false (prevents double-create in dev)
   })();
-}, [caseId, userId, loadedFromStorage, router,]); // ✅ keep app here so draft includes what user typed
+}, [caseId, userId, loadedFromStorage, router, app]);
 
 // ✅ Remember the most recent active case for this user (used by "Resume Application")
 useEffect(() => {
   if (!userId || !caseId) return;
   localStorage.setItem(`nxtstps_active_case_${userId}`, caseId);
 }, [userId, caseId]);
+
+useEffect(() => {
+  if (!userId) return;
+
+  try {
+    localStorage.setItem(
+      `${PROGRESS_KEY_PREFIX}${userId}`,
+      JSON.stringify({
+        caseId: caseId ?? null,
+        step,
+        maxStepIndex,
+        updatedAt: Date.now(),
+      })
+    );
+  } catch (e) {
+    console.warn("Failed to store intake progress", e);
+  }
+}, [userId, caseId, step, maxStepIndex]);
+
+useEffect(() => {
+  const order: IntakeStep[] = [
+    "victim",
+    "applicant",
+    "crime",
+    "losses",
+    "medical",
+    "employment",
+    "funeral",
+    "documents",
+    "summary",
+  ];
+
+  const idx = Math.max(0, order.indexOf(step));
+  setMaxStepIndex((prev) => Math.max(prev, idx));
+}, [step]);
 
 // 🟡 2. Auto-save whenever the application or step changes
 useEffect(() => {

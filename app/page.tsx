@@ -26,7 +26,6 @@ export default function HomePage() {
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
 
-  // 🔹 NxtGuide chat submit handler
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = chatInput.trim();
@@ -88,30 +87,19 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50">
-      {/* Top nav */}
-
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-14 space-y-16">
-        {/* HERO SECTION */}
+        {/* HERO */}
         <section className="grid gap-10 md:grid-cols-[3fr,2fr] items-center">
           <div className="space-y-5">
-            <p className="text-[11px] tracking-[0.22em] uppercase text-slate-400">
-              Trauma-Informed · AI-Powered · State-Aligned
-            </p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-50">
-              Victim support, made simple.
-              <br />
-              <span className="text-[#F2C94C]">
-                Your benefits. Your rights. One clear path.
-              </span>
+              Crime Victim Support
             </h1>
-            <p className="max-w-xl text-sm sm:text-base text-slate-200">
-              NxtStps guides you step-by-step through crime victim compensation,
-              explains your options in plain language, and helps you avoid the
-              paperwork mistakes that cause delays and denials.
-            </p>
-            <AuthPanel />
 
-            {/* CTAs */}
+            <p className="max-w-xl text-sm sm:text-base text-slate-200">
+              Apply for victim compensation today.
+            </p>
+
+            <AuthPanel />
 
             <p className="text-[11px] text-slate-500 max-w-md">
               NxtStps is a supportive tool. It does not replace legal advice,
@@ -120,7 +108,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Right-hand abstract “device” / illustration */}
+          {/* Right-hand preview card (unchanged) */}
           <div className="relative">
             <div className="absolute -inset-8 bg-gradient-to-tr from-[#1C8C8C]/10 via-[#F2C94C]/5 to-transparent blur-3xl opacity-80 pointer-events-none" />
             <div className="relative rounded-3xl border border-slate-700 bg-gradient-to-b from-[#0A2239] to-[#020b16] p-5 shadow-lg shadow-black/40 space-y-4">
@@ -132,6 +120,7 @@ export default function HomePage() {
                   Draft preview
                 </span>
               </div>
+
               <ol className="space-y-2 text-xs">
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#1C8C8C] text-[10px] font-bold text-slate-950">
@@ -146,6 +135,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </li>
+
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#F2C94C] text-[10px] font-bold text-slate-950">
                     2
@@ -160,6 +150,7 @@ export default function HomePage() {
                     </p>
                   </div>
                 </li>
+
                 <li className="flex gap-2">
                   <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-800 text-[10px] font-bold text-slate-200">
                     3
@@ -175,6 +166,7 @@ export default function HomePage() {
                   </div>
                 </li>
               </ol>
+
               <div className="mt-4 rounded-2xl bg-slate-900/70 p-3 text-[11px] text-slate-300">
                 “You don&apos;t have to figure this out alone. NxtStps walks with
                 you, step by step, at your pace.”
@@ -438,7 +430,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* 🔹 NxtGuide floating chat widget */}
+{/* NxtGuide widget (unchanged) */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
           <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
@@ -521,6 +513,7 @@ export default function HomePage() {
     </main>
   );
 }
+
 
 function Badge({ children }: { children: React.ReactNode }) {
   return (
