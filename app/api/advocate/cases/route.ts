@@ -7,9 +7,9 @@ function getToken(req: Request) {
   return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
 }
 
-async function requireUserId(req: Request): Promise<string | null> {
+async function requireUserId(req: Request): Promise<string> {
   const token = getToken(req);
-  if (!token) return null;
+  if (!token) throw new Error("Unauthorized");
 
   const supabaseAnon = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,7 +17,7 @@ async function requireUserId(req: Request): Promise<string | null> {
   );
 
   const { data, error } = await supabaseAnon.auth.getUser(token);
-  if (error || !data.user) return null;
+  if (error || !data.user) throw new Error("Unauthorized");
 
   return data.user.id;
 }
@@ -25,52 +25,44 @@ async function requireUserId(req: Request): Promise<string | null> {
 export async function GET(req: Request) {
   try {
     const userId = await requireUserId(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const supabaseAdmin = getSupabaseAdmin();
 
-    // 1) Find cases this user can view
-    const { data: accessRows, error: accessError } = await supabaseAdmin
+    // Return cases where user has case_access as advocate
+    const { data, error } = await supabaseAdmin
       .from("case_access")
-      .select("case_id, role, can_view, can_edit, created_at")
+      .select(
+        `
+        case_id,
+        role,
+        can_view,
+        can_edit,
+        created_at,
+        cases:case_id (
+          id,
+          owner_user_id,
+          created_at,
+          status,
+          state_code,
+          application
+        )
+      `
+      )
       .eq("user_id", userId)
+      .eq("role", "advocate")
       .eq("can_view", true)
       .order("created_at", { ascending: false });
 
-    if (accessError) {
-      console.error("case_access select error", accessError);
-      return NextResponse.json({ error: "Failed to load access" }, { status: 500 });
+    if (error) {
+      console.error("Advocate cases query error:", error);
+      return NextResponse.json({ error: "Failed to load advocate cases" }, { status: 500 });
     }
 
-    const caseIds = (accessRows ?? []).map((r) => r.case_id);
-    if (caseIds.length === 0) {
-      return NextResponse.json({ cases: [] });
-    }
+    const cases = (data ?? [])
+      .map((row: any) => row.cases)
+      .filter(Boolean);
 
-    // 2) Fetch the cases
-    const { data: cases, error: casesError } = await supabaseAdmin
-      .from("cases")
-      .select("id, owner_user_id, status, state_code, created_at, updated_at, application")
-      .in("id", caseIds)
-      .order("updated_at", { ascending: false });
-
-    if (casesError) {
-      console.error("cases select error", casesError);
-      return NextResponse.json({ error: "Failed to load cases" }, { status: 500 });
-    }
-
-    // 3) Merge access info into case rows
-    const accessMap = new Map((accessRows ?? []).map((r) => [r.case_id, r]));
-    const merged = (cases ?? []).map((c) => ({
-      ...c,
-      access: accessMap.get(c.id) ?? null,
-    }));
-
-    return NextResponse.json({ cases: merged });
-  } catch (err) {
-    console.error("Unexpected error in GET /api/advocate/cases", err);
-    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
+    return NextResponse.json({ cases });
+  } catch (err: any) {
+    return NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 });
   }
 }

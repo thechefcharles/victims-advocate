@@ -1,8 +1,10 @@
+// components/AuthPanel.tsx
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
@@ -32,9 +34,25 @@ function prettyLabel(label: string) {
   return label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function safeJsonParse<T>(raw: string | null): T | null {
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function safeGetItem(key: string) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
 export default function AuthPanel() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const { loading, user, role } = useAuth();
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [progress, setProgress] = useState<null | {
@@ -43,156 +61,175 @@ export default function AuthPanel() {
     label: string;
   }>(null);
 
-  const refresh = (id: string | null) => {
-    if (!id) {
+  const userIdRef = useRef<string | null>(null);
+
+  // recompute progress from localStorage (victims only)
+  const refresh = (uid: string | null) => {
+    if (!uid) {
       setActiveCaseId(null);
       setProgress(null);
       return;
     }
 
-    // active case pointer
-    const activeKey = `${ACTIVE_CASE_KEY_PREFIX}${id}`;
-    const active = localStorage.getItem(activeKey);
-    setActiveCaseId(active);
+    const activeKey = `${ACTIVE_CASE_KEY_PREFIX}${uid}`;
+    let active = safeGetItem(activeKey);
 
-    // progress payload
-    const progKey = `${PROGRESS_KEY_PREFIX}${id}`;
-    const raw = localStorage.getItem(progKey);
-    if (!raw) {
+    const progKey = `${PROGRESS_KEY_PREFIX}${uid}`;
+    const parsed = safeJsonParse<ProgressPayload>(safeGetItem(progKey));
+
+    if (!active && parsed?.caseId) active = parsed.caseId;
+
+    setActiveCaseId(active ?? null);
+
+    if (!parsed) {
       setProgress(null);
       return;
     }
 
-    try {
-      const parsed = JSON.parse(raw) as ProgressPayload;
+    const step = parsed.step ?? "victim";
+    const currentIndex = Math.max(0, STEPS.indexOf(step));
+    const maxIndex =
+      typeof parsed.maxStepIndex === "number"
+        ? Math.max(parsed.maxStepIndex, currentIndex)
+        : currentIndex;
 
-      // fallback: if active case pointer missing but progress has caseId, use it
-      if (!active && parsed.caseId) setActiveCaseId(parsed.caseId);
-
-      const step = parsed.step ?? "victim";
-      const currentIndex = Math.max(0, STEPS.indexOf(step));
-      const maxIndex =
-        typeof parsed.maxStepIndex === "number"
-          ? Math.max(parsed.maxStepIndex, currentIndex)
-          : currentIndex;
-
-      setProgress({
-        maxIndex,
-        total: STEPS.length,
-        label: step,
-      });
-    } catch {
-      setProgress(null);
-    }
+    setProgress({ maxIndex, total: STEPS.length, label: step });
   };
 
+  // when auth changes, update local pointers
   useEffect(() => {
-    const run = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
+    const uid = user?.id ?? null;
+    userIdRef.current = uid;
 
-      const id = session?.user?.id ?? null;
-      const em = session?.user?.email ?? null;
+    if (role === "advocate") {
+      // advocates never show progress/resume
+      setActiveCaseId(null);
+      setProgress(null);
+      return;
+    }
 
-      setUserId(id);
-      setEmail(em);
-      refresh(id);
-    };
+    refresh(uid);
+  }, [user?.id, role]);
 
-    run();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      const id = session?.user?.id ?? null;
-      const em = session?.user?.email ?? null;
-
-      setUserId(id);
-      setEmail(em);
-      refresh(id);
-    });
-
+  // keep synced across tabs for victims
+  useEffect(() => {
     const onStorage = (e: StorageEvent) => {
-      if (!userId) return;
-      const key1 = `${ACTIVE_CASE_KEY_PREFIX}${userId}`;
-      const key2 = `${PROGRESS_KEY_PREFIX}${userId}`;
+      const uid = userIdRef.current;
+      if (!uid) return;
+      if (role === "advocate") return;
 
-      if (e.key && (e.key === key1 || e.key === key2)) {
-        refresh(userId);
-      }
+      const key1 = `${ACTIVE_CASE_KEY_PREFIX}${uid}`;
+      const key2 = `${PROGRESS_KEY_PREFIX}${uid}`;
+
+      if (e.key === key1 || e.key === key2) refresh(uid);
     };
 
     window.addEventListener("storage", onStorage);
-    return () => {
-      sub.subscription.unsubscribe();
-      window.removeEventListener("storage", onStorage);
-    };
-  }, [userId]);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [role]);
 
-  const percent = progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
+  const percent = useMemo(() => {
+    return progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
+  }, [progress]);
+
+  const email = user?.email ?? null;
 
   const resumeHref = activeCaseId
     ? `/compensation/intake?case=${activeCaseId}`
     : "/compensation/intake";
 
-  const ctaLabel = activeCaseId ? "Resume application" : "Start application";
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5">
+        <div className="text-[11px] text-slate-400">Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-3">
-      {userId ? (
-        <>
-          <div className="text-[11px] text-slate-400">Signed in as</div>
-          <div className="text-sm font-semibold text-slate-100">{email}</div>
+      {user ? (
+        role === "advocate" ? (
+          <>
+            <div className="text-[11px] text-slate-400">Signed in as Advocate</div>
+            <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-          {/* Progress bar (only when authed) */}
-          {progress && (
-            <div className="pt-2 space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
-                <span>Your application progress</span>
-                <span>
-                  Step {progress.maxIndex + 1} of {progress.total}
-                </span>
-              </div>
+            <div className="flex flex-wrap gap-2 pt-3">
+              <Link
+                href="/dashboard"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+              >
+                Go to My clients →
+              </Link>
 
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                <div
-                  className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-
-              <div className="text-[11px] text-slate-500">
-                Current section:{" "}
-                <span className="text-slate-300">{prettyLabel(progress.label)}</span>
-              </div>
+              <Link
+                href="/knowledge/compensation"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                Learn how it works
+              </Link>
             </div>
-          )}
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            <Link
-              href={resumeHref}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                activeCaseId
-                  ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
-                  : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-              }`}
-            >
-              {ctaLabel}
-            </Link>
+            <p className="text-[11px] text-slate-500">
+              Advocates don’t fill out applications here — victims share cases with you for review.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="text-[11px] text-slate-400">Signed in as</div>
+            <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-            <Link
-              href="/dashboard"
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-            >
-              Dashboard
-            </Link>
+            {progress && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Your application progress</span>
+                  <span>
+                    Step {progress.maxIndex + 1} of {progress.total}
+                  </span>
+                </div>
 
-            <Link
-              href="/knowledge/compensation"
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-            >
-              Learn how it works
-            </Link>
-          </div>
-        </>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+
+                <div className="text-[11px] text-slate-500">
+                  Current section:{" "}
+                  <span className="text-slate-300">{prettyLabel(progress.label)}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Link
+                href={resumeHref}
+                className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  activeCaseId
+                    ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
+                    : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+                }`}
+              >
+                {activeCaseId ? "Resume application" : "Start application"}
+              </Link>
+
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                My cases
+              </Link>
+
+              <Link
+                href="/knowledge/compensation"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                Learn how it works
+              </Link>
+            </div>
+          </>
+        )
       ) : (
         <InlineLoginCard />
       )}
@@ -217,16 +254,10 @@ function InlineLoginCard() {
         email: identifier.trim(),
         password,
       });
+      if (error) setErr(error.message);
 
-      if (error) {
-        setErr(error.message);
-        return;
-      }
-
-      // Optional: persist preference (Supabase manages session; this is just UI state)
       if (!remember) {
-        // If you want "remember me" to actually change persistence, we'd handle that
-        // via Supabase client config. For now this is a UI checkbox.
+        // UI-only for now
       }
     } finally {
       setLoading(false);
@@ -235,9 +266,7 @@ function InlineLoginCard() {
 
   return (
     <>
-      <div className="text-sm font-semibold text-slate-100">
-        Let&apos;s get you signed in
-      </div>
+      <div className="text-sm font-semibold text-slate-100">Let&apos;s get you signed in</div>
 
       <form onSubmit={handleSignIn} className="space-y-3 pt-1">
         <label className="block space-y-1">
@@ -288,40 +317,29 @@ function InlineLoginCard() {
           {loading ? "Signing in…" : "Sign in"}
         </button>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <span>
-            New here?{" "}
-            <Link
-              href="/signup"
-              className="underline underline-offset-2 hover:text-slate-200"
-            >
-              Create an account
-            </Link>
-          </span>
+        <div className="flex items-start justify-between gap-4 text-[11px] text-slate-400">
+          <div className="flex flex-col gap-1">
+            <div>
+              New here?{" "}
+              <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
+                Create victim account
+              </Link>
+            </div>
+            <div>
+              Work as an advocate?{" "}
+              <Link
+                href="/signup/advocate"
+                className="underline underline-offset-2 hover:text-slate-200"
+              >
+                Create victim advocate account
+              </Link>
+            </div>
+          </div>
 
-          <Link
-            href="/help"
-            className="underline underline-offset-2 hover:text-slate-200"
-          >
+          <Link href="/help" className="underline underline-offset-2 hover:text-slate-200">
             Need help?
           </Link>
         </div>
-
-        <p className="text-[11px] text-slate-500">
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-slate-300">
-            Terms
-          </Link>{" "}
-          and acknowledge our{" "}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-300">
-            Privacy Policy
-          </Link>
-          .
-        </p>
-
-        <p className="text-[11px] text-slate-500">
-          Not legal advice. If you&apos;re in immediate danger, call 911. If you need support now, call or text 988.
-        </p>
       </form>
     </>
   );

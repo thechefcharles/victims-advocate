@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-export default function SignupForm() {
+export default function AdvocateSignupForm() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -27,7 +27,7 @@ export default function SignupForm() {
         email: email.trim(),
         password,
         options: {
-          data: { role: "victim" }, // ✅ used by your handle_new_user() trigger
+          data: { role: "advocate" }, // ✅ used by your handle_new_user() trigger
         },
       });
 
@@ -36,7 +36,6 @@ export default function SignupForm() {
         return;
       }
 
-      // If email confirmation is enabled, session may be null until confirmed.
       if (!data.session) {
         setSuccess("Account created. Please check your email to confirm, then log in.");
         return;
@@ -56,19 +55,19 @@ export default function SignupForm() {
       >
         <header className="space-y-1">
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            Victim account
+            Victim advocate account
           </p>
-          <h1 className="text-2xl font-semibold">Create your account</h1>
+          <h1 className="text-2xl font-semibold">Create your advocate account</h1>
           <p className="text-[11px] text-slate-400">
-            This account is for victims/survivors starting applications.
+            Use the same email your clients will invite.
           </p>
         </header>
 
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">Email</span>
+          <span className="text-[11px] text-slate-400">Work email</span>
           <input
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
-            placeholder="you@example.com"
+            placeholder="advocate@agency.org"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -104,7 +103,7 @@ export default function SignupForm() {
           disabled={loading || !email.trim() || password.length < 8}
           type="submit"
         >
-          {loading ? "Creating…" : "Create account"}
+          {loading ? "Creating…" : "Create advocate account"}
         </button>
 
         <div className="flex items-center justify-between text-[11px] text-slate-400">
@@ -112,11 +111,8 @@ export default function SignupForm() {
             Already have an account?
           </Link>
 
-          <Link
-            href="/signup/advocate"
-            className="underline underline-offset-2 hover:text-slate-200"
-          >
-            I’m a victim advocate
+          <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
+            I’m a victim/survivor
           </Link>
         </div>
 
