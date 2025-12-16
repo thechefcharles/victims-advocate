@@ -39,9 +39,11 @@ function safeRemoveItem(key: string) {
 export default function VictimDashboard({
   email,
   userId,
+  token,
 }: {
   email: string | null;
-  userId: string | null;
+  userId: string;
+  token: string | null;
 }) {
   const router = useRouter();
 
@@ -61,16 +63,18 @@ export default function VictimDashboard({
   }, []);
 
   const refetch = useCallback(async () => {
-    if (!userId) return;
+    if (!token) {
+      setLoading(false);
+      setCases([]);
+      setErr("Session expired. Please log in again.");
+      router.replace("/login");
+      return;
+    }
 
     setLoading(true);
     setErr(null);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Missing auth token");
-
       const res = await fetch("/api/compensation/cases", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
@@ -89,18 +93,16 @@ export default function VictimDashboard({
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [token, router]);
 
+  // init active case + fetch
   useEffect(() => {
-    if (!userId) return;
-
     setActiveCaseId(readActiveCase(userId));
     refetch();
   }, [userId, readActiveCase, refetch]);
 
+  // keep active pointer synced across tabs
   useEffect(() => {
-    if (!userId) return;
-
     const onStorage = (e: StorageEvent) => {
       const key = `${ACTIVE_CASE_KEY_PREFIX}${userId}`;
       if (e.key === key) setActiveCaseId(readActiveCase(userId));
@@ -117,26 +119,27 @@ export default function VictimDashboard({
   }, [activeCaseId]);
 
   const handleStartNew = () => {
-    if (!userId) return;
     clearPointers(userId);
     setActiveCaseId(null);
     router.push("/compensation/intake");
   };
 
   const handleOpenCase = (caseIdToOpen: string) => {
-    if (!userId) return;
-
     safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, caseIdToOpen);
     setActiveCaseId(caseIdToOpen);
 
-    // keep progress pointer aligned (homepage progress bar)
+    // keep progress pointer aligned
     try {
       const progKey = `${PROGRESS_KEY_PREFIX}${userId}`;
       const raw = safeGetItem(progKey);
       const parsed = raw ? JSON.parse(raw) : {};
       safeSetItem(
         progKey,
-        JSON.stringify({ ...(parsed ?? {}), caseId: caseIdToOpen, updatedAt: Date.now() })
+        JSON.stringify({
+          ...(parsed ?? {}),
+          caseId: caseIdToOpen,
+          updatedAt: Date.now(),
+        })
       );
     } catch {}
 
@@ -255,7 +258,11 @@ export default function VictimDashboard({
           <Link href="/" className="hover:text-slate-200">
             ← Back to home
           </Link>
-          <button type="button" onClick={handleLogout} className="hover:text-slate-200">
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="hover:text-slate-200"
+          >
             Log out
           </button>
         </div>

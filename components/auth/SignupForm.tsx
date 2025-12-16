@@ -1,3 +1,4 @@
+// components/auth/SignupForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -42,7 +43,6 @@ export default function SignupForm() {
       }
 
       router.push("/dashboard");
-      router.refresh();
     } finally {
       setLoading(false);
     }

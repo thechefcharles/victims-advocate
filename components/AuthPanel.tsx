@@ -1,8 +1,10 @@
+// components/AuthPanel.tsx
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
@@ -28,8 +30,6 @@ type ProgressPayload = {
   updatedAt?: number;
 };
 
-type ProfileRole = "victim" | "advocate";
-
 function prettyLabel(label: string) {
   return label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -52,9 +52,7 @@ function safeGetItem(key: string) {
 }
 
 export default function AuthPanel() {
-  const [email, setEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [role, setRole] = useState<ProfileRole>("victim");
+  const { loading, user, role } = useAuth();
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [progress, setProgress] = useState<null | {
@@ -65,20 +63,22 @@ export default function AuthPanel() {
 
   const userIdRef = useRef<string | null>(null);
 
-  const refresh = useCallback((id: string | null) => {
-    if (!id) {
+  // recompute progress from localStorage (victims only)
+  const refresh = (uid: string | null) => {
+    if (!uid) {
       setActiveCaseId(null);
       setProgress(null);
       return;
     }
 
-    const activeKey = `${ACTIVE_CASE_KEY_PREFIX}${id}`;
-    let active: string | null = safeGetItem(activeKey);
+    const activeKey = `${ACTIVE_CASE_KEY_PREFIX}${uid}`;
+    let active = safeGetItem(activeKey);
 
-    const progKey = `${PROGRESS_KEY_PREFIX}${id}`;
+    const progKey = `${PROGRESS_KEY_PREFIX}${uid}`;
     const parsed = safeJsonParse<ProgressPayload>(safeGetItem(progKey));
 
     if (!active && parsed?.caseId) active = parsed.caseId;
+
     setActiveCaseId(active ?? null);
 
     if (!parsed) {
@@ -93,128 +93,65 @@ export default function AuthPanel() {
         ? Math.max(parsed.maxStepIndex, currentIndex)
         : currentIndex;
 
-    setProgress({
-      maxIndex,
-      total: STEPS.length,
-      label: step,
-    });
-  }, []);
+    setProgress({ maxIndex, total: STEPS.length, label: step });
+  };
 
+  // when auth changes, update local pointers
   useEffect(() => {
-    let mounted = true;
+    const uid = user?.id ?? null;
+    userIdRef.current = uid;
 
-const loadRole = async (session: any) => {
-  const uid = session?.user?.id as string | undefined;
-  if (!uid) {
-    setRole("victim");
-    return;
-  }
-
-  // ✅ PRIMARY: auth metadata role (fast + reliable)
-  const metaRole = (session.user.user_metadata?.role as ProfileRole) ?? "victim";
-  const resolved: ProfileRole = metaRole === "advocate" ? "advocate" : "victim";
-  setRole(resolved);
-
-  // ✅ SECONDARY: best-effort confirm from profiles (may fail due to RLS)
-  try {
-    const { data: prof, error } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", uid)
-      .maybeSingle();
-
-    if (!error && prof?.role) {
-      setRole(prof.role === "advocate" ? "advocate" : "victim");
+    if (role === "advocate") {
+      // advocates never show progress/resume
+      setActiveCaseId(null);
+      setProgress(null);
+      return;
     }
-  } catch {
-    // ignore
-  }
-};
 
-    const run = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
+    refresh(uid);
+  }, [user?.id, role]);
 
-      const id = session?.user?.id ?? null;
-      const em = session?.user?.email ?? null;
-
-      if (!mounted) return;
-
-      userIdRef.current = id;
-      setUserId(id);
-      setEmail(em);
-
-await loadRole(session);
-
-      refresh(id);
-      // ✅ If advocate, never show victim progress/start/resume
-const metaRole = (session?.user?.user_metadata?.role as ProfileRole) ?? "victim";
-if (metaRole === "advocate") {
-  setProgress(null);
-  setActiveCaseId(null);
-}
-    };
-
-    run();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, session) => {
-      const id = session?.user?.id ?? null;
-      const em = session?.user?.email ?? null;
-
-      userIdRef.current = id;
-      setUserId(id);
-      setEmail(em);
-
-await loadRole(session);
-
-      refresh(id);
-      // ✅ If advocate, never show victim progress/start/resume
-const metaRole = (session?.user?.user_metadata?.role as ProfileRole) ?? "victim";
-if (metaRole === "advocate") {
-  setProgress(null);
-  setActiveCaseId(null);
-}
-    });
-
+  // keep synced across tabs for victims
+  useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       const uid = userIdRef.current;
       if (!uid) return;
+      if (role === "advocate") return;
 
       const key1 = `${ACTIVE_CASE_KEY_PREFIX}${uid}`;
       const key2 = `${PROGRESS_KEY_PREFIX}${uid}`;
 
-      if (e.key === key1 || e.key === key2) {
-        refresh(uid);
-      }
+      if (e.key === key1 || e.key === key2) refresh(uid);
     };
 
     window.addEventListener("storage", onStorage);
-
-    return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
-      window.removeEventListener("storage", onStorage);
-    };
-  }, [refresh]);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [role]);
 
   const percent = useMemo(() => {
     return progress ? ((progress.maxIndex + 1) / progress.total) * 100 : 0;
   }, [progress]);
 
+  const email = user?.email ?? null;
+
   const resumeHref = activeCaseId
     ? `/compensation/intake?case=${activeCaseId}`
     : "/compensation/intake";
 
-  const ctaLabel = activeCaseId ? "Resume application" : "Start application";
+  if (loading) {
+    return (
+      <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5">
+        <div className="text-[11px] text-slate-400">Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-3">
-      {userId ? (
+      {user ? (
         role === "advocate" ? (
           <>
-<div className="text-[11px] text-slate-400">
-  Signed in as {role === "advocate" ? "Advocate" : "Victim"}
-</div>
+            <div className="text-[11px] text-slate-400">Signed in as Advocate</div>
             <div className="text-sm font-semibold text-slate-100">{email}</div>
 
             <div className="flex flex-wrap gap-2 pt-3">
@@ -242,9 +179,9 @@ if (metaRole === "advocate") {
             <div className="text-[11px] text-slate-400">Signed in as</div>
             <div className="text-sm font-semibold text-slate-100">{email}</div>
 
-              {role === "victim" && progress && (
-                <div className="pt-2 space-y-2">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+            {progress && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
                   <span>Your application progress</span>
                   <span>
                     Step {progress.maxIndex + 1} of {progress.total}
@@ -260,52 +197,37 @@ if (metaRole === "advocate") {
 
                 <div className="text-[11px] text-slate-500">
                   Current section:{" "}
-                  <span className="text-slate-300">
-                    {prettyLabel(progress.label)}
-                  </span>
+                  <span className="text-slate-300">{prettyLabel(progress.label)}</span>
                 </div>
               </div>
             )}
 
-<div className="flex flex-wrap gap-2 pt-2">
-  {role === "victim" ? (
-    <>
-      <Link
-        href={resumeHref}
-        className={`rounded-full px-4 py-2 text-xs font-semibold ${
-          activeCaseId
-            ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
-            : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-        }`}
-      >
-        {activeCaseId ? "Resume application" : "Start application"}
-      </Link>
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Link
+                href={resumeHref}
+                className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  activeCaseId
+                    ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
+                    : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+                }`}
+              >
+                {activeCaseId ? "Resume application" : "Start application"}
+              </Link>
 
-      <Link
-        href="/dashboard"
-        className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-      >
-        My cases
-      </Link>
-    </>
-  ) : (
-    <>
-      <Link
-        href="/dashboard"
-        className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
-      >
-        View my clients
-      </Link>
-    </>
-  )}
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                My cases
+              </Link>
 
-  <Link
-    href="/knowledge/compensation"
-    className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
-  >
-    Learn how it works
-  </Link>
-</div>
+              <Link
+                href="/knowledge/compensation"
+                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              >
+                Learn how it works
+              </Link>
+            </div>
           </>
         )
       ) : (
@@ -332,14 +254,10 @@ function InlineLoginCard() {
         email: identifier.trim(),
         password,
       });
-
-      if (error) {
-        setErr(error.message);
-        return;
-      }
+      if (error) setErr(error.message);
 
       if (!remember) {
-        // UI only for now
+        // UI-only for now
       }
     } finally {
       setLoading(false);
@@ -348,9 +266,7 @@ function InlineLoginCard() {
 
   return (
     <>
-      <div className="text-sm font-semibold text-slate-100">
-        Let&apos;s get you signed in
-      </div>
+      <div className="text-sm font-semibold text-slate-100">Let&apos;s get you signed in</div>
 
       <form onSubmit={handleSignIn} className="space-y-3 pt-1">
         <label className="block space-y-1">
@@ -411,7 +327,10 @@ function InlineLoginCard() {
             </div>
             <div>
               Work as an advocate?{" "}
-              <Link href="/signup/advocate" className="underline underline-offset-2 hover:text-slate-200">
+              <Link
+                href="/signup/advocate"
+                className="underline underline-offset-2 hover:text-slate-200"
+              >
                 Create victim advocate account
               </Link>
             </div>
@@ -421,22 +340,6 @@ function InlineLoginCard() {
             Need help?
           </Link>
         </div>
-
-        <p className="text-[11px] text-slate-500">
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-slate-300">
-            Terms
-          </Link>{" "}
-          and acknowledge our{" "}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-300">
-            Privacy Policy
-          </Link>
-          .
-        </p>
-
-        <p className="text-[11px] text-slate-500">
-          Not legal advice. If you&apos;re in immediate danger, call 911. If you need support now, call or text 988.
-        </p>
       </form>
     </>
   );

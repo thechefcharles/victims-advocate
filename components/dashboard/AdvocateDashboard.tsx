@@ -3,7 +3,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type ClientRow = {
@@ -16,44 +15,62 @@ type ClientRow = {
 
 export default function AdvocateDashboard({
   email,
-  userId,
+  token,
 }: {
   email: string | null;
-  userId: string | null;
+  userId: string; // keep if you want, but unused
+  token: string | null;
 }) {
-  const router = useRouter();
-
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   const refetch = useCallback(async () => {
-    if (!userId) return;
+    // ✅ Don’t redirect from here — token can be briefly null during hydration.
+    if (!token) {
+      setLoading(false);
+      setClients([]);
+      setErr("You’re not signed in yet. If this persists, go to /login.");
+      return;
+    }
 
     setLoading(true);
     setErr(null);
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-      if (!token) throw new Error("Missing auth token");
-
       const res = await fetch("/api/advocate/clients", {
         method: "GET",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      // Handle auth errors clearly
+      if (res.status === 401) {
+        setClients([]);
+        setErr("Session expired. Please log in again.");
+        return;
+      }
+      if (res.status === 403) {
+        setClients([]);
+        setErr("Forbidden: this account is not an advocate.");
+        return;
+      }
 
-      const json = await res.json();
-      setClients((json.clients ?? []) as ClientRow[]);
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setClients([]);
+        setErr(json?.error ?? "Couldn’t load your clients.");
+        return;
+      }
+
+      setClients((json?.clients ?? []) as ClientRow[]);
     } catch (e) {
       console.error(e);
       setErr("Couldn’t load your clients. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [token]);
 
   useEffect(() => {
     refetch();
@@ -61,7 +78,9 @@ export default function AdvocateDashboard({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login");
+    // Don’t router.push here if your AuthProvider handles redirect.
+    // If you want it, do it in the parent page effect.
+    window.location.href = "/login";
   };
 
   return (
@@ -133,11 +152,7 @@ export default function AdvocateDashboard({
             ← Back to home
           </Link>
 
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="hover:text-slate-200"
-          >
+          <button type="button" onClick={handleLogout} className="hover:text-slate-200">
             Log out
           </button>
         </div>

@@ -1,3 +1,4 @@
+// components/auth/LoginForm.tsx
 "use client";
 
 import { useState } from "react";
@@ -47,7 +48,6 @@ export default function LoginForm() {
       // Later you can branch:
       // if (role === "advocate") router.push("/dashboard"); else router.push("/dashboard");
       router.push("/dashboard");
-      router.refresh();
     } finally {
       setLoading(false);
     }

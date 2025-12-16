@@ -1,7 +1,9 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,18 +20,14 @@ export const metadata: Metadata = {
   description: "Trauma-informed, AI-powered victim support",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-[#020b16] text-slate-50 antialiased`}
-      >
-        <TopNav />
-        {children}
+      <body className="min-h-screen bg-[#020b16] text-slate-50 antialiased">
+        <AuthProvider>
+          <TopNav />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

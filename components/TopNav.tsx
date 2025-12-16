@@ -2,77 +2,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-
-type ProfileRole = "victim" | "advocate";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function TopNav() {
   const router = useRouter();
-
-  const [authed, setAuthed] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [role, setRole] = useState<ProfileRole>("victim");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      setCheckingAuth(true);
-
-      try {
-        const { data, error } = await supabase.auth.getSession();
-        const session = data.session;
-
-        if (cancelled) return;
-
-        if (error) {
-          console.warn("[TopNav] getSession error:", error);
-        }
-
-        setAuthed(!!session);
-
-        if (!session?.user?.id) {
-          setRole("victim");
-          return;
-        }
-
-        // Role lookup (safe fallback if RLS blocks it)
-        const { data: prof, error: profErr } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (cancelled) return;
-
-        if (profErr) {
-          console.warn("[TopNav] profiles role lookup error:", profErr);
-          setRole("victim");
-        } else {
-          setRole(prof?.role === "advocate" ? "advocate" : "victim");
-        }
-      } finally {
-        if (!cancelled) setCheckingAuth(false);
-      }
-    };
-
-    load();
-
-    const { data: sub } = supabase.auth.onAuthStateChange(() => {
-      load();
-    });
-
-    return () => {
-      cancelled = true;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
+  const { loading, user, role } = useAuth();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
+    router.refresh();
   };
 
   const dashboardLabel = role === "advocate" ? "My clients" : "My cases";
@@ -95,9 +36,9 @@ export default function TopNav() {
         </Link>
 
         <nav className="flex items-center gap-3 text-xs text-slate-200">
-          {checkingAuth ? (
+          {loading ? (
             <span className="text-[11px] text-slate-400">Loading…</span>
-          ) : authed ? (
+          ) : user ? (
             <>
               <Link
                 href="/dashboard"
