@@ -152,6 +152,7 @@ const caseId = searchParams.get("case"); // ✅ if present, we load case from Su
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
+  const isReadOnly = !!caseId && !canEdit;
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
 const [saveToast, setSaveToast] = useState<string | null>(null);
 const [saveNowLoading, setSaveNowLoading] = useState(false);
@@ -377,7 +378,7 @@ useEffect(() => {
   if (!caseId) return;                 // only in case-link mode
   if (!loadedFromStorage) return;      // wait until case has loaded
   if (!canEdit) return;
-  if (savingCase) return;                // view-only advocates shouldn't save
+  if (savingCase) return; // prevent overlapping saves
 
   const timeout = setTimeout(async () => {
     try {
@@ -419,51 +420,56 @@ const medical = app.medical;
 const employment = app.employment; // 👈 ADD THIS
 const funeral = app.funeral; // 👈 ADD THIS
 
-  const updateVictim = (patch: Partial<VictimInfo>) => {
-    setApp((prev) => ({ ...prev, victim: { ...prev.victim, ...patch } }));
+const guardPatch =
+  <T,>(fn: (patch: Partial<T>) => void) =>
+  (patch: Partial<T>) => {
+    if (isReadOnly) {
+      setSaveToast("View-only access (you can’t edit this case).");
+      setTimeout(() => setSaveToast(null), 2000);
+      return;
+    }
+    fn(patch);
   };
 
-  const updateApplicant = (patch: Partial<ApplicantInfo>) => {
-    setApp((prev) => ({
-      ...prev,
-      applicant: { ...prev.applicant, ...patch },
-    }));
-  };
+// Wrap the real setters
+const updateVictim = guardPatch<VictimInfo>((patch) => {
+  setApp((prev) => ({ ...prev, victim: { ...prev.victim, ...patch } }));
+});
 
-  const updateCrime = (patch: Partial<CrimeInfo>) => {
-    setApp((prev) => ({
-      ...prev,
-      crime: { ...prev.crime, ...patch },
-    }));
-  };
+const updateApplicant = guardPatch<ApplicantInfo>((patch) => {
+  setApp((prev) => ({ ...prev, applicant: { ...prev.applicant, ...patch } }));
+});
 
-  const updateLosses = (patch: Partial<LossesClaimed>) => {
-    setApp((prev) => ({
-      ...prev,
-      losses: { ...prev.losses, ...patch },
-    }));
-  };
+const updateCrime = guardPatch<CrimeInfo>((patch) => {
+  setApp((prev) => ({ ...prev, crime: { ...prev.crime, ...patch } }));
+});
 
-  const updateCourt = (patch: Partial<CourtInfo>) => {
-  setApp((prev) => ({
-    ...prev,
-    court: { ...prev.court, ...patch },
-  }));
-};
+const updateLosses = guardPatch<LossesClaimed>((patch) => {
+  setApp((prev) => ({ ...prev, losses: { ...prev.losses, ...patch } }));
+});
 
-  const updateMedical = (patch: Partial<MedicalInfo>) => {
-    setApp((prev) => ({
-      ...prev,
-      medical: { ...prev.medical, ...patch },
-    }));
-  };
+const updateCourt = guardPatch<CourtInfo>((patch) => {
+  setApp((prev) => ({ ...prev, court: { ...prev.court, ...patch } }));
+});
 
-  const updateCertification = (patch: Partial<CertificationInfo>) => {
+const updateMedical = guardPatch<MedicalInfo>((patch) => {
+  setApp((prev) => ({ ...prev, medical: { ...prev.medical, ...patch } }));
+});
+
+const updateEmployment = guardPatch<EmploymentInfo>((patch) => {
+  setApp((prev) => ({ ...prev, employment: { ...prev.employment, ...patch } }));
+});
+
+const updateFuneral = guardPatch<FuneralInfo>((patch) => {
+  setApp((prev) => ({ ...prev, funeral: { ...prev.funeral, ...patch } }));
+});
+
+const updateCertification = guardPatch<CertificationInfo>((patch) => {
   setApp((prev) => ({
     ...prev,
     certification: { ...prev.certification, ...patch },
   }));
-};
+});
 
 const handleDownloadPdf = async () => {
   try {
@@ -709,8 +715,8 @@ router.push(`/compensation/intake?case=${newCaseId}`);
   };
 
   const handleNextFromApplicant = () => {
-    if (applicant.isSameAsVictim) {
-      setApp((prev) => ({
+if (!isReadOnly && applicant.isSameAsVictim) {
+        setApp((prev) => ({
         ...prev,
         applicant: {
           ...prev.applicant,
@@ -808,20 +814,6 @@ const handleBack = () => {
   else if (step === "summary") setStep("funeral");
 };
 
-  const updateEmployment = (patch: Partial<EmploymentInfo>) => {
-  setApp((prev) => ({
-    ...prev,
-    employment: { ...prev.employment, ...patch },
-  }));
-};
-
-const updateFuneral = (patch: Partial<FuneralInfo>) => {
-  setApp((prev) => ({
-    ...prev,
-    funeral: { ...prev.funeral, ...patch },
-  }));
-};
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -830,6 +822,12 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
             Guided Intake · Early Draft
           </p>
+
+          {isReadOnly && (
+  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+    View-only access: you can review this case, but you can’t edit or save changes.
+  </div>
+)}
           <h1 className="text-2xl sm:text-3xl font-bold">
             Tell us about the victim, the incident, and what you need help with
           </h1>
@@ -852,99 +850,56 @@ const updateFuneral = (patch: Partial<FuneralInfo>) => {
 
         {/* Step indicator */}
 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-  <StepBadge
-    label="Victim"
-    active={step === "victim"}
-    disabled={false}
-    onClick={() => setStep("victim")}
-  />
-  <StepBadge
-    label="Applicant"
-    active={step === "applicant"}
-    disabled={false}
-    onClick={() => setStep("applicant")}
-  />
-  <StepBadge
-    label="Crime & incident"
-    active={step === "crime"}
-    disabled={false}
-    onClick={() => setStep("crime")}
-  />
-  <StepBadge
-    label="Losses & money"
-    active={step === "losses"}
-    disabled={false}
-    onClick={() => setStep("losses")}
-  />
-  <StepBadge
-    label="Medical & counseling"
-    active={step === "medical"}
-    disabled={false}
-    onClick={() => setStep("medical")}
-  />
-  <StepBadge
-    label="Work & income"
-    active={step === "employment"}
-    disabled={false}
-    onClick={() => setStep("employment")}
-  />
-  <StepBadge
-    label="Funeral & dependents"
-    active={step === "funeral"}
-    disabled={false}
-    onClick={() => setStep("funeral")}
-  />
-  <StepBadge
-    label="Documents"
-    active={step === "documents"}
-    disabled={false}
-    onClick={() => setStep("documents")}   // 👈 NEW TAB
-  />
-  <StepBadge
-    label="Summary"
-    active={step === "summary"}
-    disabled={false}
-    onClick={() => setStep("summary")}
-  />
+<StepBadge label="Victim" active={step === "victim"} onClick={() => setStep("victim")} />
+<StepBadge label="Applicant" active={step === "applicant"} onClick={() => setStep("applicant")} />
+<StepBadge label="Crime & incident" active={step === "crime"} onClick={() => setStep("crime")} />
+<StepBadge label="Losses & money" active={step === "losses"} onClick={() => setStep("losses")} />
+<StepBadge label="Medical & counseling" active={step === "medical"} onClick={() => setStep("medical")} />
+<StepBadge label="Work & income" active={step === "employment"} onClick={() => setStep("employment")} />
+<StepBadge label="Funeral & dependents" active={step === "funeral"} onClick={() => setStep("funeral")} />
+<StepBadge label="Documents" active={step === "documents"} onClick={() => setStep("documents")} />
+<StepBadge label="Summary" active={step === "summary"} onClick={() => setStep("summary")} />
+
 </div>
 
         {/* Step content */}
 {step === "victim" && (
-  <VictimForm victim={victim} onChange={updateVictim} />
+<VictimForm victim={victim} onChange={updateVictim} isReadOnly={isReadOnly} />
 )}
 
 {step === "applicant" && (
-  <ApplicantForm applicant={applicant} onChange={updateApplicant} />
+<ApplicantForm applicant={applicant} onChange={updateApplicant} isReadOnly={isReadOnly} />
 )}
 
 {step === "crime" && (
   <>
-    <CrimeForm crime={crime} onChange={updateCrime} />
-    <CourtForm court={court} onChange={updateCourt} />
+<CrimeForm crime={crime} onChange={updateCrime} isReadOnly={isReadOnly} />
+<CourtForm court={court} onChange={updateCourt} isReadOnly={isReadOnly} />
   </>
 )}
 
 {step === "losses" && (
-  <LossesForm losses={losses} onChange={updateLosses} />
+<LossesForm losses={losses} onChange={updateLosses} isReadOnly={isReadOnly} />
 )}
 
 {step === "medical" && (
-  <MedicalForm medical={medical} onChange={updateMedical} />
+  <MedicalForm medical={medical} onChange={updateMedical} isReadOnly={isReadOnly} />
 )}
 
 {step === "employment" && (
-  <EmploymentForm employment={employment} onChange={updateEmployment} />
+  <EmploymentForm employment={employment} onChange={updateEmployment} isReadOnly={isReadOnly} />
 )}
 
 {step === "funeral" && (
-  <FuneralForm funeral={funeral} onChange={updateFuneral} />
+  <FuneralForm funeral={funeral} onChange={updateFuneral} isReadOnly={isReadOnly} />
 )}
 
-{step === "documents" && <DocumentsStep />}
+{step === "documents" && <DocumentsStep isReadOnly={isReadOnly} />}
 
 {step === "summary" && (
   <SummaryView
     caseId={caseId} // ✅ ADD THIS LINE
+     isReadOnly={isReadOnly}
     victim={victim}
     applicant={applicant}
     crime={crime}
@@ -1211,18 +1166,20 @@ function StepBadge({
 function VictimForm({
   victim,
   onChange,
+  isReadOnly,
 }: {
   victim: VictimInfo;
   onChange: (patch: Partial<VictimInfo>) => void;
+  isReadOnly: boolean;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
-        Victim information
-      </h2>
+      <h2 className="text-lg font-semibold text-slate-50">Victim information</h2>
       <p className="text-xs text-slate-300">
-        This section is about the person who was physically injured or killed.
-        If you are that person and over 18, this is your information.
+        This section is about the person who was physically injured or killed. If you
+        are that person and over 18, this is your information.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -1230,11 +1187,13 @@ function VictimForm({
           label="First name *"
           value={victim.firstName}
           onChange={(v) => onChange({ firstName: v })}
+          disabled={isReadOnly}
         />
         <Field
           label="Last name *"
           value={victim.lastName}
           onChange={(v) => onChange({ lastName: v })}
+          disabled={isReadOnly}
         />
       </div>
 
@@ -1244,12 +1203,14 @@ function VictimForm({
           type="date"
           value={victim.dateOfBirth}
           onChange={(v) => onChange({ dateOfBirth: v })}
+          disabled={isReadOnly}
         />
         <Field
           label="Cell phone"
           placeholder="(xxx) xxx-xxxx"
           value={victim.cellPhone ?? ""}
           onChange={(v) => onChange({ cellPhone: v })}
+          disabled={isReadOnly}
         />
       </div>
 
@@ -1258,27 +1219,32 @@ function VictimForm({
           label="Street address *"
           value={victim.streetAddress}
           onChange={(v) => onChange({ streetAddress: v })}
+          disabled={isReadOnly}
         />
         <Field
           label="Apartment / Unit"
           value={victim.apt ?? ""}
           onChange={(v) => onChange({ apt: v })}
+          disabled={isReadOnly}
         />
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="City *"
             value={victim.city}
             onChange={(v) => onChange({ city: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="State *"
             value={victim.state}
             onChange={(v) => onChange({ state: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="ZIP code *"
             value={victim.zip}
             onChange={(v) => onChange({ zip: v })}
+            disabled={isReadOnly}
           />
         </div>
       </div>
@@ -1289,19 +1255,20 @@ function VictimForm({
           type="email"
           value={victim.email ?? ""}
           onChange={(v) => onChange({ email: v })}
+          disabled={isReadOnly}
         />
         <Field
           label="Alternate phone"
           value={victim.alternatePhone ?? ""}
           onChange={(v) => onChange({ alternatePhone: v })}
+          disabled={isReadOnly}
         />
       </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-800">
+      <div className="space-y-3 pt-3 border-t border-slate-800">
         <p className="text-[11px] text-slate-400">
-          The following questions are used for civil rights reporting and do
-          not affect eligibility. You can skip any that you do not wish to
-          answer.
+          The following questions are used for civil rights reporting and do not affect
+          eligibility. You can skip any that you do not wish to answer.
         </p>
 
         <div className="grid gap-3 sm:grid-cols-3">
@@ -1309,29 +1276,34 @@ function VictimForm({
             label="Gender identity (optional)"
             value={victim.genderIdentity ?? ""}
             onChange={(v) => onChange({ genderIdentity: v })}
+            disabled={isReadOnly}
             placeholder="Male, female, non-binary, etc."
           />
           <Field
             label="Race (optional)"
             value={victim.race ?? ""}
             onChange={(v) => onChange({ race: v })}
+            disabled={isReadOnly}
             placeholder="e.g. Black, White, Asian, etc."
           />
           <Field
             label="Ethnicity (optional)"
             value={victim.ethnicity ?? ""}
             onChange={(v) => onChange({ ethnicity: v })}
+            disabled={isReadOnly}
             placeholder="e.g. Hispanic/Latino, Not Hispanic"
           />
         </div>
 
         <div className="space-y-2 text-xs">
           <p className="text-slate-200">Does the victim have a disability?</p>
+
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() => onChange({ hasDisability: true })}
-              className={`px-3 py-1 rounded-full border text-[11px] ${
+              disabled={isReadOnly}
+              onClick={() => !isReadOnly && onChange({ hasDisability: true })}
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability
                   ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1339,12 +1311,14 @@ function VictimForm({
             >
               Yes
             </button>
+
             <button
               type="button"
+              disabled={isReadOnly}
               onClick={() =>
-                onChange({ hasDisability: false, disabilityType: null })
+                !isReadOnly && onChange({ hasDisability: false, disabilityType: null })
               }
-              className={`px-3 py-1 rounded-full border text-[11px] ${
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability === false
                   ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1356,55 +1330,25 @@ function VictimForm({
 
           {victim.hasDisability && (
             <div className="grid gap-2 sm:grid-cols-4 mt-2">
-              <button
-                type="button"
-                onClick={() => onChange({ disabilityType: "physical" })}
-                className={`px-2 py-1 rounded-full border text-[11px] ${
-                  victim.disabilityType === "physical"
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
-              >
-                Physical
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ disabilityType: "mental" })}
-                className={`px-2 py-1 rounded-full border text-[11px] ${
-                  victim.disabilityType === "mental"
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
-              >
-                Mental
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ disabilityType: "developmental" })}
-                className={`px-2 py-1 rounded-full border text-[11px] ${
-                  victim.disabilityType === "developmental"
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
-              >
-                Developmental
-              </button>
-              <button
-                type="button"
-                onClick={() => onChange({ disabilityType: "other" })}
-                className={`px-2 py-1 rounded-full border text-[11px] ${
-                  victim.disabilityType === "other"
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
-                }`}
-              >
-                Other
-              </button>
+              {(["physical", "mental", "developmental", "other"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() => !isReadOnly && onChange({ disabilityType: t })}
+                  className={`px-2 py-1 rounded-full border text-[11px] ${disBtn} ${
+                    victim.disabilityType === t
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
             </div>
           )}
         </div>
       </div>
-
     </section>
   );
 }
@@ -1412,19 +1356,23 @@ function VictimForm({
 function ApplicantForm({
   applicant,
   onChange,
+  isReadOnly,
 }: {
   applicant: ApplicantInfo;
   onChange: (patch: Partial<ApplicantInfo>) => void;
+  isReadOnly: boolean;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
         Who is filling out this application?
       </h2>
       <p className="text-xs text-slate-300">
-        If you are the injured victim and over 18, you are both the victim and
-        the applicant. If you are a parent, spouse, or someone who paid bills,
-        you may be applying on the victim&apos;s behalf.
+        If you are the injured victim and over 18, you are both the victim and the
+        applicant. If you are a parent, spouse, or someone who paid bills, you may be
+        applying on the victim&apos;s behalf.
       </p>
 
       <div className="space-y-2 text-xs">
@@ -1433,20 +1381,21 @@ function ApplicantForm({
             type="radio"
             className="h-3 w-3"
             checked={applicant.isSameAsVictim}
-            onChange={() => onChange({ isSameAsVictim: true })}
+            disabled={isReadOnly}
+            onChange={() => !isReadOnly && onChange({ isSameAsVictim: true })}
           />
           <span>I am the victim (my information is the same as above)</span>
         </label>
+
         <label className="flex items-center gap-2">
           <input
             type="radio"
             className="h-3 w-3"
             checked={!applicant.isSameAsVictim}
-            onChange={() => onChange({ isSameAsVictim: false })}
+            disabled={isReadOnly}
+            onChange={() => !isReadOnly && onChange({ isSameAsVictim: false })}
           />
-          <span>
-            I am applying on behalf of the victim (parent, spouse, other)
-          </span>
+          <span>I am applying on behalf of the victim (parent, spouse, other)</span>
         </label>
       </div>
 
@@ -1457,11 +1406,13 @@ function ApplicantForm({
               label="Your first name *"
               value={applicant.firstName ?? ""}
               onChange={(v) => onChange({ firstName: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Your last name *"
               value={applicant.lastName ?? ""}
               onChange={(v) => onChange({ lastName: v })}
+              disabled={isReadOnly}
             />
           </div>
 
@@ -1471,12 +1422,14 @@ function ApplicantForm({
               type="date"
               value={applicant.dateOfBirth ?? ""}
               onChange={(v) => onChange({ dateOfBirth: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Relationship to victim"
               placeholder="Parent, spouse, sibling, friend..."
               value={applicant.relationshipToVictim ?? ""}
               onChange={(v) => onChange({ relationshipToVictim: v })}
+              disabled={isReadOnly}
             />
           </div>
 
@@ -1485,27 +1438,32 @@ function ApplicantForm({
               label="Your street address"
               value={applicant.streetAddress ?? ""}
               onChange={(v) => onChange({ streetAddress: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Apartment / Unit"
               value={applicant.apt ?? ""}
               onChange={(v) => onChange({ apt: v })}
+              disabled={isReadOnly}
             />
             <div className="grid gap-3 sm:grid-cols-3">
               <Field
                 label="City"
                 value={applicant.city ?? ""}
                 onChange={(v) => onChange({ city: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="State"
                 value={applicant.state ?? ""}
                 onChange={(v) => onChange({ state: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="ZIP code"
                 value={applicant.zip ?? ""}
                 onChange={(v) => onChange({ zip: v })}
+                disabled={isReadOnly}
               />
             </div>
           </div>
@@ -1516,23 +1474,28 @@ function ApplicantForm({
               type="email"
               value={applicant.email ?? ""}
               onChange={(v) => onChange({ email: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Cell phone"
               value={applicant.cellPhone ?? ""}
               onChange={(v) => onChange({ cellPhone: v })}
+              disabled={isReadOnly}
             />
           </div>
-                    <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+
+          <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
             <p className="text-slate-200">
-              If the victim is a minor or an incapacitated adult, do you have
-              legal guardianship for them?
+              If the victim is a minor or an incapacitated adult, do you have legal
+              guardianship for them?
             </p>
+
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => onChange({ hasLegalGuardianship: true })}
-                className={`px-3 py-1 rounded-full border text-[11px] ${
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ hasLegalGuardianship: true })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship
                     ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1540,10 +1503,12 @@ function ApplicantForm({
               >
                 Yes
               </button>
+
               <button
                 type="button"
-                onClick={() => onChange({ hasLegalGuardianship: false })}
-                className={`px-3 py-1 rounded-full border text-[11px] ${
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ hasLegalGuardianship: false })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship === false
                     ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1552,12 +1517,6 @@ function ApplicantForm({
                 No / Not sure
               </button>
             </div>
-            <p className="text-[11px] text-slate-400">
-              If you are not the legal guardian but are helping with the
-              application, the Attorney General&apos;s office may still contact you
-              for information, but they may also need to contact a parent or
-              legal guardian.
-            </p>
           </div>
         </div>
       )}
@@ -1568,19 +1527,19 @@ function ApplicantForm({
 function CrimeForm({
   crime,
   onChange,
+  isReadOnly,
 }: {
   crime: CrimeInfo;
   onChange: (patch: Partial<CrimeInfo>) => void;
+  isReadOnly: boolean;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
-        Crime and incident details
-      </h2>
+      <h2 className="text-lg font-semibold text-slate-50">Crime and incident details</h2>
       <p className="text-xs text-slate-300">
-        This section is about what happened. You do not need to remember every
-        detail. Do your best, and it&apos;s okay to leave something blank if you
-        truly don&apos;t know.
+        This section is about what happened. You do not need to remember every detail.
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -1589,12 +1548,14 @@ function CrimeForm({
           type="date"
           value={crime.dateOfCrime}
           onChange={(v) => onChange({ dateOfCrime: v })}
+          disabled={isReadOnly}
         />
         <Field
           label="Date crime was reported"
           type="date"
           value={crime.dateReported}
           onChange={(v) => onChange({ dateReported: v })}
+          disabled={isReadOnly}
         />
       </div>
 
@@ -1603,23 +1564,28 @@ function CrimeForm({
           label="Where did the crime happen? (street address or location) *"
           value={crime.crimeAddress}
           onChange={(v) => onChange({ crimeAddress: v })}
+          disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="City *"
             value={crime.crimeCity}
             onChange={(v) => onChange({ crimeCity: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="County"
             value={crime.crimeCounty}
             onChange={(v) => onChange({ crimeCounty: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Police department crime was reported to *"
             placeholder="e.g. Chicago Police Department"
             value={crime.reportingAgency}
             onChange={(v) => onChange({ reportingAgency: v })}
+            disabled={isReadOnly}
           />
         </div>
       </div>
@@ -1628,6 +1594,7 @@ function CrimeForm({
         label="Police report number (if you have it)"
         value={crime.policeReportNumber ?? ""}
         onChange={(v) => onChange({ policeReportNumber: v })}
+        disabled={isReadOnly}
       />
 
       <Field
@@ -1635,6 +1602,7 @@ function CrimeForm({
         placeholder="In your own words, describe the incident."
         value={crime.crimeDescription}
         onChange={(v) => onChange({ crimeDescription: v })}
+        disabled={isReadOnly}
       />
 
       <Field
@@ -1642,15 +1610,18 @@ function CrimeForm({
         placeholder="For example: gunshot wound to leg, surgery, PTSD, etc."
         value={crime.injuryDescription}
         onChange={(v) => onChange({ injuryDescription: v })}
+        disabled={isReadOnly}
       />
 
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">Do you know who did this?</p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ offenderKnown: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderKnown: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.offenderKnown
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1658,10 +1629,12 @@ function CrimeForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ offenderKnown: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderKnown: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               !crime.offenderKnown
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1678,25 +1651,29 @@ function CrimeForm({
             label="Offender name(s), if known"
             value={crime.offenderNames ?? ""}
             onChange={(v) => onChange({ offenderNames: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Relationship to victim, if any"
             placeholder="Stranger, partner, family member, etc."
             value={crime.offenderRelationship ?? ""}
             onChange={(v) => onChange({ offenderRelationship: v })}
+            disabled={isReadOnly}
           />
         </div>
       )}
 
-            <div className="space-y-2 text-xs pt-2 border-t border-slate-800">
+      <div className="space-y-2 text-xs pt-2 border-t border-slate-800">
         <p className="text-slate-200">
           Was a sexual assault evidence collection kit performed at a hospital?
         </p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ sexualAssaultKitPerformed: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ sexualAssaultKitPerformed: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1704,10 +1681,12 @@ function CrimeForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ sexualAssaultKitPerformed: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ sexualAssaultKitPerformed: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1718,13 +1697,11 @@ function CrimeForm({
         </div>
       </div>
 
-      {/* Inline uploader for crime-related documents */}
       <InlineDocumentUploader
         contextLabel="the crime and incident (police reports, witness statements)"
         defaultDocType="police_report"
+        disabled={isReadOnly}
       />
-    
-
     </section>
   );
 }
@@ -1732,10 +1709,14 @@ function CrimeForm({
 function CourtForm({
   court,
   onChange,
+  isReadOnly,
 }: {
   court: CourtInfo;
   onChange: (patch: Partial<CourtInfo>) => void;
+  isReadOnly: boolean;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
       <h2 className="text-lg font-semibold text-slate-50">
@@ -1746,13 +1727,15 @@ function CourtForm({
         if you don&apos;t know all of these details — answer what you can.
       </p>
 
+      {/* Arrested */}
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">Was the offender arrested?</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ offenderArrested: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderArrested: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1762,8 +1745,9 @@ function CourtForm({
           </button>
           <button
             type="button"
-            onClick={() => onChange({ offenderArrested: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderArrested: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1774,13 +1758,15 @@ function CourtForm({
         </div>
       </div>
 
+      {/* Charged */}
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">Has the offender been charged in court?</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ offenderCharged: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderCharged: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1790,8 +1776,9 @@ function CourtForm({
           </button>
           <button
             type="button"
-            onClick={() => onChange({ offenderCharged: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ offenderCharged: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1802,6 +1789,7 @@ function CourtForm({
         </div>
       </div>
 
+      {/* Testified */}
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">
           Have you been required to testify in the criminal case?
@@ -1809,8 +1797,9 @@ function CourtForm({
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ applicantTestified: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ applicantTestified: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1820,8 +1809,9 @@ function CourtForm({
           </button>
           <button
             type="button"
-            onClick={() => onChange({ applicantTestified: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ applicantTestified: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1836,6 +1826,7 @@ function CourtForm({
         label="Criminal case number (if known)"
         value={court.criminalCaseNumber ?? ""}
         onChange={(v) => onChange({ criminalCaseNumber: v })}
+        disabled={isReadOnly}
       />
 
       <Field
@@ -1843,18 +1834,22 @@ function CourtForm({
         placeholder="For example: convicted, case dismissed, plea deal, still pending..."
         value={court.criminalCaseOutcome ?? ""}
         onChange={(v) => onChange({ criminalCaseOutcome: v })}
+        disabled={isReadOnly}
       />
 
+      {/* Restitution */}
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">
           Has the court ordered the offender to pay restitution (money directly
           to you or on your behalf)?
         </p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ restitutionOrdered: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ restitutionOrdered: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1862,10 +1857,12 @@ function CourtForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ restitutionOrdered: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ restitutionOrdered: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1882,27 +1879,26 @@ function CourtForm({
             value={court.restitutionAmount?.toString() ?? ""}
             onChange={(v) =>
               onChange({
-                restitutionAmount: v
-                  ? Number(v.replace(/[^0-9.]/g, ""))
-                  : undefined,
+                restitutionAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
               })
             }
+            disabled={isReadOnly}
           />
         )}
       </div>
 
+      {/* Human trafficking */}
       <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
         <p className="text-slate-200">
-          Has the offender been involved in a human trafficking court
-          proceeding related to this incident?
+          Has the offender been involved in a human trafficking court proceeding related to this incident?
         </p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() =>
-              onChange({ humanTraffickingCaseFiled: true })
-            }
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ humanTraffickingCaseFiled: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1910,12 +1906,12 @@ function CourtForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() =>
-              onChange({ humanTraffickingCaseFiled: false })
-            }
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ humanTraffickingCaseFiled: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -1930,16 +1926,14 @@ function CourtForm({
             <Field
               label="Human trafficking case number (if known)"
               value={court.humanTraffickingCaseNumber ?? ""}
-              onChange={(v) =>
-                onChange({ humanTraffickingCaseNumber: v })
-              }
+              onChange={(v) => onChange({ humanTraffickingCaseNumber: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Outcome of the human trafficking case (if known)"
               value={court.humanTraffickingCaseOutcome ?? ""}
-              onChange={(v) =>
-                onChange({ humanTraffickingCaseOutcome: v })
-              }
+              onChange={(v) => onChange({ humanTraffickingCaseOutcome: v })}
+              disabled={isReadOnly}
             />
           </>
         )}
@@ -1951,11 +1945,14 @@ function CourtForm({
 function LossesForm({
   losses,
   onChange,
+  isReadOnly,
 }: {
   losses: LossesClaimed;
   onChange: (patch: Partial<LossesClaimed>) => void;
+  isReadOnly: boolean;
 }) {
   const toggle = (key: keyof LossesClaimed) => {
+    if (isReadOnly) return;
     onChange({ [key]: !losses[key] } as Partial<LossesClaimed>);
   };
 
@@ -1966,8 +1963,7 @@ function LossesForm({
       </h2>
       <p className="text-xs text-slate-300">
         This section lists the types of expenses and losses that may be covered
-        by Crime Victims Compensation. Choose everything that applies. You&apos;ll
-        have a chance later to enter details and upload documents.
+        by Crime Victims Compensation. Choose everything that applies.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 text-xs">
@@ -1979,36 +1975,43 @@ function LossesForm({
             label="Medical / hospital bills"
             checked={losses.medicalHospital}
             onChange={() => toggle("medicalHospital")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Dental care"
             checked={losses.dental}
             onChange={() => toggle("dental")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Counseling / therapy"
             checked={losses.counseling}
             onChange={() => toggle("counseling")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Transportation to medical or court"
             checked={losses.transportation}
             onChange={() => toggle("transportation")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Accessibility costs (wheelchair ramps, etc.)"
             checked={losses.accessibilityCosts}
             onChange={() => toggle("accessibilityCosts")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Temporary lodging / hotel"
             checked={losses.temporaryLodging}
             onChange={() => toggle("temporaryLodging")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Relocation costs (moving for safety)"
             checked={losses.relocationCosts}
             onChange={() => toggle("relocationCosts")}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -2020,26 +2023,31 @@ function LossesForm({
             label="Loss of earnings (missed work)"
             checked={losses.lossOfEarnings}
             onChange={() => toggle("lossOfEarnings")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Loss of support to dependents"
             checked={losses.lossOfSupport}
             onChange={() => toggle("lossOfSupport")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Loss of future earnings"
             checked={losses.lossOfFutureEarnings}
             onChange={() => toggle("lossOfFutureEarnings")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Replacement service loss (services victim used to provide)"
             checked={losses.replacementServiceLoss}
             onChange={() => toggle("replacementServiceLoss")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Tuition / school-related costs"
             checked={losses.tuition}
             onChange={() => toggle("tuition")}
+            disabled={isReadOnly}
           />
         </div>
 
@@ -2051,32 +2059,39 @@ function LossesForm({
             label="Funeral / burial / cremation"
             checked={losses.funeralBurial}
             onChange={() => toggle("funeralBurial")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Headstone"
             checked={losses.headstone}
             onChange={() => toggle("headstone")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Crime scene cleanup"
             checked={losses.crimeSceneCleanup}
             onChange={() => toggle("crimeSceneCleanup")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Towing and storage of vehicle"
             checked={losses.towingStorage}
             onChange={() => toggle("towingStorage")}
+            disabled={isReadOnly}
           />
+
           <Checkbox
             label="Doors, locks, windows (security repairs)"
             checked={losses.doors || losses.locks || losses.windows}
-            onChange={() =>
+            disabled={isReadOnly}
+            onChange={() => {
+              if (isReadOnly) return;
               onChange({
                 doors: !losses.doors,
                 locks: !losses.locks,
                 windows: !losses.windows,
-              })
-            }
+              });
+            }}
           />
         </div>
 
@@ -2084,16 +2099,20 @@ function LossesForm({
           <h3 className="font-semibold text-slate-100">
             Personal items & other
           </h3>
+
           <Checkbox
             label="Clothing or bedding taken as evidence"
             checked={losses.clothing || losses.bedding}
-            onChange={() =>
+            disabled={isReadOnly}
+            onChange={() => {
+              if (isReadOnly) return;
               onChange({
                 clothing: !losses.clothing,
                 bedding: !losses.bedding,
-              })
-            }
+              });
+            }}
           />
+
           <Checkbox
             label="Prosthetic appliances, eyeglasses, hearing aids"
             checked={
@@ -2101,36 +2120,40 @@ function LossesForm({
               losses.eyeglassesContacts ||
               losses.hearingAids
             }
-            onChange={() =>
+            disabled={isReadOnly}
+            onChange={() => {
+              if (isReadOnly) return;
               onChange({
                 prostheticAppliances: !losses.prostheticAppliances,
                 eyeglassesContacts: !losses.eyeglassesContacts,
                 hearingAids: !losses.hearingAids,
-              })
-            }
+              });
+            }}
           />
+
           <Checkbox
             label="Replacement costs for necessary items"
             checked={losses.replacementCosts}
             onChange={() => toggle("replacementCosts")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Legal fees"
             checked={losses.legalFees}
             onChange={() => toggle("legalFees")}
+            disabled={isReadOnly}
           />
           <Checkbox
             label="Tattoo removal (human trafficking cases)"
             checked={losses.tattooRemoval}
             onChange={() => toggle("tattooRemoval")}
+            disabled={isReadOnly}
           />
         </div>
       </div>
 
       <p className="text-[11px] text-slate-400">
-        Choosing an item here does not guarantee payment, but it tells the
-        program what you are asking to be considered. In later steps we&apos;ll
-        connect each choice to specific documents and amounts.
+        Choosing an item here does not guarantee payment, but it tells the program what you are asking to be considered.
       </p>
     </section>
   );
@@ -2139,11 +2162,18 @@ function LossesForm({
 function MedicalForm({
   medical,
   onChange,
+  isReadOnly,
 }: {
   medical: MedicalInfo;
   onChange: (patch: Partial<MedicalInfo>) => void;
+  isReadOnly: boolean;
 }) {
-  const primary = medical.providers[0] ?? {
+  const disBtn = isReadOnly
+    ? "opacity-60 cursor-not-allowed pointer-events-none"
+    : "";
+
+  const providersSafe = Array.isArray(medical.providers) ? medical.providers : [];
+  const primary = providersSafe[0] ?? {
     providerName: "",
     city: "",
     phone: "",
@@ -2160,8 +2190,10 @@ function MedicalForm({
       amountOfBill?: number;
     }>
   ) => {
+    if (isReadOnly) return;
+
     const updated = { ...primary, ...patch };
-    const providers = [...medical.providers];
+    const providers = [...providersSafe];
     providers[0] = {
       providerName: updated.providerName,
       city: updated.city,
@@ -2169,6 +2201,7 @@ function MedicalForm({
       serviceDates: updated.serviceDates,
       amountOfBill: updated.amountOfBill,
     };
+
     onChange({ providers });
   };
 
@@ -2178,10 +2211,8 @@ function MedicalForm({
         Medical, dental, and counseling bills
       </h2>
       <p className="text-xs text-slate-300">
-        If you are asking for help with medical, dental, hospital, or
-        counseling bills, you can list at least one provider here. You do not
-        need every detail to continue. If you don&apos;t have medical bills, you
-        can leave this blank and move on.
+        If you are asking for help with medical, dental, hospital, or counseling bills,
+        you can list at least one provider here.
       </p>
 
       <div className="space-y-3">
@@ -2189,24 +2220,31 @@ function MedicalForm({
           label="Main hospital / clinic / therapist name"
           value={primary.providerName}
           onChange={(v) => updatePrimary({ providerName: v })}
+          disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-3">
-        <Field
+          <Field
             label="City"
             value={primary.city || ""}
             onChange={(v) => updatePrimary({ city: v })}
-        />
-        <Field
+            disabled={isReadOnly}
+          />
+          <Field
             label="Provider phone"
             value={primary.phone || ""}
             onChange={(v) => updatePrimary({ phone: v })}
-        />
-        <Field
+            disabled={isReadOnly}
+          />
+          <Field
             label="Dates of service (if known)"
             value={primary.serviceDates || ""}
             onChange={(v) => updatePrimary({ serviceDates: v })}
-        />
-        </div>        <Field
+            disabled={isReadOnly}
+          />
+        </div>
+
+        <Field
           label="Approximate total amount of this bill"
           placeholder="For example: 2500"
           value={primary.amountOfBill?.toString() ?? ""}
@@ -2215,19 +2253,21 @@ function MedicalForm({
               amountOfBill: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
             })
           }
+          disabled={isReadOnly}
         />
       </div>
 
-            <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+      <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
         <p className="text-slate-200">
-          Do you have health insurance, public aid, or other programs that may
-          pay some of these bills?
+          Do you have health insurance, public aid, or other programs that may pay some of these bills?
         </p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ hasOtherSources: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ hasOtherSources: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2235,10 +2275,12 @@ function MedicalForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ hasOtherSources: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ hasOtherSources: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2252,20 +2294,22 @@ function MedicalForm({
           <Field
             label="Briefly list any insurance or programs (Medical Card, Medicare, private insurance, etc.)"
             value={medical.otherInsuranceDescription || ""}
-            onChange={(v) => onChange({ otherInsuranceDescription: v })}
+            onChange={(v) =>
+              !isReadOnly && onChange({ otherInsuranceDescription: v })
+            }
+            disabled={isReadOnly}
           />
         )}
       </div>
 
       <p className="text-[11px] text-slate-400">
-        The official application allows you to list many providers. In a later
-        version, we&apos;ll let you add more here, or your advocate can attach a
-        full list.
+        In a later version, we&apos;ll let you add more providers here, or your advocate can attach a full list.
       </p>
-      {/* Inline uploader for medical / counseling bills */}
+
       <InlineDocumentUploader
         contextLabel="medical and counseling bills"
         defaultDocType="medical_bill"
+        disabled={isReadOnly}
       />
     </section>
   );
@@ -2274,11 +2318,21 @@ function MedicalForm({
 function EmploymentForm({
   employment,
   onChange,
+  isReadOnly,
 }: {
   employment: EmploymentInfo;
   onChange: (patch: Partial<EmploymentInfo>) => void;
+  isReadOnly: boolean;
 }) {
-  const record = employment.employmentHistory[0] ?? {
+  const disBtn = isReadOnly
+    ? "opacity-60 cursor-not-allowed pointer-events-none"
+    : "";
+
+  const historySafe = Array.isArray(employment.employmentHistory)
+    ? employment.employmentHistory
+    : [];
+
+  const record = historySafe[0] ?? {
     employerName: "",
     employerAddress: "",
     employerPhone: "",
@@ -2293,14 +2347,17 @@ function EmploymentForm({
       netMonthlyWages?: number;
     }>
   ) => {
+    if (isReadOnly) return;
+
     const updated = { ...record, ...patch };
-    const history = [...employment.employmentHistory];
+    const history = [...historySafe];
     history[0] = {
       employerName: updated.employerName,
       employerAddress: updated.employerAddress,
       employerPhone: updated.employerPhone,
       netMonthlyWages: updated.netMonthlyWages,
     };
+
     onChange({ employmentHistory: history });
   };
 
@@ -2310,9 +2367,7 @@ function EmploymentForm({
         Work & income (loss of earnings)
       </h2>
       <p className="text-xs text-slate-300">
-        If you missed work because of the crime or had to take time off for
-        court or medical appointments, the program may consider paying for some
-        of that lost income. You can start by entering your main job here.
+        If you missed work because of the crime, the program may consider paying for some of that lost income.
       </p>
 
       <div className="space-y-3">
@@ -2320,85 +2375,95 @@ function EmploymentForm({
           label="Employer name"
           value={record.employerName}
           onChange={(v) => updateRecord({ employerName: v })}
+          disabled={isReadOnly}
         />
+
         <Field
           label="Employer address"
           value={record.employerAddress ?? ""}
           onChange={(v) => updateRecord({ employerAddress: v })}
+          disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
             label="Employer phone"
             value={record.employerPhone ?? ""}
             onChange={(v) => updateRecord({ employerPhone: v })}
+            disabled={isReadOnly}
           />
+
           <Field
             label="Your net monthly wages (take-home pay)"
             placeholder="For example: 2200"
             value={record.netMonthlyWages?.toString() ?? ""}
             onChange={(v) =>
               updateRecord({
-                netMonthlyWages: v
-                  ? Number(v.replace(/[^0-9.]/g, ""))
-                  : undefined,
+                netMonthlyWages: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
               })
             }
+            disabled={isReadOnly}
           />
-        </div>
-              <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-        <p className="text-slate-200">
-          After the crime, did you receive sick time, vacation, personal time,
-          disability, or other paid benefits from this employer?
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() =>
-              onChange({ receivedSickOrVacationOrDisability: true })
-            }
-            className={`px-3 py-1 rounded-full border text-[11px] ${
-              employment.receivedSickOrVacationOrDisability
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
-            }`}
-          >
-            Yes
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              onChange({ receivedSickOrVacationOrDisability: false })
-            }
-            className={`px-3 py-1 rounded-full border text-[11px] ${
-              employment.receivedSickOrVacationOrDisability === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
-            }`}
-          >
-            No / Not sure
-          </button>
         </div>
 
-        {employment.receivedSickOrVacationOrDisability && (
-          <Field
-            label="If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)..."
-            value={employment.benefitNotes || ""}
-            onChange={(v) => onChange({ benefitNotes: v })}
-          />
-        )}
-      </div>
+        <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+          <p className="text-slate-200">
+            After the crime, did you receive sick time, vacation, disability, or other paid benefits?
+          </p>
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={isReadOnly}
+              onClick={() =>
+                !isReadOnly &&
+                onChange({ receivedSickOrVacationOrDisability: true })
+              }
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                employment.receivedSickOrVacationOrDisability
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              Yes
+            </button>
+
+            <button
+              type="button"
+              disabled={isReadOnly}
+              onClick={() =>
+                !isReadOnly &&
+                onChange({ receivedSickOrVacationOrDisability: false })
+              }
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                employment.receivedSickOrVacationOrDisability === false
+                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  : "border-slate-700 bg-slate-900 text-slate-300"
+              }`}
+            >
+              No / Not sure
+            </button>
+          </div>
+
+          {employment.receivedSickOrVacationOrDisability && (
+            <Field
+              label="If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)..."
+              value={employment.benefitNotes || ""}
+              onChange={(v) => !isReadOnly && onChange({ benefitNotes: v })}
+              disabled={isReadOnly}
+            />
+          )}
+        </div>
       </div>
 
       <p className="text-[11px] text-slate-400">
-        On the official application, you can list up to six months of
-        employment and indicate any sick, vacation, or disability benefits you
-        received. In a later version, you&apos;ll be able to add more jobs and
-        details here.
+        In a later version, you&apos;ll be able to add more jobs and more detail here.
       </p>
-      {/* Inline uploader for wage / income documents */}
+
       <InlineDocumentUploader
         contextLabel="work and income (pay stubs, employer letters)"
         defaultDocType="wage_proof"
+        disabled={isReadOnly}
       />
     </section>
   );
@@ -2407,10 +2472,14 @@ function EmploymentForm({
 function FuneralForm({
   funeral,
   onChange,
+  isReadOnly,
 }: {
   funeral: FuneralInfo;
   onChange: (patch: Partial<FuneralInfo>) => void;
+  isReadOnly: boolean;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
   const primaryPayment = funeral.payments?.[0] ?? {
     payerName: "",
     relationshipToVictim: "",
@@ -2424,6 +2493,8 @@ function FuneralForm({
       amountPaid: number;
     }>
   ) => {
+    if (isReadOnly) return;
+
     const updated = { ...primaryPayment, ...patch };
     const payments = [...(funeral.payments ?? [])];
     payments[0] = {
@@ -2434,15 +2505,34 @@ function FuneralForm({
     onChange({ payments });
   };
 
+  // dependent helper
+  const dep =
+    funeral.dependents && funeral.dependents.length > 0
+      ? funeral.dependents[0]
+      : {
+          name: "",
+          relationshipToVictim: "",
+          dateOfBirth: "",
+          guardianNamePhone: "",
+        };
+
+  const updateDep = (patch: Partial<typeof dep>) => {
+    if (isReadOnly) return;
+
+    const updated = { ...dep, ...patch };
+    const deps = [...(funeral.dependents ?? [])];
+    deps[0] = updated;
+    onChange({ dependents: deps });
+  };
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
         Funeral, burial, and dependents
       </h2>
       <p className="text-xs text-slate-300">
-        If the victim died as a result of the crime, this program may help with
-        funeral, burial, or cremation costs. You can enter basic information
-        here. If this does not apply, you can leave it blank and continue.
+        If the victim died as a result of the crime, this program may help with funeral,
+        burial, or cremation costs. You can enter basic information here.
       </p>
 
       <div className="space-y-3">
@@ -2450,12 +2540,14 @@ function FuneralForm({
           label="Funeral home name"
           value={funeral.funeralHomeName ?? ""}
           onChange={(v) => onChange({ funeralHomeName: v })}
+          disabled={isReadOnly}
         />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
             label="Funeral home phone"
             value={funeral.funeralHomePhone ?? ""}
             onChange={(v) => onChange({ funeralHomePhone: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Total funeral bill (approximate)"
@@ -2463,29 +2555,30 @@ function FuneralForm({
             value={funeral.funeralBillTotal?.toString() ?? ""}
             onChange={(v) =>
               onChange({
-                funeralBillTotal: v
-                  ? Number(v.replace(/[^0-9.]/g, ""))
-                  : undefined,
+                funeralBillTotal: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
               })
             }
+            disabled={isReadOnly}
           />
         </div>
       </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-800">
+      <div className="space-y-3 pt-3 border-t border-slate-800">
         <h3 className="text-xs font-semibold text-slate-100">
-          Cemetery information (if applicable)
+          Cemetery information
         </h3>
         <Field
           label="Name of cemetery"
           value={funeral.cemeteryName ?? ""}
           onChange={(v) => onChange({ cemeteryName: v })}
+          disabled={isReadOnly}
         />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
             label="Cemetery phone"
             value={funeral.cemeteryPhone ?? ""}
             onChange={(v) => onChange({ cemeteryPhone: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Total cemetery bill (approximate)"
@@ -2493,11 +2586,10 @@ function FuneralForm({
             value={funeral.cemeteryBillTotal?.toString() ?? ""}
             onChange={(v) =>
               onChange({
-                cemeteryBillTotal: v
-                  ? Number(v.replace(/[^0-9.]/g, ""))
-                  : undefined,
+                cemeteryBillTotal: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
               })
             }
+            disabled={isReadOnly}
           />
         </div>
       </div>
@@ -2506,24 +2598,20 @@ function FuneralForm({
         <h3 className="text-xs font-semibold text-slate-100">
           Who has paid or will pay these costs?
         </h3>
-        <p className="text-[11px] text-slate-300">
-          You can list one person here who has paid or is responsible for the
-          funeral bill. In a later version, you&apos;ll be able to add more.
-        </p>
 
         <div className="space-y-3">
           <Field
             label="Name of person paying"
             value={primaryPayment.payerName}
             onChange={(v) => updatePrimaryPayment({ payerName: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Relationship to victim"
             placeholder="Parent, spouse, sibling, friend..."
             value={primaryPayment.relationshipToVictim ?? ""}
-            onChange={(v) =>
-              updatePrimaryPayment({ relationshipToVictim: v })
-            }
+            onChange={(v) => updatePrimaryPayment({ relationshipToVictim: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Amount paid so far (approximate)"
@@ -2538,20 +2626,21 @@ function FuneralForm({
                 amountPaid: v ? Number(v.replace(/[^0-9.]/g, "")) : 0,
               })
             }
+            disabled={isReadOnly}
           />
         </div>
       </div>
 
       <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
         <p className="text-slate-200">
-          Did you receive money from the City of Chicago Emergency Supplemental
-          Victims Fund (ESVF) for funeral expenses?
+          Did you receive money from the City of Chicago ESVF for funeral expenses?
         </p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ receivedChicagoESVF: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2559,10 +2648,12 @@ function FuneralForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ receivedChicagoESVF: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2582,19 +2673,22 @@ function FuneralForm({
                 esvfAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
               })
             }
+            disabled={isReadOnly}
           />
         )}
       </div>
 
-            <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+      <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
         <p className="text-slate-200">
           Did the victim have a life insurance policy that paid out after their death?
         </p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => onChange({ lifeInsurancePolicyExists: true })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ lifeInsurancePolicyExists: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2602,10 +2696,12 @@ function FuneralForm({
           >
             Yes
           </button>
+
           <button
             type="button"
-            onClick={() => onChange({ lifeInsurancePolicyExists: false })}
-            className={`px-3 py-1 rounded-full border text-[11px] ${
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ lifeInsurancePolicyExists: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
@@ -2621,18 +2717,19 @@ function FuneralForm({
               label="Life insurance company"
               value={funeral.lifeInsuranceCompany ?? ""}
               onChange={(v) => onChange({ lifeInsuranceCompany: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Name of beneficiary"
               value={funeral.lifeInsuranceBeneficiary ?? ""}
               onChange={(v) => onChange({ lifeInsuranceBeneficiary: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Beneficiary phone"
               value={funeral.lifeInsuranceBeneficiaryPhone ?? ""}
-              onChange={(v) =>
-                onChange({ lifeInsuranceBeneficiaryPhone: v })
-              }
+              onChange={(v) => onChange({ lifeInsuranceBeneficiaryPhone: v })}
+              disabled={isReadOnly}
             />
             <Field
               label="Amount paid (approximate)"
@@ -2645,78 +2742,64 @@ function FuneralForm({
                     : undefined,
                 })
               }
+              disabled={isReadOnly}
             />
           </div>
         )}
       </div>
 
-            <div className="space-y-3 pt-3 border-t border-slate-800">
+      <div className="space-y-3 pt-3 border-t border-slate-800">
         <h3 className="text-xs font-semibold text-slate-100">
           Dependents who relied on the victim&apos;s income
         </h3>
-        <p className="text-[11px] text-slate-300">
-          If anyone depended on the victim financially (children, spouse, others),
-          you can list one here. In a later version you&apos;ll be able to add more.
-        </p>
 
-        {(() => {
-          const dep =
-            funeral.dependents && funeral.dependents.length > 0
-              ? funeral.dependents[0]
-              : { name: "", relationshipToVictim: "", dateOfBirth: "", guardianNamePhone: "" };
-
-          const updateDep = (patch: Partial<typeof dep>) => {
-            const updated = { ...dep, ...patch };
-            const deps = [...(funeral.dependents ?? [])];
-            deps[0] = updated;
-            onChange({ dependents: deps });
-          };
-
-          return (
-            <div className="space-y-3">
-              <Field
-                label="Dependent name"
-                value={dep.name}
-                onChange={(v) => updateDep({ name: v })}
-              />
-              <Field
-                label="Relationship to victim"
-                placeholder="Child, spouse, partner, etc."
-                value={dep.relationshipToVictim ?? ""}
-                onChange={(v) => updateDep({ relationshipToVictim: v })}
-              />
-              <Field
-                label="Dependent date of birth"
-                type="date"
-                value={dep.dateOfBirth ?? ""}
-                onChange={(v) => updateDep({ dateOfBirth: v })}
-              />
-              <Field
-                label="Guardian name & phone (if minor)"
-                value={dep.guardianNamePhone ?? ""}
-                onChange={(v) => updateDep({ guardianNamePhone: v })}
-              />
-            </div>
-          );
-        })()}
+        <div className="space-y-3">
+          <Field
+            label="Dependent name"
+            value={dep.name}
+            onChange={(v) => updateDep({ name: v })}
+            disabled={isReadOnly}
+          />
+          <Field
+            label="Relationship to victim"
+            placeholder="Child, spouse, partner, etc."
+            value={dep.relationshipToVictim ?? ""}
+            onChange={(v) => updateDep({ relationshipToVictim: v })}
+            disabled={isReadOnly}
+          />
+          <Field
+            label="Dependent date of birth"
+            type="date"
+            value={dep.dateOfBirth ?? ""}
+            onChange={(v) => updateDep({ dateOfBirth: v })}
+            disabled={isReadOnly}
+          />
+          <Field
+            label="Guardian name & phone (if minor)"
+            value={dep.guardianNamePhone ?? ""}
+            onChange={(v) => updateDep({ guardianNamePhone: v })}
+            disabled={isReadOnly}
+          />
+        </div>
       </div>
 
       <p className="text-[11px] text-slate-400">
-        The official application also asks about dependents of the victim and
-        ongoing loss of support. In a later version, you&apos;ll be able to add
-        each dependent here and link them to loss-of-support claims.
+        In a later version, you&apos;ll be able to add each dependent here and link them
+        to loss-of-support claims.
       </p>
-      {/* Inline uploader for funeral / cemetery / life insurance docs */}
+
       <InlineDocumentUploader
         contextLabel="funeral, burial, and dependents"
         defaultDocType="funeral_bill"
+        disabled={isReadOnly}
       />
     </section>
   );
 }
 
 function SummaryView({
-  caseId, // ✅ ADD THIS
+  caseId,
+  isReadOnly, // ✅ NEW
   victim,
   applicant,
   crime,
@@ -2730,7 +2813,8 @@ function SummaryView({
   onDownloadOfficialIlPdf,
   onSaveCase,
 }: {
-  caseId: string | null; // ✅ ADD THIS
+  caseId: string | null;
+  isReadOnly: boolean; // ✅ NEW
   victim: VictimInfo;
   applicant: ApplicantInfo;
   crime: CrimeInfo;
@@ -2744,79 +2828,90 @@ function SummaryView({
   onDownloadOfficialIlPdf: () => void;
   onSaveCase: () => void;
 }) {
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
-    const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteCanEdit, setInviteCanEdit] = useState(true);
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteResult, setInviteResult] = useState<string | null>(null);
 
-const handleInvite = async () => {
-  setInviteLoading(true);
-  setInviteResult(null);
+  const handleInvite = async () => {
+    if (isReadOnly) return;
 
-  try {
-    // ✅ use the prop (already passed in)
-    if (!caseId) {
+    setInviteLoading(true);
+    setInviteResult(null);
+
+    try {
+      if (!caseId) {
+        setInviteResult(
+          "Save this as a case first so we can generate a secure invite link."
+        );
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      if (!token) {
+        setInviteResult("You must be logged in to invite an advocate.");
+        return;
+      }
+
+      const res = await fetch("/api/case-access/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          caseId,
+          advocateEmail: inviteEmail,
+          canEdit: inviteCanEdit,
+        }),
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        setInviteResult(text);
+        return;
+      }
+
+      const json = JSON.parse(text);
       setInviteResult(
-        "Save this as a case first so we can generate a secure invite link."
+        `✅ Access granted.\nShare this link with the advocate:\n${json.shareUrl}`
       );
-      return;
+    } catch (e: any) {
+      setInviteResult(e?.message || "Unexpected error inviting advocate.");
+    } finally {
+      setInviteLoading(false);
     }
+  };
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-
-    if (!token) {
-      setInviteResult("You must be logged in to invite an advocate.");
-      return;
-    }
-
-    const res = await fetch("/api/case-access/invite", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        caseId, // ✅ now this is the prop
-        advocateEmail: inviteEmail,
-        canEdit: inviteCanEdit,
-      }),
-    });
-
-    const text = await res.text();
-    if (!res.ok) {
-      setInviteResult(text);
-      return;
-    }
-
-    const json = JSON.parse(text);
-    setInviteResult(
-      `✅ Access granted.\nShare this link with the advocate:\n${json.shareUrl}`
-    );
-  } catch (e: any) {
-    setInviteResult(e?.message || "Unexpected error inviting advocate.");
-  } finally {
-    setInviteLoading(false);
-  }
-};
-
-                    const selectedLosses = Object.entries(losses)
+  const selectedLosses = Object.entries(losses)
     .filter(([_, v]) => v)
     .map(([k]) => k);
 
   const primaryProvider = medical.providers[0];
-const primaryJob = employment.employmentHistory[0];
-const primaryFuneralPayer = funeral.payments?.[0];
+  const primaryJob = employment.employmentHistory[0];
+  const primaryFuneralPayer = funeral.payments?.[0];
+
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-sm">
       <h2 className="text-lg font-semibold text-slate-50">Quick summary</h2>
+
+      {isReadOnly && (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+          View-only access: you can review this case, but you can’t edit fields,
+          certification, or invites.
+        </div>
+      )}
+
       <p className="text-xs text-slate-300">
-        This is a quick snapshot of what you&apos;ve entered so far. You&apos;ll
-        get a more detailed review before anything is turned into a PDF.
+        This is a quick snapshot of what you&apos;ve entered so far.
       </p>
 
+      {/* snapshot blocks (unchanged) */}
       <div className="grid gap-4 sm:grid-cols-2 text-xs">
         <div className="space-y-1.5">
           <h3 className="font-semibold text-slate-100">Victim</h3>
@@ -2838,7 +2933,7 @@ const primaryFuneralPayer = funeral.payments?.[0];
           <h3 className="font-semibold text-slate-100">Applicant</h3>
           {applicant.isSameAsVictim ? (
             <p className="text-slate-300">
-              You indicated that the victim and applicant are the same person.
+              Victim and applicant are the same person.
             </p>
           ) : (
             <>
@@ -2868,14 +2963,9 @@ const primaryFuneralPayer = funeral.payments?.[0];
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
-          Losses you&apos;re asking to be considered
-        </h3>
+        <h3 className="font-semibold text-slate-100">Losses</h3>
         {selectedLosses.length === 0 ? (
-          <p className="text-slate-300">
-            You haven&apos;t selected any yet. Go back to &quot;Losses & money&quot;
-            to choose what this program should review.
-          </p>
+          <p className="text-slate-300">No losses selected yet.</p>
         ) : (
           <ul className="list-disc list-inside text-slate-300">
             {selectedLosses.map((key) => (
@@ -2886,10 +2976,8 @@ const primaryFuneralPayer = funeral.payments?.[0];
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
-          Medical / counseling snapshot
-        </h3>
-        {primaryProvider && primaryProvider.providerName ? (
+        <h3 className="font-semibold text-slate-100">Medical snapshot</h3>
+        {primaryProvider?.providerName ? (
           <>
             <p>Provider: {primaryProvider.providerName}</p>
             <p>
@@ -2905,264 +2993,214 @@ const primaryFuneralPayer = funeral.payments?.[0];
             </p>
           </>
         ) : (
-          <p className="text-slate-300">
-            No medical provider entered yet. If you have hospital or counseling
-            bills, you can add at least one on the previous step.
-          </p>
+          <p className="text-slate-300">No medical provider entered yet.</p>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-  <h3 className="font-semibold text-slate-100">Work & income snapshot</h3>
-  {primaryJob && primaryJob.employerName ? (
-    <>
-      <p>Employer: {primaryJob.employerName}</p>
-      <p>Employer phone: {primaryJob.employerPhone || "—"}</p>
-      <p>
-        Net monthly wages:{" "}
-        {primaryJob.netMonthlyWages != null
-          ? `$${primaryJob.netMonthlyWages}`
-          : "—"}
-      </p>
-    </>
-  ) : (
-    <p className="text-slate-300">
-      No work or income information entered yet. If you lost wages because of
-      the crime, you can add your main job in the Work & income step.
-    </p>
-  )}
-</div>
+        <h3 className="font-semibold text-slate-100">Work snapshot</h3>
+        {primaryJob?.employerName ? (
+          <>
+            <p>Employer: {primaryJob.employerName}</p>
+            <p>Employer phone: {primaryJob.employerPhone || "—"}</p>
+            <p>
+              Net monthly wages:{" "}
+              {primaryJob.netMonthlyWages != null
+                ? `$${primaryJob.netMonthlyWages}`
+                : "—"}
+            </p>
+          </>
+        ) : (
+          <p className="text-slate-300">No work info entered yet.</p>
+        )}
+      </div>
 
-<div className="space-y-1.5 text-xs">
-  <h3 className="font-semibold text-slate-100">
-    Funeral & burial snapshot
-  </h3>
-  {funeral.funeralHomeName || funeral.funeralBillTotal ? (
-    <>
-      <p>Funeral home: {funeral.funeralHomeName || "—"}</p>
-      <p>Funeral home phone: {funeral.funeralHomePhone || "—"}</p>
-      <p>
-        Total funeral bill:{" "}
-        {funeral.funeralBillTotal != null
-          ? `$${funeral.funeralBillTotal}`
-          : "—"}
-      </p>
-      {primaryFuneralPayer && primaryFuneralPayer.payerName ? (
-        <>
-          <p>
-            Payer: {primaryFuneralPayer.payerName} (
-            {primaryFuneralPayer.relationshipToVictim || "relationship not set"}
-            )
+      <div className="space-y-1.5 text-xs">
+        <h3 className="font-semibold text-slate-100">Funeral snapshot</h3>
+        {funeral.funeralHomeName || funeral.funeralBillTotal ? (
+          <>
+            <p>Funeral home: {funeral.funeralHomeName || "—"}</p>
+            <p>Funeral home phone: {funeral.funeralHomePhone || "—"}</p>
+            <p>
+              Total funeral bill:{" "}
+              {funeral.funeralBillTotal != null
+                ? `$${funeral.funeralBillTotal}`
+                : "—"}
+            </p>
+            {primaryFuneralPayer?.payerName ? (
+              <>
+                <p>
+                  Payer: {primaryFuneralPayer.payerName} (
+                  {primaryFuneralPayer.relationshipToVictim ||
+                    "relationship not set"}
+                  )
+                </p>
+                <p>
+                  Amount paid so far:{" "}
+                  {primaryFuneralPayer.amountPaid != null
+                    ? `$${primaryFuneralPayer.amountPaid}`
+                    : "—"}
+                </p>
+              </>
+            ) : (
+              <p className="text-slate-300">No payer entered yet.</p>
+            )}
+          </>
+        ) : (
+          <p className="text-slate-300">No funeral info entered yet.</p>
+        )}
+      </div>
+
+      {/* actions */}
+      <div className="flex flex-wrap gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onDownloadSummaryPdf}
+          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+        >
+          Download summary PDF
+        </button>
+
+        <button
+          type="button"
+          onClick={onDownloadOfficialIlPdf}
+          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+        >
+          Download official Illinois CVC form
+        </button>
+
+        {!caseId && !isReadOnly && (
+          <button
+            type="button"
+            onClick={onSaveCase}
+            className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+          >
+            Save as case for advocate review
+          </button>
+        )}
+
+        <button
+          type="button"
+          disabled={isReadOnly}
+          onClick={() => {
+            if (isReadOnly) return;
+            setInviteResult(null);
+            setInviteOpen(true);
+          }}
+          className={`inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition ${disBtn}`}
+        >
+          Invite advocate
+        </button>
+      </div>
+
+      {/* invite panel */}
+      {inviteOpen && (
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-slate-100">Invite an advocate</div>
+            <button
+              type="button"
+              onClick={() => setInviteOpen(false)}
+              className="text-slate-400 hover:text-slate-200"
+            >
+              ✕
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-400">
+            The advocate must already have an account using this email.
           </p>
-          <p>
-            Amount paid so far:{" "}
-            {primaryFuneralPayer.amountPaid != null
-              ? `$${primaryFuneralPayer.amountPaid}`
-              : "—"}
-          </p>
-        </>
-      ) : (
-        <p className="text-slate-300">
-          No specific payer information entered yet.
-        </p>
-      )}
-      <p>
-        ESVF help:{" "}
-        {funeral.receivedChicagoESVF
-          ? funeral.esvfAmount != null
-            ? `Yes, about $${funeral.esvfAmount}`
-            : "Yes"
-          : funeral.receivedChicagoESVF === false
-          ? "No / not received"
-          : "Not specified"}
-      </p>
-    </>
-  ) : (
-    <p className="text-slate-300">
-      No funeral or burial information entered yet. If the victim passed away
-      and you have funeral bills, you can add them in the Funeral & dependents
-      step.
-    </p>
-  )}
-</div>
 
+          <label className="block space-y-1">
+            <span className="text-slate-300">Advocate email</span>
+            <input
+              disabled={isReadOnly}
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder="advocate@example.com"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 disabled:opacity-60"
+            />
+          </label>
 
+          <label className="flex items-center gap-2 text-slate-300">
+            <input
+              disabled={isReadOnly}
+              type="checkbox"
+              checked={inviteCanEdit}
+              onChange={(e) => setInviteCanEdit(e.target.checked)}
+            />
+            Allow this advocate to edit
+          </label>
 
-<div className="flex flex-wrap gap-2 justify-end">
-  <button
-    type="button"
-    onClick={onDownloadSummaryPdf}
-    className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
-  >
-    Download summary PDF
-  </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleInvite}
+              disabled={isReadOnly || inviteLoading || !inviteEmail.trim()}
+              className={`rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition`}
+            >
+              {inviteLoading ? "Inviting…" : "Send invite"}
+            </button>
 
-  <button
-    type="button"
-    onClick={onDownloadOfficialIlPdf}
-    className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
-  >
-    Download official Illinois CVC form
-  </button>
+            <button
+              type="button"
+              onClick={() => setInviteOpen(false)}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
+            >
+              Close
+            </button>
+          </div>
 
-{!caseId && (
-  <button
-    type="button"
-    onClick={onSaveCase}
-    className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
-  >
-    Save as case for advocate review
-  </button>
-)}
-
-  <button
-  type="button"
-  onClick={() => {
-    setInviteResult(null);
-    setInviteOpen(true);
-  }}
-  className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
->
-  Invite advocate
-</button>
-
-  <a
-    href="/admin/cases"
-    className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
-  >
-    View saved cases →
-  </a>
-</div>
-
-{inviteOpen && (
-  <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
-    <div className="flex items-center justify-between">
-      <div className="font-semibold text-slate-100">Invite an advocate</div>
-      <button
-        type="button"
-        onClick={() => setInviteOpen(false)}
-        className="text-slate-400 hover:text-slate-200"
-      >
-        ✕
-      </button>
-    </div>
-
-    <p className="text-[11px] text-slate-400">
-      The advocate must already have an account using this email.
-    </p>
-
-    <label className="block space-y-1">
-      <span className="text-slate-300">Advocate email</span>
-      <input
-        value={inviteEmail}
-        onChange={(e) => setInviteEmail(e.target.value)}
-        placeholder="advocate@example.com"
-        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
-      />
-    </label>
-
-    <label className="flex items-center gap-2 text-slate-300">
-      <input
-        type="checkbox"
-        checked={inviteCanEdit}
-        onChange={(e) => setInviteCanEdit(e.target.checked)}
-      />
-      Allow this advocate to edit
-    </label>
-
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={handleInvite}
-        disabled={inviteLoading || !inviteEmail.trim()}
-        className="rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition"
-      >
-        {inviteLoading ? "Inviting…" : "Send invite"}
-      </button>
-
-      <button
-        type="button"
-        onClick={() => setInviteOpen(false)}
-        className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
-      >
-        Close
-      </button>
-    </div>
-
-    {inviteResult && (
-      <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
+          {inviteResult && (
+            <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
 {inviteResult}
-      </pre>
-    )}
-  </div>
-)}
+            </pre>
+          )}
+        </div>
+      )}
 
+      {/* certification */}
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
-        <h3 className="font-semibold text-slate-100">
-          Certification & authorization
-        </h3>
-        <p className="text-[11px] text-slate-300">
-          On the official Illinois Crime Victims Compensation application, you
-          must certify that the information is true, understand that certain
-          payments may need to be repaid if you recover money from other
-          sources, and authorize the Attorney General&apos;s office to request
-          records needed to review your claim.
-        </p>
+        <h3 className="font-semibold text-slate-100">Certification & authorization</h3>
 
         <div className="space-y-2 mt-2">
-          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
             <input
+              disabled={isReadOnly}
               type="checkbox"
               checked={!!certification.acknowledgesSubrogation}
               onChange={(e) =>
-                onChangeCertification({
-                  acknowledgesSubrogation: e.target.checked,
-                })
+                onChangeCertification({ acknowledgesSubrogation: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>
-              I understand that if I receive money from the offender, a civil
-              lawsuit, insurance, or another government program for the same
-              expenses, I may need to repay some or all of what I receive from
-              this program.
-            </span>
+            <span>…subrogation acknowledgement…</span>
           </label>
 
-          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
             <input
+              disabled={isReadOnly}
               type="checkbox"
               checked={!!certification.acknowledgesRelease}
               onChange={(e) =>
-                onChangeCertification({
-                  acknowledgesRelease: e.target.checked,
-                })
+                onChangeCertification({ acknowledgesRelease: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>
-              I authorize the Attorney General&apos;s office to request medical,
-              law enforcement, employment, and insurance records needed to
-              process this claim.
-            </span>
+            <span>…release acknowledgement…</span>
           </label>
 
-          <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
             <input
+              disabled={isReadOnly}
               type="checkbox"
               checked={!!certification.acknowledgesPerjury}
               onChange={(e) =>
-                onChangeCertification({
-                  acknowledgesPerjury: e.target.checked,
-                })
+                onChangeCertification({ acknowledgesPerjury: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>
-              I certify that the information I have provided is true, accurate,
-              and complete to the best of my knowledge, and I understand that
-              false statements may be punishable by law.
-            </span>
+            <span>…perjury acknowledgement…</span>
           </label>
         </div>
 
@@ -3170,32 +3208,30 @@ const primaryFuneralPayer = funeral.payments?.[0];
           <Field
             label="Applicant signature (type your full name)"
             value={certification.applicantSignatureName ?? ""}
-            onChange={(v) =>
-              onChangeCertification({ applicantSignatureName: v })
-            }
+            onChange={(v) => onChangeCertification({ applicantSignatureName: v })}
+            disabled={isReadOnly}
           />
           <Field
             label="Date"
             type="date"
             value={certification.applicantSignatureDate ?? ""}
-            onChange={(v) =>
-              onChangeCertification({ applicantSignatureDate: v })
-            }
+            onChange={(v) => onChangeCertification({ applicantSignatureDate: v })}
+            disabled={isReadOnly}
           />
         </div>
 
+        {/* represented by attorney */}
         <div className="space-y-2 mt-3">
           <p className="text-[11px] text-slate-200">
-            Are you being represented by an attorney for this Crime Victims
-            Compensation claim?
+            Are you being represented by an attorney?
           </p>
+
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={() =>
-                onChangeCertification({ representedByAttorney: true })
-              }
-              className={`px-3 py-1 rounded-full border text-[11px] ${
+              disabled={isReadOnly}
+              onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: true })}
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney
                   ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
@@ -3203,12 +3239,12 @@ const primaryFuneralPayer = funeral.payments?.[0];
             >
               Yes
             </button>
+
             <button
               type="button"
-              onClick={() =>
-                onChangeCertification({ representedByAttorney: false })
-              }
-              className={`px-3 py-1 rounded-full border text-[11px] ${
+              disabled={isReadOnly}
+              onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: false })}
+              className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney === false
                   ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
@@ -3223,64 +3259,55 @@ const primaryFuneralPayer = funeral.payments?.[0];
               <Field
                 label="Attorney name"
                 value={certification.attorneyName ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyName: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyName: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="ARDC number (if known)"
                 value={certification.attorneyArdc ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyArdc: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyArdc: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="Attorney address"
                 value={certification.attorneyAddress ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyAddress: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyAddress: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="City"
                 value={certification.attorneyCity ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyCity: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyCity: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="State"
                 value={certification.attorneyState ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyState: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyState: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="ZIP"
                 value={certification.attorneyZip ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyZip: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyZip: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="Phone"
                 value={certification.attorneyPhone ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyPhone: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyPhone: v })}
+                disabled={isReadOnly}
               />
               <Field
                 label="Email"
                 value={certification.attorneyEmail ?? ""}
-                onChange={(v) =>
-                  onChangeCertification({ attorneyEmail: v })
-                }
+                onChange={(v) => onChangeCertification({ attorneyEmail: v })}
+                disabled={isReadOnly}
               />
             </div>
           )}
         </div>
       </div>
-
     </section>
   );
 }
@@ -3291,60 +3318,72 @@ function Field({
   onChange,
   type = "text",
   placeholder,
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   type?: string;
   placeholder?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="block text-xs text-slate-200 space-y-1">
       <span>{label}</span>
       <input
+        disabled={disabled}
         type={type}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+        className={`w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500
+          focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400
+          disabled:opacity-60 disabled:cursor-not-allowed`}
       />
     </label>
   );
 }
 
-function Checkbox({
-  label,
-  checked,
-  onChange,
-}: {
+function Checkbox({ label, checked, onChange, disabled = false }: {
   label: string;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
 }) {
   return (
     <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
       <input
+        disabled={disabled}
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400"
+        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
       />
-      <span>{label}</span>
+      <span className={disabled ? "opacity-60" : ""}>{label}</span>
     </label>
   );
 }
 
-function DocumentsStep() {
+function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
       <h2 className="text-lg font-semibold text-slate-50">
         Upload police reports, bills, and other documents
       </h2>
+
+      {isReadOnly && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+          View-only access: you can review this section, but only the case owner
+          can upload or modify documents.
+        </div>
+      )}
+
       <p className="text-slate-300">
         Supporting documents help the Attorney General&apos;s office understand
         your case and verify the costs you&apos;re asking to be covered.
         You can upload:
       </p>
+
       <ul className="list-disc list-inside text-slate-300 space-y-1">
         <li>Police reports or incident numbers</li>
         <li>Hospital and medical bills</li>
@@ -3352,14 +3391,22 @@ function DocumentsStep() {
         <li>Pay stubs or letters from employers</li>
         <li>Any other proof of expenses related to the crime</li>
       </ul>
+
       <p className="text-[11px] text-slate-400">
         Uploading documents does not submit your application. You&apos;ll have a
         chance to review everything on the Summary page before sending anything
         to the state.
       </p>
+
       <a
-        href="/compensation/documents"
-        className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        href={isReadOnly ? undefined : "/compensation/documents"}
+        className={`inline-flex items-center rounded-lg px-3 py-1.5 text-[11px] font-semibold transition
+          ${
+            isReadOnly
+              ? "cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-400"
+              : "border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+          }`}
+        aria-disabled={isReadOnly}
       >
         Go to document upload page →
       </a>
@@ -3370,14 +3417,17 @@ function DocumentsStep() {
 function InlineDocumentUploader({
   contextLabel,
   defaultDocType,
+  disabled = false,
 }: {
   contextLabel: string;
   defaultDocType: string;
+  disabled?: boolean;
 }) {
-  const [description, setDescription] = useState("");
+    const [description, setDescription] = useState("");
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+const handleFiles = async (files: FileList | null) => {
+  if (disabled) return;
+  if (!files || files.length === 0) return;
 
     // ✅ Use Promise.all (async-safe). Avoid async forEach.
     await Promise.all(
@@ -3433,6 +3483,7 @@ function InlineDocumentUploader({
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Short description (optional)</span>
           <input
+            disabled={disabled}
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -3444,6 +3495,7 @@ function InlineDocumentUploader({
         <label className="block text-[11px] text-slate-200 space-y-1">
           <span>Upload file(s)</span>
           <input
+            disabled={disabled}
             type="file"
             multiple
             onChange={(e) => handleFiles(e.target.files)}

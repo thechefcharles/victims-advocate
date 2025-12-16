@@ -11,77 +11,57 @@ type ProfileRole = "victim" | "advocate";
 export default function TopNav() {
   const router = useRouter();
 
-  const [checkingAuth, setCheckingAuth] = useState(true);
   const [authed, setAuthed] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [role, setRole] = useState<ProfileRole>("victim");
-
-  const resolveRoleFromSession = (session: any): ProfileRole => {
-    const metaRole = session?.user?.user_metadata?.role;
-    return metaRole === "advocate" ? "advocate" : "victim";
-  };
 
   useEffect(() => {
     let cancelled = false;
 
-    const boot = async () => {
+    const load = async () => {
       setCheckingAuth(true);
 
-      // 1) fast path: session → render immediately
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
-
-      if (cancelled) return;
-
-      setAuthed(!!session);
-      setRole(resolveRoleFromSession(session));
-      setCheckingAuth(false); // ✅ IMPORTANT: stop "Loading…" immediately
-
-      // 2) optional background confirm from profiles (never block UI)
-      const uid = session?.user?.id;
-      if (!uid) return;
-
       try {
-        const { data: prof } = await supabase
+        const { data, error } = await supabase.auth.getSession();
+        const session = data.session;
+
+        if (cancelled) return;
+
+        if (error) {
+          console.warn("[TopNav] getSession error:", error);
+        }
+
+        setAuthed(!!session);
+
+        if (!session?.user?.id) {
+          setRole("victim");
+          return;
+        }
+
+        // Role lookup (safe fallback if RLS blocks it)
+        const { data: prof, error: profErr } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", uid)
+          .eq("id", session.user.id)
           .maybeSingle();
 
         if (cancelled) return;
 
-        if (prof?.role === "advocate") setRole("advocate");
-        else if (prof?.role === "victim") setRole("victim");
-      } catch {
-        // ignore
+        if (profErr) {
+          console.warn("[TopNav] profiles role lookup error:", profErr);
+          setRole("victim");
+        } else {
+          setRole(prof?.role === "advocate" ? "advocate" : "victim");
+        }
+      } finally {
+        if (!cancelled) setCheckingAuth(false);
       }
     };
 
-    boot();
+    load();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-
-      // ✅ auth changes should also be instant
-      setAuthed(!!session);
-      setRole(resolveRoleFromSession(session));
-      setCheckingAuth(false);
-
-      // (optional) background confirm again
-      const uid = session?.user?.id;
-      if (!uid) return;
-
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", uid)
-        .maybeSingle()
-        .then(({ data: prof }) => {
-          if (cancelled) return;
-          if (prof?.role === "advocate") setRole("advocate");
-          else if (prof?.role === "victim") setRole("victim");
-        })
-        .catch(() => {});
-        // intentionally ignored — role already set from session metadata
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      load();
     });
 
     return () => {
