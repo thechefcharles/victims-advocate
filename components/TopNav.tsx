@@ -1,4 +1,3 @@
-// components/TopNav.tsx
 "use client";
 
 import Link from "next/link";
@@ -11,9 +10,14 @@ export default function TopNav() {
   const { loading, user, role } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Logout failed:", error);
+      return;
+    }
+
+    // Optional UX: kick them to login after signout
+    router.replace("/login");
   };
 
   const dashboardLabel = role === "advocate" ? "My clients" : "My cases";
@@ -29,9 +33,7 @@ export default function TopNav() {
             <div className="font-semibold tracking-[0.14em] uppercase text-slate-200">
               NxtStps
             </div>
-            <div className="text-[11px] text-slate-400">
-              Victim Support · Made Simple
-            </div>
+            <div className="text-[11px] text-slate-400">Victim Support · Made Simple</div>
           </div>
         </Link>
 
