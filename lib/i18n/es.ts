@@ -2,6 +2,9 @@
 import type { I18nDict } from "./types";
 
 export const es: I18nDict = {
+  /* =========================
+     NAV / COMMON
+  ========================== */
   nav: {
     dashboardVictim: "Mis casos",
     dashboardAdvocate: "Mis clientes",
@@ -16,8 +19,13 @@ export const es: I18nDict = {
     refresh: "Actualizar",
     refreshing: "Actualizando…",
     backToHome: "← Volver al inicio",
+    yes: "Sí",
+    no: "No",
   },
 
+  /* =========================
+     AUTH PANEL / LOGIN
+  ========================== */
   authPanel: {
     signedInAs: "Conectado como",
     signedInAsAdvocate: "Conectado como Defensor/a",
@@ -48,16 +56,20 @@ export const es: I18nDict = {
     needHelp: "¿Necesitas ayuda?",
   },
 
-loginForm: {
-  title: "Iniciar sesión",
-  submit: "Iniciar sesión",
-  emailPlaceholder: "Correo electrónico",
-  passwordPlaceholder: "Contraseña",
-  loggingIn: "Iniciando...",
-  createAccount: "Crear cuenta",
-  createAdvocateAccount: "Crear cuenta de defensor/a",
-  forgotPassword: "Olvidé mi contraseña",
-},
+  loginForm: {
+    title: "Iniciar sesión",
+    submit: "Iniciar sesión",
+    emailPlaceholder: "Correo electrónico",
+    passwordPlaceholder: "Contraseña",
+    loggingIn: "Iniciando…",
+    createAccount: "Crear cuenta",
+    createAdvocateAccount: "Crear cuenta de defensor/a",
+    forgotPassword: "Olvidé mi contraseña",
+  },
+
+  /* =========================
+     HOME PAGE
+  ========================== */
   home: {
     hero: {
       title: "Apoyo para Víctimas de Delitos",
@@ -223,6 +235,129 @@ loginForm: {
     },
   },
 
+  /* =========================
+     INTAKE (APPLICATION FLOW)
+  ========================== */
+  intake: {
+    steps: {
+      victim: "Víctima",
+      applicant: "Solicitante",
+      crime: "Delito e incidente",
+      losses: "Gastos y dinero",
+      medical: "Atención médica y consejería",
+      employment: "Trabajo e ingresos",
+      funeral: "Funeral y dependientes",
+      documents: "Documentos",
+      summary: "Resumen",
+    },
+
+    viewOnly: "Acceso de solo lectura (no puedes editar este caso).",
+    startFailed: "No se pudo iniciar la solicitud. Intenta recargar.",
+    missingCaseId: "Se creó, pero falta el ID del caso.",
+    started: "Solicitud iniciada",
+
+    loadCase: {
+      failed: "No se pudo cargar ese caso (sin acceso o no existe).",
+      unexpected: "Ocurrió un error al cargar ese caso.",
+    },
+
+    save: {
+      viewOnly: "Acceso de solo lectura. No puedes guardar cambios.",
+      noCaseLoaded: "Aún no hay un caso cargado. Inicia la solicitud primero.",
+      saved: "Solicitud guardada",
+      failed: "No se pudo guardar. Intenta de nuevo.",
+    },
+
+    pdf: {
+      summaryFailed:
+        "Hubo un problema al generar el PDF. Por favor intenta de nuevo.",
+      summaryUnexpected:
+        "Ocurrió un error inesperado al generar el PDF.",
+      officialFailed:
+        "Hubo un problema al generar el formulario oficial de Illinois. Por favor intenta de nuevo.",
+      officialUnexpected:
+        "Ocurrió un error al crear el formulario oficial.",
+    },
+
+    validation: {
+      victimRequired:
+        "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",
+      crimeMinimumRequired:
+        "Por favor proporciona al menos la fecha del delito, dónde ocurrió y a qué departamento de policía se reportó.",
+      certificationRequired:
+        "Antes de guardar esto como un caso, revisa la sección de certificación y agrega tu nombre, fecha y confirmaciones.",
+    },
+
+    confirm: {
+      noLossesSelected:
+        "Aún no has seleccionado ninguna pérdida. ¿Seguro que no quieres solicitar ayuda con costos médicos, funerarios u otros?",
+      lossOfEarningsNoEmployer:
+        "Indicaste pérdida de ingresos pero aún no ingresaste información del empleador. ¿Continuar de todos modos?",
+      funeralSelectedNoData:
+        "Indicaste costos funerarios o de sepelio pero aún no ingresaste información funeraria. ¿Continuar de todos modos?",
+    },
+
+    saveCase: {
+      failed:
+        "Hubo un problema al guardar tu caso. Por favor revisa la consola.",
+      missingId:
+        "Se guardó, pero no se devolvió un ID de caso. Revisa la respuesta del API.",
+      unexpected:
+        "Ocurrió un error al guardar tu caso. Revisa la consola para más detalles.",
+    },
+  },
+
+  /* =========================
+     FIELD COPY (PAGE/FORM-SPECIFIC LABELS)
+  ========================== */
+  fields: {
+    firstName: { required: "Nombre *" },
+    lastName: { required: "Apellido *" },
+    dateOfBirth: { required: "Fecha de nacimiento *" },
+
+    cellPhone: {
+      label: "Teléfono celular",
+      placeholder: "(xxx) xxx-xxxx",
+    },
+
+    streetAddress: { required: "Dirección *" },
+    apt: { label: "Apartamento / Unidad" },
+
+    city: { required: "Ciudad *" },
+    state: { required: "Estado *" },
+    zip: { required: "Código postal *" },
+
+    email: { label: "Correo electrónico" },
+    alternatePhone: { label: "Teléfono alternativo" },
+
+    genderIdentity: {
+      optional: "Identidad de género (opcional)",
+      placeholder: "Masculino, femenino, no binario, etc.",
+    },
+    race: {
+      optional: "Raza (opcional)",
+      placeholder: "Ej. Negro, Blanco, Asiático, etc.",
+    },
+    ethnicity: {
+      optional: "Etnicidad (opcional)",
+      placeholder: "Ej. Hispano/Latino, No hispano",
+    },
+
+    hasDisability: {
+      question: "¿La víctima tiene alguna discapacidad?",
+    },
+
+    disabilityType: {
+      physical: "Física",
+      mental: "Mental",
+      developmental: "Del desarrollo",
+      other: "Otra",
+    },
+  },
+
+  /* =========================
+     NXTGUIDE CHAT
+  ========================== */
   nxtGuide: {
     title: "NxtGuide",
     subtitle: "Defensor/a virtual con enfoque informado por trauma",
@@ -247,6 +382,108 @@ loginForm: {
         "Lo siento, tuve problemas para responder. Por favor intenta de nuevo en un momento.",
       technicalProblem:
         "Tuve un problema técnico al intentar responder. Por favor intenta de nuevo pronto.",
+    },
+  },
+
+  /* =========================
+     UI (BUTTONS, MODALS, GENERIC COPY)
+  ========================== */
+  ui: {
+    buttons: {
+      back: "Atrás",
+      next: "Siguiente",
+      continue: "Continuar",
+      cancel: "Cancelar",
+      close: "Cerrar",
+      save: "Guardar",
+      saving: "Guardando…",
+      submit: "Enviar",
+      submitting: "Enviando…",
+      edit: "Editar",
+      done: "Listo",
+      confirm: "Confirmar",
+      download: "Descargar",
+      upload: "Subir",
+      remove: "Eliminar",
+      retry: "Reintentar",
+      refresh: "Actualizar",
+    },
+
+    status: {
+      optional: "Opcional",
+      required: "Obligatorio",
+      yes: "Sí",
+      no: "No",
+      none: "Ninguno",
+      unknown: "Desconocido",
+      notProvided: "No proporcionado",
+    },
+
+    errors: {
+      generic: "Ocurrió un error. Por favor intenta de nuevo.",
+      network:
+        "Error de red. Verifica tu conexión e inténtalo nuevamente.",
+      unauthorized: "No tienes acceso a esto.",
+      notFound: "No se pudo encontrar ese elemento.",
+    },
+
+    toasts: {
+      saved: "Guardado",
+      updated: "Actualizado",
+      copied: "Copiado",
+      uploaded: "Subido",
+      removed: "Eliminado",
+    },
+
+    modals: {
+      confirmTitle: "Confirmar",
+      areYouSure: "¿Estás seguro/a?",
+    },
+  },
+
+  /* =========================
+     FORMS (REUSABLE + PAGE/FORM COPY)
+  ========================== */
+  forms: {
+    victim: {
+      title: "Información de la víctima",
+      description:
+        "Esta sección es sobre la persona que fue lesionada físicamente o falleció. Si usted es esa persona y tiene más de 18 años, esta es su información.",
+      civilRightsNote:
+        "Las siguientes preguntas se utilizan para reportes de derechos civiles y no afectan la elegibilidad. Puede omitir cualquiera que no desee responder.",
+    },
+
+    labels: {
+      firstName: "Nombre",
+      lastName: "Apellido",
+      middleName: "Segundo nombre",
+      dateOfBirth: "Fecha de nacimiento",
+      email: "Correo electrónico",
+      phone: "Teléfono",
+      address: "Dirección",
+      unit: "Apartamento / Unidad",
+      city: "Ciudad",
+      state: "Estado",
+      zip: "Código postal",
+      county: "Condado",
+      country: "País",
+      relationship: "Relación",
+      notes: "Notas",
+    },
+
+    placeholders: {
+      selectOne: "Selecciona una opción…",
+      typeHere: "Escribe aquí…",
+      search: "Buscar…",
+    },
+
+    validation: {
+      required: "Este campo es obligatorio.",
+      invalidEmail: "Por favor ingresa un correo electrónico válido.",
+      invalidPhone: "Por favor ingresa un número de teléfono válido.",
+      invalidZip: "Por favor ingresa un código postal válido.",
+      minChars: "Por favor ingresa al menos {min} caracteres.",
+      maxChars: "Por favor ingresa {max} caracteres o menos.",
     },
   },
 };

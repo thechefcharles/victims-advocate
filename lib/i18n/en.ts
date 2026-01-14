@@ -2,6 +2,9 @@
 import type { I18nDict } from "./types";
 
 export const en: I18nDict = {
+  /* =========================
+     NAV / COMMON
+  ========================== */
   nav: {
     dashboardVictim: "My cases",
     dashboardAdvocate: "My clients",
@@ -16,8 +19,13 @@ export const en: I18nDict = {
     refresh: "Refresh",
     refreshing: "Refreshing…",
     backToHome: "← Back to home",
+    yes: "Yes",
+    no: "No",
   },
 
+  /* =========================
+     AUTH PANEL / LOGIN
+  ========================== */
   authPanel: {
     signedInAs: "Signed in as",
     signedInAsAdvocate: "Signed in as Advocate",
@@ -48,16 +56,20 @@ export const en: I18nDict = {
     needHelp: "Need help?",
   },
 
-loginForm: {
-  title: "Log in",
-  submit: "Log in",
-  emailPlaceholder: "Email",
-  passwordPlaceholder: "Password",
-  loggingIn: "Logging in...",
-  createAccount: "Create account",
-  createAdvocateAccount: "Create Victim Advocate account",
-  forgotPassword: "Forgot password",
-},
+  loginForm: {
+    title: "Log in",
+    submit: "Log in",
+    emailPlaceholder: "Email",
+    passwordPlaceholder: "Password",
+    loggingIn: "Logging in…",
+    createAccount: "Create account",
+    createAdvocateAccount: "Create Victim Advocate account",
+    forgotPassword: "Forgot password",
+  },
+
+  /* =========================
+     HOME PAGE
+  ========================== */
   home: {
     hero: {
       title: "Crime Victim Support",
@@ -80,7 +92,8 @@ loginForm: {
       },
       step3: {
         title: "File with confidence",
-        body: "You review a clean draft packet before anything is sent to the state.",
+        body:
+          "You review a clean draft packet before anything is sent to the state.",
       },
       quote:
         "“You don't have to figure this out alone. NxtStps walks with you, step by step, at your pace.”",
@@ -222,6 +235,126 @@ loginForm: {
     },
   },
 
+  /* =========================
+     INTAKE (APPLICATION FLOW)
+  ========================== */
+  intake: {
+    steps: {
+      victim: "Victim",
+      applicant: "Applicant",
+      crime: "Crime & incident",
+      losses: "Losses & money",
+      medical: "Medical & counseling",
+      employment: "Work & income",
+      funeral: "Funeral & dependents",
+      documents: "Documents",
+      summary: "Summary",
+    },
+
+    viewOnly: "View-only access (you can’t edit this case).",
+    startFailed: "Couldn’t start application. Try refresh.",
+    missingCaseId: "Created, but missing case ID.",
+    started: "Application started",
+
+    loadCase: {
+      failed: "Could not load that case (no access or not found).",
+      unexpected: "Something went wrong loading that case.",
+    },
+
+    save: {
+      viewOnly: "View-only access. You can’t save changes.",
+      noCaseLoaded: "No case loaded yet. Start the application first.",
+      saved: "Application saved",
+      failed: "Couldn’t save. Try again.",
+    },
+
+    pdf: {
+      summaryFailed: "There was an issue generating the PDF. Please try again.",
+      summaryUnexpected: "Something went wrong generating the PDF.",
+      officialFailed:
+        "There was an issue generating the official Illinois form. Please try again.",
+      officialUnexpected: "Something went wrong creating the official form.",
+    },
+
+    validation: {
+      victimRequired:
+        "Please fill in the victim's name, date of birth, and address before continuing.",
+      crimeMinimumRequired:
+        "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
+      certificationRequired:
+        "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
+    },
+
+    confirm: {
+      noLossesSelected:
+        "You haven't selected any losses yet. Are you sure you don't want to ask for help with medical, funeral, or other costs?",
+      lossOfEarningsNoEmployer:
+        "You indicated loss of earnings but haven't entered any employer info yet. Continue anyway?",
+      funeralSelectedNoData:
+        "You indicated funeral or burial costs but haven't entered any funeral information yet. Continue anyway?",
+    },
+
+    saveCase: {
+      failed: "There was a problem saving your case. Please check the console.",
+      missingId:
+        "Saved, but no case ID was returned. Check the API response.",
+      unexpected:
+        "Something went wrong saving your case. See console for details.",
+    },
+  },
+
+  /* =========================
+     FIELD COPY (PAGE/FORM-SPECIFIC LABELS)
+     NOTE: Use these keys in your components via t('fields.firstName.required'), etc.
+  ========================== */
+  fields: {
+    firstName: { required: "First name *" },
+    lastName: { required: "Last name *" },
+    dateOfBirth: { required: "Date of birth *" },
+
+    cellPhone: {
+      label: "Cell phone",
+      placeholder: "(xxx) xxx-xxxx",
+    },
+
+    streetAddress: { required: "Street address *" },
+    apt: { label: "Apartment / Unit" },
+
+    city: { required: "City *" },
+    state: { required: "State *" },
+    zip: { required: "ZIP code *" },
+
+    email: { label: "Email" },
+    alternatePhone: { label: "Alternate phone" },
+
+    genderIdentity: {
+      optional: "Gender identity (optional)",
+      placeholder: "Male, female, non-binary, etc.",
+    },
+    race: {
+      optional: "Race (optional)",
+      placeholder: "e.g. Black, White, Asian, etc.",
+    },
+    ethnicity: {
+      optional: "Ethnicity (optional)",
+      placeholder: "e.g. Hispanic/Latino, Not Hispanic",
+    },
+
+    hasDisability: {
+      question: "Does the victim have a disability?",
+    },
+
+    disabilityType: {
+      physical: "Physical",
+      mental: "Mental",
+      developmental: "Developmental",
+      other: "Other",
+    },
+  },
+
+  /* =========================
+     NXTGUIDE CHAT
+  ========================== */
   nxtGuide: {
     title: "NxtGuide",
     subtitle: "Trauma-informed virtual advocate",
@@ -242,8 +375,114 @@ loginForm: {
       chatWith: "Chat with NxtGuide",
     },
     errors: {
-      respondFailed: "Sorry, I had trouble responding just now. Please try again in a moment.",
-      technicalProblem: "I ran into a technical problem while trying to respond. Please try again shortly.",
+      respondFailed:
+        "Sorry, I had trouble responding just now. Please try again in a moment.",
+      technicalProblem:
+        "I ran into a technical problem while trying to respond. Please try again shortly.",
+    },
+  },
+
+  /* =========================
+     UI (BUTTONS, MODALS, GENERIC COPY)
+  ========================== */
+  ui: {
+    buttons: {
+      back: "Back",
+      next: "Next",
+      continue: "Continue",
+      cancel: "Cancel",
+      close: "Close",
+      save: "Save",
+      saving: "Saving…",
+      submit: "Submit",
+      submitting: "Submitting…",
+      edit: "Edit",
+      done: "Done",
+      confirm: "Confirm",
+      download: "Download",
+      upload: "Upload",
+      remove: "Remove",
+      retry: "Retry",
+      refresh: "Refresh",
+    },
+
+    status: {
+      optional: "Optional",
+      required: "Required",
+      yes: "Yes",
+      no: "No",
+      none: "None",
+      unknown: "Unknown",
+      notProvided: "Not provided",
+    },
+
+    errors: {
+      generic: "Something went wrong. Please try again.",
+      network: "Network error. Please check your connection and try again.",
+      unauthorized: "You don’t have access to this.",
+      notFound: "That item could not be found.",
+    },
+
+    toasts: {
+      saved: "Saved",
+      updated: "Updated",
+      copied: "Copied",
+      uploaded: "Uploaded",
+      removed: "Removed",
+    },
+
+    modals: {
+      confirmTitle: "Confirm",
+      areYouSure: "Are you sure?",
+    },
+  },
+
+  /* =========================
+     FORMS (REUSABLE + PAGE/FORM COPY)
+     NOTE:
+       - Put per-form title/description here (forms.victim.*)
+       - Keep reusable labels/placeholders/validation in forms.labels/forms.placeholders/forms.validation
+  ========================== */
+  forms: {
+    victim: {
+      title: "Victim information",
+      description:
+        "This section is about the person who was physically injured or killed. If you are that person and over 18, this is your information.",
+      civilRightsNote:
+        "The following questions are used for civil rights reporting and do not affect eligibility. You can skip any that you do not wish to answer.",
+    },
+
+    labels: {
+      firstName: "First name",
+      lastName: "Last name",
+      middleName: "Middle name",
+      dateOfBirth: "Date of birth",
+      email: "Email",
+      phone: "Phone",
+      address: "Street address",
+      unit: "Apartment / Unit",
+      city: "City",
+      state: "State",
+      zip: "ZIP code",
+      county: "County",
+      country: "Country",
+      relationship: "Relationship",
+      notes: "Notes",
+    },
+
+    placeholders: {
+      selectOne: "Select one…",
+      typeHere: "Type here…",
+      search: "Search…",
+    },
+
+    validation: {
+      required: "This field is required.",
+      invalidEmail: "Please enter a valid email address.",
+      invalidPhone: "Please enter a valid phone number.",
+      invalidZip: "Please enter a valid ZIP code.",
+      minChars: "Please enter at least {min} characters.",
+      maxChars: "Please enter {max} characters or fewer.",
     },
   },
 };
