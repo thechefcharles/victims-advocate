@@ -1,9 +1,11 @@
+// app/compensation/intake/page.tsx
 "use client";
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSearchParams } from "next/navigation";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 import type {
   VictimInfo,
@@ -132,6 +134,7 @@ function CompensationIntakeInner() {
     const router = useRouter();
   const searchParams = useSearchParams();
 const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
+const { t, lang } = useI18n();
 
 
   useEffect(() => {
@@ -198,7 +201,7 @@ useEffect(() => {
 
       if (!res.ok) {
         console.error("Failed to load case:", await res.text());
-        alert("Could not load that case (no access or not found).");
+        alert(t("intake.loadCase.failed"));
         router.push("/");
         return;
       }
@@ -214,17 +217,16 @@ useEffect(() => {
       setMaxStepIndex(0);
       setLoadedFromStorage(true);
 
-      // ✅ always set active case pointer (don’t rely on userId state)
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (uid) localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`, caseId);
     } catch (err) {
       console.error("Unexpected error loading case from API:", err);
-      alert("Something went wrong loading that case.");
+      alert(t("intake.loadCase.unexpected"));
       router.push("/");
     }
   })();
-}, [caseId, router]);
+}, [caseId, router, t]); // ✅ add t
 
 
 // 🟢 1. Load saved intake once on mount
@@ -287,7 +289,7 @@ useEffect(() => {
 
       if (!res.ok) {
         console.error("Auto-create case failed:", await res.text());
-        setSaveToast("Couldn’t start application. Try refresh.");
+        setSaveToast(t("intake.startFailed"));
         setTimeout(() => setSaveToast(null), 2500);
         return;
       }
@@ -297,7 +299,7 @@ useEffect(() => {
 
       if (!newCaseId) {
         console.error("Auto-create case returned no id:", json);
-        setSaveToast("Created, but missing case ID.");
+        setSaveToast(t("intake.missingCaseId"));
         setTimeout(() => setSaveToast(null), 2500);
         return;
       }
@@ -305,12 +307,12 @@ useEffect(() => {
       // ✅ move into case-linked mode
 localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, newCaseId);
 router.replace(`/compensation/intake?case=${newCaseId}`);
-      setSaveToast("Application started");
+setSaveToast(t("intake.started"));
       setTimeout(() => setSaveToast(null), 1500);
       return;
     } catch (e) {
       console.error("Auto-create case error:", e);
-      setSaveToast("Couldn’t start application. Try refresh.");
+      setSaveToast(t("intake.startFailed"));
       setTimeout(() => setSaveToast(null), 2500);
     }
     // ✅ DO NOT set creatingCaseRef.current back to false (prevents double-create in dev)
@@ -424,7 +426,7 @@ const guardPatch =
   <T,>(fn: (patch: Partial<T>) => void) =>
   (patch: Partial<T>) => {
     if (isReadOnly) {
-      setSaveToast("View-only access (you can’t edit this case).");
+      setSaveToast(t("intake.viewOnly"));
       setTimeout(() => setSaveToast(null), 2000);
       return;
     }
@@ -482,7 +484,7 @@ const handleDownloadPdf = async () => {
     });
 
     if (!res.ok) {
-      alert("There was an issue generating the PDF. Please try again.");
+alert(t("intake.pdf.summaryFailed"));
       return;
     }
 
@@ -497,14 +499,14 @@ const handleDownloadPdf = async () => {
     URL.revokeObjectURL(url);
   } catch (err) {
     console.error("Error downloading summary PDF", err);
-    alert("Something went wrong generating the PDF.");
+alert(t("intake.pdf.summaryUnexpected"));
   }
 };
 
 const handleSaveNow = async () => {
   // If this user is viewing a case but can't edit, don't allow saving
   if (caseId && !canEdit) {
-    setSaveToast("View-only access. You can’t save changes.");
+setSaveToast(t("intake.save.viewOnly"));
     setTimeout(() => setSaveToast(null), 2000);
     return;
   }
@@ -512,7 +514,7 @@ const handleSaveNow = async () => {
   // If there is no caseId (shouldn’t happen after “case created on start”),
   // you can either block or fallback. I’m blocking with a clear message:
   if (!caseId) {
-    setSaveToast("No case loaded yet. Start the application first.");
+setSaveToast(t("intake.save.noCaseLoaded"));
     setTimeout(() => setSaveToast(null), 2000);
     return;
   }
@@ -537,11 +539,11 @@ const handleSaveNow = async () => {
       throw new Error(await res.text());
     }
 
-    setSaveToast("Application saved");
+setSaveToast(t("intake.save.saved"));
     setTimeout(() => setSaveToast(null), 2000);
   } catch (e) {
     console.error("Save now failed:", e);
-    setSaveToast("Couldn’t save. Try again.");
+setSaveToast(t("intake.save.failed"));
     setTimeout(() => setSaveToast(null), 2500);
   } finally {
     setSaveNowLoading(false);
@@ -557,9 +559,7 @@ const handleSaveNow = async () => {
       !victim.city.trim() ||
       !victim.zip.trim()
     ) {
-      alert(
-        "Please fill in the victim's name, date of birth, and address before continuing."
-      );
+alert(t("intake.validation.victimRequired"));
       return;
     }
     setStep("applicant");
@@ -579,9 +579,8 @@ const handleSaveNow = async () => {
 
     if (!res.ok) {
       console.error("IL official PDF error:", await res.text());
-      alert(
-        "There was an issue generating the official Illinois form. Please try again."
-      );
+      
+alert(t("intake.pdf.officialFailed"));
       return;
     }
 
@@ -596,7 +595,7 @@ const handleSaveNow = async () => {
     URL.revokeObjectURL(url);
   } catch (err) {
     console.error("Error downloading IL official PDF", err);
-    alert("Something went wrong creating the official form.");
+alert(t("intake.pdf.officialUnexpected"));
   }
 };
 
@@ -608,9 +607,7 @@ const handleSaveCase = async () => {
     !certification.acknowledgesRelease ||
     !certification.acknowledgesPerjury
   ) {
-    alert(
-      "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements."
-    );
+alert(t("intake.validation.certificationRequired"));
     return;
   }
 
@@ -632,7 +629,7 @@ const res = await fetch("/api/compensation/cases", {
     if (!res.ok) {
       const text = await res.text();
       console.error("Save case failed:", res.status, text);
-      alert("There was a problem saving your case. Please check the console.");
+alert(t("intake.saveCase.failed"));
       return;
     }
 
@@ -642,7 +639,7 @@ console.log("Saved case response:", json);
 const newCaseId = json?.case?.id;
 
 if (!newCaseId) {
-  alert("Saved, but no case ID was returned. Check the API response.");
+alert(t("intake.saveCase.missingId"));
   return;
 }
 
@@ -650,7 +647,7 @@ if (!newCaseId) {
 router.push(`/compensation/intake?case=${newCaseId}`);
   } catch (err) {
     console.error("Error calling /api/compensation/cases", err);
-    alert("Something went wrong saving your case. See console for details.");
+alert(t("intake.saveCase.unexpected"));
   }
 };
 
@@ -685,8 +682,8 @@ router.push(`/compensation/intake?case=${newCaseId}`);
           ...prev,
           {
             role: "assistant",
-            content:
-              "Sorry, I had trouble responding just now. Please try again in a moment.",
+
+content: t("nxtGuide.errors.respondFailed")
           },
         ]);
         return;
@@ -705,8 +702,7 @@ router.push(`/compensation/intake?case=${newCaseId}`);
         ...prev,
         {
           role: "assistant",
-          content:
-            "I ran into a technical problem while trying to respond. Please try again shortly.",
+content: t("nxtGuide.errors.technicalProblem")
         },
       ]);
     } finally {
@@ -746,9 +742,8 @@ if (!isReadOnly && applicant.isSameAsVictim) {
       !crime.crimeCity.trim() ||
       !crime.reportingAgency.trim()
     ) {
-      alert(
-        "Please provide at least the date of the crime, where it happened, and which police department it was reported to."
-      );
+    
+alert(t("intake.validation.crimeMinimumRequired"));
       return;
     }
     setStep("losses");
@@ -758,9 +753,8 @@ if (!isReadOnly && applicant.isSameAsVictim) {
   const handleNextFromLosses = () => {
     const anySelected = Object.values(losses).some(Boolean);
     if (!anySelected) {
-      const ok = window.confirm(
-        "You haven't selected any losses yet. Are you sure you don't want to ask for help with medical, funeral, or other costs?"
-      );
+      const ok = window.confirm(t("intake.confirm.noLossesSelected"))
+
       if (!ok) return;
     }
     setStep("medical");
@@ -775,9 +769,8 @@ const handleNextFromMedical = () => {
 
 const handleNextFromEmployment = () => {
   if (losses.lossOfEarnings && !employment.employmentHistory.length) {
-    const ok = window.confirm(
-      "You indicated loss of earnings but haven't entered any employer info yet. Continue anyway?"
-    );
+    const ok = window.confirm(t("intake.confirm.lossOfEarningsNoEmployer"))
+
     if (!ok) return;
   }
   setStep("funeral");
@@ -793,13 +786,12 @@ const handleNextFromFuneral = () => {
     (!funeral.payments || funeral.payments.length === 0);
 
   if (funeralSelected && noFuneralData) {
-    const ok = window.confirm(
-      "You indicated funeral or burial costs but haven't entered any funeral information yet. Continue anyway?"
-    );
+    const ok = window.confirm(t("intake.confirm.funeralSelectedNoData"));
     if (!ok) return;
   }
 
-  setStep("summary");
+  // ✅ Correct next step
+  setStep("documents");
   setMaxStepIndex((prev) => Math.max(prev, 7));
 };
 
@@ -811,7 +803,8 @@ const handleBack = () => {
   else if (step === "medical") setStep("losses");
   else if (step === "employment") setStep("medical");
   else if (step === "funeral") setStep("employment");
-  else if (step === "summary") setStep("funeral");
+  else if (step === "documents") setStep("funeral"); // ✅ add this
+  else if (step === "summary") setStep("documents");  // ✅ summary goes back to documents
 };
 
   return (
@@ -850,16 +843,15 @@ const handleBack = () => {
 
         {/* Step indicator */}
 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-<StepBadge label="Victim" active={step === "victim"} onClick={() => setStep("victim")} />
-<StepBadge label="Applicant" active={step === "applicant"} onClick={() => setStep("applicant")} />
-<StepBadge label="Crime & incident" active={step === "crime"} onClick={() => setStep("crime")} />
-<StepBadge label="Losses & money" active={step === "losses"} onClick={() => setStep("losses")} />
-<StepBadge label="Medical & counseling" active={step === "medical"} onClick={() => setStep("medical")} />
-<StepBadge label="Work & income" active={step === "employment"} onClick={() => setStep("employment")} />
-<StepBadge label="Funeral & dependents" active={step === "funeral"} onClick={() => setStep("funeral")} />
-<StepBadge label="Documents" active={step === "documents"} onClick={() => setStep("documents")} />
-<StepBadge label="Summary" active={step === "summary"} onClick={() => setStep("summary")} />
-
+<StepBadge label={t("intake.steps.victim")} active={step === "victim"} onClick={() => setStep("victim")} />
+<StepBadge label={t("intake.steps.applicant")} active={step === "applicant"} onClick={() => setStep("applicant")} />
+<StepBadge label={t("intake.steps.crime")} active={step === "crime"} onClick={() => setStep("crime")} />
+<StepBadge label={t("intake.steps.losses")} active={step === "losses"} onClick={() => setStep("losses")} />
+<StepBadge label={t("intake.steps.medical")} active={step === "medical"} onClick={() => setStep("medical")} />
+<StepBadge label={t("intake.steps.employment")} active={step === "employment"} onClick={() => setStep("employment")} />
+<StepBadge label={t("intake.steps.funeral")} active={step === "funeral"} onClick={() => setStep("funeral")} />
+<StepBadge label={t("intake.steps.documents")} active={step === "documents"} onClick={() => setStep("documents")} />
+<StepBadge label={t("intake.steps.summary")} active={step === "summary"} onClick={() => setStep("summary")} />
 </div>
 
         {/* Step content */}
@@ -1172,25 +1164,30 @@ function VictimForm({
   onChange: (patch: Partial<VictimInfo>) => void;
   isReadOnly: boolean;
 }) {
-  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+const { t } = useI18n();
+const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
+  const disabilityTypes = ["physical", "mental", "developmental", "other"] as const;
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">Victim information</h2>
+      <h2 className="text-lg font-semibold text-slate-50">
+        {t("forms.victim.title")}
+      </h2>
+
       <p className="text-xs text-slate-300">
-        This section is about the person who was physically injured or killed. If you
-        are that person and over 18, this is your information.
+        {t("forms.victim.description")}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="First name *"
+          label={t("fields.firstName.required")}
           value={victim.firstName}
           onChange={(v) => onChange({ firstName: v })}
           disabled={isReadOnly}
         />
         <Field
-          label="Last name *"
+          label={t("fields.lastName.required")}
           value={victim.lastName}
           onChange={(v) => onChange({ lastName: v })}
           disabled={isReadOnly}
@@ -1199,15 +1196,15 @@ function VictimForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="Date of birth *"
+          label={t("fields.dateOfBirth.required")}
           type="date"
           value={victim.dateOfBirth}
           onChange={(v) => onChange({ dateOfBirth: v })}
           disabled={isReadOnly}
         />
         <Field
-          label="Cell phone"
-          placeholder="(xxx) xxx-xxxx"
+          label={t("fields.cellPhone.label")}
+          placeholder={t("fields.cellPhone.placeholder")}
           value={victim.cellPhone ?? ""}
           onChange={(v) => onChange({ cellPhone: v })}
           disabled={isReadOnly}
@@ -1216,32 +1213,33 @@ function VictimForm({
 
       <div className="space-y-3">
         <Field
-          label="Street address *"
+          label={t("fields.streetAddress.required")}
           value={victim.streetAddress}
           onChange={(v) => onChange({ streetAddress: v })}
           disabled={isReadOnly}
         />
         <Field
-          label="Apartment / Unit"
+          label={t("fields.apt.label")}
           value={victim.apt ?? ""}
           onChange={(v) => onChange({ apt: v })}
           disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="City *"
+            label={t("fields.city.required")}
             value={victim.city}
             onChange={(v) => onChange({ city: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="State *"
+            label={t("fields.state.required")}
             value={victim.state}
             onChange={(v) => onChange({ state: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="ZIP code *"
+            label={t("fields.zip.required")}
             value={victim.zip}
             onChange={(v) => onChange({ zip: v })}
             disabled={isReadOnly}
@@ -1251,14 +1249,14 @@ function VictimForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="Email"
+          label={t("fields.email.label")}
           type="email"
           value={victim.email ?? ""}
           onChange={(v) => onChange({ email: v })}
           disabled={isReadOnly}
         />
         <Field
-          label="Alternate phone"
+          label={t("fields.alternatePhone.label")}
           value={victim.alternatePhone ?? ""}
           onChange={(v) => onChange({ alternatePhone: v })}
           disabled={isReadOnly}
@@ -1267,36 +1265,35 @@ function VictimForm({
 
       <div className="space-y-3 pt-3 border-t border-slate-800">
         <p className="text-[11px] text-slate-400">
-          The following questions are used for civil rights reporting and do not affect
-          eligibility. You can skip any that you do not wish to answer.
+          {t("forms.victim.civilRightsNote")}
         </p>
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="Gender identity (optional)"
+            label={t("fields.genderIdentity.optional")}
             value={victim.genderIdentity ?? ""}
             onChange={(v) => onChange({ genderIdentity: v })}
             disabled={isReadOnly}
-            placeholder="Male, female, non-binary, etc."
+            placeholder={t("fields.genderIdentity.placeholder")}
           />
           <Field
-            label="Race (optional)"
+            label={t("fields.race.optional")}
             value={victim.race ?? ""}
             onChange={(v) => onChange({ race: v })}
             disabled={isReadOnly}
-            placeholder="e.g. Black, White, Asian, etc."
+            placeholder={t("fields.race.placeholder")}
           />
           <Field
-            label="Ethnicity (optional)"
+            label={t("fields.ethnicity.optional")}
             value={victim.ethnicity ?? ""}
             onChange={(v) => onChange({ ethnicity: v })}
             disabled={isReadOnly}
-            placeholder="e.g. Hispanic/Latino, Not Hispanic"
+            placeholder={t("fields.ethnicity.placeholder")}
           />
         </div>
 
         <div className="space-y-2 text-xs">
-          <p className="text-slate-200">Does the victim have a disability?</p>
+          <p className="text-slate-200">{t("fields.hasDisability.question")}</p>
 
           <div className="flex flex-wrap gap-3">
             <button
@@ -1309,7 +1306,7 @@ function VictimForm({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              Yes
+              {t("common.yes")}
             </button>
 
             <button
@@ -1324,25 +1321,25 @@ function VictimForm({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              No
+              {t("common.no")}
             </button>
           </div>
 
           {victim.hasDisability && (
             <div className="grid gap-2 sm:grid-cols-4 mt-2">
-              {(["physical", "mental", "developmental", "other"] as const).map((t) => (
+              {disabilityTypes.map((type) => (
                 <button
-                  key={t}
+                  key={type}
                   type="button"
                   disabled={isReadOnly}
-                  onClick={() => !isReadOnly && onChange({ disabilityType: t })}
+                  onClick={() => !isReadOnly && onChange({ disabilityType: type })}
                   className={`px-2 py-1 rounded-full border text-[11px] ${disBtn} ${
-                    victim.disabilityType === t
+                    victim.disabilityType === type
                       ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
-                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                  {t(`fields.disabilityType.${type}`)}
                 </button>
               ))}
             </div>

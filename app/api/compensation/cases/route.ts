@@ -6,6 +6,11 @@ import type { CompensationApplication } from "@/lib/compensationSchema";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
+type CreateCaseBody =
+  | { application: unknown; status?: CaseStatus; state_code?: string }
+  | { caseId?: string; application: unknown; status?: CaseStatus; state_code?: string } // tolerated
+  | unknown; // legacy: raw application object
+
 function getToken(req: Request) {
   const authHeader = req.headers.get("authorization") || "";
   return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -26,12 +31,53 @@ async function requireUserId(req: Request): Promise<string> {
   return data.user.id;
 }
 
+/**
+ * Prevents the "jsonb contains a stringified JSON" problem.
+ * Accepts:
+ * - object => returns object
+ * - JSON string => parses once or twice if needed
+ */
+function normalizeApplication(raw: unknown): CompensationApplication | null {
+  if (!raw) return null;
+
+  // already an object
+  if (typeof raw === "object") return raw as CompensationApplication;
+
+  // stringified JSON (possibly double-stringified)
+  if (typeof raw === "string") {
+    try {
+      const once = JSON.parse(raw);
+      if (typeof once === "object" && once) return once as CompensationApplication;
+
+      if (typeof once === "string") {
+        const twice = JSON.parse(once);
+        if (typeof twice === "object" && twice) return twice as CompensationApplication;
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function normalizeStatus(maybe: unknown): CaseStatus {
+  const allowed: CaseStatus[] = ["draft", "ready_for_review", "submitted", "closed"];
+  return allowed.includes(maybe as CaseStatus) ? (maybe as CaseStatus) : "draft";
+}
+
+function normalizeStateCode(maybe: unknown): string {
+  const s = typeof maybe === "string" ? maybe.trim().toUpperCase() : "";
+  // MVP: default IL; you can expand later
+  return s || "IL";
+}
+
 export async function GET(req: Request) {
   try {
     const userId = await requireUserId(req);
     const supabaseAdmin = getSupabaseAdmin();
 
-    // ✅ Only return cases the user can_view (owner OR advocate)
+    // Return cases the user can_view via case_access (owner OR advocate)
     const { data, error } = await supabaseAdmin
       .from("case_access")
       .select(
@@ -44,13 +90,12 @@ export async function GET(req: Request) {
       )
       .eq("user_id", userId)
       .eq("can_view", true)
-      // ✅ correct option name is foreignTable
       .order("created_at", { ascending: false, foreignTable: "cases" });
 
     if (error) {
       console.error("Supabase case_access SELECT error:", error);
       return NextResponse.json(
-        { error: error.message || "Supabase error", details: error },
+        { error: error.message || "Supabase error" },
         { status: 500 }
       );
     }
@@ -87,26 +132,41 @@ export async function POST(req: Request) {
     const userId = await requireUserId(req);
     const supabaseAdmin = getSupabaseAdmin();
 
-    const body = await req.json().catch(() => null);
+    const body = (await req.json().catch(() => null)) as CreateCaseBody | null;
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
 
-    // accept either:
-    // 1) { application: <app>, status?: ... }
+    // Accept either:
+    // 1) { application: <app>, status?: ..., state_code?: ... }
     // 2) <app> directly (legacy)
-    const application: CompensationApplication = (body?.application ?? body) as CompensationApplication;
+    const rawApp =
+      typeof body === "object" && body && "application" in body ? (body as any).application : body;
 
-    const status: CaseStatus = (body?.status ?? "draft") as CaseStatus;
-    const allowed: CaseStatus[] = ["draft", "ready_for_review", "submitted", "closed"];
-    const finalStatus: CaseStatus = allowed.includes(status) ? status : "draft";
+    const application = normalizeApplication(rawApp);
+    if (!application) {
+      return NextResponse.json(
+        { error: "Invalid application payload (must be JSON object)" },
+        { status: 400 }
+      );
+    }
+
+    const status =
+      typeof body === "object" && body && "status" in body
+        ? normalizeStatus((body as any).status)
+        : "draft";
+
+    const state_code =
+      typeof body === "object" && body && "state_code" in body
+        ? normalizeStateCode((body as any).state_code)
+        : "IL";
 
     // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
         owner_user_id: userId,
-        status: finalStatus,
-        state_code: "IL",
-        application,
+        status,
+        state_code,
+        application, // IMPORTANT: store as jsonb object (not string)
       })
       .select("*")
       .single();
@@ -114,7 +174,7 @@ export async function POST(req: Request) {
     if (caseError || !newCase) {
       console.error("Error inserting case", caseError);
       return NextResponse.json(
-        { error: "Failed to save case", details: caseError },
+        { error: "Failed to save case" },
         { status: 500 }
       );
     }
@@ -130,7 +190,7 @@ export async function POST(req: Request) {
 
     if (accessError) {
       console.error("Error inserting case_access owner row", accessError);
-      // don't fail case creation
+      // do not fail creation
     }
 
     // 3) Attach any unassigned documents from this user to the new case

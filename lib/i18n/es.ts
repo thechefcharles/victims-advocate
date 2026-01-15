@@ -1,0 +1,489 @@
+// lib/i18n/es.ts
+import type { I18nDict } from "./types";
+
+export const es: I18nDict = {
+  /* =========================
+     NAV / COMMON
+  ========================== */
+  nav: {
+    dashboardVictim: "Mis casos",
+    dashboardAdvocate: "Mis clientes",
+    login: "Iniciar sesión",
+    logout: "Cerrar sesión",
+    language: "Idioma",
+    brandTagline: "Apoyo a víctimas · Hecho simple",
+  },
+
+  common: {
+    loading: "Cargando…",
+    refresh: "Actualizar",
+    refreshing: "Actualizando…",
+    backToHome: "← Volver al inicio",
+    yes: "Sí",
+    no: "No",
+  },
+
+  /* =========================
+     AUTH PANEL / LOGIN
+  ========================== */
+  authPanel: {
+    signedInAs: "Conectado como",
+    signedInAsAdvocate: "Conectado como Defensor/a",
+    welcome: "Bienvenido/a",
+    goToMyClients: "Ir a Mis clientes →",
+    learnHowItWorks: "Aprende cómo funciona",
+    advocatesNote:
+      "Los defensores no completan solicitudes aquí — las víctimas comparten casos contigo para revisión.",
+
+    progressTitle: "Tu progreso de solicitud",
+    stepOf: "Paso {current} de {total}",
+    currentSection: "Sección actual:",
+    resumeApplication: "Reanudar solicitud",
+    startApplication: "Iniciar solicitud",
+    myCases: "Mis casos",
+
+    inlineLoginTitle: "Vamos a iniciar sesión",
+    emailLabel: "Correo electrónico",
+    passwordLabel: "Contraseña",
+    rememberMe: "Recordarme",
+    signingIn: "Iniciando…",
+    signIn: "Iniciar sesión",
+
+    newHere: "¿Nuevo aquí?",
+    createVictimAccount: "Crear cuenta de víctima",
+    workAsAdvocate: "¿Trabajas como defensor/a?",
+    createAdvocateAccount: "Crear cuenta de defensor/a de víctimas",
+    needHelp: "¿Necesitas ayuda?",
+  },
+
+  loginForm: {
+    title: "Iniciar sesión",
+    submit: "Iniciar sesión",
+    emailPlaceholder: "Correo electrónico",
+    passwordPlaceholder: "Contraseña",
+    loggingIn: "Iniciando…",
+    createAccount: "Crear cuenta",
+    createAdvocateAccount: "Crear cuenta de defensor/a",
+    forgotPassword: "Olvidé mi contraseña",
+  },
+
+  /* =========================
+     HOME PAGE
+  ========================== */
+  home: {
+    hero: {
+      title: "Apoyo para Víctimas de Delitos",
+      subtitle: "Solicita compensación para víctimas hoy.",
+      disclaimer:
+        "NxtStps es una herramienta de apoyo. No reemplaza asesoría legal, servicios de emergencia ni atención médica. Puedes pausar en cualquier momento y volver cuando estés listo/a.",
+    },
+
+    guidedPath: {
+      title: "Ruta Guiada de NxtStps",
+      badge: "Vista preliminar",
+      step1: {
+        title: "Cuéntanos qué pasó",
+        body: "Hacemos una pregunta a la vez, con un lenguaje calmado y claro.",
+      },
+      step2: {
+        title: "Reúne y revisa tus documentos",
+        body:
+          "Sube reportes policiales, facturas médicas y otras pruebas. Detectamos faltantes o inconsistencias.",
+      },
+      step3: {
+        title: "Presenta con confianza",
+        body:
+          "Revisas un borrador limpio del paquete antes de que se envíe al estado.",
+      },
+      quote:
+        "“No tienes que resolver esto solo/a. NxtStps te acompaña, paso a paso, a tu ritmo.”",
+    },
+
+    trustBar: {
+      title: "Diseñado para el ecosistema real de servicios a víctimas",
+      badge1: "Creado con defensores y gestores de casos",
+      badge2: "Alineado con reglas estatales de compensación",
+      badge3: "Motor con IA para prevenir rechazos",
+      badge4: "Seguro, cifrado y confidencial",
+    },
+
+    features: {
+      title: "En qué te ayuda NxtStps",
+      f1: {
+        title: "Verificador de elegibilidad",
+        body:
+          "Responde algunas preguntas clave y explica con calma si podrías calificar, por qué y qué hacer después.",
+      },
+      f2: {
+        title: "Motor para prevenir rechazos",
+        body:
+          "Convierte las razones más comunes de rechazo en verificaciones automáticas antes de presentar.",
+      },
+      f3: {
+        title: "Organizador automático de documentos",
+        body:
+          "Reportes policiales, facturas médicas, facturas funerarias y comprobantes de salario—organizados y listos para revisión.",
+      },
+      f4: {
+        title: "Constructor de solicitudes",
+        body:
+          "Transforma formularios complejos del estado en pasos claros con ejemplos y explicaciones.",
+      },
+      f5: {
+        title: "Chatbot multilingüe para defensores",
+        body:
+          "NxtGuide explica el proceso en tu idioma, hace preguntas con cuidado y mantiene un enfoque informado por trauma.",
+      },
+      f6: {
+        title: "Soporte estado por estado",
+        body:
+          "Se adapta a categorías, requisitos y plazos de cada estado para mantener tu solicitud en regla.",
+      },
+    },
+
+    audience: {
+      title: "A quién apoya NxtStps",
+      subtitle:
+        "NxtStps está diseñado para todos los que participan en el proceso de servicios a víctimas: sobrevivientes, defensores, hospitales y agencias estatales.",
+      tabs: {
+        victims: "Víctimas",
+        advocates: "Defensores/as",
+        caseManagers: "Gestores de casos",
+        communityOrgs: "Organizaciones comunitarias",
+        hospitals: "Hospitales y proveedores médicos",
+        government: "Departamentos gubernamentales",
+      },
+      bullets: {
+        victims: {
+          b1: "Comprende tus derechos con un lenguaje claro y humano.",
+          b2: "Solicita con confianza con guía paso a paso.",
+          b3: "Evita errores comunes que retrasan o niegan solicitudes.",
+        },
+        advocates: {
+          b1: "Agiliza tu carga de trabajo con flujos automatizados.",
+          b2: "Reduce envíos incompletos y errores evitables.",
+          b3: "Mantén atención informada por trauma ahorrando tiempo.",
+        },
+        caseManagers: {
+          b1: "Gestiona casos complejos con documentación organizada.",
+          b2: "Sigue el estado de solicitudes de múltiples clientes.",
+          b3: "Asegura precisión, cumplimiento y seguimiento a tiempo.",
+        },
+        communityOrgs: {
+          b1: "Centraliza trabajo de apoyo en alcance y defensa.",
+          b2: "Mejora coordinación interna y derivaciones efectivas.",
+          b3: "Accede a reportes agregados para fortalecer financiamiento.",
+        },
+        hospitals: {
+          b1: "Simplifica procesos de envío y verificación de facturas.",
+          b2: "Reduce carga en trabajadores sociales y facturación.",
+          b3: "Ayuda a pacientes a acceder a apoyo financiero rápidamente.",
+        },
+        government: {
+          b1: "Recibe solicitudes más limpias y completas.",
+          b2: "Reduce atrasos con paquetes estandarizados y sin errores.",
+          b3: "Aumenta transparencia, cumplimiento y confianza pública.",
+        },
+      },
+    },
+
+    transparency: {
+      title: "Los servicios para víctimas deben ser rápidos, claros y justos.",
+      body:
+        "NxtStps elimina confusión, documentos faltantes y rechazos evitables—ofreciendo una ruta estable y transparente hacia el apoyo.",
+      b1: "Sin cargos ocultos.",
+      b2: "Sin juicio.",
+      b3: "Sin lenguaje legal confuso.",
+      b4: "Diseñado para precisión, dignidad y equidad.",
+    },
+
+    state: {
+      title: "Adaptado a tu estado",
+      body:
+        "NxtStps apoyará múltiples estados. Por ahora, nos enfocamos en la Compensación para Víctimas de Delitos en Illinois, pero la arquitectura está lista para crecer.",
+      selectLabel: "Selecciona tu estado (vista previa)",
+      optionIL: "Illinois (enfoque actual)",
+      optionComingSoon: "Más estados próximamente…",
+    },
+
+    privacy: {
+      title: "Seguridad y privacidad, por diseño",
+      b1: "Tu información se cifra en tránsito y en reposo.",
+      b2: "Tú controlas qué se comparte y cuándo.",
+      b3: "Nada se envía al estado sin tu consentimiento.",
+      b4: "Puedes pausar o salir en cualquier momento.",
+    },
+
+    multilingual: {
+      bold: "Soporte multilingüe.",
+      body:
+        "NxtStps se está construyendo para soportar 100+ idiomas, con traducción instantánea y guía informada por trauma.",
+      badge: "Inglés · Español · Más próximamente",
+    },
+
+    footer: {
+      rights: "NxtStps. Todos los derechos reservados.",
+      disclaimer:
+        "NxtStps es una herramienta digital informada por trauma. No reemplaza asesoría legal, servicios de emergencia ni atención de salud mental.",
+      links: {
+        resourceLibrary: "Biblioteca de recursos",
+        forVictims: "Para víctimas",
+        privacySecurity: "Privacidad y seguridad",
+        terms: "Términos",
+        crisis988: "Apoyo en crisis (988)",
+      },
+    },
+  },
+
+  /* =========================
+     INTAKE (APPLICATION FLOW)
+  ========================== */
+  intake: {
+    steps: {
+      victim: "Víctima",
+      applicant: "Solicitante",
+      crime: "Delito e incidente",
+      losses: "Gastos y dinero",
+      medical: "Atención médica y consejería",
+      employment: "Trabajo e ingresos",
+      funeral: "Funeral y dependientes",
+      documents: "Documentos",
+      summary: "Resumen",
+    },
+
+    viewOnly: "Acceso de solo lectura (no puedes editar este caso).",
+    startFailed: "No se pudo iniciar la solicitud. Intenta recargar.",
+    missingCaseId: "Se creó, pero falta el ID del caso.",
+    started: "Solicitud iniciada",
+
+    loadCase: {
+      failed: "No se pudo cargar ese caso (sin acceso o no existe).",
+      unexpected: "Ocurrió un error al cargar ese caso.",
+    },
+
+    save: {
+      viewOnly: "Acceso de solo lectura. No puedes guardar cambios.",
+      noCaseLoaded: "Aún no hay un caso cargado. Inicia la solicitud primero.",
+      saved: "Solicitud guardada",
+      failed: "No se pudo guardar. Intenta de nuevo.",
+    },
+
+    pdf: {
+      summaryFailed:
+        "Hubo un problema al generar el PDF. Por favor intenta de nuevo.",
+      summaryUnexpected:
+        "Ocurrió un error inesperado al generar el PDF.",
+      officialFailed:
+        "Hubo un problema al generar el formulario oficial de Illinois. Por favor intenta de nuevo.",
+      officialUnexpected:
+        "Ocurrió un error al crear el formulario oficial.",
+    },
+
+    validation: {
+      victimRequired:
+        "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",
+      crimeMinimumRequired:
+        "Por favor proporciona al menos la fecha del delito, dónde ocurrió y a qué departamento de policía se reportó.",
+      certificationRequired:
+        "Antes de guardar esto como un caso, revisa la sección de certificación y agrega tu nombre, fecha y confirmaciones.",
+    },
+
+    confirm: {
+      noLossesSelected:
+        "Aún no has seleccionado ninguna pérdida. ¿Seguro que no quieres solicitar ayuda con costos médicos, funerarios u otros?",
+      lossOfEarningsNoEmployer:
+        "Indicaste pérdida de ingresos pero aún no ingresaste información del empleador. ¿Continuar de todos modos?",
+      funeralSelectedNoData:
+        "Indicaste costos funerarios o de sepelio pero aún no ingresaste información funeraria. ¿Continuar de todos modos?",
+    },
+
+    saveCase: {
+      failed:
+        "Hubo un problema al guardar tu caso. Por favor revisa la consola.",
+      missingId:
+        "Se guardó, pero no se devolvió un ID de caso. Revisa la respuesta del API.",
+      unexpected:
+        "Ocurrió un error al guardar tu caso. Revisa la consola para más detalles.",
+    },
+  },
+
+  /* =========================
+     FIELD COPY (PAGE/FORM-SPECIFIC LABELS)
+  ========================== */
+  fields: {
+    firstName: { required: "Nombre *" },
+    lastName: { required: "Apellido *" },
+    dateOfBirth: { required: "Fecha de nacimiento *" },
+
+    cellPhone: {
+      label: "Teléfono celular",
+      placeholder: "(xxx) xxx-xxxx",
+    },
+
+    streetAddress: { required: "Dirección *" },
+    apt: { label: "Apartamento / Unidad" },
+
+    city: { required: "Ciudad *" },
+    state: { required: "Estado *" },
+    zip: { required: "Código postal *" },
+
+    email: { label: "Correo electrónico" },
+    alternatePhone: { label: "Teléfono alternativo" },
+
+    genderIdentity: {
+      optional: "Identidad de género (opcional)",
+      placeholder: "Masculino, femenino, no binario, etc.",
+    },
+    race: {
+      optional: "Raza (opcional)",
+      placeholder: "Ej. Negro, Blanco, Asiático, etc.",
+    },
+    ethnicity: {
+      optional: "Etnicidad (opcional)",
+      placeholder: "Ej. Hispano/Latino, No hispano",
+    },
+
+    hasDisability: {
+      question: "¿La víctima tiene alguna discapacidad?",
+    },
+
+    disabilityType: {
+      physical: "Física",
+      mental: "Mental",
+      developmental: "Del desarrollo",
+      other: "Otra",
+    },
+  },
+
+  /* =========================
+     NXTGUIDE CHAT
+  ========================== */
+  nxtGuide: {
+    title: "NxtGuide",
+    subtitle: "Defensor/a virtual con enfoque informado por trauma",
+    close: "Cerrar",
+    typing: "NxtGuide está escribiendo…",
+    empty: {
+      title: "Puedes preguntarme cosas como:",
+      q1: "“¿Para qué sirve este sitio?”",
+      q2: "“¿Dónde empiezo mi solicitud?”",
+      q3: "“¿Qué documentos necesito?”",
+    },
+    placeholders: {
+      thinking: "Pensando…",
+      ask: "Pregúntale cualquier cosa a NxtGuide...",
+    },
+    cta: {
+      needHelp: "¿Necesitas ayuda?",
+      chatWith: "Chatea con NxtGuide",
+    },
+    errors: {
+      respondFailed:
+        "Lo siento, tuve problemas para responder. Por favor intenta de nuevo en un momento.",
+      technicalProblem:
+        "Tuve un problema técnico al intentar responder. Por favor intenta de nuevo pronto.",
+    },
+  },
+
+  /* =========================
+     UI (BUTTONS, MODALS, GENERIC COPY)
+  ========================== */
+  ui: {
+    buttons: {
+      back: "Atrás",
+      next: "Siguiente",
+      continue: "Continuar",
+      cancel: "Cancelar",
+      close: "Cerrar",
+      save: "Guardar",
+      saving: "Guardando…",
+      submit: "Enviar",
+      submitting: "Enviando…",
+      edit: "Editar",
+      done: "Listo",
+      confirm: "Confirmar",
+      download: "Descargar",
+      upload: "Subir",
+      remove: "Eliminar",
+      retry: "Reintentar",
+      refresh: "Actualizar",
+    },
+
+    status: {
+      optional: "Opcional",
+      required: "Obligatorio",
+      yes: "Sí",
+      no: "No",
+      none: "Ninguno",
+      unknown: "Desconocido",
+      notProvided: "No proporcionado",
+    },
+
+    errors: {
+      generic: "Ocurrió un error. Por favor intenta de nuevo.",
+      network:
+        "Error de red. Verifica tu conexión e inténtalo nuevamente.",
+      unauthorized: "No tienes acceso a esto.",
+      notFound: "No se pudo encontrar ese elemento.",
+    },
+
+    toasts: {
+      saved: "Guardado",
+      updated: "Actualizado",
+      copied: "Copiado",
+      uploaded: "Subido",
+      removed: "Eliminado",
+    },
+
+    modals: {
+      confirmTitle: "Confirmar",
+      areYouSure: "¿Estás seguro/a?",
+    },
+  },
+
+  /* =========================
+     FORMS (REUSABLE + PAGE/FORM COPY)
+  ========================== */
+  forms: {
+    victim: {
+      title: "Información de la víctima",
+      description:
+        "Esta sección es sobre la persona que fue lesionada físicamente o falleció. Si usted es esa persona y tiene más de 18 años, esta es su información.",
+      civilRightsNote:
+        "Las siguientes preguntas se utilizan para reportes de derechos civiles y no afectan la elegibilidad. Puede omitir cualquiera que no desee responder.",
+    },
+
+    labels: {
+      firstName: "Nombre",
+      lastName: "Apellido",
+      middleName: "Segundo nombre",
+      dateOfBirth: "Fecha de nacimiento",
+      email: "Correo electrónico",
+      phone: "Teléfono",
+      address: "Dirección",
+      unit: "Apartamento / Unidad",
+      city: "Ciudad",
+      state: "Estado",
+      zip: "Código postal",
+      county: "Condado",
+      country: "País",
+      relationship: "Relación",
+      notes: "Notas",
+    },
+
+    placeholders: {
+      selectOne: "Selecciona una opción…",
+      typeHere: "Escribe aquí…",
+      search: "Buscar…",
+    },
+
+    validation: {
+      required: "Este campo es obligatorio.",
+      invalidEmail: "Por favor ingresa un correo electrónico válido.",
+      invalidPhone: "Por favor ingresa un número de teléfono válido.",
+      invalidZip: "Por favor ingresa un código postal válido.",
+      minChars: "Por favor ingresa al menos {min} caracteres.",
+      maxChars: "Por favor ingresa {max} caracteres o menos.",
+    },
+  },
+};

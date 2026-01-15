@@ -2,9 +2,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
@@ -30,10 +31,6 @@ type ProgressPayload = {
   updatedAt?: number;
 };
 
-function prettyLabel(label: string) {
-  return label.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function safeJsonParse<T>(raw: string | null): T | null {
   if (!raw) return null;
   try {
@@ -51,19 +48,23 @@ function safeGetItem(key: string) {
   }
 }
 
+function toTitleFromKey(key: string) {
+  return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function AuthPanel() {
   const { loading, user, role } = useAuth();
+  const { t, tf } = useI18n();
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [progress, setProgress] = useState<null | {
     maxIndex: number;
     total: number;
-    label: string;
+    label: IntakeStep;
   }>(null);
 
   const userIdRef = useRef<string | null>(null);
 
-  // recompute progress from localStorage (victims only)
   const refresh = (uid: string | null) => {
     if (!uid) {
       setActiveCaseId(null);
@@ -86,7 +87,7 @@ export default function AuthPanel() {
       return;
     }
 
-    const step = parsed.step ?? "victim";
+    const step = (parsed.step ?? "victim") as IntakeStep;
     const currentIndex = Math.max(0, STEPS.indexOf(step));
     const maxIndex =
       typeof parsed.maxStepIndex === "number"
@@ -96,13 +97,11 @@ export default function AuthPanel() {
     setProgress({ maxIndex, total: STEPS.length, label: step });
   };
 
-  // when auth changes, update local pointers
   useEffect(() => {
     const uid = user?.id ?? null;
     userIdRef.current = uid;
 
     if (role === "advocate") {
-      // advocates never show progress/resume
       setActiveCaseId(null);
       setProgress(null);
       return;
@@ -111,7 +110,6 @@ export default function AuthPanel() {
     refresh(uid);
   }, [user?.id, role]);
 
-  // keep synced across tabs for victims
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       const uid = userIdRef.current;
@@ -138,10 +136,12 @@ export default function AuthPanel() {
     ? `/compensation/intake?case=${activeCaseId}`
     : "/compensation/intake";
 
+  const stepLabel = progress?.label ? toTitleFromKey(progress.label) : "";
+
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5">
-        <div className="text-[11px] text-slate-400">Loading…</div>
+        <div className="text-[11px] text-slate-400">{t("common.loading")}</div>
       </div>
     );
   }
@@ -151,7 +151,9 @@ export default function AuthPanel() {
       {user ? (
         role === "advocate" ? (
           <>
-            <div className="text-[11px] text-slate-400">Signed in as Advocate</div>
+            <div className="text-[11px] text-slate-400">
+              {t("authPanel.signedInAsAdvocate")}
+            </div>
             <div className="text-sm font-semibold text-slate-100">{email}</div>
 
             <div className="flex flex-wrap gap-2 pt-3">
@@ -159,32 +161,33 @@ export default function AuthPanel() {
                 href="/dashboard"
                 className="rounded-full px-4 py-2 text-xs font-semibold bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
               >
-                Go to My clients →
+                {t("authPanel.goToMyClients")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
                 className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
               >
-                Learn how it works
+                {t("authPanel.learnHowItWorks")}
               </Link>
             </div>
 
-            <p className="text-[11px] text-slate-500">
-              Advocates don’t fill out applications here — victims share cases with you for review.
-            </p>
+            <p className="text-[11px] text-slate-500">{t("authPanel.advocatesNote")}</p>
           </>
         ) : (
           <>
-            <div className="text-[11px] text-slate-400">Signed in as</div>
+            <div className="text-[11px] text-slate-400">{t("authPanel.signedInAs")}</div>
             <div className="text-sm font-semibold text-slate-100">{email}</div>
 
             {progress && (
               <div className="pt-2 space-y-2">
                 <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Your application progress</span>
+                  <span>{t("authPanel.progressTitle")}</span>
                   <span>
-                    Step {progress.maxIndex + 1} of {progress.total}
+                    {tf("authPanel.stepOf", {
+                      current: progress.maxIndex + 1,
+                      total: progress.total,
+                    })}
                   </span>
                 </div>
 
@@ -196,8 +199,8 @@ export default function AuthPanel() {
                 </div>
 
                 <div className="text-[11px] text-slate-500">
-                  Current section:{" "}
-                  <span className="text-slate-300">{prettyLabel(progress.label)}</span>
+                  {t("authPanel.currentSection")}{" "}
+                  <span className="text-slate-300">{stepLabel}</span>
                 </div>
               </div>
             )}
@@ -211,21 +214,23 @@ export default function AuthPanel() {
                     : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
                 }`}
               >
-                {activeCaseId ? "Resume application" : "Start application"}
+                {activeCaseId
+                  ? t("authPanel.resumeApplication")
+                  : t("authPanel.startApplication")}
               </Link>
 
               <Link
                 href="/dashboard"
                 className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
               >
-                My cases
+                {t("authPanel.myCases")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
                 className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
               >
-                Learn how it works
+                {t("authPanel.learnHowItWorks")}
               </Link>
             </div>
           </>
@@ -238,9 +243,11 @@ export default function AuthPanel() {
 }
 
 function InlineLoginCard() {
+  const { t } = useI18n();
+
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [remember, setRemember] = useState(true);
+  const [remember, setRemember] = useState(true); // UI-only for now
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -254,10 +261,11 @@ function InlineLoginCard() {
         email: identifier.trim(),
         password,
       });
+
       if (error) setErr(error.message);
 
       if (!remember) {
-        // UI-only for now
+        // still UI-only (session persistence is configured in supabaseClient)
       }
     } finally {
       setLoading(false);
@@ -266,15 +274,17 @@ function InlineLoginCard() {
 
   return (
     <>
-      <div className="text-sm font-semibold text-slate-100">Let&apos;s get you signed in</div>
+      <div className="text-sm font-semibold text-slate-100">
+        {t("authPanel.inlineLoginTitle")}
+      </div>
 
       <form onSubmit={handleSignIn} className="space-y-3 pt-1">
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">Email</span>
+          <span className="text-[11px] text-slate-400">{t("authPanel.emailLabel")}</span>
           <input
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
-            placeholder="you@example.com"
+            placeholder={t("loginForm.emailPlaceholder")}
             type="email"
             autoComplete="email"
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
@@ -282,11 +292,11 @@ function InlineLoginCard() {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">Password</span>
+          <span className="text-[11px] text-slate-400">{t("authPanel.passwordLabel")}</span>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder={t("loginForm.passwordPlaceholder")}
             type="password"
             autoComplete="current-password"
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
@@ -300,7 +310,7 @@ function InlineLoginCard() {
             onChange={(e) => setRemember(e.target.checked)}
             className="h-3 w-3"
           />
-          Remember me
+          {t("authPanel.rememberMe")}
         </label>
 
         {err && (
@@ -314,30 +324,30 @@ function InlineLoginCard() {
           disabled={loading || !identifier.trim() || !password}
           className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Signing in…" : "Sign in"}
+          {loading ? t("authPanel.signingIn") : t("authPanel.signIn")}
         </button>
 
         <div className="flex items-start justify-between gap-4 text-[11px] text-slate-400">
           <div className="flex flex-col gap-1">
             <div>
-              New here?{" "}
+              {t("authPanel.newHere")}{" "}
               <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
-                Create victim account
+                {t("authPanel.createVictimAccount")}
               </Link>
             </div>
             <div>
-              Work as an advocate?{" "}
+              {t("authPanel.workAsAdvocate")}{" "}
               <Link
                 href="/signup/advocate"
                 className="underline underline-offset-2 hover:text-slate-200"
               >
-                Create victim advocate account
+                {t("authPanel.createAdvocateAccount")}
               </Link>
             </div>
           </div>
 
           <Link href="/help" className="underline underline-offset-2 hover:text-slate-200">
-            Need help?
+            {t("authPanel.needHelp")}
           </Link>
         </div>
       </form>
