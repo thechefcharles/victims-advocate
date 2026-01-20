@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { IntakeShell } from "@/components/intake/IntakeShell";
 import { Field, TextInput } from "@/components/intake/fields";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 import type { CaseData } from "@/lib/intake/types";
 import { loadCaseDraft, saveCaseDraft } from "@/lib/intake/api";
@@ -40,12 +41,12 @@ function YesNoUnknownSelect({
 }
 
 export default function MedicalPage() {
-  // ✅ robust caseId extraction
   const params = useParams();
   const raw = (params as any)?.caseId;
   const caseId: string | undefined = Array.isArray(raw) ? raw[0] : raw;
 
   const router = useRouter();
+  const { t } = useI18n();
 
   const [draft, setDraft] = useState<CaseData | null>(null);
   const [saving, setSaving] = useState(false);
@@ -58,7 +59,7 @@ export default function MedicalPage() {
   useEffect(() => {
     if (!caseId) {
       setLoading(false);
-      setError("Missing case id in the URL.");
+      setError(t("intake.errors.missingCaseId"));
       return;
     }
 
@@ -75,7 +76,7 @@ export default function MedicalPage() {
         setDraft(d ?? null);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load medical section.");
+        setError(e?.message ?? t("forms.medical.loadFailed"));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -84,6 +85,7 @@ export default function MedicalPage() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
   function patchMedical(patch: Partial<NonNullable<CaseData["medical"]>>) {
@@ -100,9 +102,7 @@ export default function MedicalPage() {
   }
 
   function patchCounseling(
-    patch: Partial<
-      NonNullable<NonNullable<CaseData["medical"]>["counseling"]>
-    >
+    patch: Partial<NonNullable<NonNullable<CaseData["medical"]>["counseling"]>>
   ) {
     setDraft((prev) => {
       if (!prev) return prev;
@@ -122,7 +122,12 @@ export default function MedicalPage() {
   }
 
   async function handleSave(goNext?: boolean) {
-    if (!draft || !caseId) return;
+    if (!draft) return;
+
+    if (!caseId) {
+      setError(t("intake.errors.missingCaseId"));
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -135,7 +140,7 @@ export default function MedicalPage() {
         if (nxt) router.push(stepHref(caseId, nxt));
       }
     } catch (e: any) {
-      setError(e?.message ?? "Could not save.");
+      setError(e?.message ?? t("intake.save.failed"));
     } finally {
       setSaving(false);
     }
@@ -144,10 +149,10 @@ export default function MedicalPage() {
   if (loading) {
     return (
       <IntakeShell
-        title="Medical & counseling"
-        description="Treatment details and counseling information (if applicable)."
+        title={t("forms.medical.title")}
+        description={t("forms.medical.descriptionDraft")}
       >
-        <p>Loading…</p>
+        <p>{t("common.loading")}</p>
       </IntakeShell>
     );
   }
@@ -155,24 +160,30 @@ export default function MedicalPage() {
   if (!draft) {
     return (
       <IntakeShell
-        title="Medical & counseling"
-        description="Treatment details and counseling information (if applicable)."
+        title={t("forms.medical.title")}
+        description={t("forms.medical.descriptionDraft")}
       >
-        <p style={{ color: "crimson" }}>
-          {error ?? "No case draft loaded."}
-        </p>
+        <p style={{ color: "crimson" }}>{error ?? t("forms.medical.noDraft")}</p>
       </IntakeShell>
     );
   }
 
   return (
     <IntakeShell
-      title="Medical & counseling"
-      description="Add any treatment and counseling details you know. If you don’t know something, leave it blank."
+      title={t("forms.medical.title")}
+      description={t("forms.medical.description")}
     >
-      {/* Buttons (since IntakeShell does not accept footer props in your project) */}
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginBottom: 16 }}>
-        {error ? <span style={{ color: "crimson", marginRight: "auto" }}>{error}</span> : null}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          justifyContent: "flex-end",
+          marginBottom: 16,
+        }}
+      >
+        {error ? (
+          <span style={{ color: "crimson", marginRight: "auto" }}>{error}</span>
+        ) : null}
 
         <button
           onClick={() => handleSave(false)}
@@ -185,7 +196,7 @@ export default function MedicalPage() {
             cursor: "pointer",
           }}
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("ui.buttons.saving") : t("ui.buttons.save")}
         </button>
 
         <button
@@ -200,19 +211,25 @@ export default function MedicalPage() {
             cursor: "pointer",
           }}
         >
-          {saving ? "Saving…" : "Save & Continue"}
+          {saving ? t("ui.buttons.saving") : t("forms.medical.saveContinue")}
         </button>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Did the victim receive medical treatment?" hint="If unsure, choose Unknown.">
+        <Field
+          label={t("forms.medical.questions.hasMedicalTreatment")}
+          hint={t("forms.medical.hints.unknownOk")}
+        >
           <YesNoUnknownSelect
             value={medical.hasMedicalTreatment}
             onChange={(v) => patchMedical({ hasMedicalTreatment: v })}
           />
         </Field>
 
-        <Field label="Did the victim receive counseling / therapy?" hint="If unsure, choose Unknown.">
+        <Field
+          label={t("forms.medical.questions.hasCounseling")}
+          hint={t("forms.medical.hints.unknownOk")}
+        >
           <YesNoUnknownSelect
             value={counseling.hasCounseling}
             onChange={(v) => patchCounseling({ hasCounseling: v })}
@@ -222,60 +239,67 @@ export default function MedicalPage() {
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2 style={{ margin: "8px 0 10px" }}>Medical treatment</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.medical.sections.medical")}</h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Hospital / facility name (optional)">
+        <Field label={t("forms.medical.fields.hospitalName")}>
           <TextInput
             value={medical.hospitalName ?? ""}
             onChange={(e) => patchMedical({ hospitalName: e.target.value })}
-            placeholder="Hospital, clinic, urgent care, etc."
+            placeholder={t("forms.medical.placeholders.hospitalName")}
           />
         </Field>
 
-        <Field label="Hospital / facility city (optional)">
+        <Field label={t("forms.medical.fields.hospitalCity")}>
           <TextInput
             value={medical.hospitalCity ?? ""}
             onChange={(e) => patchMedical({ hospitalCity: e.target.value })}
-            placeholder="City"
+            placeholder={t("forms.medical.placeholders.hospitalCity")}
           />
         </Field>
 
-        <Field label="Treatment start date (optional)" hint="YYYY-MM-DD">
+        <Field
+          label={t("forms.medical.fields.treatmentStart")}
+          hint={t("forms.medical.hints.dateFormat")}
+        >
           <TextInput
+            type="date"
             value={medical.treatmentStart ?? ""}
             onChange={(e) => patchMedical({ treatmentStart: e.target.value })}
-            placeholder="YYYY-MM-DD"
           />
         </Field>
 
-        <Field label="Treatment end date (optional)" hint="YYYY-MM-DD">
+        <Field
+          label={t("forms.medical.fields.treatmentEnd")}
+          hint={t("forms.medical.hints.dateFormat")}
+        >
           <TextInput
+            type="date"
             value={medical.treatmentEnd ?? ""}
             onChange={(e) => patchMedical({ treatmentEnd: e.target.value })}
-            placeholder="YYYY-MM-DD"
           />
         </Field>
       </div>
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2 style={{ margin: "8px 0 10px" }}>Counseling</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.medical.sections.counseling")}</h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Counselor / provider name (optional)">
+        <Field label={t("forms.medical.fields.providerName")}>
           <TextInput
             value={counseling.providerName ?? ""}
             onChange={(e) => patchCounseling({ providerName: e.target.value })}
-            placeholder="Therapist, clinic, program, etc."
+            placeholder={t("forms.medical.placeholders.providerName")}
           />
         </Field>
 
-        <Field label="Number of sessions (optional)">
+        <Field label={t("forms.medical.fields.sessionsCount")}>
           <TextInput
             inputMode="numeric"
             value={
-              counseling.sessionsCount === null || counseling.sessionsCount === undefined
+              counseling.sessionsCount === null ||
+              counseling.sessionsCount === undefined
                 ? ""
                 : String(counseling.sessionsCount)
             }
@@ -285,7 +309,7 @@ export default function MedicalPage() {
               const num = Number(raw.replace(/[^0-9]/g, ""));
               patchCounseling({ sessionsCount: Number.isFinite(num) ? num : undefined });
             }}
-            placeholder="e.g. 8"
+            placeholder={t("forms.medical.placeholders.sessionsCount")}
           />
         </Field>
       </div>

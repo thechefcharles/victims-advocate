@@ -6,31 +6,36 @@ import { useParams } from "next/navigation";
 
 import { IntakeShell } from "@/components/intake/IntakeShell";
 import { Field, TextInput } from "@/components/intake/fields";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 import type { CaseData } from "@/lib/intake/types";
 import { loadCaseDraft, saveCaseDraft } from "@/lib/intake/api";
 
-function formatYN(value: any) {
-  if (value === "yes") return "Yes";
-  if (value === "no") return "No";
-  if (value === "unknown") return "Unknown";
-  return "Not provided";
+type YesNoUnknown = "yes" | "no" | "unknown";
+
+function formatYN(
+  value: YesNoUnknown | undefined,
+  t: (k: string, vars?: Record<string, any>) => string
+) {
+  if (value === "yes") return t("ui.status.yes");
+  if (value === "no") return t("ui.status.no");
+  if (value === "unknown") return t("ui.status.unknown");
+  return t("ui.status.notProvided");
 }
 
 export default function SummaryPage() {
-  // ✅ robust caseId extraction
   const params = useParams();
   const raw = (params as any)?.caseId;
   const caseId: string | undefined = Array.isArray(raw) ? raw[0] : raw;
+
+const { t, tf } = useI18n();
 
   const [draft, setDraft] = useState<CaseData | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Certification does not exist in your CaseData types.
-  // We'll store it under a safe "meta" spot in CaseData: lastSavedAt/completedSteps are defined,
-  // but no certification exists. To avoid red, we keep certification local only (UI-only).
+  // NOTE: Certification is UI-only for now (not persisted in CaseData).
   const [certFullName, setCertFullName] = useState("");
   const [certDate, setCertDate] = useState("");
   const [certAgreeTruthful, setCertAgreeTruthful] = useState(false);
@@ -39,7 +44,7 @@ export default function SummaryPage() {
   useEffect(() => {
     if (!caseId) {
       setLoading(false);
-      setError("Missing case id in the URL.");
+      setError(t("intake.errors.missingCaseId"));
       return;
     }
 
@@ -49,12 +54,14 @@ export default function SummaryPage() {
       try {
         setLoading(true);
         setError(null);
+
         const d = await loadCaseDraft(caseId);
         if (!mounted) return;
+
         setDraft(d ?? null);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load summary.");
+        setError(e?.message ?? t("forms.summary.loadFailed"));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -63,68 +70,67 @@ export default function SummaryPage() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
   async function handleSave() {
-    if (!draft || !caseId) return;
+    if (!draft) return;
+
+    if (!caseId) {
+      setError(t("intake.errors.missingCaseId"));
+      return;
+    }
 
     setSaving(true);
     setError(null);
 
     try {
-      // ✅ Only save CaseData fields that actually exist.
-      // If you want to persist certification later, we must add it to CaseData types + defaults + API merge.
       await saveCaseDraft(caseId, {
         ...draft,
         lastSavedAt: new Date().toISOString(),
       });
     } catch (e: any) {
-      setError(e?.message ?? "Could not save.");
+      setError(e?.message ?? t("intake.save.failed"));
     } finally {
       setSaving(false);
     }
   }
 
+  const safe = useMemo(() => {
+    const v = draft?.victim ?? ({} as any);
+    const a = draft?.applicant ?? ({} as any);
+    const c = draft?.crime ?? ({} as any);
+    const l = draft?.losses ?? ({} as any);
+    const m = draft?.medical ?? ({} as any);
+    const e = draft?.employment ?? ({} as any);
+    const f = draft?.funeral ?? ({} as any);
+    const d = draft?.documents ?? ({} as any);
+    const uploads = d.uploads ?? {};
+    return { v, a, c, l, m, e, f, d, uploads };
+  }, [draft]);
+
   if (loading) {
     return (
-      <IntakeShell
-        title="Summary"
-        description="Review your case before generating documents."
-      >
-        <p>Loading…</p>
+      <IntakeShell title={t("forms.summary.title")} description={t("forms.summary.descriptionDraft")}>
+        <p>{t("common.loading")}</p>
       </IntakeShell>
     );
   }
 
   if (!draft) {
     return (
-      <IntakeShell
-        title="Summary"
-        description="Review your case before generating documents."
-      >
-        <p style={{ color: "crimson" }}>{error ?? "No case draft loaded."}</p>
+      <IntakeShell title={t("forms.summary.title")} description={t("forms.summary.descriptionDraft")}>
+        <p style={{ color: "crimson" }}>{error ?? t("forms.summary.noDraft")}</p>
       </IntakeShell>
     );
   }
 
-  const victim = draft.victim ?? ({} as any);
-  const applicant = draft.applicant ?? ({} as any);
-  const crime = draft.crime ?? ({} as any);
-  const losses = draft.losses ?? ({} as any);
-  const medical = draft.medical ?? ({} as any);
-  const employment = draft.employment ?? ({} as any);
-  const funeral = draft.funeral ?? ({} as any);
-  const documents = draft.documents ?? ({} as any);
-  const uploads = documents.uploads ?? {};
-
   return (
-    <IntakeShell
-      title="Summary"
-      description="Review what you’ve entered. You can go back to any section to edit."
-    >
-      {/* Save button row (since IntakeShell has no footer prop) */}
+    <IntakeShell title={t("forms.summary.title")} description={t("forms.summary.description")}>
+      {/* Save row */}
       <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginBottom: 16 }}>
         {error ? <span style={{ color: "crimson", marginRight: "auto" }}>{error}</span> : null}
+
         <button
           onClick={handleSave}
           disabled={saving}
@@ -137,120 +143,146 @@ export default function SummaryPage() {
             cursor: "pointer",
           }}
         >
-          {saving ? "Saving…" : "Save summary"}
+          {saving ? t("ui.buttons.saving") : t("forms.summary.save")}
         </button>
       </div>
 
-      <h2>Victim</h2>
+      {/* Victim */}
+      <h2>{t("forms.summary.sections.victim")}</h2>
       <ul style={{ color: "#333" }}>
         <li>
-          Name: {victim.firstName ?? "—"} {victim.lastName ?? ""}
+          {t("forms.summary.labels.name")}: {safe.v.firstName ?? "—"} {safe.v.lastName ?? ""}
         </li>
-        <li>DOB: {victim.dateOfBirth ?? "—"}</li>
-        <li>Phone: {victim.phone ?? "—"}</li>
-        <li>Email: {victim.email ?? "—"}</li>
+        <li>{t("forms.summary.labels.dob")}: {safe.v.dateOfBirth ?? "—"}</li>
+        <li>{t("forms.summary.labels.phone")}: {safe.v.phone ?? "—"}</li>
+        <li>{t("forms.summary.labels.email")}: {safe.v.email ?? "—"}</li>
         <li>
-          Address: {victim.address1 ?? "—"} {victim.city ? `, ${victim.city}` : ""}{" "}
-          {victim.state ? `, ${victim.state}` : ""} {victim.zip ?? ""}
-        </li>
-      </ul>
-
-      <h2>Applicant</h2>
-      <ul style={{ color: "#333" }}>
-        <li>Is victim also applicant: {formatYN(applicant.isVictimAlsoApplicant)}</li>
-        <li>Relationship to victim: {applicant.relationshipToVictim ?? "—"}</li>
-        <li>
-          Name: {applicant.firstName ?? "—"} {applicant.lastName ?? ""}
+          {t("forms.summary.labels.address")}: {safe.v.address1 ?? "—"}
+          {safe.v.city ? `, ${safe.v.city}` : ""}
+          {safe.v.state ? `, ${safe.v.state}` : ""} {safe.v.zip ?? ""}
         </li>
       </ul>
 
-      <h2>Crime / incident</h2>
+      {/* Applicant */}
+      <h2>{t("forms.summary.sections.applicant")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Date: {crime.incidentDate ?? "—"}</li>
-        <li>Time: {crime.incidentTime ?? "—"}</li>
         <li>
-          Location: {crime.locationCity ?? "—"}
-          {crime.locationState ? `, ${crime.locationState}` : ""}
+          {t("forms.summary.labels.isVictimAlsoApplicant")}:{" "}
+          {formatYN(safe.a.isVictimAlsoApplicant, t)}
         </li>
-        <li>Reported to police: {formatYN(crime.policeReported)}</li>
-        <li>Police department: {crime.policeDepartment ?? "—"}</li>
-        <li>Report number: {crime.policeReportNumber ?? "—"}</li>
+        <li>
+          {t("forms.summary.labels.relationshipToVictim")}: {safe.a.relationshipToVictim ?? "—"}
+        </li>
+        <li>
+          {t("forms.summary.labels.name")}: {safe.a.firstName ?? "—"} {safe.a.lastName ?? ""}
+        </li>
       </ul>
 
-      <h2>Losses requested</h2>
+      {/* Crime */}
+      <h2>{t("forms.summary.sections.crime")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Medical: {losses.wantsMedical ? "Yes" : "No"}</li>
-        <li>Counseling: {losses.wantsCounseling ? "Yes" : "No"}</li>
-        <li>Funeral: {losses.wantsFuneral ? "Yes" : "No"}</li>
-        <li>Lost wages: {losses.wantsLostWages ? "Yes" : "No"}</li>
-        <li>Relocation: {losses.wantsRelocation ? "Yes" : "No"}</li>
-        <li>Property loss: {losses.wantsPropertyLoss ? "Yes" : "No"}</li>
-        <li>Other: {losses.wantsOther ? `Yes (${losses.otherDescription ?? "—"})` : "No"}</li>
-        <li>Estimated total: {losses.estimatedTotal ?? "—"}</li>
+        <li>{t("forms.summary.labels.date")}: {safe.c.incidentDate ?? "—"}</li>
+        <li>{t("forms.summary.labels.time")}: {safe.c.incidentTime ?? "—"}</li>
+        <li>
+          {t("forms.summary.labels.location")}: {safe.c.locationCity ?? "—"}
+          {safe.c.locationState ? `, ${safe.c.locationState}` : ""}
+        </li>
+        <li>
+          {t("forms.summary.labels.reportedToPolice")}: {formatYN(safe.c.policeReported, t)}
+        </li>
+        <li>{t("forms.summary.labels.policeDepartment")}: {safe.c.policeDepartment ?? "—"}</li>
+        <li>{t("forms.summary.labels.reportNumber")}: {safe.c.policeReportNumber ?? "—"}</li>
       </ul>
 
-      <h2>Medical & counseling</h2>
+      {/* Losses */}
+      <h2>{t("forms.summary.sections.losses")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Medical treatment: {formatYN(medical.hasMedicalTreatment)}</li>
-        <li>Hospital: {medical.hospitalName ?? "—"}</li>
-        <li>City: {medical.hospitalCity ?? "—"}</li>
-        <li>Treatment dates: {medical.treatmentStart ?? "—"} to {medical.treatmentEnd ?? "—"}</li>
-        <li>Counseling: {formatYN(medical.counseling?.hasCounseling)}</li>
-        <li>Counseling provider: {medical.counseling?.providerName ?? "—"}</li>
-        <li>Sessions: {medical.counseling?.sessionsCount ?? "—"}</li>
+        <li>{t("forms.summary.losses.medical")}: {safe.l.wantsMedical ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>{t("forms.summary.losses.counseling")}: {safe.l.wantsCounseling ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>{t("forms.summary.losses.funeral")}: {safe.l.wantsFuneral ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>{t("forms.summary.losses.lostWages")}: {safe.l.wantsLostWages ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>{t("forms.summary.losses.relocation")}: {safe.l.wantsRelocation ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>{t("forms.summary.losses.propertyLoss")}: {safe.l.wantsPropertyLoss ? t("ui.status.yes") : t("ui.status.no")}</li>
+        <li>
+          {t("forms.summary.losses.other")}:{" "}
+          {safe.l.wantsOther
+            ? tf("forms.summary.losses.otherYes", { desc: safe.l.otherDescription ?? "—" })
+            : t("ui.status.no")}
+        </li>
+        <li>{t("forms.summary.losses.estimatedTotal")}: {safe.l.estimatedTotal ?? "—"}</li>
       </ul>
 
-      <h2>Employment</h2>
+      {/* Medical */}
+      <h2>{t("forms.summary.sections.medical")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Employed at time: {formatYN(employment.employedAtTime)}</li>
-        <li>Employer: {employment.employerName ?? "—"}</li>
-        <li>Missed work: {formatYN(employment.missedWork)}</li>
-        <li>Dates missed: {employment.missedWorkFrom ?? "—"} to {employment.missedWorkTo ?? "—"}</li>
-        <li>Disability from crime: {formatYN(employment.disabilityFromCrime)}</li>
+        <li>{t("forms.summary.medical.medicalTreatment")}: {formatYN(safe.m.hasMedicalTreatment, t)}</li>
+        <li>{t("forms.summary.medical.hospital")}: {safe.m.hospitalName ?? "—"}</li>
+        <li>{t("forms.summary.medical.city")}: {safe.m.hospitalCity ?? "—"}</li>
+        <li>
+          {t("forms.summary.medical.treatmentDates")}: {safe.m.treatmentStart ?? "—"}{" "}
+          {t("forms.summary.labels.to")} {safe.m.treatmentEnd ?? "—"}
+        </li>
+        <li>{t("forms.summary.medical.counseling")}: {formatYN(safe.m.counseling?.hasCounseling, t)}</li>
+        <li>{t("forms.summary.medical.provider")}: {safe.m.counseling?.providerName ?? "—"}</li>
+        <li>{t("forms.summary.medical.sessions")}: {safe.m.counseling?.sessionsCount ?? "—"}</li>
       </ul>
 
-      <h2>Funeral</h2>
+      {/* Employment */}
+      <h2>{t("forms.summary.sections.employment")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Victim deceased: {formatYN(funeral.victimDeceased)}</li>
-        <li>Funeral home: {funeral.funeralHomeName ?? "—"}</li>
-        <li>Funeral phone: {funeral.funeralHomePhone ?? "—"}</li>
-        <li>Dependents present: {formatYN(funeral.dependents?.hasDependents)}</li>
-        <li>Dependent count: {funeral.dependents?.count ?? "—"}</li>
-        <li>Dependent notes: {funeral.dependents?.notes ?? "—"}</li>
+        <li>{t("forms.summary.employment.employedAtTime")}: {formatYN(safe.e.employedAtTime, t)}</li>
+        <li>{t("forms.summary.employment.employer")}: {safe.e.employerName ?? "—"}</li>
+        <li>{t("forms.summary.employment.missedWork")}: {formatYN(safe.e.missedWork, t)}</li>
+        <li>
+          {t("forms.summary.employment.missedDates")}: {safe.e.missedWorkFrom ?? "—"}{" "}
+          {t("forms.summary.labels.to")} {safe.e.missedWorkTo ?? "—"}
+        </li>
+        <li>{t("forms.summary.employment.disabilityFromCrime")}: {formatYN(safe.e.disabilityFromCrime, t)}</li>
       </ul>
 
-      <h2>Documents (uploads)</h2>
+      {/* Funeral */}
+      <h2>{t("forms.summary.sections.funeral")}</h2>
       <ul style={{ color: "#333" }}>
-        <li>Police reports: {(uploads.policeReport?.length ?? 0)}</li>
-        <li>Medical bills: {(uploads.medicalBills?.length ?? 0)}</li>
-        <li>Counseling bills: {(uploads.counselingBills?.length ?? 0)}</li>
-        <li>Funeral bills: {(uploads.funeralBills?.length ?? 0)}</li>
-        <li>Wage proof: {(uploads.wageProof?.length ?? 0)}</li>
-        <li>Other: {(uploads.other?.length ?? 0)}</li>
-        <li>Notes: {documents.notes ?? "—"}</li>
+        <li>{t("forms.summary.funeral.victimDeceased")}: {formatYN(safe.f.victimDeceased, t)}</li>
+        <li>{t("forms.summary.funeral.funeralHome")}: {safe.f.funeralHomeName ?? "—"}</li>
+        <li>{t("forms.summary.funeral.funeralPhone")}: {safe.f.funeralHomePhone ?? "—"}</li>
+        <li>{t("forms.summary.funeral.dependentsPresent")}: {formatYN(safe.f.dependents?.hasDependents, t)}</li>
+        <li>{t("forms.summary.funeral.dependentCount")}: {safe.f.dependents?.count ?? "—"}</li>
+        <li>{t("forms.summary.funeral.dependentNotes")}: {safe.f.dependents?.notes ?? "—"}</li>
+      </ul>
+
+      {/* Documents */}
+      <h2>{t("forms.summary.sections.documents")}</h2>
+      <ul style={{ color: "#333" }}>
+        <li>{t("forms.summary.documents.policeReports")}: {safe.uploads.policeReport?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.medicalBills")}: {safe.uploads.medicalBills?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.counselingBills")}: {safe.uploads.counselingBills?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.funeralBills")}: {safe.uploads.funeralBills?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.wageProof")}: {safe.uploads.wageProof?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.other")}: {safe.uploads.other?.length ?? 0}</li>
+        <li>{t("forms.summary.documents.notes")}: {safe.d.notes ?? "—"}</li>
       </ul>
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2>Certification</h2>
-      <p style={{ color: "#666" }}>
-        This is not legal advice. This is a plain-language confirmation that the information is accurate to the best of your knowledge.
-      </p>
+      {/* Certification */}
+      <h2>{t("forms.summary.sections.certification")}</h2>
+      <p style={{ color: "#666" }}>{t("forms.summary.certification.disclaimer")}</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Full name (required)">
+        <Field label={t("forms.summary.certification.fullNameLabel")}>
           <TextInput
             value={certFullName}
             onChange={(e) => setCertFullName(e.target.value)}
-            placeholder="Type your full name"
+            placeholder={t("forms.summary.certification.fullNamePlaceholder")}
           />
         </Field>
 
-        <Field label="Date (required)">
+        <Field label={t("forms.summary.certification.dateLabel")}>
           <TextInput
+            type="date"
             value={certDate}
             onChange={(e) => setCertDate(e.target.value)}
-            placeholder="YYYY-MM-DD"
           />
         </Field>
       </div>
@@ -261,7 +293,7 @@ export default function SummaryPage() {
           checked={certAgreeTruthful}
           onChange={(e) => setCertAgreeTruthful(e.target.checked)}
         />
-        <span>I confirm the information provided is true and complete to the best of my knowledge.</span>
+        <span>{t("forms.summary.certification.truthfulLabel")}</span>
       </label>
 
       <label style={{ display: "flex", gap: 10, alignItems: "center" }}>
@@ -270,7 +302,7 @@ export default function SummaryPage() {
           checked={certAgreeRelease}
           onChange={(e) => setCertAgreeRelease(e.target.checked)}
         />
-        <span>I understand supporting documents may be required and I may be asked for verification.</span>
+        <span>{t("forms.summary.certification.releaseLabel")}</span>
       </label>
     </IntakeShell>
   );

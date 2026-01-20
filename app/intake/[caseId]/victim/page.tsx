@@ -1,3 +1,4 @@
+// app/intake/[caseId]/victim/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -15,27 +16,45 @@ import { fetchCase, patchCase } from "@/lib/api/cases";
 import { victimSchema } from "@/lib/intake/schemas";
 import type { VictimSection } from "@/lib/intake/types";
 import { INTAKE_STEPS } from "@/lib/intake/steps";
-// import { useT } from "@/lib/i18n/useT";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 export default function VictimPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const router = useRouter();
-  // const t = useT();
-  const t = (k: string) => k;
+
+const { t } = useI18n();
 
   const [loading, setLoading] = useState(true);
 
   const form = useForm<VictimSection>({
     resolver: zodResolver(victimSchema),
     defaultValues: {
+      // UPDATED: include all fields used by the UI to keep RHF stable
       firstName: "",
       lastName: "",
+      middleName: "", // NEW
       dateOfBirth: "",
+      phone: "", // NEW
+      email: "", // NEW
       address1: "",
+      address2: "", // NEW
       city: "",
       state: "IL",
       zip: "",
+      genderIdentity: "", // NEW (optional but used in UI)
+      race: "", // NEW
+      ethnicity: "", // NEW
+
       hasDisability: "unknown",
+
+      // NEW: ensure nested shape exists if your schema expects it
+      disabilityTypes: {
+        physical: false,
+        mental: false,
+        developmental: false,
+        other: false,
+        otherText: "",
+      },
     },
     mode: "onBlur",
   });
@@ -52,7 +71,10 @@ export default function VictimPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
-  const nextHref = useMemo(() => INTAKE_STEPS.find((s) => s.key === "applicant")!.path(caseId), [caseId]);
+  const nextHref = useMemo(
+    () => INTAKE_STEPS.find((s) => s.key === "applicant")!.path(caseId),
+    [caseId]
+  );
 
   async function onSubmit(values: VictimSection) {
     await patchCase(caseId, { victim: values, lastSavedAt: new Date().toISOString() });
@@ -64,10 +86,7 @@ export default function VictimPage() {
   const hasDisability = form.watch("hasDisability");
 
   return (
-    <IntakeShell
-      title={t("forms.victim.title")}
-      description={t("forms.victim.description")}
-    >
+    <IntakeShell title={t("forms.victim.title")} description={t("forms.victim.description")}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextField control={form.control} name="firstName" label={t("fields.firstName.required")} />
@@ -77,8 +96,18 @@ export default function VictimPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TextField control={form.control} name="phone" label={t("forms.labels.phone")} placeholder={t("fields.cellPhone.placeholder")} />
-          <TextField control={form.control} name="email" label={t("fields.email.label")} placeholder={t("forms.placeholders.typeHere")} />
+          <TextField
+            control={form.control}
+            name="phone"
+            label={t("forms.labels.phone")}
+            placeholder={t("fields.cellPhone.placeholder")}
+          />
+          <TextField
+            control={form.control}
+            name="email"
+            label={t("fields.email.label")}
+            placeholder={t("forms.placeholders.typeHere")}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -95,9 +124,24 @@ export default function VictimPage() {
         <div className="rounded-lg border bg-neutral-50 p-4">
           <div className="text-sm font-semibold">{t("forms.victim.civilRightsNote")}</div>
           <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <TextField control={form.control} name="genderIdentity" label={t("fields.genderIdentity.optional")} placeholder={t("fields.genderIdentity.placeholder")} />
-            <TextField control={form.control} name="race" label={t("fields.race.optional")} placeholder={t("fields.race.placeholder")} />
-            <TextField control={form.control} name="ethnicity" label={t("fields.ethnicity.optional")} placeholder={t("fields.ethnicity.placeholder")} />
+            <TextField
+              control={form.control}
+              name="genderIdentity"
+              label={t("fields.genderIdentity.optional")}
+              placeholder={t("fields.genderIdentity.placeholder")}
+            />
+            <TextField
+              control={form.control}
+              name="race"
+              label={t("fields.race.optional")}
+              placeholder={t("fields.race.placeholder")}
+            />
+            <TextField
+              control={form.control}
+              name="ethnicity"
+              label={t("fields.ethnicity.optional")}
+              placeholder={t("fields.ethnicity.placeholder")}
+            />
           </div>
         </div>
 
@@ -114,7 +158,9 @@ export default function VictimPage() {
 
         {hasDisability === "yes" ? (
           <div className="space-y-2 rounded-lg border p-4">
-            <div className="text-sm font-medium">{t("common.loading") /* replace with a disability types label key if you add one */}</div>
+            <div className="text-sm font-medium">
+              {t("forms.victim.disabilityTypesLabel")} {/* UPDATED: real label */}
+            </div>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <CheckboxField control={form.control} name="disabilityTypes.physical" label={t("fields.disabilityType.physical")} />

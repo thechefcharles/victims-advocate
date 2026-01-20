@@ -249,7 +249,13 @@ export const en: I18nDict = {
       funeral: "Funeral & dependents",
       documents: "Documents",
       summary: "Summary",
+     
     },
+
+     errors: {
+  missingCaseId: "Missing case id in the URL.",
+  missingCaseIdShort: "Missing case id.",
+},
 
     viewOnly: "View-only access (you can’t edit this case).",
     startFailed: "Couldn’t start application. Try refresh.",
@@ -450,6 +456,7 @@ export const en: I18nDict = {
         "This section is about the person who was physically injured or killed. If you are that person and over 18, this is your information.",
       civilRightsNote:
         "The following questions are used for civil rights reporting and do not affect eligibility. You can skip any that you do not wish to answer.",
+      disabilityTypesLabel: "Disability type(s)",
     },
 
     labels: {
@@ -470,6 +477,41 @@ export const en: I18nDict = {
       notes: "Notes",
     },
 
+    documents: {
+  title: "Documents",
+  description: "Check off what you already have. This helps prevent delays and denials.",
+  descriptionDraft: "Track what documents you have (uploads can be wired in next).",
+
+  loadFailed: "Failed to load documents section.",
+  noDraft: "No case draft loaded.",
+
+  saveContinue: "Save & Continue",
+
+  coreTitle: "Core documents",
+  otherTitle: "Other documents",
+
+  checklist: {
+    policeReport: "Police report / incident report",
+    medicalBills: "Medical bills / statements",
+    counselingBills: "Counseling / therapy bills",
+    funeralInvoices: "Funeral / burial invoices",
+    wageProof: "Proof of lost wages (employer letter, pay stubs, etc.)",
+    idProof: "ID proof (victim/applicant)",
+  },
+
+  otherEmpty: "No other documents added yet.",
+  otherItemTitle: "Other document #{n}",
+  otherLabel: "Label (optional)",
+  otherPlaceholder: "e.g. court order, receipts",
+  otherHaveIt: "Have it?",
+  otherNotYet: "Not yet",
+
+  addOther: "+ Add other document",
+
+  notesLabel: "Notes (optional)",
+  notesHint: "Anything you’re missing or want an advocate to know.",
+},
+
     placeholders: {
       selectOne: "Select one…",
       typeHere: "Type here…",
@@ -484,5 +526,256 @@ export const en: I18nDict = {
       minChars: "Please enter at least {min} characters.",
       maxChars: "Please enter {max} characters or fewer.",
     },
+
+    applicant: {
+    title: "Applicant information",
+    description: "This is the person applying for compensation.",
+    isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
+    sameAsVictimNote: "We’ll use the victim’s information as the applicant details for now.",
+  },
+
+  employment: {
+  title: "Work & income",
+  description:
+    "If the victim missed work or lost income because of the crime, add what you know here.",
+  descriptionDraft: "Employer details and missed work (if applicable).",
+
+  loadFailed: "Failed to load employment section.",
+  noDraft: "No case draft loaded.",
+
+  saveContinue: "Save & Continue",
+
+  unknownHint: "If unsure, choose Unknown.",
+
+  employedAtTimeLabel: "Was the victim employed at the time?",
+  employerNameLabel: "Employer name (optional)",
+  employerNamePlaceholder: "Company / employer name",
+  employerPhoneLabel: "Employer phone (optional)",
+  employerPhonePlaceholder: "(xxx) xxx-xxxx",
+  employerAddressLabel: "Employer address (optional)",
+  employerAddressPlaceholder: "Street, city, state",
+
+  missedWorkLabel: "Did the victim miss work because of the crime?",
+  missedWorkFromLabel: "Missed work from (optional)",
+  missedWorkToLabel: "Missed work to (optional)",
+
+  disabilityFromCrimeLabel: "Did the crime cause a disability that affects work?",
+},
+
+funeral: {
+  title: "Funeral & dependents",
+  description:
+    "If the victim passed away or there are dependents affected by the crime, add what you know here.",
+  descriptionDraft:
+    "Funeral/burial details and dependent information (if applicable).",
+
+  loadFailed: "Failed to load funeral section.",
+  noDraft: "No case draft loaded.",
+
+  saveContinue: "Save & Continue",
+
+  unknownHint: "If unsure, choose Unknown.",
+
+  victimDeceasedLabel: "Was the victim deceased as a result of the crime?",
+
+  funeralHomeTitle: "Funeral home",
+  funeralHomeNameLabel: "Funeral home name (optional)",
+  funeralHomeNamePlaceholder: "Name",
+  funeralHomePhoneLabel: "Funeral home phone (optional)",
+  funeralHomePhonePlaceholder: "(xxx) xxx-xxxx",
+
+  dependentsTitle: "Dependents",
+  hasDependentsLabel: "Are there dependents who relied on the victim for support?",
+  hasDependentsHint: "For example: children, spouse, or other dependents.",
+  dependentsCountLabel: "How many dependents? (optional)",
+  dependentsCountPlaceholder: "e.g. 2",
+  dependentsNotesLabel: "Notes about dependents (optional)",
+  dependentsNotesPlaceholder: "Anything helpful to know…",
+},
+
+losses: {
+  title: "Losses & money",
+  description:
+    "Select what you want help paying for. This helps us generate your packet and check missing docs.",
+
+  options: {
+    medical: "Medical bills",
+    counseling: "Counseling / therapy",
+    lostWages: "Lost wages / income",
+    funeral: "Funeral / burial costs",
+    propertyLoss: "Property loss",
+    relocation: "Relocation / housing",
+    other: "Other",
+  },
+
+  otherLabel: "Other (describe)",
+},
+
+medical: {
+  title: "Medical & counseling",
+  description:
+    "Add any treatment and counseling details you know. If you don’t know something, leave it blank.",
+  descriptionDraft:
+    "Treatment details and counseling information (if applicable).",
+
+  loadFailed: "Failed to load medical section.",
+  noDraft: "No case draft loaded.",
+
+  saveContinue: "Save & Continue",
+
+  hints: {
+    unknownOk: "If unsure, choose Unknown.",
+    dateFormat: "YYYY-MM-DD",
+  },
+
+  sections: {
+    medical: "Medical treatment",
+    counseling: "Counseling",
+  },
+
+  questions: {
+    hasMedicalTreatment: "Did the victim receive medical treatment?",
+    hasCounseling: "Did the victim receive counseling / therapy?",
+  },
+
+  fields: {
+    hospitalName: "Hospital / facility name (optional)",
+    hospitalCity: "Hospital / facility city (optional)",
+    treatmentStart: "Treatment start date (optional)",
+    treatmentEnd: "Treatment end date (optional)",
+    providerName: "Counselor / provider name (optional)",
+    sessionsCount: "Number of sessions (optional)",
+  },
+
+  placeholders: {
+    hospitalName: "Hospital, clinic, urgent care, etc.",
+    hospitalCity: "City",
+    providerName: "Therapist, clinic, program, etc.",
+    sessionsCount: "e.g. 8",
+  },
+
+  },
+
+  crime: {
+  title: "Crime & incident",
+  description: "Basic incident details help eligibility and documentation checks.",
+
+  incidentDateLabel: "Incident date",
+  incidentTimeLabel: "Incident time (optional)",
+  incidentTimePlaceholder: "e.g. 9:30 PM",
+
+  locationAddressLabel: "Where did it happen? (street or nearest cross streets)",
+
+  policeReportedLabel: "Was it reported to police?",
+  policeDepartmentLabel: "Which police department?",
+  policeReportNumberLabel: "Report / case number (if known)",
+
+  offenderKnownLabel: "Is the offender known to you?",
+  offenderNameLabel: "Offender name (if known)",
+
+  narrativeLabel: "In a few words, what happened? (optional)",
+  narrativePlaceholder: "Keep it brief. You can add more later.",
+},
+
+  summary: {
+  title: "Summary",
+  description: "Review what you’ve entered. You can go back to any section to edit.",
+  descriptionDraft: "Review your case before generating documents.",
+
+  loadFailed: "Failed to load summary.",
+  noDraft: "No case draft loaded.",
+
+  save: "Save summary",
+
+  sections: {
+    victim: "Victim",
+    applicant: "Applicant",
+    crime: "Crime / incident",
+    losses: "Losses requested",
+    medical: "Medical & counseling",
+    employment: "Employment",
+    funeral: "Funeral",
+    documents: "Documents (uploads)",
+    certification: "Certification",
+  },
+
+  labels: {
+    name: "Name",
+    dob: "DOB",
+    phone: "Phone",
+    email: "Email",
+    address: "Address",
+    isVictimAlsoApplicant: "Is victim also applicant",
+    relationshipToVictim: "Relationship to victim",
+    date: "Date",
+    time: "Time",
+    location: "Location",
+    reportedToPolice: "Reported to police",
+    policeDepartment: "Police department",
+    reportNumber: "Report number",
+    to: "to",
+  },
+
+  losses: {
+    medical: "Medical",
+    counseling: "Counseling",
+    funeral: "Funeral",
+    lostWages: "Lost wages",
+    relocation: "Relocation",
+    propertyLoss: "Property loss",
+    other: "Other",
+    otherYes: "Yes ({desc})",
+    estimatedTotal: "Estimated total",
+  },
+
+  medical: {
+    medicalTreatment: "Medical treatment",
+    hospital: "Hospital",
+    city: "City",
+    treatmentDates: "Treatment dates",
+    counseling: "Counseling",
+    provider: "Counseling provider",
+    sessions: "Sessions",
+  },
+
+  employment: {
+    employedAtTime: "Employed at time",
+    employer: "Employer",
+    missedWork: "Missed work",
+    missedDates: "Dates missed",
+    disabilityFromCrime: "Disability from crime",
+  },
+
+  funeral: {
+    victimDeceased: "Victim deceased",
+    funeralHome: "Funeral home",
+    funeralPhone: "Funeral phone",
+    dependentsPresent: "Dependents present",
+    dependentCount: "Dependent count",
+    dependentNotes: "Dependent notes",
+  },
+
+  documents: {
+    policeReports: "Police reports",
+    medicalBills: "Medical bills",
+    counselingBills: "Counseling bills",
+    funeralBills: "Funeral bills",
+    wageProof: "Wage proof",
+    other: "Other",
+    notes: "Notes",
+  },
+
+  certification: {
+    disclaimer:
+      "This is not legal advice. This is a plain-language confirmation that the information is accurate to the best of your knowledge.",
+    fullNameLabel: "Full name (required)",
+    fullNamePlaceholder: "Type your full name",
+    dateLabel: "Date (required)",
+    truthfulLabel:
+      "I confirm the information provided is true and complete to the best of my knowledge.",
+    releaseLabel:
+      "I understand supporting documents may be required and I may be asked for verification.",
+  },
+},
   },
 };

@@ -249,7 +249,12 @@ export const es: I18nDict = {
       funeral: "Funeral y dependientes",
       documents: "Documentos",
       summary: "Resumen",
-    },
+      },
+
+       errors: {
+  missingCaseId: "Falta el ID del caso en la URL.",
+  missingCaseIdShort: "Falta el ID del caso.",
+},
 
     viewOnly: "Acceso de solo lectura (no puedes editar este caso).",
     startFailed: "No se pudo iniciar la solicitud. Intenta recargar.",
@@ -451,6 +456,7 @@ export const es: I18nDict = {
         "Esta sección es sobre la persona que fue lesionada físicamente o falleció. Si usted es esa persona y tiene más de 18 años, esta es su información.",
       civilRightsNote:
         "Las siguientes preguntas se utilizan para reportes de derechos civiles y no afectan la elegibilidad. Puede omitir cualquiera que no desee responder.",
+      disabilityTypesLabel: "Tipo(s) de discapacidad",
     },
 
     labels: {
@@ -477,6 +483,44 @@ export const es: I18nDict = {
       search: "Buscar…",
     },
 
+    documents: {
+  title: "Documentos",
+  description:
+    "Marca lo que ya tienes. Esto ayuda a prevenir retrasos y rechazos.",
+  descriptionDraft:
+    "Registra qué documentos tienes (las cargas se pueden conectar después).",
+
+  loadFailed: "No se pudo cargar la sección de documentos.",
+  noDraft: "No se cargó ningún borrador del caso.",
+
+  saveContinue: "Guardar y continuar",
+
+  coreTitle: "Documentos principales",
+  otherTitle: "Otros documentos",
+
+  checklist: {
+    policeReport: "Reporte policial / reporte del incidente",
+    medicalBills: "Facturas médicas / estados de cuenta",
+    counselingBills: "Facturas de consejería / terapia",
+    funeralInvoices: "Facturas funerarias / de sepelio",
+    wageProof:
+      "Comprobante de salarios perdidos (carta del empleador, talones de pago, etc.)",
+    idProof: "Identificación (víctima/solicitante)",
+  },
+
+  otherEmpty: "Aún no se agregaron otros documentos.",
+  otherItemTitle: "Otro documento #{n}",
+  otherLabel: "Etiqueta (opcional)",
+  otherPlaceholder: "p. ej., orden judicial, recibos",
+  otherHaveIt: "¿Lo tienes?",
+  otherNotYet: "Aún no",
+
+  addOther: "+ Agregar otro documento",
+
+  notesLabel: "Notas (opcional)",
+  notesHint: "Cualquier cosa que falte o que quieras que un defensor sepa.",
+},
+
     validation: {
       required: "Este campo es obligatorio.",
       invalidEmail: "Por favor ingresa un correo electrónico válido.",
@@ -485,5 +529,256 @@ export const es: I18nDict = {
       minChars: "Por favor ingresa al menos {min} caracteres.",
       maxChars: "Por favor ingresa {max} caracteres o menos.",
     },
+
+    applicant: {
+    title: "Información del solicitante",
+    description: "Esta es la persona que solicita la compensación.",
+    isVictimAlsoApplicantLabel: "¿La víctima también es el solicitante?",
+    sameAsVictimNote: "Por ahora usaremos la información de la víctima como los datos del solicitante.",
+  },
+
+  employment: {
+  title: "Trabajo e ingresos",
+  description:
+    "Si la víctima faltó al trabajo o perdió ingresos debido al delito, agrega lo que sepas aquí.",
+  descriptionDraft: "Datos del empleador y ausencias laborales (si aplica).",
+
+  loadFailed: "No se pudo cargar la sección de empleo.",
+  noDraft: "No se cargó ningún borrador del caso.",
+
+  saveContinue: "Guardar y continuar",
+
+  unknownHint: "Si no estás seguro/a, elige Desconocido.",
+
+  employedAtTimeLabel: "¿La víctima estaba empleada en ese momento?",
+  employerNameLabel: "Nombre del empleador (opcional)",
+  employerNamePlaceholder: "Empresa / nombre del empleador",
+  employerPhoneLabel: "Teléfono del empleador (opcional)",
+  employerPhonePlaceholder: "(xxx) xxx-xxxx",
+  employerAddressLabel: "Dirección del empleador (opcional)",
+  employerAddressPlaceholder: "Calle, ciudad, estado",
+
+  missedWorkLabel: "¿La víctima faltó al trabajo debido al delito?",
+  missedWorkFromLabel: "Faltó del trabajo desde (opcional)",
+  missedWorkToLabel: "Faltó del trabajo hasta (opcional)",
+
+  disabilityFromCrimeLabel:
+    "¿El delito causó una discapacidad que afecta el trabajo?",
+},
+
+funeral: {
+  title: "Funeral y dependientes",
+  description:
+    "Si la víctima falleció o hay dependientes afectados por el delito, agrega lo que sepas aquí.",
+  descriptionDraft:
+    "Detalles de funeral/entierro e información de dependientes (si aplica).",
+
+  loadFailed: "No se pudo cargar la sección de funeral.",
+  noDraft: "No se cargó ningún borrador del caso.",
+
+  saveContinue: "Guardar y continuar",
+
+  unknownHint: "Si no estás seguro/a, elige Desconocido.",
+
+  victimDeceasedLabel: "¿La víctima falleció como resultado del delito?",
+
+  funeralHomeTitle: "Funeraria",
+  funeralHomeNameLabel: "Nombre de la funeraria (opcional)",
+  funeralHomeNamePlaceholder: "Nombre",
+  funeralHomePhoneLabel: "Teléfono de la funeraria (opcional)",
+  funeralHomePhonePlaceholder: "(xxx) xxx-xxxx",
+
+  dependentsTitle: "Dependientes",
+  hasDependentsLabel: "¿Hay dependientes que dependían de la víctima para apoyo?",
+  hasDependentsHint:
+    "Por ejemplo: hijos, cónyuge u otros dependientes.",
+  dependentsCountLabel: "¿Cuántos dependientes? (opcional)",
+  dependentsCountPlaceholder: "Ej. 2",
+  dependentsNotesLabel: "Notas sobre dependientes (opcional)",
+  dependentsNotesPlaceholder: "Cualquier detalle útil…",
+},
+losses: {
+  title: "Gastos y dinero",
+  description:
+    "Selecciona en qué gastos quieres ayuda. Esto nos ayuda a generar tu paquete y revisar documentos faltantes.",
+
+  options: {
+    medical: "Gastos médicos",
+    counseling: "Consejería / terapia",
+    lostWages: "Salarios / ingresos perdidos",
+    funeral: "Costos de funeral / entierro",
+    propertyLoss: "Pérdida de propiedad",
+    relocation: "Reubicación / vivienda",
+    other: "Otro",
+  },
+
+  otherLabel: "Otro (describe)",
+},
+
+crime: {
+  title: "Delito e incidente",
+  description: "Los detalles básicos del incidente ayudan a verificar elegibilidad y documentación.",
+
+  incidentDateLabel: "Fecha del incidente",
+  incidentTimeLabel: "Hora del incidente (opcional)",
+  incidentTimePlaceholder: "p. ej., 9:30 PM",
+
+  locationAddressLabel: "¿Dónde ocurrió? (calle o intersección cercana)",
+
+  policeReportedLabel: "¿Se reportó a la policía?",
+  policeDepartmentLabel: "¿Qué departamento de policía?",
+  policeReportNumberLabel: "Número de reporte / caso (si lo sabes)",
+
+  offenderKnownLabel: "¿Conoces a la persona agresora?",
+  offenderNameLabel: "Nombre de la persona agresora (si lo sabes)",
+
+  narrativeLabel: "En pocas palabras, ¿qué pasó? (opcional)",
+  narrativePlaceholder: "Manténlo breve. Puedes agregar más después.",
+},
+
+medical: {
+  title: "Atención médica y consejería",
+  description:
+    "Agrega los detalles de atención médica y consejería que conozcas. Si no sabes algo, déjalo en blanco.",
+  descriptionDraft:
+    "Detalles de tratamiento e información de consejería (si corresponde).",
+
+  loadFailed: "No se pudo cargar la sección de atención médica.",
+  noDraft: "No se cargó ningún borrador del caso.",
+
+  saveContinue: "Guardar y continuar",
+
+  hints: {
+    unknownOk: "Si no estás seguro, elige Desconocido.",
+    dateFormat: "AAAA-MM-DD",
+  },
+
+  sections: {
+    medical: "Atención médica",
+    counseling: "Consejería",
+  },
+
+  questions: {
+    hasMedicalTreatment: "¿La víctima recibió atención médica?",
+    hasCounseling: "¿La víctima recibió consejería / terapia?",
+  },
+
+  fields: {
+    hospitalName: "Nombre del hospital / centro (opcional)",
+    hospitalCity: "Ciudad del hospital / centro (opcional)",
+    treatmentStart: "Fecha de inicio del tratamiento (opcional)",
+    treatmentEnd: "Fecha de fin del tratamiento (opcional)",
+    providerName: "Nombre del consejero / proveedor (opcional)",
+    sessionsCount: "Número de sesiones (opcional)",
+  },
+
+  placeholders: {
+    hospitalName: "Hospital, clínica, urgencias, etc.",
+    hospitalCity: "Ciudad",
+    providerName: "Terapeuta, clínica, programa, etc.",
+    sessionsCount: "p. ej., 8",
+  },
+},
+summary: {
+  title: "Resumen",
+  description:
+    "Revisa lo que ingresaste. Puedes volver a cualquier sección para editar.",
+  descriptionDraft: "Revisa tu caso antes de generar documentos.",
+
+  loadFailed: "No se pudo cargar el resumen.",
+  noDraft: "No se cargó ningún borrador del caso.",
+
+  save: "Guardar resumen",
+
+  sections: {
+    victim: "Víctima",
+    applicant: "Solicitante",
+    crime: "Delito / incidente",
+    losses: "Gastos solicitados",
+    medical: "Atención médica y consejería",
+    employment: "Trabajo e ingresos",
+    funeral: "Funeral",
+    documents: "Documentos (cargas)",
+    certification: "Certificación",
+  },
+
+  labels: {
+    name: "Nombre",
+    dob: "Fecha de nacimiento",
+    phone: "Teléfono",
+    email: "Correo electrónico",
+    address: "Dirección",
+    isVictimAlsoApplicant: "¿La víctima también es solicitante?",
+    relationshipToVictim: "Relación con la víctima",
+    date: "Fecha",
+    time: "Hora",
+    location: "Lugar",
+    reportedToPolice: "Reportado a la policía",
+    policeDepartment: "Departamento de policía",
+    reportNumber: "Número de reporte",
+    to: "a",
+  },
+
+  losses: {
+    medical: "Atención médica",
+    counseling: "Consejería",
+    funeral: "Funeral",
+    lostWages: "Salarios perdidos",
+    relocation: "Reubicación",
+    propertyLoss: "Pérdida de propiedad",
+    other: "Otro",
+    otherYes: "Sí ({desc})",
+    estimatedTotal: "Total estimado",
+  },
+
+  medical: {
+    medicalTreatment: "Atención médica",
+    hospital: "Hospital",
+    city: "Ciudad",
+    treatmentDates: "Fechas de tratamiento",
+    counseling: "Consejería",
+    provider: "Proveedor de consejería",
+    sessions: "Sesiones",
+  },
+
+  employment: {
+    employedAtTime: "Trabajaba en ese momento",
+    employer: "Empleador",
+    missedWork: "Faltó al trabajo",
+    missedDates: "Fechas faltadas",
+    disabilityFromCrime: "Discapacidad por el delito",
+  },
+
+  funeral: {
+    victimDeceased: "La víctima falleció",
+    funeralHome: "Funeraria",
+    funeralPhone: "Teléfono de la funeraria",
+    dependentsPresent: "Hay dependientes",
+    dependentCount: "Cantidad de dependientes",
+    dependentNotes: "Notas sobre dependientes",
+  },
+
+  documents: {
+    policeReports: "Reportes policiales",
+    medicalBills: "Facturas médicas",
+    counselingBills: "Facturas de consejería",
+    funeralBills: "Facturas funerarias",
+    wageProof: "Comprobante de salarios",
+    other: "Otro",
+    notes: "Notas",
+  },
+
+  certification: {
+    disclaimer:
+      "Esto no es asesoría legal. Es una confirmación en lenguaje sencillo de que la información es correcta según tu mejor conocimiento.",
+    fullNameLabel: "Nombre completo (requerido)",
+    fullNamePlaceholder: "Escribe tu nombre completo",
+    dateLabel: "Fecha (requerida)",
+    truthfulLabel:
+      "Confirmo que la información proporcionada es verdadera y completa según mi mejor conocimiento.",
+    releaseLabel:
+      "Entiendo que pueden requerirse documentos de respaldo y que podrían pedirme verificación.",
+  },
+},
   },
 };

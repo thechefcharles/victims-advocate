@@ -11,6 +11,8 @@ import type { CaseData } from "@/lib/intake/types";
 import { loadCaseDraft, saveCaseDraft } from "@/lib/intake/api";
 import { nextStep, stepHref } from "@/lib/intake/steps";
 
+import { useI18n } from "@/components/i18n/i18nProvider";
+
 type OtherDoc = { label?: string; uploaded?: boolean };
 
 function Checkbox({
@@ -49,6 +51,7 @@ export default function DocumentsPage() {
   const caseId: string | undefined = Array.isArray(raw) ? raw[0] : raw;
 
   const router = useRouter();
+  const { t, tf } = useI18n();
 
   const [draft, setDraft] = useState<CaseData | null>(null);
   const [saving, setSaving] = useState(false);
@@ -62,7 +65,7 @@ export default function DocumentsPage() {
   useEffect(() => {
     if (!caseId) {
       setLoading(false);
-      setError("Missing case id in the URL.");
+      setError(t("intake.errors.missingCaseId"));
       return;
     }
 
@@ -80,7 +83,7 @@ export default function DocumentsPage() {
         setDraft((d ?? null) as CaseData | null);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load documents section.");
+        setError(e?.message ?? t("forms.documents.loadFailed"));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -89,7 +92,7 @@ export default function DocumentsPage() {
     return () => {
       mounted = false;
     };
-  }, [caseId]);
+  }, [caseId, t]);
 
   // ✅ Guard early so below code can treat caseId as string
   if (!caseId) {
@@ -97,10 +100,12 @@ export default function DocumentsPage() {
       <IntakeShell
         caseId={"missing"}
         step="documents"
-        title="Documents"
-        description="Missing case id in the URL."
+        title={t("forms.documents.title")}
+        description={t("intake.errors.missingCaseId")}
       >
-        <p style={{ color: "crimson" }}>{error ?? "Missing case id."}</p>
+        <p style={{ color: "crimson" }}>
+          {error ?? t("intake.errors.missingCaseIdShort")}
+        </p>
       </IntakeShell>
     );
   }
@@ -156,42 +161,42 @@ export default function DocumentsPage() {
     patchChecklist({ otherDocs: arr.filter((_, i) => i !== index) });
   }
 
-async function handleSave(goNext?: boolean) {
-  if (!draft) return;
+  async function handleSave(goNext?: boolean) {
+    if (!draft) return;
 
-  // ✅ FIX: ensure we have a real string before using it
-  const cid = caseId;
-  if (!cid) {
-    setError("Missing case id in the URL.");
-    return;
-  }
-
-  setSaving(true);
-  setError(null);
-
-  try {
-    await saveCaseDraft(cid, draft);
-
-    if (goNext) {
-      const nxt = nextStep("documents");
-      if (nxt) router.push(stepHref(cid, nxt));
+    // ✅ ensure we have a real string before using it
+    const cid = caseId;
+    if (!cid) {
+      setError(t("intake.errors.missingCaseId"));
+      return;
     }
-  } catch (e: any) {
-    setError(e?.message ?? "Could not save.");
-  } finally {
-    setSaving(false);
+
+    setSaving(true);
+    setError(null);
+
+    try {
+      await saveCaseDraft(cid, draft);
+
+      if (goNext) {
+        const nxt = nextStep("documents");
+        if (nxt) router.push(stepHref(cid, nxt));
+      }
+    } catch (e: any) {
+      setError(e?.message ?? t("intake.save.failed"));
+    } finally {
+      setSaving(false);
+    }
   }
-}
 
   if (loading) {
     return (
       <IntakeShell
         caseId={caseId}
         step="documents"
-        title="Documents"
-        description="Track what documents you have (uploads can be wired in next)."
+        title={t("forms.documents.title")}
+        description={t("forms.documents.descriptionDraft")}
       >
-        <p>Loading…</p>
+        <p>{t("common.loading")}</p>
       </IntakeShell>
     );
   }
@@ -201,10 +206,10 @@ async function handleSave(goNext?: boolean) {
       <IntakeShell
         caseId={caseId}
         step="documents"
-        title="Documents"
-        description="Track what documents you have (uploads can be wired in next)."
+        title={t("forms.documents.title")}
+        description={t("forms.documents.descriptionDraft")}
       >
-        <p style={{ color: "crimson" }}>{error ?? "No case draft loaded."}</p>
+        <p style={{ color: "crimson" }}>{error ?? t("forms.documents.noDraft")}</p>
       </IntakeShell>
     );
   }
@@ -213,8 +218,8 @@ async function handleSave(goNext?: boolean) {
     <IntakeShell
       caseId={caseId}
       step="documents"
-      title="Documents"
-      description="Check off what you already have. This helps prevent delays and denials."
+      title={t("forms.documents.title")}
+      description={t("forms.documents.description")}
       footer={
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
           {error ? (
@@ -232,7 +237,7 @@ async function handleSave(goNext?: boolean) {
               cursor: "pointer",
             }}
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? t("ui.buttons.saving") : t("ui.buttons.save")}
           </button>
 
           <button
@@ -247,50 +252,50 @@ async function handleSave(goNext?: boolean) {
               cursor: "pointer",
             }}
           >
-            {saving ? "Saving…" : "Save & Continue"}
+            {saving ? t("ui.buttons.saving") : t("forms.documents.saveContinue")}
           </button>
         </div>
       }
     >
-      <h2 style={{ margin: "8px 0 10px" }}>Core documents</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.documents.coreTitle")}</h2>
 
       <Checkbox
         checked={!!checklist.policeReport}
         onChange={(v) => patchChecklist({ policeReport: v })}
-        label="Police report / incident report"
+        label={t("forms.documents.checklist.policeReport")}
       />
       <Checkbox
         checked={!!checklist.medicalBills}
         onChange={(v) => patchChecklist({ medicalBills: v })}
-        label="Medical bills / statements"
+        label={t("forms.documents.checklist.medicalBills")}
       />
       <Checkbox
         checked={!!checklist.counselingBills}
         onChange={(v) => patchChecklist({ counselingBills: v })}
-        label="Counseling / therapy bills"
+        label={t("forms.documents.checklist.counselingBills")}
       />
       <Checkbox
         checked={!!checklist.funeralInvoices}
         onChange={(v) => patchChecklist({ funeralInvoices: v })}
-        label="Funeral / burial invoices"
+        label={t("forms.documents.checklist.funeralInvoices")}
       />
       <Checkbox
         checked={!!checklist.wageProof}
         onChange={(v) => patchChecklist({ wageProof: v })}
-        label="Proof of lost wages (employer letter, pay stubs, etc.)"
+        label={t("forms.documents.checklist.wageProof")}
       />
       <Checkbox
         checked={!!checklist.idProof}
         onChange={(v) => patchChecklist({ idProof: v })}
-        label="ID proof (victim/applicant)"
+        label={t("forms.documents.checklist.idProof")}
       />
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2 style={{ margin: "8px 0 10px" }}>Other documents</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.documents.otherTitle")}</h2>
 
       {otherDocs.length === 0 ? (
-        <p style={{ color: "#666" }}>No other documents added yet.</p>
+        <p style={{ color: "#666" }}>{t("forms.documents.otherEmpty")}</p>
       ) : null}
 
       {otherDocs.map((d, i) => (
@@ -304,7 +309,7 @@ async function handleSave(goNext?: boolean) {
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-            <strong>Other document #{i + 1}</strong>
+            <strong>{tf("forms.documents.otherItemTitle", { n: i + 1 })}</strong>
             <button
               onClick={() => removeOtherDoc(i)}
               type="button"
@@ -316,7 +321,7 @@ async function handleSave(goNext?: boolean) {
                 cursor: "pointer",
               }}
             >
-              Remove
+              {t("ui.buttons.remove")}
             </button>
           </div>
 
@@ -328,15 +333,15 @@ async function handleSave(goNext?: boolean) {
               marginTop: 10,
             }}
           >
-            <Field label="Label (optional)">
+            <Field label={t("forms.documents.otherLabel")}>
               <TextInput
                 value={d.label ?? ""}
                 onChange={(e) => setOtherDoc(i, { label: e.target.value })}
-                placeholder="e.g. court order, receipts"
+                placeholder={t("forms.documents.otherPlaceholder")}
               />
             </Field>
 
-            <Field label="Have it?">
+            <Field label={t("forms.documents.otherHaveIt")}>
               <select
                 value={d.uploaded ? "yes" : "no"}
                 onChange={(e) => setOtherDoc(i, { uploaded: e.target.value === "yes" })}
@@ -348,8 +353,8 @@ async function handleSave(goNext?: boolean) {
                   outline: "none",
                 }}
               >
-                <option value="no">Not yet</option>
-                <option value="yes">Yes</option>
+                <option value="no">{t("forms.documents.otherNotYet")}</option>
+                <option value="yes">{t("ui.status.yes")}</option>
               </select>
             </Field>
           </div>
@@ -367,16 +372,16 @@ async function handleSave(goNext?: boolean) {
           cursor: "pointer",
         }}
       >
-        + Add other document
+        {t("forms.documents.addOther")}
       </button>
 
       <hr style={{ margin: "18px 0" }} />
 
-      <Field label="Notes (optional)" hint="Anything you’re missing or want an advocate to know.">
+      <Field label={t("forms.documents.notesLabel")} hint={t("forms.documents.notesHint")}>
         <TextInput
           value={documents?.notes ?? ""}
           onChange={(e) => patchDocuments({ notes: e.target.value })}
-          placeholder="Type here…"
+          placeholder={t("forms.placeholders.typeHere")}
         />
       </Field>
     </IntakeShell>

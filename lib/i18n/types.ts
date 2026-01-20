@@ -28,7 +28,7 @@ export type I18nDict = {
     advocatesNote: string;
 
     progressTitle: string;
-    stepOf: string; // supports tokens like {current} and {total}
+    stepOf: string;
     currentSection: string;
     resumeApplication: string;
     startApplication: string;
@@ -127,9 +127,19 @@ export type I18nDict = {
       optionComingSoon: string;
     };
 
-    privacy: { title: string; b1: string; b2: string; b3: string; b4: string };
+    privacy: {
+      title: string;
+      b1: string;
+      b2: string;
+      b3: string;
+      b4: string;
+    };
 
-    multilingual: { bold: string; body: string; badge: string };
+    multilingual: {
+      bold: string;
+      body: string;
+      badge: string;
+    };
 
     footer: {
       rights: string;
@@ -155,6 +165,11 @@ export type I18nDict = {
       funeral: string;
       documents: string;
       summary: string;
+    };
+
+    errors: {
+      missingCaseId: string;
+      missingCaseIdShort: string;
     };
 
     viewOnly: string;
@@ -299,6 +314,285 @@ export type I18nDict = {
       title: string;
       description: string;
       civilRightsNote: string;
+      disabilityTypesLabel: string;
+    };
+
+    applicant: {
+      title: string;
+      description: string;
+      isVictimAlsoApplicantLabel: string;
+      sameAsVictimNote: string;
+    };
+
+    employment: {
+  title: string;
+  description: string;
+  descriptionDraft: string;
+
+  loadFailed: string;
+  noDraft: string;
+
+  saveContinue: string;
+
+  unknownHint: string;
+
+  employedAtTimeLabel: string;
+  employerNameLabel: string;
+  employerNamePlaceholder: string;
+  employerPhoneLabel: string;
+  employerPhonePlaceholder: string;
+  employerAddressLabel: string;
+  employerAddressPlaceholder: string;
+
+  missedWorkLabel: string;
+  missedWorkFromLabel: string;
+  missedWorkToLabel: string;
+
+  disabilityFromCrimeLabel: string;
+};
+
+funeral: {
+  title: string;
+  description: string;
+  descriptionDraft: string;
+
+  loadFailed: string;
+  noDraft: string;
+
+  saveContinue: string;
+
+  unknownHint: string;
+
+  victimDeceasedLabel: string;
+
+  funeralHomeTitle: string;
+  funeralHomeNameLabel: string;
+  funeralHomeNamePlaceholder: string;
+  funeralHomePhoneLabel: string;
+  funeralHomePhonePlaceholder: string;
+
+  dependentsTitle: string;
+  hasDependentsLabel: string;
+  hasDependentsHint: string;
+  dependentsCountLabel: string;
+  dependentsCountPlaceholder: string;
+  dependentsNotesLabel: string;
+  dependentsNotesPlaceholder: string;
+};
+
+losses: {
+  title: string;
+  description: string;
+
+  options: {
+    medical: string;
+    counseling: string;
+    lostWages: string;
+    funeral: string;
+    propertyLoss: string;
+    relocation: string;
+    other: string;
+  };
+
+  otherLabel: string;
+};
+
+medical: {
+  title: string;
+  description: string;
+  descriptionDraft: string;
+
+  loadFailed: string;
+  noDraft: string;
+
+  saveContinue: string;
+
+  hints: {
+    unknownOk: string;
+    dateFormat: string;
+  };
+
+  sections: {
+    medical: string;
+    counseling: string;
+  };
+
+  questions: {
+    hasMedicalTreatment: string;
+    hasCounseling: string;
+  };
+
+  fields: {
+    hospitalName: string;
+    hospitalCity: string;
+    treatmentStart: string;
+    treatmentEnd: string;
+    providerName: string;
+    sessionsCount: string;
+  };
+
+  placeholders: {
+    hospitalName: string;
+    hospitalCity: string;
+    providerName: string;
+    sessionsCount: string;
+  };
+};
+
+crime: {
+  title: string;
+  description: string;
+
+  incidentDateLabel: string;
+  incidentTimeLabel: string;
+  incidentTimePlaceholder: string;
+
+  locationAddressLabel: string;
+
+  policeReportedLabel: string;
+  policeDepartmentLabel: string;
+  policeReportNumberLabel: string;
+
+  offenderKnownLabel: string;
+  offenderNameLabel: string;
+
+  narrativeLabel: string;
+  narrativePlaceholder: string;
+};
+
+summary: {
+  title: string;
+  description: string;
+  descriptionDraft: string;
+
+  loadFailed: string;
+  noDraft: string;
+
+  save: string;
+
+  sections: {
+    victim: string;
+    applicant: string;
+    crime: string;
+    losses: string;
+    medical: string;
+    employment: string;
+    funeral: string;
+    documents: string;
+    certification: string;
+  };
+
+  labels: {
+    name: string;
+    dob: string;
+    phone: string;
+    email: string;
+    address: string;
+    isVictimAlsoApplicant: string;
+    relationshipToVictim: string;
+    date: string;
+    time: string;
+    location: string;
+    reportedToPolice: string;
+    policeDepartment: string;
+    reportNumber: string;
+    to: string;
+  };
+
+  losses: {
+    medical: string;
+    counseling: string;
+    funeral: string;
+    lostWages: string;
+    relocation: string;
+    propertyLoss: string;
+    other: string;
+    otherYes: string; // uses token {desc}
+    estimatedTotal: string;
+  };
+
+  medical: {
+    medicalTreatment: string;
+    hospital: string;
+    city: string;
+    treatmentDates: string;
+    counseling: string;
+    provider: string;
+    sessions: string;
+  };
+
+  employment: {
+    employedAtTime: string;
+    employer: string;
+    missedWork: string;
+    missedDates: string;
+    disabilityFromCrime: string;
+  };
+
+  funeral: {
+    victimDeceased: string;
+    funeralHome: string;
+    funeralPhone: string;
+    dependentsPresent: string;
+    dependentCount: string;
+    dependentNotes: string;
+  };
+
+  documents: {
+    policeReports: string;
+    medicalBills: string;
+    counselingBills: string;
+    funeralBills: string;
+    wageProof: string;
+    other: string;
+    notes: string;
+  };
+
+  certification: {
+    disclaimer: string;
+    fullNameLabel: string;
+    fullNamePlaceholder: string;
+    dateLabel: string;
+    truthfulLabel: string;
+    releaseLabel: string;
+  };
+};
+
+    documents: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      saveContinue: string;
+
+      coreTitle: string;
+      otherTitle: string;
+
+      checklist: {
+        policeReport: string;
+        medicalBills: string;
+        counselingBills: string;
+        funeralInvoices: string;
+        wageProof: string;
+        idProof: string;
+      };
+
+
+
+      otherEmpty: string;
+      otherItemTitle: string; // uses token {n}
+      otherLabel: string;
+      otherPlaceholder: string;
+      otherHaveIt: string;
+      otherNotYet: string;
+
+      addOther: string;
+
+      notesLabel: string;
+      notesHint: string;
     };
 
     labels: {

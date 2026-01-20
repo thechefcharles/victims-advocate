@@ -1,46 +1,51 @@
 // components/intake/StepNav.tsx
 "use client";
 
-import { useParams, usePathname } from "next/navigation";
-import { INTAKE_STEPS } from "@/lib/intake/steps";
+import * as React from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 
-export function StepNav() {
+import { INTAKE_STEPS, type IntakeStepKey } from "@/lib/intake/steps";
+import { useI18n } from "@/components/i18n/i18nProvider";
+
+export function StepNav({
+  caseId,
+  currentStep,
+}: {
+  caseId?: string;
+  currentStep?: IntakeStepKey;
+}) {
+  const { t } = useI18n();
+
+  // Fallback: if parent didn't pass caseId, try URL
   const params = useParams();
-  const pathname = usePathname();
-
-  // ✅ Normalize caseId (string | string[] | undefined → string | undefined)
   const raw = (params as any)?.caseId;
-  const caseId: string | undefined = Array.isArray(raw) ? raw[0] : raw;
+  const cid: string | undefined = caseId ?? (Array.isArray(raw) ? raw[0] : raw);
 
-  // TEMP translation stub
-  const t = (k: string) => k;
-
-  // ✅ Guard: if caseId is missing, don’t render links
-  if (!caseId) {
-    return null;
-  }
+  if (!cid) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {INTAKE_STEPS.map((s) => {
-        const href = s.path(caseId);
-        const active = pathname === href;
+    <nav aria-label={t("intake.steps.victim") /* any stable label */}>
+      <div className="flex flex-wrap gap-2">
+        {INTAKE_STEPS.map((s) => {
+          const isActive = currentStep === s.key;
 
-        return (
-          <a
-            key={s.key}
-            href={href}
-            className={[
-              "rounded-full border px-3 py-1 text-sm",
-              active
-                ? "border-black bg-black text-white"
-                : "border-neutral-300 bg-white",
-            ].join(" ")}
-          >
-            {t(s.labelKey)}
-          </a>
-        );
-      })}
-    </div>
+          return (
+            <Link
+              key={s.key}
+              href={s.path(cid)}
+              className={[
+                "rounded-full border px-3 py-1 text-xs transition",
+                isActive
+                  ? "border-neutral-900 bg-neutral-900 text-white"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400",
+              ].join(" ")}
+            >
+              {t(s.labelKey)}
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

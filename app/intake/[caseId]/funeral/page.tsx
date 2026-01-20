@@ -10,15 +10,18 @@ import { Field, TextInput } from "@/components/intake/fields";
 import type { CaseData } from "@/lib/intake/types";
 import { loadCaseDraft, saveCaseDraft } from "@/lib/intake/api";
 import { nextStep, stepHref } from "@/lib/intake/steps";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 type YesNoUnknown = "yes" | "no" | "unknown";
 
 function YesNoUnknownSelect({
   value,
   onChange,
+  t,
 }: {
   value: YesNoUnknown | undefined;
   onChange: (v: YesNoUnknown) => void;
+  t: (k: string, vars?: Record<string, any>) => string;
 }) {
   return (
     <select
@@ -32,20 +35,20 @@ function YesNoUnknownSelect({
         outline: "none",
       }}
     >
-      <option value="unknown">Unknown</option>
-      <option value="yes">Yes</option>
-      <option value="no">No</option>
+      <option value="unknown">{t("ui.status.unknown")}</option>
+      <option value="yes">{t("ui.status.yes")}</option>
+      <option value="no">{t("ui.status.no")}</option>
     </select>
   );
 }
 
 export default function FuneralPage() {
-  // ✅ FIX: robust caseId extraction (string | string[] | undefined)
   const params = useParams();
   const raw = (params as any)?.caseId;
   const caseId: string | undefined = Array.isArray(raw) ? raw[0] : raw;
 
   const router = useRouter();
+  const { t } = useI18n();
 
   const [draft, setDraft] = useState<CaseData | null>(null);
   const [saving, setSaving] = useState(false);
@@ -53,13 +56,12 @@ export default function FuneralPage() {
   const [error, setError] = useState<string | null>(null);
 
   const funeral = useMemo(() => draft?.funeral ?? {}, [draft]);
-  const dependents = funeral.dependents ?? {};
+  const dependents = useMemo(() => funeral.dependents ?? {}, [funeral]);
 
   useEffect(() => {
-    // ✅ Guard: don’t fetch if caseId is missing
     if (!caseId) {
       setLoading(false);
-      setError("Missing case id in the URL.");
+      setError(t("intake.errors.missingCaseId"));
       return;
     }
 
@@ -76,7 +78,7 @@ export default function FuneralPage() {
         setDraft(d ?? null);
       } catch (e: any) {
         if (!mounted) return;
-        setError(e?.message ?? "Failed to load funeral section.");
+        setError(e?.message ?? t("forms.funeral.loadFailed"));
       } finally {
         if (mounted) setLoading(false);
       }
@@ -85,7 +87,7 @@ export default function FuneralPage() {
     return () => {
       mounted = false;
     };
-  }, [caseId]);
+  }, [caseId, t]);
 
   function patchFuneral(patch: Partial<NonNullable<CaseData["funeral"]>>) {
     setDraft((prev) => {
@@ -121,7 +123,12 @@ export default function FuneralPage() {
   }
 
   async function handleSave(goNext?: boolean) {
-    if (!draft || !caseId) return;
+    if (!draft) return;
+
+    if (!caseId) {
+      setError(t("intake.errors.missingCaseIdShort"));
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -134,41 +141,50 @@ export default function FuneralPage() {
         if (nxt) router.push(stepHref(caseId, nxt));
       }
     } catch (e: any) {
-      setError(e?.message ?? "Could not save.");
+      setError(e?.message ?? t("ui.errors.generic"));
     } finally {
       setSaving(false);
     }
   }
 
-  if (loading) {
+  if (!caseId) {
     return (
       <IntakeShell
-        title="Funeral & dependents"
-        description="Funeral/burial details and dependent information (if applicable)."
+        title={t("forms.funeral.title")}
+        description={t("intake.errors.missingCaseId")}
       >
-        <p>Loading…</p>
+        <p style={{ color: "crimson" }}>{error ?? t("intake.errors.missingCaseIdShort")}</p>
+      </IntakeShell>
+    );
+  }
+
+  if (loading) {
+    return (
+      <IntakeShell title={t("forms.funeral.title")} description={t("forms.funeral.descriptionDraft")}>
+        <p>{t("common.loading")}</p>
       </IntakeShell>
     );
   }
 
   if (!draft) {
     return (
-      <IntakeShell
-        title="Funeral & dependents"
-        description="Funeral/burial details and dependent information (if applicable)."
-      >
-        <p style={{ color: "crimson" }}>{error ?? "No case draft loaded."}</p>
+      <IntakeShell title={t("forms.funeral.title")} description={t("forms.funeral.descriptionDraft")}>
+        <p style={{ color: "crimson" }}>{error ?? t("forms.funeral.noDraft")}</p>
       </IntakeShell>
     );
   }
 
   return (
-    <IntakeShell
-      title="Funeral & dependents"
-      description="If the victim passed away or there are dependents affected by the crime, add what you know here."
-    >
+    <IntakeShell title={t("forms.funeral.title")} description={t("forms.funeral.description")}>
       {/* Footer buttons inside page content (since IntakeShell does not accept footer props in your project) */}
-      <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginBottom: 16 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          justifyContent: "flex-end",
+          marginBottom: 16,
+        }}
+      >
         {error ? <span style={{ color: "crimson", marginRight: "auto" }}>{error}</span> : null}
 
         <button
@@ -182,7 +198,7 @@ export default function FuneralPage() {
             cursor: "pointer",
           }}
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("ui.buttons.saving") : t("ui.buttons.save")}
         </button>
 
         <button
@@ -197,77 +213,82 @@ export default function FuneralPage() {
             cursor: "pointer",
           }}
         >
-          {saving ? "Saving…" : "Save & Continue"}
+          {saving ? t("ui.buttons.saving") : t("forms.funeral.saveContinue")}
         </button>
       </div>
 
-      <Field label="Was the victim deceased as a result of the crime?" hint="If unsure, choose Unknown.">
+      <Field
+        label={t("forms.funeral.victimDeceasedLabel")}
+        hint={t("forms.funeral.unknownHint")}
+      >
         <YesNoUnknownSelect
           value={funeral.victimDeceased}
           onChange={(v) => patchFuneral({ victimDeceased: v })}
+          t={t}
         />
       </Field>
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2 style={{ margin: "8px 0 10px" }}>Funeral home</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.funeral.funeralHomeTitle")}</h2>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="Funeral home name (optional)">
+        <Field label={t("forms.funeral.funeralHomeNameLabel")}>
           <TextInput
             value={funeral.funeralHomeName ?? ""}
             onChange={(e) => patchFuneral({ funeralHomeName: e.target.value })}
-            placeholder="Name"
+            placeholder={t("forms.funeral.funeralHomeNamePlaceholder")}
           />
         </Field>
 
-        <Field label="Funeral home phone (optional)">
+        <Field label={t("forms.funeral.funeralHomePhoneLabel")}>
           <TextInput
             value={funeral.funeralHomePhone ?? ""}
             onChange={(e) => patchFuneral({ funeralHomePhone: e.target.value })}
-            placeholder="(xxx) xxx-xxxx"
+            placeholder={t("forms.funeral.funeralHomePhonePlaceholder")}
           />
         </Field>
       </div>
 
       <hr style={{ margin: "18px 0" }} />
 
-      <h2 style={{ margin: "8px 0 10px" }}>Dependents</h2>
+      <h2 style={{ margin: "8px 0 10px" }}>{t("forms.funeral.dependentsTitle")}</h2>
 
       <Field
-        label="Are there dependents who relied on the victim for support?"
-        hint="For example: children, spouse, or other dependents."
+        label={t("forms.funeral.hasDependentsLabel")}
+        hint={t("forms.funeral.hasDependentsHint")}
       >
         <YesNoUnknownSelect
-          value={dependents.hasDependents}
-          onChange={(v) => patchDependents({ hasDependents: v })}
+          value={(dependents as any).hasDependents}
+          onChange={(v) => patchDependents({ hasDependents: v } as any)}
+          t={t}
         />
       </Field>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <Field label="How many dependents? (optional)">
+        <Field label={t("forms.funeral.dependentsCountLabel")}>
           <TextInput
             inputMode="numeric"
             value={
-              dependents.count === null || dependents.count === undefined
+              (dependents as any).count === null || (dependents as any).count === undefined
                 ? ""
-                : String(dependents.count)
+                : String((dependents as any).count)
             }
             onChange={(e) => {
-              const raw = e.target.value.trim();
-              if (raw === "") return patchDependents({ count: undefined });
-              const num = Number(raw.replace(/[^0-9]/g, ""));
-              patchDependents({ count: Number.isFinite(num) ? num : undefined });
+              const rawVal = e.target.value.trim();
+              if (rawVal === "") return patchDependents({ count: undefined } as any);
+              const num = Number(rawVal.replace(/[^0-9]/g, ""));
+              patchDependents({ count: Number.isFinite(num) ? num : undefined } as any);
             }}
-            placeholder="e.g. 2"
+            placeholder={t("forms.funeral.dependentsCountPlaceholder")}
           />
         </Field>
 
-        <Field label="Notes about dependents (optional)">
+        <Field label={t("forms.funeral.dependentsNotesLabel")}>
           <TextInput
-            value={dependents.notes ?? ""}
-            onChange={(e) => patchDependents({ notes: e.target.value })}
-            placeholder="Anything helpful to know…"
+            value={(dependents as any).notes ?? ""}
+            onChange={(e) => patchDependents({ notes: e.target.value } as any)}
+            placeholder={t("forms.funeral.dependentsNotesPlaceholder")}
           />
         </Field>
       </div>

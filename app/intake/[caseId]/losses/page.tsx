@@ -1,3 +1,4 @@
+// app/intake/[caseId]/losses/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -8,6 +9,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { IntakeShell } from "@/components/intake/IntakeShell";
 import { CheckboxField } from "@/components/forms/CheckboxField";
 import { TextField } from "@/components/forms/TextField";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 import { fetchCase, patchCase } from "@/lib/api/cases";
 import { lossesSchema } from "@/lib/intake/schemas";
@@ -17,7 +19,7 @@ import { INTAKE_STEPS } from "@/lib/intake/steps";
 export default function LossesPage() {
   const { caseId } = useParams<{ caseId: string }>();
   const router = useRouter();
-  const t = (k: string) => k;
+  const { t } = useI18n();
 
   const [loading, setLoading] = useState(true);
 
@@ -36,11 +38,20 @@ export default function LossesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
-  const prevHref = useMemo(() => INTAKE_STEPS.find((s) => s.key === "crime")!.path(caseId), [caseId]);
-  const nextHref = useMemo(() => INTAKE_STEPS.find((s) => s.key === "medical")!.path(caseId), [caseId]);
+  const prevHref = useMemo(
+    () => INTAKE_STEPS.find((s) => s.key === "crime")!.path(caseId),
+    [caseId]
+  );
+  const nextHref = useMemo(
+    () => INTAKE_STEPS.find((s) => s.key === "medical")!.path(caseId),
+    [caseId]
+  );
 
   async function onSubmit(values: LossesSection) {
-    await patchCase(caseId, { losses: values, lastSavedAt: new Date().toISOString() });
+    await patchCase(caseId, {
+      losses: values,
+      lastSavedAt: new Date().toISOString(),
+    });
     router.push(nextHref);
   }
 
@@ -49,27 +60,70 @@ export default function LossesPage() {
   const wantsOther = form.watch("wantsOther");
 
   return (
-    <IntakeShell title={"Losses & money" /* i18n later */} description={"Select what you want help paying for. This helps us generate your packet and check missing docs." /* i18n */}>
+    <IntakeShell
+      title={t("forms.losses.title")}
+      description={t("forms.losses.description")}
+    >
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-2">
-          <CheckboxField control={form.control} name="wantsMedical" label={"Medical bills"} />
-          <CheckboxField control={form.control} name="wantsCounseling" label={"Counseling / therapy"} />
-          <CheckboxField control={form.control} name="wantsLostWages" label={"Lost wages / income"} />
-          <CheckboxField control={form.control} name="wantsFuneral" label={"Funeral / burial costs"} />
-          <CheckboxField control={form.control} name="wantsPropertyLoss" label={"Property loss"} />
-          <CheckboxField control={form.control} name="wantsRelocation" label={"Relocation / housing"} />
-          <CheckboxField control={form.control} name="wantsOther" label={"Other"} />
+          <CheckboxField
+            control={form.control}
+            name="wantsMedical"
+            label={t("forms.losses.options.medical")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsCounseling"
+            label={t("forms.losses.options.counseling")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsLostWages"
+            label={t("forms.losses.options.lostWages")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsFuneral"
+            label={t("forms.losses.options.funeral")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsPropertyLoss"
+            label={t("forms.losses.options.propertyLoss")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsRelocation"
+            label={t("forms.losses.options.relocation")}
+          />
+          <CheckboxField
+            control={form.control}
+            name="wantsOther"
+            label={t("forms.losses.options.other")}
+          />
         </div>
 
         {wantsOther ? (
-          <TextField control={form.control} name="otherDescription" label={t("forms.labels.notes")} placeholder={t("forms.placeholders.typeHere")} />
+          <TextField
+            control={form.control}
+            name="otherDescription"
+            label={t("forms.losses.otherLabel")}
+            placeholder={t("forms.placeholders.typeHere")}
+          />
         ) : null}
 
         <div className="flex items-center justify-between pt-2">
-          <button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => router.push(prevHref)}>
+          <button
+            type="button"
+            className="rounded-lg border px-4 py-2 text-sm"
+            onClick={() => router.push(prevHref)}
+          >
             {t("ui.buttons.back")}
           </button>
-          <button type="submit" className="rounded-lg bg-black px-4 py-2 text-sm text-white">
+          <button
+            type="submit"
+            className="rounded-lg bg-black px-4 py-2 text-sm text-white"
+          >
             {t("ui.buttons.next")}
           </button>
         </div>
