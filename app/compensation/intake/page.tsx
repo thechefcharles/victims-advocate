@@ -1359,20 +1359,22 @@ function ApplicantForm({
   onChange: (patch: Partial<ApplicantInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n(); // NEW: match VictimForm structure
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        Who is filling out this application?
+        {t("forms.applicant.title")}
       </h2>
-      <p className="text-xs text-slate-300">
-        If you are the injured victim and over 18, you are both the victim and the
-        applicant. If you are a parent, spouse, or someone who paid bills, you may be
-        applying on the victim&apos;s behalf.
-      </p>
+
+      <p className="text-xs text-slate-300">{t("forms.applicant.description")}</p>
 
       <div className="space-y-2 text-xs">
+        <p className="text-slate-200">
+          {t("forms.applicant.isVictimAlsoApplicantLabel")}
+        </p>
+
         <label className="flex items-center gap-2">
           <input
             type="radio"
@@ -1381,7 +1383,7 @@ function ApplicantForm({
             disabled={isReadOnly}
             onChange={() => !isReadOnly && onChange({ isSameAsVictim: true })}
           />
-          <span>I am the victim (my information is the same as above)</span>
+          <span>{t("forms.applicant.options.victim")}</span>
         </label>
 
         <label className="flex items-center gap-2">
@@ -1392,21 +1394,27 @@ function ApplicantForm({
             disabled={isReadOnly}
             onChange={() => !isReadOnly && onChange({ isSameAsVictim: false })}
           />
-          <span>I am applying on behalf of the victim (parent, spouse, other)</span>
+          <span>{t("forms.applicant.options.proxy")}</span>
         </label>
+
+        {applicant.isSameAsVictim && (
+          <p className="text-[11px] text-slate-400">
+            {t("forms.applicant.sameAsVictimNote")}
+          </p>
+        )}
       </div>
 
       {!applicant.isSameAsVictim && (
         <div className="space-y-4 pt-3 border-t border-slate-800">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
-              label="Your first name *"
+              label={t("fields.firstName.required")}
               value={applicant.firstName ?? ""}
               onChange={(v) => onChange({ firstName: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Your last name *"
+              label={t("fields.lastName.required")}
               value={applicant.lastName ?? ""}
               onChange={(v) => onChange({ lastName: v })}
               disabled={isReadOnly}
@@ -1415,15 +1423,15 @@ function ApplicantForm({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
-              label="Your date of birth"
+              label={t("fields.dateOfBirth.required")}
               type="date"
               value={applicant.dateOfBirth ?? ""}
               onChange={(v) => onChange({ dateOfBirth: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Relationship to victim"
-              placeholder="Parent, spouse, sibling, friend..."
+              label={t("forms.labels.relationship")}
+              placeholder={t("forms.applicant.relationshipPlaceholder")}
               value={applicant.relationshipToVictim ?? ""}
               onChange={(v) => onChange({ relationshipToVictim: v })}
               disabled={isReadOnly}
@@ -1432,32 +1440,33 @@ function ApplicantForm({
 
           <div className="space-y-3">
             <Field
-              label="Your street address"
+              label={t("fields.streetAddress.required")}
               value={applicant.streetAddress ?? ""}
               onChange={(v) => onChange({ streetAddress: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Apartment / Unit"
+              label={t("fields.apt.label")}
               value={applicant.apt ?? ""}
               onChange={(v) => onChange({ apt: v })}
               disabled={isReadOnly}
             />
+
             <div className="grid gap-3 sm:grid-cols-3">
               <Field
-                label="City"
+                label={t("fields.city.required")}
                 value={applicant.city ?? ""}
                 onChange={(v) => onChange({ city: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="State"
+                label={t("fields.state.required")}
                 value={applicant.state ?? ""}
                 onChange={(v) => onChange({ state: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="ZIP code"
+                label={t("fields.zip.required")}
                 value={applicant.zip ?? ""}
                 onChange={(v) => onChange({ zip: v })}
                 disabled={isReadOnly}
@@ -1467,14 +1476,15 @@ function ApplicantForm({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
-              label="Email"
+              label={t("fields.email.label")}
               type="email"
               value={applicant.email ?? ""}
               onChange={(v) => onChange({ email: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Cell phone"
+              label={t("fields.cellPhone.label")}
+              placeholder={t("fields.cellPhone.placeholder")}
               value={applicant.cellPhone ?? ""}
               onChange={(v) => onChange({ cellPhone: v })}
               disabled={isReadOnly}
@@ -1483,35 +1493,38 @@ function ApplicantForm({
 
           <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
             <p className="text-slate-200">
-              If the victim is a minor or an incapacitated adult, do you have legal
-              guardianship for them?
+              {t("forms.applicant.legalGuardianship.question")}
             </p>
 
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 disabled={isReadOnly}
-                onClick={() => !isReadOnly && onChange({ hasLegalGuardianship: true })}
+                onClick={() =>
+                  !isReadOnly && onChange({ hasLegalGuardianship: true })
+                }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship
                     ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
-                Yes
+                {t("common.yes")}
               </button>
 
               <button
                 type="button"
                 disabled={isReadOnly}
-                onClick={() => !isReadOnly && onChange({ hasLegalGuardianship: false })}
+                onClick={() =>
+                  !isReadOnly && onChange({ hasLegalGuardianship: false })
+                }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship === false
                     ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
-                No / Not sure
+                {t("forms.applicant.legalGuardianship.noNotSure")}
               </button>
             </div>
           </div>
@@ -1530,27 +1543,29 @@ function CrimeForm({
   onChange: (patch: Partial<CrimeInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">Crime and incident details</h2>
-      <p className="text-xs text-slate-300">
-        This section is about what happened. You do not need to remember every detail.
-      </p>
+      <h2 className="text-lg font-semibold text-slate-50">
+        {t("forms.crime.title")}
+      </h2>
+
+      <p className="text-xs text-slate-300">{t("forms.crime.description")}</p>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="Date of crime *"
+          label={t("forms.crime.dateOfCrimeLabel")}
           type="date"
           value={crime.dateOfCrime}
           onChange={(v) => onChange({ dateOfCrime: v })}
           disabled={isReadOnly}
         />
         <Field
-          label="Date crime was reported"
+          label={t("forms.crime.dateReportedLabel")}
           type="date"
-          value={crime.dateReported}
+          value={crime.dateReported ?? ""}
           onChange={(v) => onChange({ dateReported: v })}
           disabled={isReadOnly}
         />
@@ -1558,7 +1573,7 @@ function CrimeForm({
 
       <div className="space-y-3">
         <Field
-          label="Where did the crime happen? (street address or location) *"
+          label={t("forms.crime.crimeAddressLabel")}
           value={crime.crimeAddress}
           onChange={(v) => onChange({ crimeAddress: v })}
           disabled={isReadOnly}
@@ -1566,20 +1581,20 @@ function CrimeForm({
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="City *"
+            label={t("forms.crime.crimeCityLabel")}
             value={crime.crimeCity}
             onChange={(v) => onChange({ crimeCity: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="County"
-            value={crime.crimeCounty}
+            label={t("forms.crime.crimeCountyLabel")}
+            value={crime.crimeCounty ?? ""}
             onChange={(v) => onChange({ crimeCounty: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Police department crime was reported to *"
-            placeholder="e.g. Chicago Police Department"
+            label={t("forms.crime.reportingAgencyLabel")}
+            placeholder={t("forms.crime.reportingAgencyPlaceholder")}
             value={crime.reportingAgency}
             onChange={(v) => onChange({ reportingAgency: v })}
             disabled={isReadOnly}
@@ -1588,30 +1603,30 @@ function CrimeForm({
       </div>
 
       <Field
-        label="Police report number (if you have it)"
+        label={t("forms.crime.policeReportNumberHelp")}
         value={crime.policeReportNumber ?? ""}
         onChange={(v) => onChange({ policeReportNumber: v })}
         disabled={isReadOnly}
       />
 
       <Field
-        label="Briefly describe what happened"
-        placeholder="In your own words, describe the incident."
-        value={crime.crimeDescription}
+        label={t("forms.crime.crimeDescriptionLabel")}
+        placeholder={t("forms.crime.crimeDescriptionPlaceholder")}
+        value={crime.crimeDescription ?? ""}
         onChange={(v) => onChange({ crimeDescription: v })}
         disabled={isReadOnly}
       />
 
       <Field
-        label="Briefly describe the injuries"
-        placeholder="For example: gunshot wound to leg, surgery, PTSD, etc."
-        value={crime.injuryDescription}
+        label={t("forms.crime.injuryDescriptionLabel")}
+        placeholder={t("forms.crime.injuryDescriptionPlaceholder")}
+        value={crime.injuryDescription ?? ""}
         onChange={(v) => onChange({ injuryDescription: v })}
         disabled={isReadOnly}
       />
 
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">Do you know who did this?</p>
+        <p className="text-slate-200">{t("forms.crime.offenderKnownQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -1624,7 +1639,7 @@ function CrimeForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
@@ -1632,12 +1647,12 @@ function CrimeForm({
             disabled={isReadOnly}
             onClick={() => !isReadOnly && onChange({ offenderKnown: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-              !crime.offenderKnown
+              crime.offenderKnown === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.crime.noNotSure")}
           </button>
         </div>
       </div>
@@ -1645,14 +1660,14 @@ function CrimeForm({
       {crime.offenderKnown && (
         <div className="space-y-3">
           <Field
-            label="Offender name(s), if known"
+            label={t("forms.crime.offenderNamesLabel")}
             value={crime.offenderNames ?? ""}
             onChange={(v) => onChange({ offenderNames: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Relationship to victim, if any"
-            placeholder="Stranger, partner, family member, etc."
+            label={t("forms.crime.offenderRelationshipLabel")}
+            placeholder={t("forms.crime.offenderRelationshipPlaceholder")}
             value={crime.offenderRelationship ?? ""}
             onChange={(v) => onChange({ offenderRelationship: v })}
             disabled={isReadOnly}
@@ -1662,40 +1677,44 @@ function CrimeForm({
 
       <div className="space-y-2 text-xs pt-2 border-t border-slate-800">
         <p className="text-slate-200">
-          Was a sexual assault evidence collection kit performed at a hospital?
+          {t("forms.crime.sexualAssaultKitQuestion")}
         </p>
 
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ sexualAssaultKitPerformed: true })}
+            onClick={() =>
+              !isReadOnly && onChange({ sexualAssaultKitPerformed: true })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ sexualAssaultKitPerformed: false })}
+            onClick={() =>
+              !isReadOnly && onChange({ sexualAssaultKitPerformed: false })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.crime.noNotSure")}
           </button>
         </div>
       </div>
 
       <InlineDocumentUploader
-        contextLabel="the crime and incident (police reports, witness statements)"
+        contextLabel={t("forms.crime.uploaderContextLabel")}
         defaultDocType="police_report"
         disabled={isReadOnly}
       />
@@ -1712,21 +1731,22 @@ function CourtForm({
   onChange: (patch: Partial<CourtInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        Court & restitution information
+        {t("forms.court.title")}
       </h2>
+
       <p className="text-xs text-slate-300">
-        If there is a criminal case, you can share what you know. It&apos;s okay
-        if you don&apos;t know all of these details — answer what you can.
+        {t("forms.court.description")}
       </p>
 
       {/* Arrested */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">Was the offender arrested?</p>
+        <p className="text-slate-200">{t("forms.court.offenderArrestedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -1738,8 +1758,9 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
+
           <button
             type="button"
             disabled={isReadOnly}
@@ -1750,14 +1771,14 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.court.noNotSure")}
           </button>
         </div>
       </div>
 
       {/* Charged */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">Has the offender been charged in court?</p>
+        <p className="text-slate-200">{t("forms.court.offenderChargedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -1769,8 +1790,9 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
+
           <button
             type="button"
             disabled={isReadOnly}
@@ -1781,16 +1803,14 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.court.noNotSure")}
           </button>
         </div>
       </div>
 
       {/* Testified */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">
-          Have you been required to testify in the criminal case?
-        </p>
+        <p className="text-slate-200">{t("forms.court.applicantTestifiedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -1802,8 +1822,9 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
+
           <button
             type="button"
             disabled={isReadOnly}
@@ -1814,21 +1835,21 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.court.noNotSure")}
           </button>
         </div>
       </div>
 
       <Field
-        label="Criminal case number (if known)"
+        label={t("forms.court.criminalCaseNumberLabel")}
         value={court.criminalCaseNumber ?? ""}
         onChange={(v) => onChange({ criminalCaseNumber: v })}
         disabled={isReadOnly}
       />
 
       <Field
-        label="What was the outcome of the criminal case? (if known)"
-        placeholder="For example: convicted, case dismissed, plea deal, still pending..."
+        label={t("forms.court.criminalCaseOutcomeLabel")}
+        placeholder={t("forms.court.criminalCaseOutcomePlaceholder")}
         value={court.criminalCaseOutcome ?? ""}
         onChange={(v) => onChange({ criminalCaseOutcome: v })}
         disabled={isReadOnly}
@@ -1836,10 +1857,7 @@ function CourtForm({
 
       {/* Restitution */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">
-          Has the court ordered the offender to pay restitution (money directly
-          to you or on your behalf)?
-        </p>
+        <p className="text-slate-200">{t("forms.court.restitutionOrderedQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -1852,7 +1870,7 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
@@ -1865,18 +1883,20 @@ function CourtForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.court.noNotSure")}
           </button>
         </div>
 
         {court.restitutionOrdered && (
           <Field
-            label="If yes, how much (approximate)?"
-            placeholder="For example: 5000"
+            label={t("forms.court.restitutionAmountLabel")}
+            placeholder={t("forms.court.restitutionAmountPlaceholder")}
             value={court.restitutionAmount?.toString() ?? ""}
             onChange={(v) =>
               onChange({
-                restitutionAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                restitutionAmount: v
+                  ? Number(v.replace(/[^0-9.]/g, ""))
+                  : undefined,
               })
             }
             disabled={isReadOnly}
@@ -1886,48 +1906,50 @@ function CourtForm({
 
       {/* Human trafficking */}
       <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
-        <p className="text-slate-200">
-          Has the offender been involved in a human trafficking court proceeding related to this incident?
-        </p>
+        <p className="text-slate-200">{t("forms.court.humanTraffickingQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ humanTraffickingCaseFiled: true })}
+            onClick={() =>
+              !isReadOnly && onChange({ humanTraffickingCaseFiled: true })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ humanTraffickingCaseFiled: false })}
+            onClick={() =>
+              !isReadOnly && onChange({ humanTraffickingCaseFiled: false })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.court.noNotSure")}
           </button>
         </div>
 
         {court.humanTraffickingCaseFiled && (
           <>
             <Field
-              label="Human trafficking case number (if known)"
+              label={t("forms.court.humanTraffickingCaseNumberLabel")}
               value={court.humanTraffickingCaseNumber ?? ""}
               onChange={(v) => onChange({ humanTraffickingCaseNumber: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Outcome of the human trafficking case (if known)"
+              label={t("forms.court.humanTraffickingCaseOutcomeLabel")}
               value={court.humanTraffickingCaseOutcome ?? ""}
               onChange={(v) => onChange({ humanTraffickingCaseOutcome: v })}
               disabled={isReadOnly}
@@ -1948,6 +1970,8 @@ function LossesForm({
   onChange: (patch: Partial<LossesClaimed>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
+
   const toggle = (key: keyof LossesClaimed) => {
     if (isReadOnly) return;
     onChange({ [key]: !losses[key] } as Partial<LossesClaimed>);
@@ -1956,56 +1980,57 @@ function LossesForm({
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        What do you need help paying for?
+        {t("forms.lossesExtended.title")}
       </h2>
+
       <p className="text-xs text-slate-300">
-        This section lists the types of expenses and losses that may be covered
-        by Crime Victims Compensation. Choose everything that applies.
+        {t("forms.lossesExtended.description")}
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 text-xs">
         <div className="space-y-2">
           <h3 className="font-semibold text-slate-100">
-            Medical, counseling, basic needs
+            {t("forms.lossesExtended.groups.medical.title")}
           </h3>
+
           <Checkbox
-            label="Medical / hospital bills"
+            label={t("forms.lossesExtended.items.medicalHospital")}
             checked={losses.medicalHospital}
             onChange={() => toggle("medicalHospital")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Dental care"
+            label={t("forms.lossesExtended.items.dental")}
             checked={losses.dental}
             onChange={() => toggle("dental")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Counseling / therapy"
+            label={t("forms.lossesExtended.items.counseling")}
             checked={losses.counseling}
             onChange={() => toggle("counseling")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Transportation to medical or court"
+            label={t("forms.lossesExtended.items.transportation")}
             checked={losses.transportation}
             onChange={() => toggle("transportation")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Accessibility costs (wheelchair ramps, etc.)"
+            label={t("forms.lossesExtended.items.accessibilityCosts")}
             checked={losses.accessibilityCosts}
             onChange={() => toggle("accessibilityCosts")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Temporary lodging / hotel"
+            label={t("forms.lossesExtended.items.temporaryLodging")}
             checked={losses.temporaryLodging}
             onChange={() => toggle("temporaryLodging")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Relocation costs (moving for safety)"
+            label={t("forms.lossesExtended.items.relocationCosts")}
             checked={losses.relocationCosts}
             onChange={() => toggle("relocationCosts")}
             disabled={isReadOnly}
@@ -2014,34 +2039,35 @@ function LossesForm({
 
         <div className="space-y-2">
           <h3 className="font-semibold text-slate-100">
-            Work, income, and support
+            {t("forms.lossesExtended.groups.work.title")}
           </h3>
+
           <Checkbox
-            label="Loss of earnings (missed work)"
+            label={t("forms.lossesExtended.items.lossOfEarnings")}
             checked={losses.lossOfEarnings}
             onChange={() => toggle("lossOfEarnings")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Loss of support to dependents"
+            label={t("forms.lossesExtended.items.lossOfSupport")}
             checked={losses.lossOfSupport}
             onChange={() => toggle("lossOfSupport")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Loss of future earnings"
+            label={t("forms.lossesExtended.items.lossOfFutureEarnings")}
             checked={losses.lossOfFutureEarnings}
             onChange={() => toggle("lossOfFutureEarnings")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Replacement service loss (services victim used to provide)"
+            label={t("forms.lossesExtended.items.replacementServiceLoss")}
             checked={losses.replacementServiceLoss}
             onChange={() => toggle("replacementServiceLoss")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Tuition / school-related costs"
+            label={t("forms.lossesExtended.items.tuition")}
             checked={losses.tuition}
             onChange={() => toggle("tuition")}
             disabled={isReadOnly}
@@ -2050,35 +2076,36 @@ function LossesForm({
 
         <div className="space-y-2">
           <h3 className="font-semibold text-slate-100">
-            Funeral, burial, and property
+            {t("forms.lossesExtended.groups.funeralProperty.title")}
           </h3>
+
           <Checkbox
-            label="Funeral / burial / cremation"
+            label={t("forms.lossesExtended.items.funeralBurial")}
             checked={losses.funeralBurial}
             onChange={() => toggle("funeralBurial")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Headstone"
+            label={t("forms.lossesExtended.items.headstone")}
             checked={losses.headstone}
             onChange={() => toggle("headstone")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Crime scene cleanup"
+            label={t("forms.lossesExtended.items.crimeSceneCleanup")}
             checked={losses.crimeSceneCleanup}
             onChange={() => toggle("crimeSceneCleanup")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Towing and storage of vehicle"
+            label={t("forms.lossesExtended.items.towingStorage")}
             checked={losses.towingStorage}
             onChange={() => toggle("towingStorage")}
             disabled={isReadOnly}
           />
 
           <Checkbox
-            label="Doors, locks, windows (security repairs)"
+            label={t("forms.lossesExtended.items.securityRepairs")}
             checked={losses.doors || losses.locks || losses.windows}
             disabled={isReadOnly}
             onChange={() => {
@@ -2094,11 +2121,11 @@ function LossesForm({
 
         <div className="space-y-2">
           <h3 className="font-semibold text-slate-100">
-            Personal items & other
+            {t("forms.lossesExtended.groups.personalOther.title")}
           </h3>
 
           <Checkbox
-            label="Clothing or bedding taken as evidence"
+            label={t("forms.lossesExtended.items.evidenceClothingBedding")}
             checked={losses.clothing || losses.bedding}
             disabled={isReadOnly}
             onChange={() => {
@@ -2111,7 +2138,7 @@ function LossesForm({
           />
 
           <Checkbox
-            label="Prosthetic appliances, eyeglasses, hearing aids"
+            label={t("forms.lossesExtended.items.assistiveItems")}
             checked={
               losses.prostheticAppliances ||
               losses.eyeglassesContacts ||
@@ -2129,19 +2156,19 @@ function LossesForm({
           />
 
           <Checkbox
-            label="Replacement costs for necessary items"
+            label={t("forms.lossesExtended.items.replacementCosts")}
             checked={losses.replacementCosts}
             onChange={() => toggle("replacementCosts")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Legal fees"
+            label={t("forms.lossesExtended.items.legalFees")}
             checked={losses.legalFees}
             onChange={() => toggle("legalFees")}
             disabled={isReadOnly}
           />
           <Checkbox
-            label="Tattoo removal (human trafficking cases)"
+            label={t("forms.lossesExtended.items.tattooRemoval")}
             checked={losses.tattooRemoval}
             onChange={() => toggle("tattooRemoval")}
             disabled={isReadOnly}
@@ -2150,7 +2177,7 @@ function LossesForm({
       </div>
 
       <p className="text-[11px] text-slate-400">
-        Choosing an item here does not guarantee payment, but it tells the program what you are asking to be considered.
+        {t("forms.lossesExtended.footerNote")}
       </p>
     </section>
   );
@@ -2165,6 +2192,8 @@ function MedicalForm({
   onChange: (patch: Partial<MedicalInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
+
   const disBtn = isReadOnly
     ? "opacity-60 cursor-not-allowed pointer-events-none"
     : "";
@@ -2205,16 +2234,16 @@ function MedicalForm({
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        Medical, dental, and counseling bills
+        {t("forms.medicalExtended.title")}
       </h2>
+
       <p className="text-xs text-slate-300">
-        If you are asking for help with medical, dental, hospital, or counseling bills,
-        you can list at least one provider here.
+        {t("forms.medicalExtended.description")}
       </p>
 
       <div className="space-y-3">
         <Field
-          label="Main hospital / clinic / therapist name"
+          label={t("forms.medicalExtended.fields.providerNameLabel")}
           value={primary.providerName}
           onChange={(v) => updatePrimary({ providerName: v })}
           disabled={isReadOnly}
@@ -2222,19 +2251,19 @@ function MedicalForm({
 
         <div className="grid gap-3 sm:grid-cols-3">
           <Field
-            label="City"
+            label={t("forms.medicalExtended.fields.cityLabel")}
             value={primary.city || ""}
             onChange={(v) => updatePrimary({ city: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Provider phone"
+            label={t("forms.medicalExtended.fields.phoneLabel")}
             value={primary.phone || ""}
             onChange={(v) => updatePrimary({ phone: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Dates of service (if known)"
+            label={t("forms.medicalExtended.fields.serviceDatesLabel")}
             value={primary.serviceDates || ""}
             onChange={(v) => updatePrimary({ serviceDates: v })}
             disabled={isReadOnly}
@@ -2242,8 +2271,8 @@ function MedicalForm({
         </div>
 
         <Field
-          label="Approximate total amount of this bill"
-          placeholder="For example: 2500"
+          label={t("forms.medicalExtended.fields.amountLabel")}
+          placeholder={t("forms.medicalExtended.fields.amountPlaceholder")}
           value={primary.amountOfBill?.toString() ?? ""}
           onChange={(v) =>
             updatePrimary({
@@ -2256,7 +2285,7 @@ function MedicalForm({
 
       <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
         <p className="text-slate-200">
-          Do you have health insurance, public aid, or other programs that may pay some of these bills?
+          {t("forms.medicalExtended.otherSources.question")}
         </p>
 
         <div className="flex flex-wrap gap-3">
@@ -2270,7 +2299,7 @@ function MedicalForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
@@ -2283,13 +2312,13 @@ function MedicalForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.medicalExtended.noNotSure")}
           </button>
         </div>
 
         {medical.hasOtherSources && (
           <Field
-            label="Briefly list any insurance or programs (Medical Card, Medicare, private insurance, etc.)"
+            label={t("forms.medicalExtended.otherSources.descriptionLabel")}
             value={medical.otherInsuranceDescription || ""}
             onChange={(v) =>
               !isReadOnly && onChange({ otherInsuranceDescription: v })
@@ -2300,11 +2329,11 @@ function MedicalForm({
       </div>
 
       <p className="text-[11px] text-slate-400">
-        In a later version, we&apos;ll let you add more providers here, or your advocate can attach a full list.
+        {t("forms.medicalExtended.footerNote")}
       </p>
 
       <InlineDocumentUploader
-        contextLabel="medical and counseling bills"
+        contextLabel={t("forms.medicalExtended.uploaderContextLabel")}
         defaultDocType="medical_bill"
         disabled={isReadOnly}
       />
@@ -2321,6 +2350,8 @@ function EmploymentForm({
   onChange: (patch: Partial<EmploymentInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
+
   const disBtn = isReadOnly
     ? "opacity-60 cursor-not-allowed pointer-events-none"
     : "";
@@ -2361,22 +2392,23 @@ function EmploymentForm({
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        Work & income (loss of earnings)
+        {t("forms.employmentExtended.title")}
       </h2>
+
       <p className="text-xs text-slate-300">
-        If you missed work because of the crime, the program may consider paying for some of that lost income.
+        {t("forms.employmentExtended.description")}
       </p>
 
       <div className="space-y-3">
         <Field
-          label="Employer name"
+          label={t("forms.employmentExtended.fields.employerNameLabel")}
           value={record.employerName}
           onChange={(v) => updateRecord({ employerName: v })}
           disabled={isReadOnly}
         />
 
         <Field
-          label="Employer address"
+          label={t("forms.employmentExtended.fields.employerAddressLabel")}
           value={record.employerAddress ?? ""}
           onChange={(v) => updateRecord({ employerAddress: v })}
           disabled={isReadOnly}
@@ -2384,15 +2416,15 @@ function EmploymentForm({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
-            label="Employer phone"
+            label={t("forms.employmentExtended.fields.employerPhoneLabel")}
             value={record.employerPhone ?? ""}
             onChange={(v) => updateRecord({ employerPhone: v })}
             disabled={isReadOnly}
           />
 
           <Field
-            label="Your net monthly wages (take-home pay)"
-            placeholder="For example: 2200"
+            label={t("forms.employmentExtended.fields.netMonthlyWagesLabel")}
+            placeholder={t("forms.employmentExtended.fields.netMonthlyWagesPlaceholder")}
             value={record.netMonthlyWages?.toString() ?? ""}
             onChange={(v) =>
               updateRecord({
@@ -2405,7 +2437,7 @@ function EmploymentForm({
 
         <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
           <p className="text-slate-200">
-            After the crime, did you receive sick time, vacation, disability, or other paid benefits?
+            {t("forms.employmentExtended.benefits.question")}
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -2413,8 +2445,7 @@ function EmploymentForm({
               type="button"
               disabled={isReadOnly}
               onClick={() =>
-                !isReadOnly &&
-                onChange({ receivedSickOrVacationOrDisability: true })
+                !isReadOnly && onChange({ receivedSickOrVacationOrDisability: true })
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability
@@ -2422,15 +2453,14 @@ function EmploymentForm({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              Yes
+              {t("common.yes")}
             </button>
 
             <button
               type="button"
               disabled={isReadOnly}
               onClick={() =>
-                !isReadOnly &&
-                onChange({ receivedSickOrVacationOrDisability: false })
+                !isReadOnly && onChange({ receivedSickOrVacationOrDisability: false })
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability === false
@@ -2438,13 +2468,13 @@ function EmploymentForm({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              No / Not sure
+              {t("forms.employmentExtended.noNotSure")}
             </button>
           </div>
 
           {employment.receivedSickOrVacationOrDisability && (
             <Field
-              label="If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)..."
+              label={t("forms.employmentExtended.benefits.notesLabel")}
               value={employment.benefitNotes || ""}
               onChange={(v) => !isReadOnly && onChange({ benefitNotes: v })}
               disabled={isReadOnly}
@@ -2454,11 +2484,11 @@ function EmploymentForm({
       </div>
 
       <p className="text-[11px] text-slate-400">
-        In a later version, you&apos;ll be able to add more jobs and more detail here.
+        {t("forms.employmentExtended.footerNote")}
       </p>
 
       <InlineDocumentUploader
-        contextLabel="work and income (pay stubs, employer letters)"
+        contextLabel={t("forms.employmentExtended.uploaderContextLabel")}
         defaultDocType="wage_proof"
         disabled={isReadOnly}
       />
@@ -2475,6 +2505,7 @@ function FuneralForm({
   onChange: (patch: Partial<FuneralInfo>) => void;
   isReadOnly: boolean;
 }) {
+  const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   const primaryPayment = funeral.payments?.[0] ?? {
@@ -2502,7 +2533,6 @@ function FuneralForm({
     onChange({ payments });
   };
 
-  // dependent helper
   const dep =
     funeral.dependents && funeral.dependents.length > 0
       ? funeral.dependents[0]
@@ -2525,30 +2555,33 @@ function FuneralForm({
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 className="text-lg font-semibold text-slate-50">
-        Funeral, burial, and dependents
+        {t("forms.funeralExtended.title")}
       </h2>
+
       <p className="text-xs text-slate-300">
-        If the victim died as a result of the crime, this program may help with funeral,
-        burial, or cremation costs. You can enter basic information here.
+        {t("forms.funeralExtended.description")}
       </p>
 
+      {/* Funeral home */}
       <div className="space-y-3">
         <Field
-          label="Funeral home name"
+          label={t("forms.funeralExtended.funeralHome.nameLabel")}
           value={funeral.funeralHomeName ?? ""}
           onChange={(v) => onChange({ funeralHomeName: v })}
           disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
-            label="Funeral home phone"
+            label={t("forms.funeralExtended.funeralHome.phoneLabel")}
             value={funeral.funeralHomePhone ?? ""}
             onChange={(v) => onChange({ funeralHomePhone: v })}
             disabled={isReadOnly}
           />
+
           <Field
-            label="Total funeral bill (approximate)"
-            placeholder="For example: 8000"
+            label={t("forms.funeralExtended.funeralHome.billTotalLabel")}
+            placeholder={t("forms.funeralExtended.placeholders.moneyExample8000")}
             value={funeral.funeralBillTotal?.toString() ?? ""}
             onChange={(v) =>
               onChange({
@@ -2560,26 +2593,29 @@ function FuneralForm({
         </div>
       </div>
 
+      {/* Cemetery */}
       <div className="space-y-3 pt-3 border-t border-slate-800">
         <h3 className="text-xs font-semibold text-slate-100">
-          Cemetery information
+          {t("forms.funeralExtended.cemetery.title")}
         </h3>
+
         <Field
-          label="Name of cemetery"
+          label={t("forms.funeralExtended.cemetery.nameLabel")}
           value={funeral.cemeteryName ?? ""}
           onChange={(v) => onChange({ cemeteryName: v })}
           disabled={isReadOnly}
         />
+
         <div className="grid gap-3 sm:grid-cols-2">
           <Field
-            label="Cemetery phone"
+            label={t("forms.funeralExtended.cemetery.phoneLabel")}
             value={funeral.cemeteryPhone ?? ""}
             onChange={(v) => onChange({ cemeteryPhone: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Total cemetery bill (approximate)"
-            placeholder="For example: 2000"
+            label={t("forms.funeralExtended.cemetery.billTotalLabel")}
+            placeholder={t("forms.funeralExtended.placeholders.moneyExample2000")}
             value={funeral.cemeteryBillTotal?.toString() ?? ""}
             onChange={(v) =>
               onChange({
@@ -2591,28 +2627,29 @@ function FuneralForm({
         </div>
       </div>
 
+      {/* Who paid */}
       <div className="space-y-3 pt-3 border-t border-slate-800">
         <h3 className="text-xs font-semibold text-slate-100">
-          Who has paid or will pay these costs?
+          {t("forms.funeralExtended.payer.title")}
         </h3>
 
         <div className="space-y-3">
           <Field
-            label="Name of person paying"
+            label={t("forms.funeralExtended.payer.nameLabel")}
             value={primaryPayment.payerName}
             onChange={(v) => updatePrimaryPayment({ payerName: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Relationship to victim"
-            placeholder="Parent, spouse, sibling, friend..."
+            label={t("forms.funeralExtended.payer.relationshipLabel")}
+            placeholder={t("forms.funeralExtended.payer.relationshipPlaceholder")}
             value={primaryPayment.relationshipToVictim ?? ""}
             onChange={(v) => updatePrimaryPayment({ relationshipToVictim: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Amount paid so far (approximate)"
-            placeholder="For example: 2000"
+            label={t("forms.funeralExtended.payer.amountPaidLabel")}
+            placeholder={t("forms.funeralExtended.placeholders.moneyExample2000")}
             value={
               primaryPayment.amountPaid != null
                 ? primaryPayment.amountPaid.toString()
@@ -2628,10 +2665,10 @@ function FuneralForm({
         </div>
       </div>
 
+      {/* Chicago ESVF */}
       <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-        <p className="text-slate-200">
-          Did you receive money from the City of Chicago ESVF for funeral expenses?
-        </p>
+        <p className="text-slate-200">{t("forms.funeralExtended.esvf.question")}</p>
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -2643,7 +2680,7 @@ function FuneralForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
@@ -2656,14 +2693,14 @@ function FuneralForm({
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.funeralExtended.noNotSure")}
           </button>
         </div>
 
         {funeral.receivedChicagoESVF && (
           <Field
-            label="How much did ESVF pay? (approximate)"
-            placeholder="For example: 1500"
+            label={t("forms.funeralExtended.esvf.amountLabel")}
+            placeholder={t("forms.funeralExtended.placeholders.moneyExample1500")}
             value={funeral.esvfAmount?.toString() ?? ""}
             onChange={(v) =>
               onChange({
@@ -2675,62 +2712,69 @@ function FuneralForm({
         )}
       </div>
 
+      {/* Life insurance */}
       <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
         <p className="text-slate-200">
-          Did the victim have a life insurance policy that paid out after their death?
+          {t("forms.funeralExtended.lifeInsurance.question")}
         </p>
 
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ lifeInsurancePolicyExists: true })}
+            onClick={() =>
+              !isReadOnly && onChange({ lifeInsurancePolicyExists: true })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            Yes
+            {t("common.yes")}
           </button>
 
           <button
             type="button"
             disabled={isReadOnly}
-            onClick={() => !isReadOnly && onChange({ lifeInsurancePolicyExists: false })}
+            onClick={() =>
+              !isReadOnly && onChange({ lifeInsurancePolicyExists: false })
+            }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists === false
                 ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
-            No / Not sure
+            {t("forms.funeralExtended.noNotSure")}
           </button>
         </div>
 
         {funeral.lifeInsurancePolicyExists && (
           <div className="space-y-2">
             <Field
-              label="Life insurance company"
+              label={t("forms.funeralExtended.lifeInsurance.companyLabel")}
               value={funeral.lifeInsuranceCompany ?? ""}
               onChange={(v) => onChange({ lifeInsuranceCompany: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Name of beneficiary"
+              label={t("forms.funeralExtended.lifeInsurance.beneficiaryNameLabel")}
               value={funeral.lifeInsuranceBeneficiary ?? ""}
               onChange={(v) => onChange({ lifeInsuranceBeneficiary: v })}
               disabled={isReadOnly}
             />
             <Field
-              label="Beneficiary phone"
+              label={t("forms.funeralExtended.lifeInsurance.beneficiaryPhoneLabel")}
               value={funeral.lifeInsuranceBeneficiaryPhone ?? ""}
-              onChange={(v) => onChange({ lifeInsuranceBeneficiaryPhone: v })}
+              onChange={(v) =>
+                onChange({ lifeInsuranceBeneficiaryPhone: v })
+              }
               disabled={isReadOnly}
             />
             <Field
-              label="Amount paid (approximate)"
-              placeholder="For example: 10000"
+              label={t("forms.funeralExtended.lifeInsurance.amountPaidLabel")}
+              placeholder={t("forms.funeralExtended.placeholders.moneyExample10000")}
               value={funeral.lifeInsuranceAmountPaid?.toString() ?? ""}
               onChange={(v) =>
                 onChange({
@@ -2745,34 +2789,35 @@ function FuneralForm({
         )}
       </div>
 
+      {/* Dependents */}
       <div className="space-y-3 pt-3 border-t border-slate-800">
         <h3 className="text-xs font-semibold text-slate-100">
-          Dependents who relied on the victim&apos;s income
+          {t("forms.funeralExtended.dependents.title")}
         </h3>
 
         <div className="space-y-3">
           <Field
-            label="Dependent name"
+            label={t("forms.funeralExtended.dependents.nameLabel")}
             value={dep.name}
             onChange={(v) => updateDep({ name: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Relationship to victim"
-            placeholder="Child, spouse, partner, etc."
+            label={t("forms.funeralExtended.dependents.relationshipLabel")}
+            placeholder={t("forms.funeralExtended.dependents.relationshipPlaceholder")}
             value={dep.relationshipToVictim ?? ""}
             onChange={(v) => updateDep({ relationshipToVictim: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Dependent date of birth"
+            label={t("forms.funeralExtended.dependents.dobLabel")}
             type="date"
             value={dep.dateOfBirth ?? ""}
             onChange={(v) => updateDep({ dateOfBirth: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Guardian name & phone (if minor)"
+            label={t("forms.funeralExtended.dependents.guardianLabel")}
             value={dep.guardianNamePhone ?? ""}
             onChange={(v) => updateDep({ guardianNamePhone: v })}
             disabled={isReadOnly}
@@ -2781,12 +2826,11 @@ function FuneralForm({
       </div>
 
       <p className="text-[11px] text-slate-400">
-        In a later version, you&apos;ll be able to add each dependent here and link them
-        to loss-of-support claims.
+        {t("forms.funeralExtended.footerNote")}
       </p>
 
       <InlineDocumentUploader
-        contextLabel="funeral, burial, and dependents"
+        contextLabel={t("forms.funeralExtended.uploaderContextLabel")}
         defaultDocType="funeral_bill"
         disabled={isReadOnly}
       />
@@ -2796,7 +2840,7 @@ function FuneralForm({
 
 function SummaryView({
   caseId,
-  isReadOnly, // ✅ NEW
+  isReadOnly,
   victim,
   applicant,
   crime,
@@ -2811,7 +2855,7 @@ function SummaryView({
   onSaveCase,
 }: {
   caseId: string | null;
-  isReadOnly: boolean; // ✅ NEW
+  isReadOnly: boolean;
   victim: VictimInfo;
   applicant: ApplicantInfo;
   crime: CrimeInfo;
@@ -2825,6 +2869,7 @@ function SummaryView({
   onDownloadOfficialIlPdf: () => void;
   onSaveCase: () => void;
 }) {
+  const { t } = useI18n(); // ✅ NEW
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -2841,9 +2886,7 @@ function SummaryView({
 
     try {
       if (!caseId) {
-        setInviteResult(
-          "Save this as a case first so we can generate a secure invite link."
-        );
+        setInviteResult(t("forms.summary.invite.errors.saveCaseFirst"));
         return;
       }
 
@@ -2851,7 +2894,7 @@ function SummaryView({
       const token = sessionData.session?.access_token;
 
       if (!token) {
-        setInviteResult("You must be logged in to invite an advocate.");
+        setInviteResult(t("forms.summary.invite.errors.mustBeLoggedIn"));
         return;
       }
 
@@ -2870,16 +2913,20 @@ function SummaryView({
 
       const text = await res.text();
       if (!res.ok) {
-        setInviteResult(text);
+        setInviteResult(text); // keep server error as-is
         return;
       }
 
       const json = JSON.parse(text);
+
+      // ✅ Use i18n template so Spanish reads naturally
       setInviteResult(
-        `✅ Access granted.\nShare this link with the advocate:\n${json.shareUrl}`
+        t("forms.summary.invite.success", { url: json.shareUrl })
       );
     } catch (e: any) {
-      setInviteResult(e?.message || "Unexpected error inviting advocate.");
+      setInviteResult(
+        e?.message || t("forms.summary.invite.errors.unexpected")
+      );
     } finally {
       setInviteLoading(false);
     }
@@ -2895,27 +2942,29 @@ function SummaryView({
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-sm">
-      <h2 className="text-lg font-semibold text-slate-50">Quick summary</h2>
+      <h2 className="text-lg font-semibold text-slate-50">
+        {t("forms.summary.title")}
+      </h2>
 
       {isReadOnly && (
         <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-          View-only access: you can review this case, but you can’t edit fields,
-          certification, or invites.
+          {t("forms.summary.viewOnlyBanner")}
         </div>
       )}
 
-      <p className="text-xs text-slate-300">
-        This is a quick snapshot of what you&apos;ve entered so far.
-      </p>
+      <p className="text-xs text-slate-300">{t("forms.summary.description")}</p>
 
-      {/* snapshot blocks (unchanged) */}
       <div className="grid gap-4 sm:grid-cols-2 text-xs">
         <div className="space-y-1.5">
-          <h3 className="font-semibold text-slate-100">Victim</h3>
+          <h3 className="font-semibold text-slate-100">
+            {t("forms.summary.sections.victim")}
+          </h3>
           <p>
             {victim.firstName} {victim.lastName}
           </p>
-          <p>DOB: {victim.dateOfBirth || "—"}</p>
+          <p>
+            {t("forms.summary.labels.dob")}: {victim.dateOfBirth || t("ui.status.none")}
+          </p>
           <p>
             {victim.streetAddress}
             {victim.apt ? `, ${victim.apt}` : ""}
@@ -2923,139 +2972,183 @@ function SummaryView({
           <p>
             {victim.city}, {victim.state} {victim.zip}
           </p>
-          <p>Cell: {victim.cellPhone || "—"}</p>
+          <p>
+            {t("forms.summary.labels.phone")}: {victim.cellPhone || t("ui.status.none")}
+          </p>
         </div>
 
         <div className="space-y-1.5">
-          <h3 className="font-semibold text-slate-100">Applicant</h3>
+          <h3 className="font-semibold text-slate-100">
+            {t("forms.summary.sections.applicant")}
+          </h3>
+
           {applicant.isSameAsVictim ? (
-            <p className="text-slate-300">
-              Victim and applicant are the same person.
-            </p>
+            <p className="text-slate-300">{t("forms.summary.applicant.samePerson")}</p>
           ) : (
             <>
               <p>
                 {applicant.firstName} {applicant.lastName}
               </p>
               <p>
-                Relationship: {applicant.relationshipToVictim || "Not provided"}
+                {t("forms.summary.labels.relationship")}:{" "}
+                {applicant.relationshipToVictim || t("ui.status.notProvided")}
               </p>
-              <p>Email: {applicant.email || "—"}</p>
-              <p>Cell: {applicant.cellPhone || "—"}</p>
+              <p>
+                {t("forms.summary.labels.email")}: {applicant.email || t("ui.status.none")}
+              </p>
+              <p>
+                {t("forms.summary.labels.phone")}: {applicant.cellPhone || t("ui.status.none")}
+              </p>
             </>
           )}
         </div>
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">Crime snapshot</h3>
-        <p>Date of crime: {crime.dateOfCrime || "—"}</p>
-        <p>Location: {crime.crimeAddress || "—"}</p>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.sections.crime")}
+        </h3>
         <p>
-          City / County: {crime.crimeCity || "—"}
+          {t("forms.summary.crime.dateOfCrime")}: {crime.dateOfCrime || t("ui.status.none")}
+        </p>
+        <p>
+          {t("forms.summary.crime.location")}: {crime.crimeAddress || t("ui.status.none")}
+        </p>
+        <p>
+          {t("forms.summary.crime.cityCounty")}: {crime.crimeCity || t("ui.status.none")}
           {crime.crimeCounty ? ` (${crime.crimeCounty})` : ""}
         </p>
-        <p>Reported to: {crime.reportingAgency || "—"}</p>
-        <p>Police report #: {crime.policeReportNumber || "—"}</p>
+        <p>
+          {t("forms.summary.crime.reportedTo")}: {crime.reportingAgency || t("ui.status.none")}
+        </p>
+        <p>
+          {t("forms.summary.crime.policeReportNumber")}:{" "}
+          {crime.policeReportNumber || t("ui.status.none")}
+        </p>
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">Losses</h3>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.sections.losses")}
+        </h3>
         {selectedLosses.length === 0 ? (
-          <p className="text-slate-300">No losses selected yet.</p>
+          <p className="text-slate-300">{t("forms.summary.losses.noneSelected")}</p>
         ) : (
           <ul className="list-disc list-inside text-slate-300">
             {selectedLosses.map((key) => (
-              <li key={key}>{key}</li>
+              <li key={key}>
+                {/* Optional improvement: map keys -> translated label later */}
+                {key}
+              </li>
             ))}
           </ul>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">Medical snapshot</h3>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.sections.medical")}
+        </h3>
         {primaryProvider?.providerName ? (
           <>
-            <p>Provider: {primaryProvider.providerName}</p>
             <p>
-              City / Phone: {primaryProvider.city || "—"}{" "}
+              {t("forms.summary.medical.provider")}: {primaryProvider.providerName}
+            </p>
+            <p>
+              {t("forms.summary.medical.cityPhone")}: {primaryProvider.city || t("ui.status.none")}
               {primaryProvider.phone ? ` / ${primaryProvider.phone}` : ""}
             </p>
-            <p>Dates of service: {primaryProvider.serviceDates || "—"}</p>
             <p>
-              Approx. bill amount:{" "}
+              {t("forms.summary.medical.serviceDates")}:{" "}
+              {primaryProvider.serviceDates || t("ui.status.none")}
+            </p>
+            <p>
+              {t("forms.summary.medical.amount")}:{" "}
               {primaryProvider.amountOfBill != null
                 ? `$${primaryProvider.amountOfBill}`
-                : "—"}
+                : t("ui.status.none")}
             </p>
           </>
         ) : (
-          <p className="text-slate-300">No medical provider entered yet.</p>
+          <p className="text-slate-300">{t("forms.summary.medical.noneEntered")}</p>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">Work snapshot</h3>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.sections.employment")}
+        </h3>
         {primaryJob?.employerName ? (
           <>
-            <p>Employer: {primaryJob.employerName}</p>
-            <p>Employer phone: {primaryJob.employerPhone || "—"}</p>
             <p>
-              Net monthly wages:{" "}
+              {t("forms.summary.employment.employer")}: {primaryJob.employerName}
+            </p>
+            <p>
+              {t("forms.summary.employment.employerPhone")}:{" "}
+              {primaryJob.employerPhone || t("ui.status.none")}
+            </p>
+            <p>
+              {t("forms.summary.employment.netMonthlyWages")}:{" "}
               {primaryJob.netMonthlyWages != null
                 ? `$${primaryJob.netMonthlyWages}`
-                : "—"}
+                : t("ui.status.none")}
             </p>
           </>
         ) : (
-          <p className="text-slate-300">No work info entered yet.</p>
+          <p className="text-slate-300">{t("forms.summary.employment.noneEntered")}</p>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">Funeral snapshot</h3>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.sections.funeral")}
+        </h3>
         {funeral.funeralHomeName || funeral.funeralBillTotal ? (
           <>
-            <p>Funeral home: {funeral.funeralHomeName || "—"}</p>
-            <p>Funeral home phone: {funeral.funeralHomePhone || "—"}</p>
             <p>
-              Total funeral bill:{" "}
+              {t("forms.summary.funeral.funeralHome")}: {funeral.funeralHomeName || t("ui.status.none")}
+            </p>
+            <p>
+              {t("forms.summary.funeral.funeralHomePhone")}: {funeral.funeralHomePhone || t("ui.status.none")}
+            </p>
+            <p>
+              {t("forms.summary.funeral.totalBill")}:{" "}
               {funeral.funeralBillTotal != null
                 ? `$${funeral.funeralBillTotal}`
-                : "—"}
+                : t("ui.status.none")}
             </p>
+
             {primaryFuneralPayer?.payerName ? (
               <>
                 <p>
-                  Payer: {primaryFuneralPayer.payerName} (
+                  {t("forms.summary.funeral.payer")}: {primaryFuneralPayer.payerName} (
                   {primaryFuneralPayer.relationshipToVictim ||
-                    "relationship not set"}
+                    t("forms.summary.funeral.relationshipNotSet")}
                   )
                 </p>
                 <p>
-                  Amount paid so far:{" "}
+                  {t("forms.summary.funeral.amountPaid")}:{" "}
                   {primaryFuneralPayer.amountPaid != null
                     ? `$${primaryFuneralPayer.amountPaid}`
-                    : "—"}
+                    : t("ui.status.none")}
                 </p>
               </>
             ) : (
-              <p className="text-slate-300">No payer entered yet.</p>
+              <p className="text-slate-300">{t("forms.summary.funeral.noPayer")}</p>
             )}
           </>
         ) : (
-          <p className="text-slate-300">No funeral info entered yet.</p>
+          <p className="text-slate-300">{t("forms.summary.funeral.noneEntered")}</p>
         )}
       </div>
 
-      {/* actions */}
       <div className="flex flex-wrap gap-2 justify-end">
         <button
           type="button"
           onClick={onDownloadSummaryPdf}
           className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
         >
-          Download summary PDF
+          {t("forms.summary.actions.downloadSummaryPdf")}
         </button>
 
         <button
@@ -3063,7 +3156,7 @@ function SummaryView({
           onClick={onDownloadOfficialIlPdf}
           className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
         >
-          Download official Illinois CVC form
+          {t("forms.summary.actions.downloadOfficialIl")}
         </button>
 
         {!caseId && !isReadOnly && (
@@ -3072,7 +3165,7 @@ function SummaryView({
             onClick={onSaveCase}
             className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
           >
-            Save as case for advocate review
+            {t("forms.summary.actions.saveCaseForAdvocate")}
           </button>
         )}
 
@@ -3086,15 +3179,16 @@ function SummaryView({
           }}
           className={`inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition ${disBtn}`}
         >
-          Invite advocate
+          {t("forms.summary.actions.inviteAdvocate")}
         </button>
       </div>
 
-      {/* invite panel */}
       {inviteOpen && (
         <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
           <div className="flex items-center justify-between">
-            <div className="font-semibold text-slate-100">Invite an advocate</div>
+            <div className="font-semibold text-slate-100">
+              {t("forms.summary.invite.title")}
+            </div>
             <button
               type="button"
               onClick={() => setInviteOpen(false)}
@@ -3105,16 +3199,18 @@ function SummaryView({
           </div>
 
           <p className="text-[11px] text-slate-400">
-            The advocate must already have an account using this email.
+            {t("forms.summary.invite.note")}
           </p>
 
           <label className="block space-y-1">
-            <span className="text-slate-300">Advocate email</span>
+            <span className="text-slate-300">
+              {t("forms.summary.invite.emailLabel")}
+            </span>
             <input
               disabled={isReadOnly}
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="advocate@example.com"
+              placeholder={t("forms.summary.invite.emailPlaceholder")}
               className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 disabled:opacity-60"
             />
           </label>
@@ -3126,7 +3222,7 @@ function SummaryView({
               checked={inviteCanEdit}
               onChange={(e) => setInviteCanEdit(e.target.checked)}
             />
-            Allow this advocate to edit
+            {t("forms.summary.invite.canEditLabel")}
           </label>
 
           <div className="flex flex-wrap gap-2">
@@ -3134,9 +3230,11 @@ function SummaryView({
               type="button"
               onClick={handleInvite}
               disabled={isReadOnly || inviteLoading || !inviteEmail.trim()}
-              className={`rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition`}
+              className="rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition"
             >
-              {inviteLoading ? "Inviting…" : "Send invite"}
+              {inviteLoading
+                ? t("forms.summary.invite.sending")
+                : t("forms.summary.invite.send")}
             </button>
 
             <button
@@ -3144,7 +3242,7 @@ function SummaryView({
               onClick={() => setInviteOpen(false)}
               className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
             >
-              Close
+              {t("ui.buttons.close")}
             </button>
           </div>
 
@@ -3156,9 +3254,10 @@ function SummaryView({
         </div>
       )}
 
-      {/* certification */}
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
-        <h3 className="font-semibold text-slate-100">Certification & authorization</h3>
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.summary.certification.title")}
+        </h3>
 
         <div className="space-y-2 mt-2">
           <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
@@ -3171,7 +3270,7 @@ function SummaryView({
               }
               className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>…subrogation acknowledgement…</span>
+            <span>{t("forms.summary.certification.checks.subrogation")}</span>
           </label>
 
           <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
@@ -3184,7 +3283,7 @@ function SummaryView({
               }
               className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>…release acknowledgement…</span>
+            <span>{t("forms.summary.certification.checks.release")}</span>
           </label>
 
           <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
@@ -3197,19 +3296,19 @@ function SummaryView({
               }
               className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>…perjury acknowledgement…</span>
+            <span>{t("forms.summary.certification.checks.perjury")}</span>
           </label>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 mt-3">
           <Field
-            label="Applicant signature (type your full name)"
+            label={t("forms.summary.certification.signatureLabel")}
             value={certification.applicantSignatureName ?? ""}
             onChange={(v) => onChangeCertification({ applicantSignatureName: v })}
             disabled={isReadOnly}
           />
           <Field
-            label="Date"
+            label={t("forms.summary.certification.dateLabel")}
             type="date"
             value={certification.applicantSignatureDate ?? ""}
             onChange={(v) => onChangeCertification({ applicantSignatureDate: v })}
@@ -3217,10 +3316,9 @@ function SummaryView({
           />
         </div>
 
-        {/* represented by attorney */}
         <div className="space-y-2 mt-3">
           <p className="text-[11px] text-slate-200">
-            Are you being represented by an attorney?
+            {t("forms.summary.certification.attorney.question")}
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -3234,7 +3332,7 @@ function SummaryView({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              Yes
+              {t("common.yes")}
             </button>
 
             <button
@@ -3247,56 +3345,56 @@ function SummaryView({
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
-              No
+              {t("common.no")}
             </button>
           </div>
 
           {certification.representedByAttorney && (
             <div className="grid gap-3 sm:grid-cols-2 mt-2">
               <Field
-                label="Attorney name"
+                label={t("forms.summary.certification.attorney.name")}
                 value={certification.attorneyName ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyName: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="ARDC number (if known)"
+                label={t("forms.summary.certification.attorney.ardc")}
                 value={certification.attorneyArdc ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyArdc: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="Attorney address"
+                label={t("forms.summary.certification.attorney.address")}
                 value={certification.attorneyAddress ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyAddress: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="City"
+                label={t("forms.summary.certification.attorney.city")}
                 value={certification.attorneyCity ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyCity: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="State"
+                label={t("forms.summary.certification.attorney.state")}
                 value={certification.attorneyState ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyState: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="ZIP"
+                label={t("forms.summary.certification.attorney.zip")}
                 value={certification.attorneyZip ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyZip: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="Phone"
+                label={t("forms.summary.certification.attorney.phone")}
                 value={certification.attorneyPhone ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyPhone: v })}
                 disabled={isReadOnly}
               />
               <Field
-                label="Email"
+                label={t("forms.summary.certification.attorney.email")}
                 value={certification.attorneyEmail ?? ""}
                 onChange={(v) => onChangeCertification({ attorneyEmail: v })}
                 disabled={isReadOnly}

@@ -527,12 +527,29 @@ export const en: I18nDict = {
       maxChars: "Please enter {max} characters or fewer.",
     },
 
-    applicant: {
-    title: "Applicant information",
-    description: "This is the person applying for compensation.",
-    isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
-    sameAsVictimNote: "We’ll use the victim’s information as the applicant details for now.",
+applicant: {
+  title: "Applicant information",
+  description: "This is the person applying for compensation.",
+  isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
+  sameAsVictimNote:
+    "We’ll use the victim’s information as the applicant details for now.",
+
+  // NEW — add this
+  options: {
+    victim: "I am the victim (my information is the same as above)",
+    proxy: "I am applying on behalf of the victim (parent, spouse, other)",
   },
+
+  // NEW — add this
+  relationshipPlaceholder: "Parent, spouse, sibling, friend...",
+
+  // NEW — add this
+  legalGuardianship: {
+    question:
+      "If the victim is a minor or an incapacitated adult, do you have legal guardianship for them?",
+    noNotSure: "No / Not sure",
+  },
+},
 
   employment: {
   title: "Work & income",
@@ -560,6 +577,63 @@ export const en: I18nDict = {
   missedWorkToLabel: "Missed work to (optional)",
 
   disabilityFromCrimeLabel: "Did the crime cause a disability that affects work?",
+},
+employmentExtended: {
+  title: "Work & income (loss of earnings)",
+  description:
+    "If you missed work because of the crime, the program may consider paying for some of that lost income.",
+
+  fields: {
+    employerNameLabel: "Employer name",
+    employerAddressLabel: "Employer address",
+    employerPhoneLabel: "Employer phone",
+    netMonthlyWagesLabel: "Your net monthly wages (take-home pay)",
+    netMonthlyWagesPlaceholder: "For example: 2200",
+  },
+
+  benefits: {
+    question:
+      "After the crime, did you receive sick time, vacation, disability, or other paid benefits?",
+    notesLabel:
+      "If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)...",
+  },
+
+  noNotSure: "No / Not sure",
+
+  footerNote:
+    "In a later version, you'll be able to add more jobs and more detail here.",
+
+  uploaderContextLabel: "work and income (pay stubs, employer letters)",
+},
+
+court: {
+  title: "Court & restitution information",
+  description:
+    "If there is a criminal case, you can share what you know. It's okay if you don't know all of these details — answer what you can.",
+
+  noNotSure: "No / Not sure",
+
+  offenderArrestedQuestion: "Was the offender arrested?",
+  offenderChargedQuestion: "Has the offender been charged in court?",
+  applicantTestifiedQuestion:
+    "Have you been required to testify in the criminal case?",
+
+  criminalCaseNumberLabel: "Criminal case number (if known)",
+  criminalCaseOutcomeLabel: "What was the outcome of the criminal case? (if known)",
+  criminalCaseOutcomePlaceholder:
+    "For example: convicted, case dismissed, plea deal, still pending...",
+
+  restitutionOrderedQuestion:
+    "Has the court ordered the offender to pay restitution (money directly to you or on your behalf)?",
+
+  restitutionAmountLabel: "If yes, how much (approximate)?",
+  restitutionAmountPlaceholder: "For example: 5000",
+
+  humanTraffickingQuestion:
+    "Has the offender been involved in a human trafficking court proceeding related to this incident?",
+
+  humanTraffickingCaseNumberLabel: "Human trafficking case number (if known)",
+  humanTraffickingCaseOutcomeLabel: "Outcome of the human trafficking case (if known)",
 },
 
 funeral: {
@@ -593,6 +667,71 @@ funeral: {
   dependentsNotesPlaceholder: "Anything helpful to know…",
 },
 
+funeralExtended: {
+  title: "Funeral, burial, and dependents",
+  description:
+    "If the victim died as a result of the crime, this program may help with funeral, burial, or cremation costs. You can enter basic information here.",
+
+  funeralHome: {
+    nameLabel: "Funeral home name",
+    phoneLabel: "Funeral home phone",
+    billTotalLabel: "Total funeral bill (approximate)",
+  },
+
+  cemetery: {
+    title: "Cemetery information",
+    nameLabel: "Name of cemetery",
+    phoneLabel: "Cemetery phone",
+    billTotalLabel: "Total cemetery bill (approximate)",
+  },
+
+  payer: {
+    title: "Who has paid or will pay these costs?",
+    nameLabel: "Name of person paying",
+    relationshipLabel: "Relationship to victim",
+    relationshipPlaceholder: "Parent, spouse, sibling, friend...",
+    amountPaidLabel: "Amount paid so far (approximate)",
+  },
+
+  esvf: {
+    question:
+      "Did you receive money from the City of Chicago ESVF for funeral expenses?",
+    amountLabel: "How much did ESVF pay? (approximate)",
+  },
+
+  lifeInsurance: {
+    question:
+      "Did the victim have a life insurance policy that paid out after their death?",
+    companyLabel: "Life insurance company",
+    beneficiaryNameLabel: "Name of beneficiary",
+    beneficiaryPhoneLabel: "Beneficiary phone",
+    amountPaidLabel: "Amount paid (approximate)",
+  },
+
+  dependents: {
+    title: "Dependents who relied on the victim's income",
+    nameLabel: "Dependent name",
+    relationshipLabel: "Relationship to victim",
+    relationshipPlaceholder: "Child, spouse, partner, etc.",
+    dobLabel: "Dependent date of birth",
+    guardianLabel: "Guardian name & phone (if minor)",
+  },
+
+  placeholders: {
+    moneyExample8000: "For example: 8000",
+    moneyExample2000: "For example: 2000",
+    moneyExample1500: "For example: 1500",
+    moneyExample10000: "For example: 10000",
+  },
+
+  noNotSure: "No / Not sure",
+
+  footerNote:
+    "In a later version, you'll be able to add each dependent here and link them to loss-of-support claims.",
+
+  uploaderContextLabel: "funeral, burial, and dependents",
+},
+
 losses: {
   title: "Losses & money",
   description:
@@ -609,6 +748,50 @@ losses: {
   },
 
   otherLabel: "Other (describe)",
+},
+
+lossesExtended: {
+  title: "What do you need help paying for?",
+  description:
+    "This section lists the types of expenses and losses that may be covered by Crime Victims Compensation. Choose everything that applies.",
+
+  groups: {
+    medical: { title: "Medical, counseling, basic needs" },
+    work: { title: "Work, income, and support" },
+    funeralProperty: { title: "Funeral, burial, and property" },
+    personalOther: { title: "Personal items & other" },
+  },
+
+  items: {
+    medicalHospital: "Medical / hospital bills",
+    dental: "Dental care",
+    counseling: "Counseling / therapy",
+    transportation: "Transportation to medical or court",
+    accessibilityCosts: "Accessibility costs (wheelchair ramps, etc.)",
+    temporaryLodging: "Temporary lodging / hotel",
+    relocationCosts: "Relocation costs (moving for safety)",
+
+    lossOfEarnings: "Loss of earnings (missed work)",
+    lossOfSupport: "Loss of support to dependents",
+    lossOfFutureEarnings: "Loss of future earnings",
+    replacementServiceLoss: "Replacement service loss (services victim used to provide)",
+    tuition: "Tuition / school-related costs",
+
+    funeralBurial: "Funeral / burial / cremation",
+    headstone: "Headstone",
+    crimeSceneCleanup: "Crime scene cleanup",
+    towingStorage: "Towing and storage of vehicle",
+    securityRepairs: "Doors, locks, windows (security repairs)",
+
+    evidenceClothingBedding: "Clothing or bedding taken as evidence",
+    assistiveItems: "Prosthetic appliances, eyeglasses, hearing aids",
+    replacementCosts: "Replacement costs for necessary items",
+    legalFees: "Legal fees",
+    tattooRemoval: "Tattoo removal (human trafficking cases)",
+  },
+
+  footerNote:
+    "Choosing an item here does not guarantee payment, but it tells the program what you are asking to be considered.",
 },
 
 medical: {
@@ -655,11 +838,40 @@ medical: {
   },
 
   },
+medicalExtended: {
+  title: "Medical, dental, and counseling bills",
+  description:
+    "If you are asking for help with medical, dental, hospital, or counseling bills, you can list at least one provider here.",
 
-  crime: {
+  fields: {
+    providerNameLabel: "Main hospital / clinic / therapist name",
+    cityLabel: "City",
+    phoneLabel: "Provider phone",
+    serviceDatesLabel: "Dates of service (if known)",
+    amountLabel: "Approximate total amount of this bill",
+    amountPlaceholder: "For example: 2500",
+  },
+
+  otherSources: {
+    question:
+      "Do you have health insurance, public aid, or other programs that may pay some of these bills?",
+    descriptionLabel:
+      "Briefly list any insurance or programs (Medical Card, Medicare, private insurance, etc.)",
+  },
+
+  noNotSure: "No / Not sure",
+
+  footerNote:
+    "In a later version, we'll let you add more providers here, or your advocate can attach a full list.",
+
+  uploaderContextLabel: "medical and counseling bills",
+},
+
+crime: {
   title: "Crime & incident",
   description: "Basic incident details help eligibility and documentation checks.",
 
+  // ===== Existing keys (keep for backwards compatibility) =====
   incidentDateLabel: "Incident date",
   incidentTimeLabel: "Incident time (optional)",
   incidentTimePlaceholder: "e.g. 9:30 PM",
@@ -675,9 +887,48 @@ medical: {
 
   narrativeLabel: "In a few words, what happened? (optional)",
   narrativePlaceholder: "Keep it brief. You can add more later.",
+
+  // ===== NEW: keys required by your current CrimeForm component =====
+  sectionTitle: "Crime and incident details",
+  sectionDescription:
+    "This section is about what happened. You do not need to remember every detail.",
+
+  dateOfCrimeLabel: "Date of crime *",
+  dateReportedLabel: "Date crime was reported",
+
+  crimeAddressLabel: "Where did the crime happen? (street address or location) *",
+
+  crimeCityLabel: "City *",
+  crimeCountyLabel: "County",
+
+  reportingAgencyLabel: "Police department crime was reported to *",
+  reportingAgencyPlaceholder: "e.g. Chicago Police Department",
+
+  policeReportNumberHelp: "Police report number (if you have it)",
+
+  crimeDescriptionLabel: "Briefly describe what happened",
+  crimeDescriptionPlaceholder: "In your own words, describe the incident.",
+
+  injuryDescriptionLabel: "Briefly describe the injuries",
+  injuryDescriptionPlaceholder:
+    "For example: gunshot wound to leg, surgery, PTSD, etc.",
+
+  offenderKnownQuestion: "Do you know who did this?",
+  noNotSure: "No / Not sure",
+
+  offenderNamesLabel: "Offender name(s), if known",
+
+  offenderRelationshipLabel: "Relationship to victim, if any",
+  offenderRelationshipPlaceholder: "Stranger, partner, family member, etc.",
+
+  sexualAssaultKitQuestion:
+    "Was a sexual assault evidence collection kit performed at a hospital?",
+
+  uploaderContextLabel:
+    "the crime and incident (police reports, witness statements)",
 },
 
-  summary: {
+summary: {
   title: "Summary",
   description: "Review what you’ve entered. You can go back to any section to edit.",
   descriptionDraft: "Review your case before generating documents.",
@@ -687,6 +938,199 @@ medical: {
 
   save: "Save summary",
 
+  // ===== UI-only =====
+  quickTitle: "Quick summary",
+  quickDescription: "This is a quick snapshot of what you’ve entered so far.",
+
+  viewOnlyBanner:
+    "View-only access: you can review this case, but you can’t edit fields, certification, or invites.",
+
+  placeholders: {
+    none: "—",
+    notProvided: "Not provided",
+    relationshipNotSet: "relationship not set",
+  },
+
+  actions: {
+    downloadSummaryPdf: "Download summary PDF",
+    downloadOfficialIlPdf: "Download official Illinois CVC form",
+    saveCaseForAdvocateReview: "Save as case for advocate review",
+    inviteAdvocate: "Invite advocate",
+    close: "Close",
+    sendInvite: "Send invite",
+    inviting: "Inviting…",
+  },
+
+  invite: {
+    title: "Invite an advocate",
+    note: "The advocate must already have an account using this email.",
+    advocateEmailLabel: "Advocate email",
+    advocateEmailPlaceholder: "advocate@example.com",
+    allowEdit: "Allow this advocate to edit",
+
+    // Back-compat (keep)
+    results: {
+      saveCaseFirst:
+        "Save this as a case first so we can generate a secure invite link.",
+      mustBeLoggedIn: "You must be logged in to invite an advocate.",
+      unexpected: "Unexpected error inviting advocate.",
+      accessGranted: "✅ Access granted.\nShare this link with the advocate:\n{url}",
+    },
+
+    // Common shape used in UI components (added)
+    errors: {
+      saveCaseFirst:
+        "Save this as a case first so we can generate a secure invite link.",
+      mustBeLoggedIn: "You must be logged in to invite an advocate.",
+      unexpected: "Unexpected error inviting advocate.",
+    },
+    success: {
+      accessGranted: "✅ Access granted.\nShare this link with the advocate:\n{url}",
+    },
+  },
+
+  snapshots: {
+    victimTitle: "Victim",
+    applicantTitle: "Applicant",
+    applicantSamePerson: "Victim and applicant are the same person.",
+
+    crimeTitle: "Crime snapshot",
+    crime: {
+      dateOfCrime: "Date of crime",
+      location: "Location",
+      cityCounty: "City / County",
+      reportedTo: "Reported to",
+      policeReportNumber: "Police report #",
+    },
+
+    lossesTitle: "Losses",
+    lossesNone: "No losses selected yet.",
+
+    medicalTitle: "Medical snapshot",
+    medical: {
+      provider: "Provider",
+      cityPhone: "City / Phone",
+      serviceDates: "Dates of service",
+      approxBillAmount: "Approx. bill amount",
+      noneEntered: "No medical provider entered yet.",
+    },
+
+    workTitle: "Work snapshot",
+    work: {
+      employer: "Employer",
+      employerPhone: "Employer phone",
+      netMonthlyWages: "Net monthly wages",
+      noneEntered: "No work info entered yet.",
+    },
+
+    funeralTitle: "Funeral snapshot",
+    funeral: {
+      funeralHome: "Funeral home",
+      funeralHomePhone: "Funeral home phone",
+      totalFuneralBill: "Total funeral bill",
+      payer: "Payer",
+      amountPaidSoFar: "Amount paid so far",
+      noPayer: "No payer entered yet.",
+      noneEntered: "No funeral info entered yet.",
+    },
+  },
+
+  // Aliases (some components expect these top-level blocks)
+  crime: {
+    title: "Crime snapshot",
+    fields: {
+      dateOfCrime: "Date of crime",
+      location: "Location",
+      cityCounty: "City / County",
+      reportedTo: "Reported to",
+      policeReportNumber: "Police report #",
+    },
+  },
+
+  medicalSnapshot: {
+    title: "Medical snapshot",
+    fields: {
+      provider: "Provider",
+      cityPhone: "City / Phone",
+      serviceDates: "Dates of service",
+      approxBillAmount: "Approx. bill amount",
+    },
+    noneEntered: "No medical provider entered yet.",
+  },
+
+  employmentSnapshot: {
+    title: "Work snapshot",
+    fields: {
+      employer: "Employer",
+      employerPhone: "Employer phone",
+      netMonthlyWages: "Net monthly wages",
+    },
+    noneEntered: "No work info entered yet.",
+  },
+
+  funeralSnapshot: {
+    title: "Funeral snapshot",
+    fields: {
+      funeralHome: "Funeral home",
+      funeralHomePhone: "Funeral home phone",
+      totalFuneralBill: "Total funeral bill",
+      payer: "Payer",
+      amountPaidSoFar: "Amount paid so far",
+    },
+    noPayer: "No payer entered yet.",
+    noneEntered: "No funeral info entered yet.",
+  },
+
+  certificationUi: {
+    title: "Certification & authorization",
+    checks: {
+      subrogation: "I acknowledge subrogation (repayment rules may apply).",
+      release: "I acknowledge authorization/release for verification as required.",
+      perjury: "I confirm the information is true to the best of my knowledge.",
+    },
+    signatureLabel: "Applicant signature (type your full name)",
+    dateLabel: "Date",
+
+    attorney: {
+      question: "Are you being represented by an attorney?",
+      yes: "Yes",
+      no: "No",
+
+      name: "Attorney name",
+      ardc: "ARDC number (if known)",
+      address: "Attorney address",
+      city: "City",
+      state: "State",
+      zip: "ZIP",
+      phone: "Phone",
+      email: "Email",
+    },
+  },
+
+  // Alias (many UIs expect `summary.certification.*`)
+  certification: {
+    title: "Certification & authorization",
+    checks: {
+      subrogation: "I acknowledge subrogation (repayment rules may apply).",
+      release: "I acknowledge authorization/release for verification as required.",
+      perjury: "I confirm the information is true to the best of my knowledge.",
+    },
+    signatureLabel: "Applicant signature (type your full name)",
+    dateLabel: "Date",
+    attorney: {
+      question: "Are you being represented by an attorney?",
+      name: "Attorney name",
+      ardc: "ARDC number (if known)",
+      address: "Attorney address",
+      city: "City",
+      state: "State",
+      zip: "ZIP",
+      phone: "Phone",
+      email: "Email",
+    },
+  },
+
+  // ===== Existing (keep) =====
   sections: {
     victim: "Victim",
     applicant: "Applicant",
@@ -765,7 +1209,8 @@ medical: {
     notes: "Notes",
   },
 
-  certification: {
+  // Existing “plain-language” certification copy (keep)
+  certificationText: {
     disclaimer:
       "This is not legal advice. This is a plain-language confirmation that the information is accurate to the best of your knowledge.",
     fullNameLabel: "Full name (required)",
@@ -776,6 +1221,8 @@ medical: {
     releaseLabel:
       "I understand supporting documents may be required and I may be asked for verification.",
   },
-},
-  },
-};
+}, // closes summary
+
+}, // closes forms
+
+}; // closes export const en

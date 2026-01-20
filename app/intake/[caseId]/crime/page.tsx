@@ -33,14 +33,23 @@ export default function CrimePage() {
   useEffect(() => {
     (async () => {
       const data = await fetchCase(caseId);
-      form.reset(data.crime);
+
+      // UPDATED: ensure we always pass an object to reset (avoid undefined crashes)
+      form.reset(data?.crime ?? { policeReported: "unknown", offenderKnown: "unknown" });
+
       setLoading(false);
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [caseId]);
 
-  const prevHref = useMemo(() => INTAKE_STEPS.find((s) => s.key === "applicant")!.path(caseId), [caseId]);
-  const nextHref = useMemo(() => INTAKE_STEPS.find((s) => s.key === "losses")!.path(caseId), [caseId]);
+  const prevHref = useMemo(
+    () => INTAKE_STEPS.find((s) => s.key === "applicant")!.path(caseId),
+    [caseId]
+  );
+  const nextHref = useMemo(
+    () => INTAKE_STEPS.find((s) => s.key === "losses")!.path(caseId),
+    [caseId]
+  );
 
   async function onSubmit(values: CrimeSection) {
     await patchCase(caseId, { crime: values, lastSavedAt: new Date().toISOString() });
@@ -56,7 +65,11 @@ export default function CrimePage() {
     <IntakeShell title={t("forms.crime.title")} description={t("forms.crime.description")}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <DateField control={form.control} name="incidentDate" label={t("forms.crime.incidentDateLabel")} />
+          <DateField
+            control={form.control}
+            name="incidentDate"
+            label={t("forms.crime.incidentDateLabel")}
+          />
           <TextField
             control={form.control}
             name="incidentTime"
@@ -66,7 +79,11 @@ export default function CrimePage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          <TextField control={form.control} name="locationAddress" label={t("forms.crime.locationAddressLabel")} />
+          <TextField
+            control={form.control}
+            name="locationAddress"
+            label={t("forms.crime.locationAddressLabel")}
+          />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -88,8 +105,16 @@ export default function CrimePage() {
 
         {policeReported === "yes" ? (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <TextField control={form.control} name="policeDepartment" label={t("forms.crime.policeDepartmentLabel")} />
-            <TextField control={form.control} name="policeReportNumber" label={t("forms.crime.policeReportNumberLabel")} />
+            <TextField
+              control={form.control}
+              name="policeDepartment"
+              label={t("forms.crime.policeDepartmentLabel")}
+            />
+            <TextField
+              control={form.control}
+              name="policeReportNumber"
+              label={t("forms.crime.policeReportNumberLabel")}
+            />
           </div>
         ) : null}
 
@@ -105,7 +130,11 @@ export default function CrimePage() {
         />
 
         {offenderKnown === "yes" ? (
-          <TextField control={form.control} name="offenderName" label={t("forms.crime.offenderNameLabel")} />
+          <TextField
+            control={form.control}
+            name="offenderName"
+            label={t("forms.crime.offenderNameLabel")}
+          />
         ) : null}
 
         <TextField
@@ -116,7 +145,11 @@ export default function CrimePage() {
         />
 
         <div className="flex items-center justify-between pt-2">
-          <button type="button" className="rounded-lg border px-4 py-2 text-sm" onClick={() => router.push(prevHref)}>
+          <button
+            type="button"
+            className="rounded-lg border px-4 py-2 text-sm"
+            onClick={() => router.push(prevHref)}
+          >
             {t("ui.buttons.back")}
           </button>
           <button type="submit" className="rounded-lg bg-black px-4 py-2 text-sm text-white">

@@ -535,6 +535,19 @@ export const es: I18nDict = {
     description: "Esta es la persona que solicita la compensación.",
     isVictimAlsoApplicantLabel: "¿La víctima también es el solicitante?",
     sameAsVictimNote: "Por ahora usaremos la información de la víctima como los datos del solicitante.",
+
+    options: {
+  victim: "Soy la víctima (mi información es la misma que arriba)",
+  proxy:
+    "Estoy solicitando en nombre de la víctima (padre/madre, cónyuge, otro)",
+},
+relationshipPlaceholder: "Padre/madre, cónyuge, hermano/a, amigo/a...",
+legalGuardianship: {
+  question:
+    "Si la víctima es menor de edad o un adulto incapacitado, ¿tienes tutela legal?",
+  noNotSure: "No / No estoy seguro/a",
+},
+
   },
 
   employment: {
@@ -564,6 +577,34 @@ export const es: I18nDict = {
 
   disabilityFromCrimeLabel:
     "¿El delito causó una discapacidad que afecta el trabajo?",
+},
+
+employmentExtended: {
+  title: "Trabajo e ingresos (pérdida de ingresos)",
+  description:
+    "Si faltaste al trabajo debido al delito, el programa puede considerar pagar parte de esos ingresos perdidos.",
+
+  fields: {
+    employerNameLabel: "Nombre del empleador",
+    employerAddressLabel: "Dirección del empleador",
+    employerPhoneLabel: "Teléfono del empleador",
+    netMonthlyWagesLabel: "Tus ingresos netos mensuales (pago que recibes)",
+    netMonthlyWagesPlaceholder: "Por ejemplo: 2200",
+  },
+
+  benefits: {
+    question:
+      "Después del delito, ¿recibiste tiempo por enfermedad, vacaciones, discapacidad u otros beneficios pagados?",
+    notesLabel:
+      "Si lo recuerdas, descríbelo brevemente (por ejemplo: 2 semanas de pago por enfermedad, 3 días de vacaciones)...",
+  },
+
+  noNotSure: "No / No estoy seguro/a",
+
+  footerNote:
+    "En una versión posterior, podrás agregar más trabajos y más detalles aquí.",
+
+  uploaderContextLabel: "trabajo e ingresos (talones de pago, cartas del empleador)",
 },
 
 funeral: {
@@ -597,6 +638,71 @@ funeral: {
   dependentsNotesLabel: "Notas sobre dependientes (opcional)",
   dependentsNotesPlaceholder: "Cualquier detalle útil…",
 },
+funeralExtended: {
+  title: "Funeral, entierro y dependientes",
+  description:
+    "Si la víctima falleció como resultado del delito, este programa puede ayudar con los costos del funeral, entierro o cremación. Puedes ingresar información básica aquí.",
+
+  funeralHome: {
+    nameLabel: "Nombre de la funeraria",
+    phoneLabel: "Teléfono de la funeraria",
+    billTotalLabel: "Total de la factura del funeral (aproximado)",
+  },
+
+  cemetery: {
+    title: "Información del cementerio",
+    nameLabel: "Nombre del cementerio",
+    phoneLabel: "Teléfono del cementerio",
+    billTotalLabel: "Total de la factura del cementerio (aproximado)",
+  },
+
+  payer: {
+    title: "¿Quién ha pagado o pagará estos costos?",
+    nameLabel: "Nombre de la persona que paga",
+    relationshipLabel: "Relación con la víctima",
+    relationshipPlaceholder: "Padre/madre, cónyuge, hermano/a, amigo/a...",
+    amountPaidLabel: "Monto pagado hasta ahora (aproximado)",
+  },
+
+  esvf: {
+    question:
+      "¿Recibiste dinero del ESVF de la Ciudad de Chicago para gastos funerarios?",
+    amountLabel: "¿Cuánto pagó el ESVF? (aproximado)",
+  },
+
+  lifeInsurance: {
+    question:
+      "¿La víctima tenía un seguro de vida que pagó después de su fallecimiento?",
+    companyLabel: "Compañía de seguro de vida",
+    beneficiaryNameLabel: "Nombre del beneficiario",
+    beneficiaryPhoneLabel: "Teléfono del beneficiario",
+    amountPaidLabel: "Monto pagado (aproximado)",
+  },
+
+  dependents: {
+    title: "Dependientes que dependían de los ingresos de la víctima",
+    nameLabel: "Nombre del dependiente",
+    relationshipLabel: "Relación con la víctima",
+    relationshipPlaceholder: "Hijo/a, cónyuge, pareja, etc.",
+    dobLabel: "Fecha de nacimiento del dependiente",
+    guardianLabel: "Nombre y teléfono del tutor (si es menor)",
+  },
+
+  placeholders: {
+    moneyExample8000: "Por ejemplo: 8000",
+    moneyExample2000: "Por ejemplo: 2000",
+    moneyExample1500: "Por ejemplo: 1500",
+    moneyExample10000: "Por ejemplo: 10000",
+  },
+
+  noNotSure: "No / No estoy seguro/a",
+
+  footerNote:
+    "En una versión posterior, podrás agregar a cada dependiente aquí y vincularlos a reclamos por pérdida de apoyo.",
+
+  uploaderContextLabel: "funeral, entierro y dependientes",
+},
+
 losses: {
   title: "Gastos y dinero",
   description:
@@ -615,10 +721,57 @@ losses: {
   otherLabel: "Otro (describe)",
 },
 
+lossesExtended: {
+  title: "¿En qué necesitas ayuda para pagar?",
+  description:
+    "Esta sección enumera los tipos de gastos y pérdidas que podrían estar cubiertos por la Compensación para Víctimas de Delitos. Selecciona todo lo que corresponda.",
+
+  groups: {
+    medical: { title: "Médico, consejería y necesidades básicas" },
+    work: { title: "Trabajo, ingresos y apoyo" },
+    funeralProperty: { title: "Funeral, sepelio y propiedad" },
+    personalOther: { title: "Artículos personales y otros" },
+  },
+
+  items: {
+    medicalHospital: "Facturas médicas / hospitalarias",
+    dental: "Atención dental",
+    counseling: "Consejería / terapia",
+    transportation: "Transporte a citas médicas o a la corte",
+    accessibilityCosts: "Costos de accesibilidad (rampas para silla de ruedas, etc.)",
+    temporaryLodging: "Alojamiento temporal / hotel",
+    relocationCosts: "Costos de reubicación (mudanza por seguridad)",
+
+    lossOfEarnings: "Pérdida de ingresos (faltó al trabajo)",
+    lossOfSupport: "Pérdida de apoyo para dependientes",
+    lossOfFutureEarnings: "Pérdida de ingresos futuros",
+    replacementServiceLoss:
+      "Pérdida de servicios de reemplazo (servicios que la víctima brindaba)",
+    tuition: "Matrícula / costos relacionados con la escuela",
+
+    funeralBurial: "Funeral / sepelio / cremación",
+    headstone: "Lápida",
+    crimeSceneCleanup: "Limpieza de la escena del crimen",
+    towingStorage: "Remolque y almacenamiento del vehículo",
+    securityRepairs: "Puertas, cerraduras y ventanas (reparaciones de seguridad)",
+
+    evidenceClothingBedding: "Ropa o ropa de cama incautada como evidencia",
+    assistiveItems: "Prótesis, lentes/anteojos y audífonos",
+    replacementCosts: "Costos de reemplazo de artículos necesarios",
+    legalFees: "Honorarios legales",
+    tattooRemoval: "Eliminación de tatuajes (casos de trata de personas)",
+  },
+
+  footerNote:
+    "Seleccionar un elemento aquí no garantiza el pago, pero le indica al programa qué estás solicitando que se considere.",
+},
+
 crime: {
   title: "Delito e incidente",
-  description: "Los detalles básicos del incidente ayudan a verificar elegibilidad y documentación.",
+  description:
+    "Los detalles básicos del incidente ayudan a verificar elegibilidad y documentación.",
 
+  // ===== Existing keys (kept for backwards compatibility) =====
   incidentDateLabel: "Fecha del incidente",
   incidentTimeLabel: "Hora del incidente (opcional)",
   incidentTimePlaceholder: "p. ej., 9:30 PM",
@@ -634,6 +787,113 @@ crime: {
 
   narrativeLabel: "En pocas palabras, ¿qué pasó? (opcional)",
   narrativePlaceholder: "Manténlo breve. Puedes agregar más después.",
+
+  // ===== NEW: keys required by CrimeForm =====
+  sectionTitle: "Detalles del delito y del incidente",
+  sectionDescription:
+    "Esta sección es sobre lo que ocurrió. No necesitas recordar cada detalle.",
+
+  dateOfCrimeLabel: "Fecha del delito *",
+  dateReportedLabel: "Fecha en que se reportó el delito",
+
+  crimeAddressLabel:
+    "¿Dónde ocurrió el delito? (dirección o lugar aproximado) *",
+
+  crimeCityLabel: "Ciudad *",
+  crimeCountyLabel: "Condado",
+
+  reportingAgencyLabel:
+    "Departamento de policía al que se reportó el delito *",
+  reportingAgencyPlaceholder:
+    "p. ej., Departamento de Policía de Chicago",
+
+  policeReportNumberHelp:
+    "Número de reporte policial (si lo tienes)",
+
+  crimeDescriptionLabel: "Describe brevemente lo que ocurrió",
+  crimeDescriptionPlaceholder:
+    "En tus propias palabras, describe el incidente.",
+
+  injuryDescriptionLabel: "Describe brevemente las lesiones",
+  injuryDescriptionPlaceholder:
+    "Por ejemplo: herida de bala en la pierna, cirugía, PTSD, etc.",
+
+  offenderKnownQuestion: "¿Sabes quién hizo esto?",
+  noNotSure: "No / No estoy seguro/a",
+
+  offenderNamesLabel: "Nombre(s) de la persona agresora, si lo sabes",
+
+  offenderRelationshipLabel:
+    "Relación con la víctima, si existe",
+  offenderRelationshipPlaceholder:
+    "Desconocido, pareja, familiar, etc.",
+
+  sexualAssaultKitQuestion:
+    "¿Se realizó un kit de recolección de evidencia de agresión sexual en un hospital?",
+
+  uploaderContextLabel:
+    "el delito y el incidente (reportes policiales, declaraciones de testigos)",
+},
+
+medicalExtended: {
+  title: "Facturas médicas, dentales y de consejería",
+  description:
+    "Si estás solicitando ayuda con facturas médicas, dentales, hospitalarias o de consejería, puedes incluir al menos un proveedor aquí.",
+
+  fields: {
+    providerNameLabel: "Nombre del hospital / clínica / terapeuta principal",
+    cityLabel: "Ciudad",
+    phoneLabel: "Teléfono del proveedor",
+    serviceDatesLabel: "Fechas de servicio (si las sabes)",
+    amountLabel: "Monto total aproximado de esta factura",
+    amountPlaceholder: "Por ejemplo: 2500",
+  },
+
+  otherSources: {
+    question:
+      "¿Tienes seguro médico, ayuda pública u otros programas que puedan pagar parte de estas facturas?",
+    descriptionLabel:
+      "Enumera brevemente cualquier seguro o programa (Medical Card, Medicare, seguro privado, etc.)",
+  },
+
+  noNotSure: "No / No estoy seguro/a",
+
+  footerNote:
+    "En una versión posterior, podrás agregar más proveedores aquí, o tu defensor/a puede adjuntar una lista completa.",
+
+  uploaderContextLabel: "facturas médicas y de consejería",
+},
+
+court: {
+  title: "Información judicial y restitución",
+  description:
+    "Si hay un caso penal, puedes compartir lo que sepas. Está bien si no conoces todos estos detalles — responde lo que puedas.",
+
+  noNotSure: "No / No estoy seguro/a",
+
+  offenderArrestedQuestion: "¿La persona agresora fue arrestada?",
+  offenderChargedQuestion: "¿Se presentaron cargos en la corte?",
+  applicantTestifiedQuestion:
+    "¿Te han pedido declarar/testificar en el caso penal?",
+
+  criminalCaseNumberLabel: "Número de caso penal (si lo sabes)",
+  criminalCaseOutcomeLabel: "¿Cuál fue el resultado del caso penal? (si lo sabes)",
+  criminalCaseOutcomePlaceholder:
+    "Por ejemplo: condenado, caso desestimado, acuerdo de culpabilidad, aún pendiente…",
+
+  restitutionOrderedQuestion:
+    "¿La corte ordenó que la persona agresora pague restitución (dinero directamente para ti o en tu nombre)?",
+
+  restitutionAmountLabel: "Si sí, ¿cuánto (aproximado)?",
+  restitutionAmountPlaceholder: "Por ejemplo: 5000",
+
+  humanTraffickingQuestion:
+    "¿La persona agresora ha estado involucrada en un proceso judicial por trata de personas relacionado con este incidente?",
+
+  humanTraffickingCaseNumberLabel:
+    "Número del caso de trata de personas (si lo sabes)",
+  humanTraffickingCaseOutcomeLabel:
+    "Resultado del caso de trata de personas (si lo sabes)",
 },
 
 medical: {
@@ -690,6 +950,208 @@ summary: {
 
   save: "Guardar resumen",
 
+  // ===== Solo UI =====
+  quickTitle: "Resumen rápido",
+  quickDescription:
+    "Esta es una vista rápida de lo que has ingresado hasta ahora.",
+
+  viewOnlyBanner:
+    "Acceso solo de lectura: puedes revisar este caso, pero no puedes editar campos, certificación ni invitaciones.",
+
+  placeholders: {
+    none: "—",
+    notProvided: "No proporcionado",
+    relationshipNotSet: "relación no establecida",
+  },
+
+  actions: {
+    downloadSummaryPdf: "Descargar PDF de resumen",
+    downloadOfficialIlPdf: "Descargar formulario oficial de CVC de Illinois",
+    saveCaseForAdvocateReview: "Guardar como caso para revisión de un defensor",
+    inviteAdvocate: "Invitar a un defensor",
+    close: "Cerrar",
+    sendInvite: "Enviar invitación",
+    inviting: "Enviando…",
+  },
+
+  invite: {
+    title: "Invitar a un defensor",
+    note: "El defensor ya debe tener una cuenta con este correo electrónico.",
+    advocateEmailLabel: "Correo del defensor",
+    advocateEmailPlaceholder: "defensor@ejemplo.com",
+    allowEdit: "Permitir que este defensor edite",
+
+    // Compatibilidad (mantener)
+    results: {
+      saveCaseFirst:
+        "Primero guarda esto como un caso para poder generar un enlace seguro de invitación.",
+      mustBeLoggedIn: "Debes iniciar sesión para invitar a un defensor.",
+      unexpected: "Error inesperado al invitar al defensor.",
+      accessGranted:
+        "✅ Acceso otorgado.\nComparte este enlace con el defensor:\n{url}",
+    },
+
+    // Forma común usada en componentes (agregado)
+    errors: {
+      saveCaseFirst:
+        "Primero guarda esto como un caso para poder generar un enlace seguro de invitación.",
+      mustBeLoggedIn: "Debes iniciar sesión para invitar a un defensor.",
+      unexpected: "Error inesperado al invitar al defensor.",
+    },
+    success: {
+      accessGranted:
+        "✅ Acceso otorgado.\nComparte este enlace con el defensor:\n{url}",
+    },
+  },
+
+  snapshots: {
+    victimTitle: "Víctima",
+    applicantTitle: "Solicitante",
+    applicantSamePerson: "La víctima y el solicitante son la misma persona.",
+
+    crimeTitle: "Resumen del delito",
+    crime: {
+      dateOfCrime: "Fecha del delito",
+      location: "Lugar",
+      cityCounty: "Ciudad / Condado",
+      reportedTo: "Reportado a",
+      policeReportNumber: "N.º de reporte policial",
+    },
+
+    lossesTitle: "Gastos / pérdidas",
+    lossesNone: "Aún no se seleccionaron gastos.",
+
+    medicalTitle: "Resumen médico",
+    medical: {
+      provider: "Proveedor",
+      cityPhone: "Ciudad / Teléfono",
+      serviceDates: "Fechas del servicio",
+      approxBillAmount: "Monto aproximado de la factura",
+      noneEntered: "Aún no se ingresó ningún proveedor médico.",
+    },
+
+    workTitle: "Resumen de trabajo",
+    work: {
+      employer: "Empleador",
+      employerPhone: "Teléfono del empleador",
+      netMonthlyWages: "Salario neto mensual",
+      noneEntered: "Aún no se ingresó información de trabajo.",
+    },
+
+    funeralTitle: "Resumen de funeral",
+    funeral: {
+      funeralHome: "Funeraria",
+      funeralHomePhone: "Teléfono de la funeraria",
+      totalFuneralBill: "Total de la factura del funeral",
+      payer: "Pagador",
+      amountPaidSoFar: "Monto pagado hasta ahora",
+      noPayer: "Aún no se ingresó un pagador.",
+      noneEntered: "Aún no se ingresó información del funeral.",
+    },
+  },
+
+  // Alias (algunos componentes esperan estos bloques a nivel superior)
+  crime: {
+    title: "Resumen del delito",
+    fields: {
+      dateOfCrime: "Fecha del delito",
+      location: "Lugar",
+      cityCounty: "Ciudad / Condado",
+      reportedTo: "Reportado a",
+      policeReportNumber: "N.º de reporte policial",
+    },
+  },
+
+  medicalSnapshot: {
+    title: "Resumen médico",
+    fields: {
+      provider: "Proveedor",
+      cityPhone: "Ciudad / Teléfono",
+      serviceDates: "Fechas del servicio",
+      approxBillAmount: "Monto aproximado de la factura",
+    },
+    noneEntered: "Aún no se ingresó ningún proveedor médico.",
+  },
+
+  employmentSnapshot: {
+    title: "Resumen de trabajo",
+    fields: {
+      employer: "Empleador",
+      employerPhone: "Teléfono del empleador",
+      netMonthlyWages: "Salario neto mensual",
+    },
+    noneEntered: "Aún no se ingresó información de trabajo.",
+  },
+
+  funeralSnapshot: {
+    title: "Resumen de funeral",
+    fields: {
+      funeralHome: "Funeraria",
+      funeralHomePhone: "Teléfono de la funeraria",
+      totalFuneralBill: "Total de la factura del funeral",
+      payer: "Pagador",
+      amountPaidSoFar: "Monto pagado hasta ahora",
+    },
+    noPayer: "Aún no se ingresó un pagador.",
+    noneEntered: "Aún no se ingresó información del funeral.",
+  },
+
+  certificationUi: {
+    title: "Certificación y autorización",
+    checks: {
+      subrogation:
+        "Reconozco la subrogación (pueden aplicar reglas de reembolso).",
+      release:
+        "Reconozco la autorización/liberación para verificación según se requiera.",
+      perjury:
+        "Confirmo que la información es verdadera según mi mejor conocimiento.",
+    },
+    signatureLabel: "Firma del solicitante (escribe tu nombre completo)",
+    dateLabel: "Fecha",
+
+    attorney: {
+      question: "¿Estás siendo representado por un abogado?",
+      yes: "Sí",
+      no: "No",
+
+      name: "Nombre del abogado",
+      ardc: "Número ARDC (si lo conoces)",
+      address: "Dirección del abogado",
+      city: "Ciudad",
+      state: "Estado",
+      zip: "Código postal",
+      phone: "Teléfono",
+      email: "Correo electrónico",
+    },
+  },
+
+  // Alias (muchas UIs esperan `summary.certification.*`)
+  certification: {
+    title: "Certificación y autorización",
+    checks: {
+      subrogation:
+        "Reconozco la subrogación (pueden aplicar reglas de reembolso).",
+      release:
+        "Reconozco la autorización/liberación para verificación según se requiera.",
+      perjury:
+        "Confirmo que la información es verdadera según mi mejor conocimiento.",
+    },
+    signatureLabel: "Firma del solicitante (escribe tu nombre completo)",
+    dateLabel: "Fecha",
+    attorney: {
+      question: "¿Estás siendo representado por un abogado?",
+      name: "Nombre del abogado",
+      ardc: "Número ARDC (si lo conoces)",
+      address: "Dirección del abogado",
+      city: "Ciudad",
+      state: "Estado",
+      zip: "Código postal",
+      phone: "Teléfono",
+      email: "Correo electrónico",
+    },
+  },
+
+  // ===== Existente (mantener) =====
   sections: {
     victim: "Víctima",
     applicant: "Solicitante",
@@ -768,7 +1230,8 @@ summary: {
     notes: "Notas",
   },
 
-  certification: {
+  // Copia existente “lenguaje sencillo” (mantener) — renombrado para evitar colisión con el alias de arriba
+  certificationText: {
     disclaimer:
       "Esto no es asesoría legal. Es una confirmación en lenguaje sencillo de que la información es correcta según tu mejor conocimiento.",
     fullNameLabel: "Nombre completo (requerido)",
@@ -779,6 +1242,8 @@ summary: {
     releaseLabel:
       "Entiendo que pueden requerirse documentos de respaldo y que podrían pedirme verificación.",
   },
-},
-  },
-};
+}, // cierra summary
+
+}, // cierra forms
+
+}; // cierra el objeto exportado (por ejemplo: export const es = { ... })

@@ -1,5 +1,4 @@
 // lib/i18n/types.ts
-
 export type I18nDict = {
   nav: {
     dashboardVictim: string;
@@ -60,7 +59,11 @@ export type I18nDict = {
   };
 
   home: {
-    hero: { title: string; subtitle: string; disclaimer: string };
+    hero: {
+      title: string;
+      subtitle: string;
+      disclaimer: string;
+    };
 
     guidedPath: {
       title: string;
@@ -151,6 +154,14 @@ export type I18nDict = {
         terms: string;
         crisis988: string;
       };
+    };
+
+    // IMPORTANT: include this only if it exists in en.ts
+    nxtGuide?: {
+      title: string;
+      subtitle: string;
+      body: string;
+      button: string;
     };
   };
 
@@ -317,284 +328,6 @@ export type I18nDict = {
       disabilityTypesLabel: string;
     };
 
-    applicant: {
-      title: string;
-      description: string;
-      isVictimAlsoApplicantLabel: string;
-      sameAsVictimNote: string;
-    };
-
-    employment: {
-  title: string;
-  description: string;
-  descriptionDraft: string;
-
-  loadFailed: string;
-  noDraft: string;
-
-  saveContinue: string;
-
-  unknownHint: string;
-
-  employedAtTimeLabel: string;
-  employerNameLabel: string;
-  employerNamePlaceholder: string;
-  employerPhoneLabel: string;
-  employerPhonePlaceholder: string;
-  employerAddressLabel: string;
-  employerAddressPlaceholder: string;
-
-  missedWorkLabel: string;
-  missedWorkFromLabel: string;
-  missedWorkToLabel: string;
-
-  disabilityFromCrimeLabel: string;
-};
-
-funeral: {
-  title: string;
-  description: string;
-  descriptionDraft: string;
-
-  loadFailed: string;
-  noDraft: string;
-
-  saveContinue: string;
-
-  unknownHint: string;
-
-  victimDeceasedLabel: string;
-
-  funeralHomeTitle: string;
-  funeralHomeNameLabel: string;
-  funeralHomeNamePlaceholder: string;
-  funeralHomePhoneLabel: string;
-  funeralHomePhonePlaceholder: string;
-
-  dependentsTitle: string;
-  hasDependentsLabel: string;
-  hasDependentsHint: string;
-  dependentsCountLabel: string;
-  dependentsCountPlaceholder: string;
-  dependentsNotesLabel: string;
-  dependentsNotesPlaceholder: string;
-};
-
-losses: {
-  title: string;
-  description: string;
-
-  options: {
-    medical: string;
-    counseling: string;
-    lostWages: string;
-    funeral: string;
-    propertyLoss: string;
-    relocation: string;
-    other: string;
-  };
-
-  otherLabel: string;
-};
-
-medical: {
-  title: string;
-  description: string;
-  descriptionDraft: string;
-
-  loadFailed: string;
-  noDraft: string;
-
-  saveContinue: string;
-
-  hints: {
-    unknownOk: string;
-    dateFormat: string;
-  };
-
-  sections: {
-    medical: string;
-    counseling: string;
-  };
-
-  questions: {
-    hasMedicalTreatment: string;
-    hasCounseling: string;
-  };
-
-  fields: {
-    hospitalName: string;
-    hospitalCity: string;
-    treatmentStart: string;
-    treatmentEnd: string;
-    providerName: string;
-    sessionsCount: string;
-  };
-
-  placeholders: {
-    hospitalName: string;
-    hospitalCity: string;
-    providerName: string;
-    sessionsCount: string;
-  };
-};
-
-crime: {
-  title: string;
-  description: string;
-
-  incidentDateLabel: string;
-  incidentTimeLabel: string;
-  incidentTimePlaceholder: string;
-
-  locationAddressLabel: string;
-
-  policeReportedLabel: string;
-  policeDepartmentLabel: string;
-  policeReportNumberLabel: string;
-
-  offenderKnownLabel: string;
-  offenderNameLabel: string;
-
-  narrativeLabel: string;
-  narrativePlaceholder: string;
-};
-
-summary: {
-  title: string;
-  description: string;
-  descriptionDraft: string;
-
-  loadFailed: string;
-  noDraft: string;
-
-  save: string;
-
-  sections: {
-    victim: string;
-    applicant: string;
-    crime: string;
-    losses: string;
-    medical: string;
-    employment: string;
-    funeral: string;
-    documents: string;
-    certification: string;
-  };
-
-  labels: {
-    name: string;
-    dob: string;
-    phone: string;
-    email: string;
-    address: string;
-    isVictimAlsoApplicant: string;
-    relationshipToVictim: string;
-    date: string;
-    time: string;
-    location: string;
-    reportedToPolice: string;
-    policeDepartment: string;
-    reportNumber: string;
-    to: string;
-  };
-
-  losses: {
-    medical: string;
-    counseling: string;
-    funeral: string;
-    lostWages: string;
-    relocation: string;
-    propertyLoss: string;
-    other: string;
-    otherYes: string; // uses token {desc}
-    estimatedTotal: string;
-  };
-
-  medical: {
-    medicalTreatment: string;
-    hospital: string;
-    city: string;
-    treatmentDates: string;
-    counseling: string;
-    provider: string;
-    sessions: string;
-  };
-
-  employment: {
-    employedAtTime: string;
-    employer: string;
-    missedWork: string;
-    missedDates: string;
-    disabilityFromCrime: string;
-  };
-
-  funeral: {
-    victimDeceased: string;
-    funeralHome: string;
-    funeralPhone: string;
-    dependentsPresent: string;
-    dependentCount: string;
-    dependentNotes: string;
-  };
-
-  documents: {
-    policeReports: string;
-    medicalBills: string;
-    counselingBills: string;
-    funeralBills: string;
-    wageProof: string;
-    other: string;
-    notes: string;
-  };
-
-  certification: {
-    disclaimer: string;
-    fullNameLabel: string;
-    fullNamePlaceholder: string;
-    dateLabel: string;
-    truthfulLabel: string;
-    releaseLabel: string;
-  };
-};
-
-    documents: {
-      title: string;
-      description: string;
-      descriptionDraft: string;
-
-      loadFailed: string;
-      noDraft: string;
-
-      saveContinue: string;
-
-      coreTitle: string;
-      otherTitle: string;
-
-      checklist: {
-        policeReport: string;
-        medicalBills: string;
-        counselingBills: string;
-        funeralInvoices: string;
-        wageProof: string;
-        idProof: string;
-      };
-
-
-
-      otherEmpty: string;
-      otherItemTitle: string; // uses token {n}
-      otherLabel: string;
-      otherPlaceholder: string;
-      otherHaveIt: string;
-      otherNotYet: string;
-
-      addOther: string;
-
-      notesLabel: string;
-      notesHint: string;
-    };
-
     labels: {
       firstName: string;
       lastName: string;
@@ -626,6 +359,688 @@ summary: {
       invalidZip: string;
       minChars: string;
       maxChars: string;
+    };
+
+    documents: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      saveContinue: string;
+
+      coreTitle: string;
+      otherTitle: string;
+
+      checklist: {
+        policeReport: string;
+        medicalBills: string;
+        counselingBills: string;
+        funeralInvoices: string;
+        wageProof: string;
+        idProof: string;
+      };
+
+      otherEmpty: string;
+      otherItemTitle: string; // {n}
+      otherLabel: string;
+      otherPlaceholder: string;
+      otherHaveIt: string;
+      otherNotYet: string;
+
+      addOther: string;
+
+      notesLabel: string;
+      notesHint: string;
+    };
+
+    applicant: {
+      title: string;
+      description: string;
+      isVictimAlsoApplicantLabel: string;
+      sameAsVictimNote: string;
+
+      options: {
+        victim: string;
+        proxy: string;
+      };
+
+      relationshipPlaceholder: string;
+
+      legalGuardianship: {
+        question: string;
+        noNotSure: string;
+      };
+    };
+
+    employment: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      saveContinue: string;
+
+      unknownHint: string;
+
+      employedAtTimeLabel: string;
+      employerNameLabel: string;
+      employerNamePlaceholder: string;
+      employerPhoneLabel: string;
+      employerPhonePlaceholder: string;
+      employerAddressLabel: string;
+      employerAddressPlaceholder: string;
+
+      missedWorkLabel: string;
+      missedWorkFromLabel: string;
+      missedWorkToLabel: string;
+
+      disabilityFromCrimeLabel: string;
+    };
+
+    employmentExtended: {
+      title: string;
+      description: string;
+
+      fields: {
+        employerNameLabel: string;
+        employerAddressLabel: string;
+        employerPhoneLabel: string;
+        netMonthlyWagesLabel: string;
+        netMonthlyWagesPlaceholder: string;
+      };
+
+      benefits: {
+        question: string;
+        notesLabel: string;
+      };
+
+      noNotSure: string;
+
+      footerNote: string;
+
+      uploaderContextLabel: string;
+    };
+
+    court: {
+      title: string;
+      description: string;
+
+      noNotSure: string;
+
+      offenderArrestedQuestion: string;
+      offenderChargedQuestion: string;
+      applicantTestifiedQuestion: string;
+
+      criminalCaseNumberLabel: string;
+      criminalCaseOutcomeLabel: string;
+      criminalCaseOutcomePlaceholder: string;
+
+      restitutionOrderedQuestion: string;
+      restitutionAmountLabel: string;
+      restitutionAmountPlaceholder: string;
+
+      humanTraffickingQuestion: string;
+      humanTraffickingCaseNumberLabel: string;
+      humanTraffickingCaseOutcomeLabel: string;
+    };
+
+    funeral: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      saveContinue: string;
+
+      unknownHint: string;
+
+      victimDeceasedLabel: string;
+
+      funeralHomeTitle: string;
+      funeralHomeNameLabel: string;
+      funeralHomeNamePlaceholder: string;
+      funeralHomePhoneLabel: string;
+      funeralHomePhonePlaceholder: string;
+
+      dependentsTitle: string;
+      hasDependentsLabel: string;
+      hasDependentsHint: string;
+      dependentsCountLabel: string;
+      dependentsCountPlaceholder: string;
+      dependentsNotesLabel: string;
+      dependentsNotesPlaceholder: string;
+    };
+
+    funeralExtended: {
+      title: string;
+      description: string;
+
+      funeralHome: {
+        nameLabel: string;
+        phoneLabel: string;
+        billTotalLabel: string;
+      };
+
+      cemetery: {
+        title: string;
+        nameLabel: string;
+        phoneLabel: string;
+        billTotalLabel: string;
+      };
+
+      payer: {
+        title: string;
+        nameLabel: string;
+        relationshipLabel: string;
+        relationshipPlaceholder: string;
+        amountPaidLabel: string;
+      };
+
+      esvf: {
+        question: string;
+        amountLabel: string;
+      };
+
+      lifeInsurance: {
+        question: string;
+        companyLabel: string;
+        beneficiaryNameLabel: string;
+        beneficiaryPhoneLabel: string;
+        amountPaidLabel: string;
+      };
+
+      dependents: {
+        title: string;
+        nameLabel: string;
+        relationshipLabel: string;
+        relationshipPlaceholder: string;
+        dobLabel: string;
+        guardianLabel: string;
+      };
+
+      placeholders: {
+        moneyExample8000: string;
+        moneyExample2000: string;
+        moneyExample1500: string;
+        moneyExample10000: string;
+      };
+
+      noNotSure: string;
+
+      footerNote: string;
+
+      uploaderContextLabel: string;
+    };
+
+    losses: {
+      title: string;
+      description: string;
+
+      options: {
+        medical: string;
+        counseling: string;
+        lostWages: string;
+        funeral: string;
+        propertyLoss: string;
+        relocation: string;
+        other: string;
+      };
+
+      otherLabel: string;
+    };
+
+    lossesExtended: {
+      title: string;
+      description: string;
+
+      groups: {
+        medical: { title: string };
+        work: { title: string };
+        funeralProperty: { title: string };
+        personalOther: { title: string };
+      };
+
+      items: {
+        medicalHospital: string;
+        dental: string;
+        counseling: string;
+        transportation: string;
+        accessibilityCosts: string;
+        temporaryLodging: string;
+        relocationCosts: string;
+
+        lossOfEarnings: string;
+        lossOfSupport: string;
+        lossOfFutureEarnings: string;
+        replacementServiceLoss: string;
+        tuition: string;
+
+        funeralBurial: string;
+        headstone: string;
+        crimeSceneCleanup: string;
+        towingStorage: string;
+        securityRepairs: string;
+
+        evidenceClothingBedding: string;
+        assistiveItems: string;
+        replacementCosts: string;
+        legalFees: string;
+        tattooRemoval: string;
+      };
+
+      footerNote: string;
+    };
+
+    medical: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      saveContinue: string;
+
+      hints: {
+        unknownOk: string;
+        dateFormat: string;
+      };
+
+      sections: {
+        medical: string;
+        counseling: string;
+      };
+
+      questions: {
+        hasMedicalTreatment: string;
+        hasCounseling: string;
+      };
+
+      fields: {
+        hospitalName: string;
+        hospitalCity: string;
+        treatmentStart: string;
+        treatmentEnd: string;
+        providerName: string;
+        sessionsCount: string;
+      };
+
+      placeholders: {
+        hospitalName: string;
+        hospitalCity: string;
+        providerName: string;
+        sessionsCount: string;
+      };
+    };
+
+    medicalExtended: {
+      title: string;
+      description: string;
+
+      fields: {
+        providerNameLabel: string;
+        cityLabel: string;
+        phoneLabel: string;
+        serviceDatesLabel: string;
+        amountLabel: string;
+        amountPlaceholder: string;
+      };
+
+      otherSources: {
+        question: string;
+        descriptionLabel: string;
+      };
+
+      noNotSure: string;
+
+      footerNote: string;
+
+      uploaderContextLabel: string;
+    };
+
+    crime: {
+      title: string;
+      description: string;
+
+      incidentDateLabel: string;
+      incidentTimeLabel: string;
+      incidentTimePlaceholder: string;
+
+      locationAddressLabel: string;
+
+      policeReportedLabel: string;
+      policeDepartmentLabel: string;
+      policeReportNumberLabel: string;
+
+      offenderKnownLabel: string;
+      offenderNameLabel: string;
+
+      narrativeLabel: string;
+      narrativePlaceholder: string;
+
+      sectionTitle: string;
+      sectionDescription: string;
+
+      dateOfCrimeLabel: string;
+      dateReportedLabel: string;
+
+      crimeAddressLabel: string;
+
+      crimeCityLabel: string;
+      crimeCountyLabel: string;
+
+      reportingAgencyLabel: string;
+      reportingAgencyPlaceholder: string;
+
+      policeReportNumberHelp: string;
+
+      crimeDescriptionLabel: string;
+      crimeDescriptionPlaceholder: string;
+
+      injuryDescriptionLabel: string;
+      injuryDescriptionPlaceholder: string;
+
+      offenderKnownQuestion: string;
+      noNotSure: string;
+
+      offenderNamesLabel: string;
+
+      offenderRelationshipLabel: string;
+      offenderRelationshipPlaceholder: string;
+
+      sexualAssaultKitQuestion: string;
+
+      uploaderContextLabel: string;
+    };
+
+    summary: {
+      title: string;
+      description: string;
+      descriptionDraft: string;
+
+      loadFailed: string;
+      noDraft: string;
+
+      save: string;
+
+      quickTitle: string;
+      quickDescription: string;
+
+      viewOnlyBanner: string;
+
+      placeholders: {
+        none: string;
+        notProvided: string;
+        relationshipNotSet: string;
+      };
+
+      actions: {
+        downloadSummaryPdf: string;
+        downloadOfficialIlPdf: string;
+        saveCaseForAdvocateReview: string;
+        inviteAdvocate: string;
+        close: string;
+        sendInvite: string;
+        inviting: string;
+      };
+
+      invite: {
+        title: string;
+        note: string;
+        advocateEmailLabel: string;
+        advocateEmailPlaceholder: string;
+        allowEdit: string;
+
+        results: {
+          saveCaseFirst: string;
+          mustBeLoggedIn: string;
+          unexpected: string;
+          accessGranted: string;
+        };
+
+        errors: {
+          saveCaseFirst: string;
+          mustBeLoggedIn: string;
+          unexpected: string;
+        };
+
+        success: {
+          accessGranted: string;
+        };
+      };
+
+      snapshots: {
+        victimTitle: string;
+        applicantTitle: string;
+        applicantSamePerson: string;
+
+        crimeTitle: string;
+        crime: {
+          dateOfCrime: string;
+          location: string;
+          cityCounty: string;
+          reportedTo: string;
+          policeReportNumber: string;
+        };
+
+        lossesTitle: string;
+        lossesNone: string;
+
+        medicalTitle: string;
+        medical: {
+          provider: string;
+          cityPhone: string;
+          serviceDates: string;
+          approxBillAmount: string;
+          noneEntered: string;
+        };
+
+        workTitle: string;
+        work: {
+          employer: string;
+          employerPhone: string;
+          netMonthlyWages: string;
+          noneEntered: string;
+        };
+
+        funeralTitle: string;
+        funeral: {
+          funeralHome: string;
+          funeralHomePhone: string;
+          totalFuneralBill: string;
+          payer: string;
+          amountPaidSoFar: string;
+          noPayer: string;
+          noneEntered: string;
+        };
+      };
+
+      crime?: {
+        title: string;
+        fields: {
+          dateOfCrime: string;
+          location: string;
+          cityCounty: string;
+          reportedTo: string;
+          policeReportNumber: string;
+        };
+      };
+
+      medicalSnapshot?: {
+        title: string;
+        fields: {
+          provider: string;
+          cityPhone: string;
+          serviceDates: string;
+          approxBillAmount: string;
+        };
+        noneEntered: string;
+      };
+
+      employmentSnapshot?: {
+        title: string;
+        fields: {
+          employer: string;
+          employerPhone: string;
+          netMonthlyWages: string;
+        };
+        noneEntered: string;
+      };
+
+      funeralSnapshot?: {
+        title: string;
+        fields: {
+          funeralHome: string;
+          funeralHomePhone: string;
+          totalFuneralBill: string;
+          payer: string;
+          amountPaidSoFar: string;
+        };
+        noPayer: string;
+        noneEntered: string;
+      };
+
+      certificationUi: {
+        title: string;
+        checks: {
+          subrogation: string;
+          release: string;
+          perjury: string;
+        };
+        signatureLabel: string;
+        dateLabel: string;
+
+        attorney: {
+          question: string;
+          yes: string;
+          no: string;
+
+          name: string;
+          ardc: string;
+          address: string;
+          city: string;
+          state: string;
+          zip: string;
+          phone: string;
+          email: string;
+        };
+      };
+
+      certification?: {
+        title: string;
+        checks: {
+          subrogation: string;
+          release: string;
+          perjury: string;
+        };
+        signatureLabel: string;
+        dateLabel: string;
+        attorney: {
+          question: string;
+          name: string;
+          ardc: string;
+          address: string;
+          city: string;
+          state: string;
+          zip: string;
+          phone: string;
+          email: string;
+        };
+      };
+
+      sections: {
+        victim: string;
+        applicant: string;
+        crime: string;
+        losses: string;
+        medical: string;
+        employment: string;
+        funeral: string;
+        documents: string;
+        certification: string;
+      };
+
+      labels: {
+        name: string;
+        dob: string;
+        phone: string;
+        email: string;
+        address: string;
+        isVictimAlsoApplicant: string;
+        relationshipToVictim: string;
+        date: string;
+        time: string;
+        location: string;
+        reportedToPolice: string;
+        policeDepartment: string;
+        reportNumber: string;
+        to: string;
+      };
+
+      losses: {
+        medical: string;
+        counseling: string;
+        funeral: string;
+        lostWages: string;
+        relocation: string;
+        propertyLoss: string;
+        other: string;
+        otherYes: string;
+        estimatedTotal: string;
+      };
+
+      medical: {
+        medicalTreatment: string;
+        hospital: string;
+        city: string;
+        treatmentDates: string;
+        counseling: string;
+        provider: string;
+        sessions: string;
+      };
+
+      employment: {
+        employedAtTime: string;
+        employer: string;
+        missedWork: string;
+        missedDates: string;
+        disabilityFromCrime: string;
+      };
+
+      funeral: {
+        victimDeceased: string;
+        funeralHome: string;
+        funeralPhone: string;
+        dependentsPresent: string;
+        dependentCount: string;
+        dependentNotes: string;
+      };
+
+      documents: {
+        policeReports: string;
+        medicalBills: string;
+        counselingBills: string;
+        funeralBills: string;
+        wageProof: string;
+        other: string;
+        notes: string;
+      };
+
+      certificationText: {
+        disclaimer: string;
+        fullNameLabel: string;
+        fullNamePlaceholder: string;
+        dateLabel: string;
+        truthfulLabel: string;
+        releaseLabel: string;
+      };
     };
   };
 };
