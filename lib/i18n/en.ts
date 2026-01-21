@@ -257,6 +257,11 @@ export const en: I18nDict = {
   missingCaseIdShort: "Missing case id.",
 },
 
+actions: {
+    continueToStep: "Continue to {step} →",
+    goToStep: "Go to {step} →",
+    reviewComplete: "Review complete",
+  },
     viewOnly: "View-only access (you can’t edit this case).",
     startFailed: "Couldn’t start application. Try refresh.",
     missingCaseId: "Created, but missing case ID.",

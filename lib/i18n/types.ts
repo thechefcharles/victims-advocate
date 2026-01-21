@@ -183,6 +183,12 @@ export type I18nDict = {
       missingCaseIdShort: string;
     };
 
+    actions: {
+    continueToStep: string;
+    goToStep: string;
+    reviewComplete: string;
+  };
+
     viewOnly: string;
     startFailed: string;
     missingCaseId: string;

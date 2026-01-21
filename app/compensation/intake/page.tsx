@@ -134,8 +134,7 @@ function CompensationIntakeInner() {
     const router = useRouter();
   const searchParams = useSearchParams();
 const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
-const { t, lang } = useI18n();
-
+const { t, tf, lang } = useI18n();
 
   useEffect(() => {
   (async () => {
@@ -668,12 +667,13 @@ alert(t("intake.saveCase.unexpected"));
       const res = await fetch("/api/nxtguide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: newMessages,
-          currentRoute: "/compensation/intake",
-          currentStep: step,
-          application: app,
-        }),
+body: JSON.stringify({
+  messages: newMessages,
+  currentRoute: "/compensation/intake",
+  currentStep: step,
+  application: app,
+  locale: lang,
+}),
       });
 
       if (!res.ok) {
@@ -813,30 +813,28 @@ const handleBack = () => {
         {/* Header */}
         <header className="space-y-2">
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            Guided Intake · Early Draft
+            {t("intake.header.badge")}
           </p>
 
           {isReadOnly && (
   <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-    View-only access: you can review this case, but you can’t edit or save changes.
+      {t("intake.viewOnlyBanner")}
   </div>
 )}
           <h1 className="text-2xl sm:text-3xl font-bold">
-            Tell us about the victim, the incident, and what you need help with
+            {t("intake.header.title")}
           </h1>
           <p className="text-sm text-slate-300">
-            We&apos;ll move slowly through the same sections that appear in the
-            Illinois Crime Victims Compensation application, but in plain
-            language. You can pause any time.
+          {t("intake.header.subtitle")}
           </p>
 
         <p className="text-[11px] text-slate-500">
-  Need more context about this program?{" "}
+{t("intake.header.needMoreContext")}{" "}
   <a
     href="/knowledge/compensation"
     className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
   >
-    Learn how Illinois CVC works.
+{t("intake.header.learnLink")}
   </a>
 </p>
         </header>
@@ -917,7 +915,7 @@ const handleBack = () => {
     disabled={step === "victim"}
     className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
   >
-    ← Back
+{t("intake.actions.back")}
   </button>
 
   <button
@@ -925,13 +923,19 @@ const handleBack = () => {
     onClick={handleSaveNow}
     disabled={saveNowLoading || !caseId || !canEdit}
     className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
-    title={!caseId ? "Creating your case..." : !canEdit ? "View-only access" : ""}
+title={
+  !caseId
+    ? t("intake.actions.creatingCase")
+    : !canEdit
+    ? t("intake.actions.viewOnlyTitle")
+    : ""
+}
   >
-    {saveNowLoading ? "Saving..." : "Save"}
+{saveNowLoading ? t("intake.actions.saving") : t("intake.actions.save")}
   </button>
 
   {caseId && canEdit && savingCase && (
-    <span className="text-[11px] text-slate-400">Auto-saving…</span>
+    <span className="text-[11px] text-slate-400">{t("intake.actions.autoSaving")}</span>
   )}
 </div>
 
@@ -943,7 +947,7 @@ const handleBack = () => {
         onClick={handleNextFromVictim}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Applicant →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.applicant") })}
       </button>
     )}
 
@@ -953,7 +957,7 @@ const handleBack = () => {
         onClick={handleNextFromApplicant}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Crime Details →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.crime") })}
       </button>
     )}
 
@@ -963,7 +967,7 @@ const handleBack = () => {
         onClick={handleNextFromCrime}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Losses →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.losses") })}
       </button>
     )}
 
@@ -973,7 +977,7 @@ const handleBack = () => {
         onClick={handleNextFromLosses}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Medical →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.medical") })}
       </button>
     )}
 
@@ -983,7 +987,7 @@ const handleBack = () => {
         onClick={handleNextFromMedical}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Work &amp; income →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.employment") })}
       </button>
     )}
 
@@ -993,7 +997,7 @@ const handleBack = () => {
         onClick={handleNextFromEmployment}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Continue to Funeral &amp; dependents →
+{tf("intake.actions.continueToStep", { step: t("intake.steps.funeral") })}
       </button>
     )}
 
@@ -1003,7 +1007,7 @@ const handleBack = () => {
         onClick={handleNextFromFuneral}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Go to Documents →
+{tf("intake.actions.goToStep", { step: t("intake.steps.documents") })}
       </button>
     )}
 
@@ -1013,25 +1017,26 @@ const handleBack = () => {
         onClick={() => setStep("summary")}
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Go to Summary →
+{tf("intake.actions.goToStep", { step: t("intake.steps.summary") })}
       </button>
     )}
 
     {step === "summary" && (
       <button
         type="button"
-        onClick={() => setSaveToast("You're already in the final review. Use Save if needed.")}
+        onClick={() => setSaveToast(t("intake.summary.alreadyFinalReview"))
+
+        }
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
       >
-        Review complete
+{t("intake.actions.reviewComplete")}
       </button>
     )}
   </div>
 </div>
 
         <p className="text-[11px] text-slate-500">
-          You are not submitting anything to the state yet. This is preparing a
-          draft packet that you can review and send when you are ready.
+{t("intake.footer.draftDisclaimer")}
         </p>
       </div>
 
@@ -1043,7 +1048,7 @@ const handleBack = () => {
               <div className="text-[11px]">
                 <div className="font-semibold text-slate-50">NxtGuide</div>
                 <div className="text-slate-300">
-                  Here to help with this step
+{t("nxtGuide.subtitle")}
                 </div>
               </div>
               <button
@@ -1057,15 +1062,12 @@ const handleBack = () => {
 
             <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-[11px]">
               {chatMessages.length === 0 && (
-                <p className="text-slate-400">
-                  You can ask me things like:
-                  <br />
-                  • “What is this step about?”
-                  <br />
-                  • “What happens after I finish this section?”
-                  <br />
-                  • “What if I don&apos;t have all my documents yet?”
-                </p>
+<p>
+  {t("nxtGuide.empty.title")}<br/>
+  • {t("nxtGuide.empty.q1")}<br/>
+  • {t("nxtGuide.empty.q2")}<br/>
+  • {t("nxtGuide.empty.q3")}<br/>
+</p>
               )}
               {chatMessages.map((m, idx) => (
                 <div
@@ -1087,7 +1089,7 @@ const handleBack = () => {
               ))}
               {chatLoading && (
                 <p className="text-[11px] text-slate-400">
-                  NxtGuide is typing…
+{t("nxtGuide.typing")}
                 </p>
               )}
             </div>
@@ -1097,7 +1099,7 @@ const handleBack = () => {
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask NxtGuide about this step..."
+placeholder={t("nxtGuide.placeholders.ask")}
                 className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
               />
             </form>
@@ -1108,7 +1110,7 @@ const handleBack = () => {
             onClick={() => setChatOpen(true)}
             className="inline-flex items-center rounded-full bg-[#1C8C8C] px-3 py-2 text-[11px] font-semibold text-slate-950 shadow-md shadow-black/40 hover:bg-[#21a3a3] transition"
           >
-            Need help on this step?
+{t("nxtGuide.floating.needHelpOnThisStep")}
           </button>
         )}
       </div>
@@ -2869,7 +2871,7 @@ function SummaryView({
   onDownloadOfficialIlPdf: () => void;
   onSaveCase: () => void;
 }) {
-  const { t } = useI18n(); // ✅ NEW
+  const { t, tf } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -2921,7 +2923,7 @@ function SummaryView({
 
       // ✅ Use i18n template so Spanish reads naturally
       setInviteResult(
-        t("forms.summary.invite.success", { url: json.shareUrl })
+    tf("forms.summary.invite.success", { url: json.shareUrl })
       );
     } catch (e: any) {
       setInviteResult(
