@@ -611,6 +611,15 @@ applicant: {
       "If the victim is a minor or an incapacitated adult, do you have legal guardianship for them?",
     noNotSure: "No / Not sure",
   },
+
+  // NEW: Seeking own expenses
+  seekingOwnExpenses: {
+    question: "Are you seeking compensation for your own expenses?",
+  },
+  descriptionOfExpensesSought: {
+    label: "If no, what expenses are you requesting compensation for?",
+    placeholder: "Describe the expenses you are requesting compensation for...",
+  },
 },
 
   employment: {
@@ -639,7 +648,7 @@ applicant: {
   missedWorkToLabel: "Missed work to (optional)",
 
   disabilityFromCrimeLabel: "Did the crime cause a disability that affects work?",
-},
+  },
 employmentExtended: {
   title: "Work & income (loss of earnings)",
   description:
@@ -658,6 +667,12 @@ employmentExtended: {
       "After the crime, did you receive sick time, vacation, disability, or other paid benefits?",
     notesLabel:
       "If you remember, briefly describe (for example: 2 weeks sick pay, 3 days vacation)...",
+    // NEW: Benefit breakdown fields
+    sickPayLabel: "Sick $",
+    vacationPayLabel: "Vacation $",
+    personalTimeLabel: "Personal $",
+    disabilityPayLabel: "Disability $",
+    otherBenefitLabel: "Other $",
   },
 
   noNotSure: "No / Not sure",
@@ -666,6 +681,31 @@ employmentExtended: {
     "In a later version, you'll be able to add more jobs and more detail here.",
 
   uploaderContextLabel: "work and income (pay stubs, employer letters)",
+},
+
+contact: {
+  title: "Contact information",
+  description:
+    "Help us reach you and work with your advocate if you have one.",
+
+  prefersEnglishQuestion: "Is English your preferred language?",
+  preferredLanguageLabel: "If no, language you are most comfortable speaking:",
+  preferredLanguagePlaceholder: "e.g. Spanish, Polish, etc.",
+
+  workingWithAdvocateQuestion: "Are you working with an advocate?",
+  advocateNameLabel: "Advocate name",
+  advocatePhoneLabel: "Advocate telephone",
+  advocateOrganizationLabel: "Advocate organization",
+  advocateEmailLabel: "Advocate email address",
+
+  consentToTalkToAdvocateQuestion:
+    "Do you consent to allow the Attorney General's Office to discuss your claim with your advocate or obtain documents required for your claim?",
+
+  alternateContactQuestion:
+    "Is there another person you would prefer us to contact to discuss your claim?",
+  alternateContactNameLabel: "Alternate contact name",
+  alternateContactPhoneLabel: "Alternate contact telephone",
+  alternateContactRelationshipLabel: "Relationship to you",
 },
 
 court: {
@@ -693,6 +733,9 @@ court: {
 
   humanTraffickingQuestion:
     "Has the offender been involved in a human trafficking court proceeding related to this incident?",
+
+  humanTraffickingTestifiedQuestion:
+    "Were you required to testify for the Human Trafficking court case?",
 
   humanTraffickingCaseNumberLabel: "Human trafficking case number (if known)",
   humanTraffickingCaseOutcomeLabel: "Outcome of the human trafficking case (if known)",
@@ -792,6 +835,22 @@ funeralExtended: {
     "In a later version, you'll be able to add each dependent here and link them to loss-of-support claims.",
 
   uploaderContextLabel: "funeral, burial, and dependents",
+
+  // NEW: Death benefits section
+  deathBenefits: {
+    title: "Death benefits",
+    description:
+      "If the victim died, please provide information about any death benefits received.",
+    deathBenefitChicagoFundLabel: "Death Benefit From City of Chicago Fund $",
+    lifeHealthAccidentInsuranceLabel:
+      "Life, health accident, vehicle towing, or liability insurance $",
+    unemploymentPaymentsLabel: "Unemployment Payments $",
+    veteransSocialSecurityBurialLabel:
+      "Veterans or Social Security Burial Benefits $",
+    workersCompDramShopLabel: "Worker's Compensation or Dram Shop $",
+    federalMedicarePublicAidLabel:
+      "Federal Medicare or State Public Aid Program $",
+  },
 },
 
 losses: {
@@ -1222,6 +1281,14 @@ approxBillAmount: "Approx. bill amount",
     certification: "Certification",
   },
 
+  crime: {
+    dateOfCrime: "Date of crime",
+    location: "Location",
+    cityCounty: "City / County",
+    reportedTo: "Reported to",
+    policeReportNumber: "Police report #",
+  },
+
   labels: {
     name: "Name",
     dob: "DOB",
@@ -1251,6 +1318,33 @@ approxBillAmount: "Approx. bill amount",
     other: "Other",
     otherYes: "Yes ({desc})",
     estimatedTotal: "Estimated total",
+    // NEW: Specific loss type keys used by SummaryView
+    medicalHospital: "Medical/Hospital",
+    dental: "Dental",
+    transportation: "Transportation",
+    accessibilityCosts: "Accessibility Costs",
+    crimeSceneCleanup: "Crime Scene Cleanup",
+    relocationCosts: "Relocation Costs",
+    temporaryLodging: "Temporary Lodging",
+    tattooRemoval: "Tattoo Removal",
+    lossOfEarnings: "Loss of Earnings",
+    tuition: "Tuition",
+    replacementServiceLoss: "Replacement Service Loss",
+    locks: "Locks",
+    windows: "Windows",
+    clothing: "Clothing",
+    bedding: "Bedding",
+    prostheticAppliances: "Prosthetic Appliances",
+    eyeglassesContacts: "Eyeglasses/Contacts",
+    hearingAids: "Hearing Aids",
+    replacementCosts: "Replacement Costs",
+    lossOfSupport: "Loss of Support",
+    towingStorage: "Towing and Storage",
+    funeralBurial: "Funeral/Burial",
+    lossOfFutureEarnings: "Loss of Future Earnings",
+    legalFees: "Legal Fees",
+    doors: "Doors",
+    headstone: "Headstone",
   },
 
   medical: {
@@ -1261,6 +1355,9 @@ approxBillAmount: "Approx. bill amount",
     counseling: "Counseling",
     provider: "Counseling provider",
     sessions: "Sessions",
+    // NEW: Keys used by SummaryView
+    cityPhone: "City / Phone",
+    serviceDates: "Dates of service",
     // Alias for UI key used in SummaryView
     amount: "Approx. bill amount",
     // Alias for when no primary provider is entered
@@ -1273,6 +1370,9 @@ approxBillAmount: "Approx. bill amount",
     missedWork: "Missed work",
     missedDates: "Dates missed",
     disabilityFromCrime: "Disability from crime",
+    // NEW: Keys used by SummaryView
+    employerPhone: "Employer phone",
+    netMonthlyWages: "Net monthly wages",
     // Alias for when no employment info is entered
     noneEntered: "No work info entered yet.",
   },
@@ -1281,9 +1381,13 @@ approxBillAmount: "Approx. bill amount",
     victimDeceased: "Victim deceased",
     funeralHome: "Funeral home",
     funeralPhone: "Funeral home phone",
+    funeralHomePhone: "Funeral home phone", // NEW: Alias for SummaryView
     dependentsPresent: "Dependents present",
     dependentCount: "Dependent count",
     dependentNotes: "Dependent notes",
+    // NEW: Keys used by SummaryView
+    payer: "Payer",
+    noPayer: "No payer entered yet.",
     // Aliases used by SummaryView
     totalBill: "Total funeral bill",
     amountPaid: "Amount paid so far",

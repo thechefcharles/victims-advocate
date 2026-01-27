@@ -612,6 +612,15 @@ export const es: I18nDict = {
                     "Si la víctima es menor de edad o un adulto incapacitado, ¿tienes tutela legal?",
                 noNotSure: "No / No estoy seguro/a",
             },
+
+            // NEW: Seeking own expenses
+            seekingOwnExpenses: {
+                question: "¿Estás solicitando compensación por tus propios gastos?",
+            },
+            descriptionOfExpensesSought: {
+                label: "Si no, ¿qué gastos estás solicitando compensación?",
+                placeholder: "Describe los gastos por los que estás solicitando compensación...",
+            },
         },
         employment: {
             title: "Trabajo e ingresos",
@@ -660,6 +669,12 @@ export const es: I18nDict = {
                     "Después del delito, ¿recibiste tiempo por enfermedad, vacaciones, discapacidad u otros beneficios pagados?",
                 notesLabel:
                     "Si lo recuerdas, descríbelo brevemente (por ejemplo: 2 semanas de pago por enfermedad, 3 días de vacaciones)...",
+                // NEW: Benefit breakdown fields
+                sickPayLabel: "Enfermedad $",
+                vacationPayLabel: "Vacaciones $",
+                personalTimeLabel: "Personal $",
+                disabilityPayLabel: "Discapacidad $",
+                otherBenefitLabel: "Otro $",
             },
 
             noNotSure: "No / No estoy seguro/a",
@@ -764,6 +779,22 @@ export const es: I18nDict = {
                 "En una versión posterior, podrás agregar a cada dependiente aquí y vincularlos a reclamos por pérdida de apoyo.",
 
             uploaderContextLabel: "funeral, entierro y dependientes",
+
+            // NEW: Death benefits section
+            deathBenefits: {
+                title: "Beneficios por muerte",
+                description:
+                    "Si la víctima falleció, por favor proporciona información sobre cualquier beneficio por muerte recibido.",
+                deathBenefitChicagoFundLabel: "Beneficio por Muerte del Fondo de la Ciudad de Chicago $",
+                lifeHealthAccidentInsuranceLabel:
+                    "Seguro de vida, salud, accidentes, remolque de vehículos o responsabilidad civil $",
+                unemploymentPaymentsLabel: "Pagos de Desempleo $",
+                veteransSocialSecurityBurialLabel:
+                    "Beneficios de Entierro de Veteranos o Seguro Social $",
+                workersCompDramShopLabel: "Compensación Laboral o Dram Shop $",
+                federalMedicarePublicAidLabel:
+                    "Medicare Federal o Programa de Asistencia Pública Estatal $",
+            },
         },
 
         losses: {
@@ -925,6 +956,31 @@ export const es: I18nDict = {
                 "En una versión posterior, podrás agregar más proveedores aquí, o tu defensor/a puede adjuntar una lista completa.",
 
             uploaderContextLabel: "facturas médicas y de consejería",
+        },
+
+        contact: {
+            title: "Información de contacto",
+            description:
+                "Ayúdanos a contactarte y trabajar con tu defensor si tienes uno.",
+
+            prefersEnglishQuestion: "¿Es el inglés tu idioma preferido?",
+            preferredLanguageLabel: "Si no, idioma en el que te sientes más cómodo hablando:",
+            preferredLanguagePlaceholder: "ej. Español, Polaco, etc.",
+
+            workingWithAdvocateQuestion: "¿Estás trabajando con un defensor?",
+            advocateNameLabel: "Nombre del defensor",
+            advocatePhoneLabel: "Teléfono del defensor",
+            advocateOrganizationLabel: "Organización del defensor",
+            advocateEmailLabel: "Correo electrónico del defensor",
+
+            consentToTalkToAdvocateQuestion:
+                "¿Consientes que la Oficina del Fiscal General discuta tu reclamo con tu defensor u obtenga documentos requeridos para tu reclamo?",
+
+            alternateContactQuestion:
+                "¿Hay otra persona con la que prefieras que nos contactemos para discutir tu reclamo?",
+            alternateContactNameLabel: "Nombre del contacto alternativo",
+            alternateContactPhoneLabel: "Teléfono del contacto alternativo",
+            alternateContactRelationshipLabel: "Relación contigo",
         },
 
         court: {
@@ -1267,6 +1323,33 @@ export const es: I18nDict = {
                 other: "Otro",
                 otherYes: "Sí ({desc})",
                 estimatedTotal: "Total estimado",
+                // NEW: Claves específicas de tipos de pérdidas usadas por SummaryView
+                medicalHospital: "Médico/Hospital",
+                dental: "Dental",
+                transportation: "Transporte",
+                accessibilityCosts: "Costos de Accesibilidad",
+                crimeSceneCleanup: "Limpieza de Escena del Crimen",
+                relocationCosts: "Costos de Reubicación",
+                temporaryLodging: "Alojamiento Temporal",
+                tattooRemoval: "Remoción de Tatuajes",
+                lossOfEarnings: "Pérdida de Ingresos",
+                tuition: "Matrícula",
+                replacementServiceLoss: "Pérdida de Servicio de Reemplazo",
+                locks: "Cerraduras",
+                windows: "Ventanas",
+                clothing: "Ropa",
+                bedding: "Ropa de Cama",
+                prostheticAppliances: "Aparatos Protésicos",
+                eyeglassesContacts: "Lentes/Contactos",
+                hearingAids: "Audífonos",
+                replacementCosts: "Costos de Reemplazo",
+                lossOfSupport: "Pérdida de Apoyo",
+                towingStorage: "Remolque y Almacenamiento",
+                funeralBurial: "Funeral/Entierro",
+                lossOfFutureEarnings: "Pérdida de Ingresos Futuros",
+                legalFees: "Honorarios Legales",
+                doors: "Puertas",
+                headstone: "Lápida",
             },
 
             medical: {
@@ -1278,6 +1361,9 @@ export const es: I18nDict = {
                 sessions: "Sesiones",
                 // Campos usados en algunos resúmenes/instantáneas (mantener)
                 provider: "Proveedor",
+                // NEW: Claves usadas por SummaryView
+                cityPhone: "Ciudad / Teléfono",
+                serviceDates: "Fechas de servicio",
                 // Alias para la clave usada en SummaryView
                 amount: "Monto aproximado de la factura",
                 // Alias cuando no hay proveedor principal
@@ -1290,6 +1376,9 @@ export const es: I18nDict = {
                 missedWork: "Faltó al trabajo",
                 missedDates: "Fechas faltadas",
                 disabilityFromCrime: "Discapacidad por el delito",
+                // NEW: Claves usadas por SummaryView
+                employerPhone: "Teléfono del empleador",
+                netMonthlyWages: "Ingresos netos mensuales",
                 // Alias cuando no hay información de trabajo
                 noneEntered: "Aún no se ingresó información de trabajo.",
             },
@@ -1298,9 +1387,13 @@ export const es: I18nDict = {
                 victimDeceased: "La víctima falleció",
                 funeralHome: "Funeraria",
                 funeralPhone: "Teléfono de la funeraria",
+                funeralHomePhone: "Teléfono de la funeraria", // NEW: Alias para SummaryView
                 dependentsPresent: "Hay dependientes",
                 dependentCount: "Cantidad de dependientes",
                 dependentNotes: "Notas sobre dependientes",
+                // NEW: Claves usadas por SummaryView
+                payer: "Pagador",
+                noPayer: "Aún no se ingresó ningún pagador.",
                 // Alias usados por SummaryView
                 totalBill: "Total de la factura del funeral",
                 amountPaid: "Monto pagado hasta ahora",

@@ -82,6 +82,7 @@ export interface CourtInfo {
   restitutionOrdered?: boolean | null;
   restitutionAmount?: number;
   humanTraffickingCaseFiled?: boolean | null;
+  humanTraffickingTestified?: boolean | null; // NEW: separate testimony question for human trafficking case
   humanTraffickingCaseOutcome?: string;
   humanTraffickingCaseNumber?: string;
 }
@@ -173,6 +174,12 @@ export interface EmploymentInfo {
   employmentHistory: EmploymentRecord[];
   receivedSickOrVacationOrDisability?: boolean;
   benefitNotes?: string; // e.g. "2 weeks sick pay, 3 days vacation"
+  // NEW: Breakdown of benefit amounts (for PDF form)
+  sickPayAmount?: number;
+  vacationPayAmount?: number;
+  personalTimeAmount?: number;
+  disabilityPayAmount?: number;
+  otherBenefitAmount?: number;
 }
 
 // SECTION 6 – Funeral (simplified)
@@ -189,16 +196,23 @@ export interface Dependent {
   guardianNamePhone?: string;
 }
 
+export interface CemeteryPayment {
+  payerName: string;
+  relationshipToVictim?: string;
+  amountPaid: number;
+}
+
 export interface FuneralInfo {
   funeralHomeName?: string;
   funeralHomePhone?: string;
   funeralBillTotal?: number;
-  payments: FuneralPayment[];
+  payments: FuneralPayment[]; // Funeral payers (up to 5)
 
   // Cemetery
   cemeteryName?: string;
   cemeteryPhone?: string;
   cemeteryBillTotal?: number;
+  cemeteryPayments?: CemeteryPayment[]; // NEW: Cemetery payers (up to 5)
 
   // Chicago ESVF (funeral fund)
   receivedChicagoESVF?: boolean;
@@ -210,6 +224,14 @@ export interface FuneralInfo {
   lifeInsuranceBeneficiary?: string;
   lifeInsuranceBeneficiaryPhone?: string;
   lifeInsuranceAmountPaid?: number;
+
+  // NEW: Death benefits section (from PDF Section 6)
+  deathBenefitChicagoFund?: number; // Death Benefit From City of Chicago Fund
+  lifeHealthAccidentInsurance?: number; // Life, health accident, vehicle towing, or liability insurance
+  unemploymentPayments?: number;
+  veteransSocialSecurityBurial?: number; // Veterans or Social Security Burial Benefits
+  workersCompDramShop?: number; // Worker's Compensation or Dram Shop
+  federalMedicarePublicAid?: number; // Federal Medicare or State Public Aid Program
 
   // Loss of support dependents
   dependents?: Dependent[];

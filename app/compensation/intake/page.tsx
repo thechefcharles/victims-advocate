@@ -119,9 +119,23 @@ const makeEmptyApplication = (): CompensationApplication => ({
   employment: {
     isApplyingForLossOfEarnings: false,
     employmentHistory: [],
+    // NEW: Benefit breakdown
+    sickPayAmount: undefined,
+    vacationPayAmount: undefined,
+    personalTimeAmount: undefined,
+    disabilityPayAmount: undefined,
+    otherBenefitAmount: undefined,
   },
   funeral: {
     payments: [],
+    cemeteryPayments: [], // NEW: Cemetery payers
+    // NEW: Death benefits
+    deathBenefitChicagoFund: undefined,
+    lifeHealthAccidentInsurance: undefined,
+    unemploymentPayments: undefined,
+    veteransSocialSecurityBurial: undefined,
+    workersCompDramShop: undefined,
+    federalMedicarePublicAid: undefined,
   },
   certification: {
     acknowledgesSubrogation: false,
@@ -413,13 +427,14 @@ useEffect(() => {
 
 const victim = app.victim;
 const applicant = app.applicant;
+const contact = app.contact; // NEW
 const crime = app.crime;
 const certification = app.certification;
-const court = app.court; // 👈 ADD THIS // 👈 ADD THIS
+const court = app.court;
 const losses = app.losses;
 const medical = app.medical;
-const employment = app.employment; // 👈 ADD THIS
-const funeral = app.funeral; // 👈 ADD THIS
+const employment = app.employment;
+const funeral = app.funeral;
 
 const guardPatch =
   <T,>(fn: (patch: Partial<T>) => void) =>
@@ -439,6 +454,10 @@ const updateVictim = guardPatch<VictimInfo>((patch) => {
 
 const updateApplicant = guardPatch<ApplicantInfo>((patch) => {
   setApp((prev) => ({ ...prev, applicant: { ...prev.applicant, ...patch } }));
+});
+
+const updateContact = guardPatch<AdvocateContact>((patch) => {
+  setApp((prev) => ({ ...prev, contact: { ...prev.contact, ...patch } }));
 });
 
 const updateCrime = guardPatch<CrimeInfo>((patch) => {
@@ -858,7 +877,10 @@ const handleBack = () => {
 )}
 
 {step === "applicant" && (
-<ApplicantForm applicant={applicant} onChange={updateApplicant} isReadOnly={isReadOnly} />
+  <>
+    <ApplicantForm applicant={applicant} onChange={updateApplicant} isReadOnly={isReadOnly} />
+    <ContactForm contact={contact} onChange={updateContact} isReadOnly={isReadOnly} />
+  </>
 )}
 
 {step === "crime" && (
@@ -1493,6 +1515,52 @@ function ApplicantForm({
             />
           </div>
 
+          {/* NEW: Seeking own expenses question */}
+          <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
+            <p className="text-slate-200">
+              {t("forms.applicant.seekingOwnExpenses.question")}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() =>
+                  !isReadOnly && onChange({ seekingOwnExpenses: true })
+                }
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  applicant.seekingOwnExpenses === true
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.yes")}
+              </button>
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() =>
+                  !isReadOnly && onChange({ seekingOwnExpenses: false })
+                }
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  applicant.seekingOwnExpenses === false
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.no")}
+              </button>
+            </div>
+            {applicant.seekingOwnExpenses === false && (
+              <Field
+                label={t("forms.applicant.descriptionOfExpensesSought.label")}
+                placeholder={t("forms.applicant.descriptionOfExpensesSought.placeholder")}
+                value={applicant.descriptionOfExpensesSought ?? ""}
+                onChange={(v) => onChange({ descriptionOfExpensesSought: v })}
+                disabled={isReadOnly}
+              />
+            )}
+          </div>
+
           <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
             <p className="text-slate-200">
               {t("forms.applicant.legalGuardianship.question")}
@@ -1532,6 +1600,252 @@ function ApplicantForm({
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+function ContactForm({
+  contact,
+  onChange,
+  isReadOnly,
+}: {
+  contact: AdvocateContact;
+  onChange: (patch: Partial<AdvocateContact>) => void;
+  isReadOnly: boolean;
+}) {
+  const { t } = useI18n();
+  const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
+  return (
+    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
+      <h2 className="text-lg font-semibold text-slate-50">
+        {t("forms.contact.title")}
+      </h2>
+
+      <p className="text-xs text-slate-300">{t("forms.contact.description")}</p>
+
+      {/* Language preference */}
+      <div className="space-y-2 text-xs">
+        <p className="text-slate-200">
+          {t("forms.contact.prefersEnglishQuestion")}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ prefersEnglish: true })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              contact.prefersEnglish === true
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.yes")}
+          </button>
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() => !isReadOnly && onChange({ prefersEnglish: false })}
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              contact.prefersEnglish === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.no")}
+          </button>
+        </div>
+        {contact.prefersEnglish === false && (
+          <Field
+            label={t("forms.contact.preferredLanguageLabel")}
+            placeholder={t("forms.contact.preferredLanguagePlaceholder")}
+            value={contact.preferredLanguage ?? ""}
+            onChange={(v) => onChange({ preferredLanguage: v })}
+            disabled={isReadOnly}
+          />
+        )}
+      </div>
+
+      {/* Working with advocate */}
+      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
+        <p className="text-slate-200">
+          {t("forms.contact.workingWithAdvocateQuestion")}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() =>
+              !isReadOnly && onChange({ workingWithAdvocate: true })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              contact.workingWithAdvocate === true
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.yes")}
+          </button>
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() =>
+              !isReadOnly && onChange({ workingWithAdvocate: false })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              contact.workingWithAdvocate === false
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.no")}
+          </button>
+        </div>
+
+        {contact.workingWithAdvocate && (
+          <div className="space-y-3 pt-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label={t("forms.contact.advocateNameLabel")}
+                value={contact.advocateName ?? ""}
+                onChange={(v) => onChange({ advocateName: v })}
+                disabled={isReadOnly}
+              />
+              <Field
+                label={t("forms.contact.advocatePhoneLabel")}
+                placeholder={t("fields.cellPhone.placeholder")}
+                value={contact.advocatePhone ?? ""}
+                onChange={(v) => onChange({ advocatePhone: v })}
+                disabled={isReadOnly}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label={t("forms.contact.advocateOrganizationLabel")}
+                value={contact.advocateOrganization ?? ""}
+                onChange={(v) => onChange({ advocateOrganization: v })}
+                disabled={isReadOnly}
+              />
+              <Field
+                label={t("forms.contact.advocateEmailLabel")}
+                type="email"
+                value={contact.advocateEmail ?? ""}
+                onChange={(v) => onChange({ advocateEmail: v })}
+                disabled={isReadOnly}
+              />
+            </div>
+
+            {/* Consent to talk to advocate */}
+            <div className="space-y-2 pt-2">
+              <p className="text-slate-200">
+                {t("forms.contact.consentToTalkToAdvocateQuestion")}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() =>
+                    !isReadOnly && onChange({ consentToTalkToAdvocate: true })
+                  }
+                  className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                    contact.consentToTalkToAdvocate === true
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  {t("common.yes")}
+                </button>
+                <button
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() =>
+                    !isReadOnly && onChange({ consentToTalkToAdvocate: false })
+                  }
+                  className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                    contact.consentToTalkToAdvocate === false
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  {t("common.no")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Alternate contact */}
+      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
+        <p className="text-slate-200">
+          {t("forms.contact.alternateContactQuestion")}
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() =>
+              !isReadOnly &&
+              onChange({
+                alternateContactName: contact.alternateContactName ? contact.alternateContactName : "",
+              })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              contact.alternateContactName
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.yes")}
+          </button>
+          <button
+            type="button"
+            disabled={isReadOnly}
+            onClick={() =>
+              !isReadOnly &&
+              onChange({
+                alternateContactName: undefined,
+                alternateContactPhone: undefined,
+                alternateContactRelationship: undefined,
+              })
+            }
+            className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+              !contact.alternateContactName
+                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                : "border-slate-700 bg-slate-900 text-slate-300"
+            }`}
+          >
+            {t("common.no")}
+          </button>
+        </div>
+
+        {contact.alternateContactName && (
+          <div className="space-y-3 pt-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label={t("forms.contact.alternateContactNameLabel")}
+                value={contact.alternateContactName ?? ""}
+                onChange={(v) => onChange({ alternateContactName: v })}
+                disabled={isReadOnly}
+              />
+              <Field
+                label={t("forms.contact.alternateContactPhoneLabel")}
+                placeholder={t("fields.cellPhone.placeholder")}
+                value={contact.alternateContactPhone ?? ""}
+                onChange={(v) => onChange({ alternateContactPhone: v })}
+                disabled={isReadOnly}
+              />
+            </div>
+            <Field
+              label={t("forms.contact.alternateContactRelationshipLabel")}
+              placeholder={t("forms.applicant.relationshipPlaceholder")}
+              value={contact.alternateContactRelationship ?? ""}
+              onChange={(v) => onChange({ alternateContactRelationship: v })}
+              disabled={isReadOnly}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
@@ -1944,6 +2258,43 @@ function CourtForm({
 
         {court.humanTraffickingCaseFiled && (
           <>
+            {/* NEW: Human trafficking testimony question */}
+            <div className="space-y-2 pt-2">
+              <p className="text-slate-200">
+                {t("forms.court.humanTraffickingTestifiedQuestion")}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() =>
+                    !isReadOnly && onChange({ humanTraffickingTestified: true })
+                  }
+                  className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                    court.humanTraffickingTestified === true
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  {t("common.yes")}
+                </button>
+                <button
+                  type="button"
+                  disabled={isReadOnly}
+                  onClick={() =>
+                    !isReadOnly && onChange({ humanTraffickingTestified: false })
+                  }
+                  className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                    court.humanTraffickingTestified === false
+                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      : "border-slate-700 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  {t("forms.court.noNotSure")}
+                </button>
+              </div>
+            </div>
+
             <Field
               label={t("forms.court.humanTraffickingCaseNumberLabel")}
               value={court.humanTraffickingCaseNumber ?? ""}
@@ -2475,12 +2826,72 @@ function EmploymentForm({
           </div>
 
           {employment.receivedSickOrVacationOrDisability && (
-            <Field
-              label={t("forms.employmentExtended.benefits.notesLabel")}
-              value={employment.benefitNotes || ""}
-              onChange={(v) => !isReadOnly && onChange({ benefitNotes: v })}
-              disabled={isReadOnly}
-            />
+            <>
+              <Field
+                label={t("forms.employmentExtended.benefits.notesLabel")}
+                value={employment.benefitNotes || ""}
+                onChange={(v) => !isReadOnly && onChange({ benefitNotes: v })}
+                disabled={isReadOnly}
+              />
+              {/* NEW: Benefit breakdown fields */}
+              <div className="grid gap-3 sm:grid-cols-2 pt-2">
+                <Field
+                  label={t("forms.employmentExtended.benefits.sickPayLabel")}
+                  placeholder="0"
+                  value={employment.sickPayAmount?.toString() ?? ""}
+                  onChange={(v) =>
+                    onChange({
+                      sickPayAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+                <Field
+                  label={t("forms.employmentExtended.benefits.vacationPayLabel")}
+                  placeholder="0"
+                  value={employment.vacationPayAmount?.toString() ?? ""}
+                  onChange={(v) =>
+                    onChange({
+                      vacationPayAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+                <Field
+                  label={t("forms.employmentExtended.benefits.personalTimeLabel")}
+                  placeholder="0"
+                  value={employment.personalTimeAmount?.toString() ?? ""}
+                  onChange={(v) =>
+                    onChange({
+                      personalTimeAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+                <Field
+                  label={t("forms.employmentExtended.benefits.disabilityPayLabel")}
+                  placeholder="0"
+                  value={employment.disabilityPayAmount?.toString() ?? ""}
+                  onChange={(v) =>
+                    onChange({
+                      disabilityPayAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+                <Field
+                  label={t("forms.employmentExtended.benefits.otherBenefitLabel")}
+                  placeholder="0"
+                  value={employment.otherBenefitAmount?.toString() ?? ""}
+                  onChange={(v) =>
+                    onChange({
+                      otherBenefitAmount: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+                    })
+                  }
+                  disabled={isReadOnly}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -2789,6 +3200,84 @@ function FuneralForm({
             />
           </div>
         )}
+      </div>
+
+      {/* NEW: Death benefits */}
+      <div className="space-y-3 pt-3 border-t border-slate-800 text-xs">
+        <h3 className="font-semibold text-slate-100">
+          {t("forms.funeralExtended.deathBenefits.title")}
+        </h3>
+        <p className="text-slate-300 text-[11px]">
+          {t("forms.funeralExtended.deathBenefits.description")}
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.deathBenefitChicagoFundLabel")}
+            placeholder="0"
+            value={funeral.deathBenefitChicagoFund?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                deathBenefitChicagoFund: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.lifeHealthAccidentInsuranceLabel")}
+            placeholder="0"
+            value={funeral.lifeHealthAccidentInsurance?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                lifeHealthAccidentInsurance: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.unemploymentPaymentsLabel")}
+            placeholder="0"
+            value={funeral.unemploymentPayments?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                unemploymentPayments: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.veteransSocialSecurityBurialLabel")}
+            placeholder="0"
+            value={funeral.veteransSocialSecurityBurial?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                veteransSocialSecurityBurial: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.workersCompDramShopLabel")}
+            placeholder="0"
+            value={funeral.workersCompDramShop?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                workersCompDramShop: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+          <Field
+            label={t("forms.funeralExtended.deathBenefits.federalMedicarePublicAidLabel")}
+            placeholder="0"
+            value={funeral.federalMedicarePublicAid?.toString() ?? ""}
+            onChange={(v) =>
+              onChange({
+                federalMedicarePublicAid: v ? Number(v.replace(/[^0-9.]/g, "")) : undefined,
+              })
+            }
+            disabled={isReadOnly}
+          />
+        </div>
       </div>
 
       {/* Dependents */}
