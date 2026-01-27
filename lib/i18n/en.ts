@@ -510,39 +510,69 @@ intake: {
     },
 
     documents: {
-  title: "Documents",
-  description: "Check off what you already have. This helps prevent delays and denials.",
-  descriptionDraft: "Track what documents you have (uploads can be wired in next).",
+      title: "Documents",
+      description:
+        "Check off what you already have. This helps prevent delays and denials.",
+      descriptionDraft:
+        "Track what documents you have (uploads can be wired in next).",
 
-  loadFailed: "Failed to load documents section.",
-  noDraft: "No case draft loaded.",
+      loadFailed: "Failed to load documents section.",
+      noDraft: "No case draft loaded.",
 
-  saveContinue: "Save & Continue",
+      saveContinue: "Save & Continue",
 
-  coreTitle: "Core documents",
-  otherTitle: "Other documents",
+      coreTitle: "Core documents",
+      otherTitle: "Other documents",
 
-  checklist: {
-    policeReport: "Police report / incident report",
-    medicalBills: "Medical bills / statements",
-    counselingBills: "Counseling / therapy bills",
-    funeralInvoices: "Funeral / burial invoices",
-    wageProof: "Proof of lost wages (employer letter, pay stubs, etc.)",
-    idProof: "ID proof (victim/applicant)",
-  },
+      checklist: {
+        policeReport: "Police report / incident report",
+        medicalBills: "Medical bills / statements",
+        counselingBills: "Counseling / therapy bills",
+        funeralInvoices: "Funeral / burial invoices",
+        wageProof: "Proof of lost wages (employer letter, pay stubs, etc.)",
+        idProof: "ID proof (victim/applicant)",
+      },
 
-  otherEmpty: "No other documents added yet.",
-  otherItemTitle: "Other document #{n}",
-  otherLabel: "Label (optional)",
-  otherPlaceholder: "e.g. court order, receipts",
-  otherHaveIt: "Have it?",
-  otherNotYet: "Not yet",
+      otherEmpty: "No other documents added yet.",
+      otherItemTitle: "Other document #{n}",
+      otherLabel: "Label (optional)",
+      otherPlaceholder: "e.g. court order, receipts",
+      otherHaveIt: "Have it?",
+      otherNotYet: "Not yet",
 
-  addOther: "+ Add other document",
+      addOther: "+ Add other document",
 
-  notesLabel: "Notes (optional)",
-  notesHint: "Anything you’re missing or want an advocate to know.",
-},
+      notesLabel: "Notes (optional)",
+      notesHint: "Anything you’re missing or want an advocate to know.",
+
+      // Documents step (in the intake flow)
+      stepTitle: "Upload police reports, bills, and other documents",
+      viewOnlyBanner:
+        "View-only access: you can review this section, but only the case owner can upload or modify documents.",
+      intro:
+        "Supporting documents help the Attorney General's office understand your case and verify the costs you're asking to be covered. You can upload:",
+      bullets: {
+        police: "Police reports or incident numbers",
+        medical: "Hospital and medical bills",
+        funeral: "Funeral and cemetery invoices",
+        wages: "Pay stubs or letters from employers",
+        other: "Any other proof of expenses related to the crime",
+      },
+      disclaimer:
+        "Uploading documents does not submit your application. You'll have a chance to review everything on the Summary page before sending anything to the state.",
+      goToUploadPage: "Go to document upload page",
+
+      // Inline uploader strings
+      uploader: {
+        title: "Attach documents related to {context}",
+        helper:
+          "These uploads are optional, but they can help the Attorney General's office review this part of your application more quickly.",
+        shortDescriptionLabel: "Short description (optional)",
+        shortDescriptionPlaceholder:
+          "e.g. Police report from CPD, case #...",
+        uploadLabel: "Upload file(s)",
+      },
+    },
 
     placeholders: {
       selectOne: "Select one…",
@@ -985,15 +1015,19 @@ summary: {
     alreadyFinalReview: "You’re already on the final review step.",
   },
 
-actions: {
-  downloadSummaryPdf: "Download summary PDF",
-  downloadOfficialIlPdf: "Download official Illinois CVC form",
-  saveCaseForAdvocateReview: "Save as case for advocate review",
-  inviteAdvocate: "Invite advocate",
-  close: "Close",
-  sendInvite: "Send invite",
-  inviting: "Inviting…",
-},
+  actions: {
+    downloadSummaryPdf: "Download summary PDF",
+    downloadOfficialIlPdf: "Download official Illinois CVC form",
+    // Alias for UI key used in SummaryView
+    downloadOfficialIl: "Download official Illinois CVC form",
+    saveCaseForAdvocateReview: "Save as case for advocate review",
+    // Alias for UI key used in SummaryView
+    saveCaseForAdvocate: "Save as case for advocate review",
+    inviteAdvocate: "Invite advocate",
+    close: "Close",
+    sendInvite: "Send invite",
+    inviting: "Inviting…",
+  },
 
   invite: {
     title: "Invite an advocate",
@@ -1074,6 +1108,12 @@ approxBillAmount: "Approx. bill amount",
   // Aliases (some components expect these top-level blocks)
   crime: {
     title: "Crime snapshot",
+    // Aliases for flat keys used in SummaryView (forms.summary.crime.*)
+    dateOfCrime: "Date of crime",
+    location: "Location",
+    cityCounty: "City / County",
+    reportedTo: "Reported to",
+    policeReportNumber: "Police report #",
     fields: {
       dateOfCrime: "Date of crime",
       location: "Location",
@@ -1200,6 +1240,8 @@ approxBillAmount: "Approx. bill amount",
   },
 
   losses: {
+    // Used for the summary list; alias for "no losses selected yet"
+    noneSelected: "No losses selected yet.",
     medical: "Medical",
     counseling: "Counseling",
     funeral: "Funeral",
@@ -1219,6 +1261,10 @@ approxBillAmount: "Approx. bill amount",
     counseling: "Counseling",
     provider: "Counseling provider",
     sessions: "Sessions",
+    // Alias for UI key used in SummaryView
+    amount: "Approx. bill amount",
+    // Alias for when no primary provider is entered
+    noneEntered: "No medical provider entered yet.",
   },
 
   employment: {
@@ -1227,16 +1273,29 @@ approxBillAmount: "Approx. bill amount",
     missedWork: "Missed work",
     missedDates: "Dates missed",
     disabilityFromCrime: "Disability from crime",
+    // Alias for when no employment info is entered
+    noneEntered: "No work info entered yet.",
   },
 
-funeral: {
-  victimDeceased: "Victim deceased",
-  funeralHome: "Funeral home",
-  funeralPhone: "Funeral home phone",
-  dependentsPresent: "Dependents present",
-  dependentCount: "Dependent count",
-  dependentNotes: "Dependent notes",
-},
+  funeral: {
+    victimDeceased: "Victim deceased",
+    funeralHome: "Funeral home",
+    funeralPhone: "Funeral home phone",
+    dependentsPresent: "Dependents present",
+    dependentCount: "Dependent count",
+    dependentNotes: "Dependent notes",
+    // Aliases used by SummaryView
+    totalBill: "Total funeral bill",
+    amountPaid: "Amount paid so far",
+    relationshipNotSet: "relationship not set",
+    // Alias for when no funeral info is entered
+    noneEntered: "No funeral info entered yet.",
+  },
+
+  applicant: {
+    // Alias for text used when victim and applicant are the same person
+    samePerson: "Victim and applicant are the same person.",
+  },
 
   documents: {
     policeReports: "Police reports",

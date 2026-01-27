@@ -3459,37 +3459,33 @@ function Checkbox({ label, checked, onChange, disabled = false }: {
 }
 
 function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
+  const { t } = useI18n();
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
       <h2 className="text-lg font-semibold text-slate-50">
-        Upload police reports, bills, and other documents
+        {t("forms.documents.stepTitle")}
       </h2>
 
       {isReadOnly && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-          View-only access: you can review this section, but only the case owner
-          can upload or modify documents.
+          {t("forms.documents.viewOnlyBanner")}
         </div>
       )}
 
       <p className="text-slate-300">
-        Supporting documents help the Attorney General&apos;s office understand
-        your case and verify the costs you&apos;re asking to be covered.
-        You can upload:
+        {t("forms.documents.intro")}
       </p>
 
       <ul className="list-disc list-inside text-slate-300 space-y-1">
-        <li>Police reports or incident numbers</li>
-        <li>Hospital and medical bills</li>
-        <li>Funeral and cemetery invoices</li>
-        <li>Pay stubs or letters from employers</li>
-        <li>Any other proof of expenses related to the crime</li>
+        <li>{t("forms.documents.bullets.police")}</li>
+        <li>{t("forms.documents.bullets.medical")}</li>
+        <li>{t("forms.documents.bullets.funeral")}</li>
+        <li>{t("forms.documents.bullets.wages")}</li>
+        <li>{t("forms.documents.bullets.other")}</li>
       </ul>
 
       <p className="text-[11px] text-slate-400">
-        Uploading documents does not submit your application. You&apos;ll have a
-        chance to review everything on the Summary page before sending anything
-        to the state.
+        {t("forms.documents.disclaimer")}
       </p>
 
       <a
@@ -3502,7 +3498,7 @@ function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
           }`}
         aria-disabled={isReadOnly}
       >
-        Go to document upload page →
+        {t("forms.documents.goToUploadPage")} →
       </a>
     </section>
   );
@@ -3517,7 +3513,8 @@ function InlineDocumentUploader({
   defaultDocType: string;
   disabled?: boolean;
 }) {
-    const [description, setDescription] = useState("");
+  const { t } = useI18n();
+  const [description, setDescription] = useState("");
 
 const handleFiles = async (files: FileList | null) => {
   if (disabled) return;
@@ -3566,28 +3563,27 @@ const handleFiles = async (files: FileList | null) => {
   return (
     <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
       <h3 className="font-semibold text-slate-100">
-        Attach documents related to {contextLabel}
+        {t("forms.documents.uploader.title", { context: contextLabel })}
       </h3>
       <p className="text-[11px] text-slate-400">
-        These uploads are optional, but they can help the Attorney General&apos;s
-        office review this part of your application more quickly.
+        {t("forms.documents.uploader.helper")}
       </p>
 
       <div className="grid gap-2 sm:grid-cols-[2fr,3fr]">
         <label className="block text-[11px] text-slate-200 space-y-1">
-          <span>Short description (optional)</span>
+          <span>{t("forms.documents.uploader.shortDescriptionLabel")}</span>
           <input
             disabled={disabled}
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Police report from CPD, case #..."
+            placeholder={t("forms.documents.uploader.shortDescriptionPlaceholder")}
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </label>
 
         <label className="block text-[11px] text-slate-200 space-y-1">
-          <span>Upload file(s)</span>
+          <span>{t("forms.documents.uploader.uploadLabel")}</span>
           <input
             disabled={disabled}
             type="file"

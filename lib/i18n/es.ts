@@ -553,6 +553,34 @@ export const es: I18nDict = {
 
             notesLabel: "Notas (opcional)",
             notesHint: "Cualquier cosa que falte o que quieras que un defensor sepa.",
+
+            // Paso de Documentos (en el flujo de solicitud)
+            stepTitle: "Sube reportes policiales, facturas y otros documentos",
+            viewOnlyBanner:
+                "Acceso solo de lectura: puedes revisar esta sección, pero solo el dueño del caso puede subir o modificar documentos.",
+            intro:
+                "Los documentos de respaldo ayudan a la Oficina del Fiscal General a entender tu caso y verificar los costos que solicitas que se cubran. Puedes subir:",
+            bullets: {
+                police: "Reportes policiales o números de incidente",
+                medical: "Facturas del hospital y médicas",
+                funeral: "Facturas de funeral y cementerio",
+                wages: "Talones de pago o cartas del empleador",
+                other: "Cualquier otra prueba de gastos relacionados con el delito",
+            },
+            disclaimer:
+                "Subir documentos no envía tu solicitud. Tendrás la oportunidad de revisar todo en la página de Resumen antes de enviar cualquier cosa al estado.",
+            goToUploadPage: "Ir a la página para subir documentos",
+
+            // Textos para el cargador en línea
+            uploader: {
+                title: "Adjunta documentos relacionados con {context}",
+                helper:
+                    "Estas cargas son opcionales, pero pueden ayudar a la Oficina del Fiscal General a revisar más rápido esta parte de tu solicitud.",
+                shortDescriptionLabel: "Descripción breve (opcional)",
+                shortDescriptionPlaceholder:
+                    "p. ej., reporte policial de CPD, n.º de caso...",
+                uploadLabel: "Subir archivo(s)",
+            },
         },
 
         validation: {
@@ -1003,7 +1031,11 @@ export const es: I18nDict = {
             actions: {
                 downloadSummaryPdf: "Descargar PDF de resumen",
                 downloadOfficialIlPdf: "Descargar formulario oficial de CVC de Illinois",
+                // Alias para la clave usada en SummaryView
+                downloadOfficialIl: "Descargar formulario oficial de CVC de Illinois",
                 saveCaseForAdvocateReview: "Guardar como caso para revisión de un defensor",
+                // Alias para la clave usada en SummaryView
+                saveCaseForAdvocate: "Guardar como caso para revisión de un defensor",
                 inviteAdvocate: "Invitar a un defensor",
                 close: "Cerrar",
                 sendInvite: "Enviar invitación",
@@ -1090,6 +1122,12 @@ export const es: I18nDict = {
             // Alias (algunos componentes esperan estos bloques a nivel superior)
             crime: {
                 title: "Resumen del delito",
+                // Alias para claves planas usadas en SummaryView (forms.summary.crime.*)
+                dateOfCrime: "Fecha del delito",
+                location: "Lugar",
+                cityCounty: "Ciudad / Condado",
+                reportedTo: "Reportado a",
+                policeReportNumber: "N.º de reporte policial",
                 fields: {
                     dateOfCrime: "Fecha del delito",
                     location: "Lugar",
@@ -1218,6 +1256,8 @@ export const es: I18nDict = {
             },
 
             losses: {
+                // Usado para la lista de pérdidas en el resumen
+                noneSelected: "Aún no se seleccionaron gastos.",
                 medical: "Atención médica",
                 counseling: "Consejería",
                 funeral: "Funeral",
@@ -1236,9 +1276,12 @@ export const es: I18nDict = {
                 treatmentDates: "Fechas de tratamiento",
                 counseling: "Consejería",
                 sessions: "Sesiones",
-
                 // Campos usados en algunos resúmenes/instantáneas (mantener)
                 provider: "Proveedor",
+                // Alias para la clave usada en SummaryView
+                amount: "Monto aproximado de la factura",
+                // Alias cuando no hay proveedor principal
+                noneEntered: "Aún no se ingresó ningún proveedor médico.",
             },
 
             employment: {
@@ -1247,6 +1290,8 @@ export const es: I18nDict = {
                 missedWork: "Faltó al trabajo",
                 missedDates: "Fechas faltadas",
                 disabilityFromCrime: "Discapacidad por el delito",
+                // Alias cuando no hay información de trabajo
+                noneEntered: "Aún no se ingresó información de trabajo.",
             },
 
             funeral: {
@@ -1256,6 +1301,12 @@ export const es: I18nDict = {
                 dependentsPresent: "Hay dependientes",
                 dependentCount: "Cantidad de dependientes",
                 dependentNotes: "Notas sobre dependientes",
+                // Alias usados por SummaryView
+                totalBill: "Total de la factura del funeral",
+                amountPaid: "Monto pagado hasta ahora",
+                relationshipNotSet: "relación no establecida",
+                // Alias cuando no hay información de funeral
+                noneEntered: "Aún no se ingresó información del funeral.",
             },
 
             documents: {
@@ -1278,6 +1329,10 @@ export const es: I18nDict = {
                     "Confirmo que la información proporcionada es verdadera y completa según mi mejor conocimiento.",
                 releaseLabel:
                     "Entiendo que pueden requerirse documentos de respaldo y que podrían pedirme verificación.",
+            },
+            applicant: {
+                // Alias para el texto usado cuando la víctima y el solicitante son la misma persona
+                samePerson: "La víctima y el solicitante son la misma persona.",
             },
         }, // closes summary
     }, // closes forms
