@@ -238,81 +238,105 @@ export const en: I18nDict = {
   /* =========================
      INTAKE (APPLICATION FLOW)
   ========================== */
-  intake: {
-    steps: {
-      victim: "Victim",
-      applicant: "Applicant",
-      crime: "Crime & incident",
-      losses: "Losses & money",
-      medical: "Medical & counseling",
-      employment: "Work & income",
-      funeral: "Funeral & dependents",
-      documents: "Documents",
-      summary: "Summary",
-     
-    },
+intake: {
+  header: {
+    badge: "Illinois Crime Victims Compensation",
+    title: "Compensation application",
+    subtitle:
+      "Answer what you can. You can pause anytime and come back when you're ready.",
+    needMoreContext: "Need more context?",
+    learnLink: "How Illinois compensation works",
+  },
 
-     errors: {
-  missingCaseId: "Missing case id in the URL.",
-  missingCaseIdShort: "Missing case id.",
-},
+  steps: {
+    victim: "Victim",
+    applicant: "Applicant",
+    crime: "Crime & incident",
+    losses: "Losses & money",
+    medical: "Medical & counseling",
+    employment: "Work & income",
+    funeral: "Funeral & dependents",
+    documents: "Documents",
+    summary: "Summary",
+  },
 
-actions: {
+  errors: {
+    missingCaseId: "Missing case id in the URL.",
+    missingCaseIdShort: "Missing case id.",
+  },
+
+  actions: {
+    back: "Back",
+    save: "Save",
+    saving: "Saving…",
+    autoSaving: "Auto-saving…",
+    creatingCase: "Creating case…",
+    viewOnlyTitle: "View-only access",
     continueToStep: "Continue to {step} →",
     goToStep: "Go to {step} →",
     reviewComplete: "Review complete",
   },
-    viewOnly: "View-only access (you can’t edit this case).",
-    startFailed: "Couldn’t start application. Try refresh.",
-    missingCaseId: "Created, but missing case ID.",
-    started: "Application started",
 
-    loadCase: {
-      failed: "Could not load that case (no access or not found).",
-      unexpected: "Something went wrong loading that case.",
-    },
+  viewOnly: "View-only access (you can’t edit this case).",
+  viewOnlyBanner:
+    "View-only access: you can review this case, but you can’t edit it.",
 
-    save: {
-      viewOnly: "View-only access. You can’t save changes.",
-      noCaseLoaded: "No case loaded yet. Start the application first.",
-      saved: "Application saved",
-      failed: "Couldn’t save. Try again.",
-    },
-
-    pdf: {
-      summaryFailed: "There was an issue generating the PDF. Please try again.",
-      summaryUnexpected: "Something went wrong generating the PDF.",
-      officialFailed:
-        "There was an issue generating the official Illinois form. Please try again.",
-      officialUnexpected: "Something went wrong creating the official form.",
-    },
-
-    validation: {
-      victimRequired:
-        "Please fill in the victim's name, date of birth, and address before continuing.",
-      crimeMinimumRequired:
-        "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
-      certificationRequired:
-        "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
-    },
-
-    confirm: {
-      noLossesSelected:
-        "You haven't selected any losses yet. Are you sure you don't want to ask for help with medical, funeral, or other costs?",
-      lossOfEarningsNoEmployer:
-        "You indicated loss of earnings but haven't entered any employer info yet. Continue anyway?",
-      funeralSelectedNoData:
-        "You indicated funeral or burial costs but haven't entered any funeral information yet. Continue anyway?",
-    },
-
-    saveCase: {
-      failed: "There was a problem saving your case. Please check the console.",
-      missingId:
-        "Saved, but no case ID was returned. Check the API response.",
-      unexpected:
-        "Something went wrong saving your case. See console for details.",
-    },
+  footer: {
+    draftDisclaimer: "Draft. Nothing is submitted to the state without your consent.",
   },
+
+  summary: {
+    alreadyFinalReview: "You’re already on the final review step.",
+  },
+
+  startFailed: "Couldn’t start application. Try refresh.",
+  missingCaseId: "Created, but missing case ID.",
+  started: "Application started",
+
+  loadCase: {
+    failed: "Could not load that case (no access or not found).",
+    unexpected: "Something went wrong loading that case.",
+  },
+
+  save: {
+    viewOnly: "View-only access. You can’t save changes.",
+    noCaseLoaded: "No case loaded yet. Start the application first.",
+    saved: "Application saved",
+    failed: "Couldn’t save. Try again.",
+  },
+
+  pdf: {
+    summaryFailed: "There was an issue generating the PDF. Please try again.",
+    summaryUnexpected: "Something went wrong generating the PDF.",
+    officialFailed:
+      "There was an issue generating the official Illinois form. Please try again.",
+    officialUnexpected: "Something went wrong creating the official form.",
+  },
+
+  validation: {
+    victimRequired:
+      "Please fill in the victim's name, date of birth, and address before continuing.",
+    crimeMinimumRequired:
+      "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
+    certificationRequired:
+      "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
+  },
+
+  confirm: {
+    noLossesSelected:
+      "You haven't selected any losses yet. Are you sure you don't want to ask for help with medical, funeral, or other costs?",
+    lossOfEarningsNoEmployer:
+      "You indicated loss of earnings but haven't entered any employer info yet. Continue anyway?",
+    funeralSelectedNoData:
+      "You indicated funeral or burial costs but haven't entered any funeral information yet. Continue anyway?",
+  },
+
+  saveCase: {
+    failed: "There was a problem saving your case. Please check the console.",
+    missingId: "Saved, but no case ID was returned. Check the API response.",
+    unexpected: "Something went wrong saving your case. See console for details.",
+  },
+},
 
   /* =========================
      FIELD COPY (PAGE/FORM-SPECIFIC LABELS)
@@ -385,6 +409,9 @@ actions: {
       needHelp: "Need help?",
       chatWith: "Chat with NxtGuide",
     },
+    floating: {
+  needHelpOnThisStep: "Need help on this step?",
+},
     errors: {
       respondFailed:
         "Sorry, I had trouble responding just now. Please try again in a moment.",
@@ -935,7 +962,8 @@ crime: {
 
 summary: {
   title: "Summary",
-  description: "Review what you’ve entered. You can go back to any section to edit.",
+  description:
+    "Review what you’ve entered. You can go back to any section to edit.",
   descriptionDraft: "Review your case before generating documents.",
 
   loadFailed: "Failed to load summary.",
@@ -954,17 +982,18 @@ summary: {
     none: "—",
     notProvided: "Not provided",
     relationshipNotSet: "relationship not set",
+    alreadyFinalReview: "You’re already on the final review step.",
   },
 
-  actions: {
-    downloadSummaryPdf: "Download summary PDF",
-    downloadOfficialIlPdf: "Download official Illinois CVC form",
-    saveCaseForAdvocateReview: "Save as case for advocate review",
-    inviteAdvocate: "Invite advocate",
-    close: "Close",
-    sendInvite: "Send invite",
-    inviting: "Inviting…",
-  },
+actions: {
+  downloadSummaryPdf: "Download summary PDF",
+  downloadOfficialIlPdf: "Download official Illinois CVC form",
+  saveCaseForAdvocateReview: "Save as case for advocate review",
+  inviteAdvocate: "Invite advocate",
+  close: "Close",
+  sendInvite: "Send invite",
+  inviting: "Inviting…",
+},
 
   invite: {
     title: "Invite an advocate",
@@ -972,17 +1001,18 @@ summary: {
     advocateEmailLabel: "Advocate email",
     advocateEmailPlaceholder: "advocate@example.com",
     allowEdit: "Allow this advocate to edit",
-
+  
     // Back-compat (keep)
     results: {
       saveCaseFirst:
         "Save this as a case first so we can generate a secure invite link.",
       mustBeLoggedIn: "You must be logged in to invite an advocate.",
       unexpected: "Unexpected error inviting advocate.",
-      accessGranted: "✅ Access granted.\nShare this link with the advocate:\n{url}",
+      accessGranted:
+        "✅ Access granted.\nShare this link with the advocate:\n{url}",
     },
 
-    // Common shape used in UI components (added)
+    // Common shape used in UI components
     errors: {
       saveCaseFirst:
         "Save this as a case first so we can generate a secure invite link.",
@@ -990,7 +1020,8 @@ summary: {
       unexpected: "Unexpected error inviting advocate.",
     },
     success: {
-      accessGranted: "✅ Access granted.\nShare this link with the advocate:\n{url}",
+      accessGranted:
+        "✅ Access granted.\nShare this link with the advocate:\n{url}",
     },
   },
 
@@ -1016,7 +1047,7 @@ summary: {
       provider: "Provider",
       cityPhone: "City / Phone",
       serviceDates: "Dates of service",
-      approxBillAmount: "Approx. bill amount",
+approxBillAmount: "Approx. bill amount",
       noneEntered: "No medical provider entered yet.",
     },
 
@@ -1090,8 +1121,10 @@ summary: {
     title: "Certification & authorization",
     checks: {
       subrogation: "I acknowledge subrogation (repayment rules may apply).",
-      release: "I acknowledge authorization/release for verification as required.",
-      perjury: "I confirm the information is true to the best of my knowledge.",
+      release:
+        "I acknowledge authorization/release for verification as required.",
+      perjury:
+        "I confirm the information is true to the best of my knowledge.",
     },
     signatureLabel: "Applicant signature (type your full name)",
     dateLabel: "Date",
@@ -1117,8 +1150,10 @@ summary: {
     title: "Certification & authorization",
     checks: {
       subrogation: "I acknowledge subrogation (repayment rules may apply).",
-      release: "I acknowledge authorization/release for verification as required.",
-      perjury: "I confirm the information is true to the best of my knowledge.",
+      release:
+        "I acknowledge authorization/release for verification as required.",
+      perjury:
+        "I confirm the information is true to the best of my knowledge.",
     },
     signatureLabel: "Applicant signature (type your full name)",
     dateLabel: "Date",
@@ -1135,7 +1170,6 @@ summary: {
     },
   },
 
-  // ===== Existing (keep) =====
   sections: {
     victim: "Victim",
     applicant: "Applicant",
@@ -1195,14 +1229,14 @@ summary: {
     disabilityFromCrime: "Disability from crime",
   },
 
-  funeral: {
-    victimDeceased: "Victim deceased",
-    funeralHome: "Funeral home",
-    funeralPhone: "Funeral phone",
-    dependentsPresent: "Dependents present",
-    dependentCount: "Dependent count",
-    dependentNotes: "Dependent notes",
-  },
+funeral: {
+  victimDeceased: "Victim deceased",
+  funeralHome: "Funeral home",
+  funeralPhone: "Funeral home phone",
+  dependentsPresent: "Dependents present",
+  dependentCount: "Dependent count",
+  dependentNotes: "Dependent notes",
+},
 
   documents: {
     policeReports: "Police reports",
@@ -1214,7 +1248,6 @@ summary: {
     notes: "Notes",
   },
 
-  // Existing “plain-language” certification copy (keep)
   certificationText: {
     disclaimer:
       "This is not legal advice. This is a plain-language confirmation that the information is accurate to the best of your knowledge.",
@@ -1225,9 +1258,7 @@ summary: {
       "I confirm the information provided is true and complete to the best of my knowledge.",
     releaseLabel:
       "I understand supporting documents may be required and I may be asked for verification.",
-  },
-}, // closes summary
-
-}, // closes forms
-
-}; // closes export const en
+ },
+},
+}, // <-- ADD THIS COMMA (summary's parent object continues safely)
+}; // closes en

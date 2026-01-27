@@ -1024,7 +1024,7 @@ title={
     {step === "summary" && (
       <button
         type="button"
-        onClick={() => setSaveToast(t("intake.summary.alreadyFinalReview"))
+        onClick={() => setSaveToast(t("forms.summary.placeholders.alreadyFinalReview"))
 
         }
         className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
@@ -2922,9 +2922,9 @@ function SummaryView({
       const json = JSON.parse(text);
 
       // ✅ Use i18n template so Spanish reads naturally
-      setInviteResult(
-    tf("forms.summary.invite.success", { url: json.shareUrl })
-      );
+setInviteResult(
+  tf("forms.summary.invite.success.accessGranted", { url: json.shareUrl })
+);
     } catch (e: any) {
       setInviteResult(
         e?.message || t("forms.summary.invite.errors.unexpected")
@@ -3037,12 +3037,9 @@ function SummaryView({
           <p className="text-slate-300">{t("forms.summary.losses.noneSelected")}</p>
         ) : (
           <ul className="list-disc list-inside text-slate-300">
-            {selectedLosses.map((key) => (
-              <li key={key}>
-                {/* Optional improvement: map keys -> translated label later */}
-                {key}
-              </li>
-            ))}
+{selectedLosses.map((key) => (
+  <li key={key}>{t(`forms.summary.losses.${key}`)}</li>
+))}
           </ul>
         )}
       </div>
