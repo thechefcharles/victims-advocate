@@ -4002,7 +4002,7 @@ function InlineDocumentUploader({
   defaultDocType: string;
   disabled?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, tf } = useI18n();
   const [description, setDescription] = useState("");
 
 const handleFiles = async (files: FileList | null) => {

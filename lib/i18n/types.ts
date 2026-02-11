@@ -446,6 +446,26 @@ forms: {
 
     notesLabel: string;
     notesHint: string;
+
+    stepTitle: string;
+    viewOnlyBanner: string;
+    intro: string;
+    bullets: {
+      police: string;
+      medical: string;
+      funeral: string;
+      wages: string;
+      other: string;
+    };
+    disclaimer: string;
+    goToUploadPage: string;
+    uploader: {
+      title: string;
+      helper: string;
+      shortDescriptionLabel: string;
+      shortDescriptionPlaceholder: string;
+      uploadLabel: string;
+    };
   };
 
   applicant: {
@@ -464,6 +484,14 @@ forms: {
     legalGuardianship: {
       question: string;
       noNotSure: string;
+    };
+
+    seekingOwnExpenses: {
+      question: string;
+    };
+    descriptionOfExpensesSought: {
+      label: string;
+      placeholder: string;
     };
   };
 
@@ -509,6 +537,11 @@ forms: {
     benefits: {
       question: string;
       notesLabel: string;
+      sickPayLabel: string;
+      vacationPayLabel: string;
+      personalTimeLabel: string;
+      disabilityPayLabel: string;
+      otherBenefitLabel: string;
     };
 
     noNotSure: string;
@@ -537,8 +570,27 @@ forms: {
     restitutionAmountPlaceholder: string;
 
     humanTraffickingQuestion: string;
+    humanTraffickingTestifiedQuestion: string;
     humanTraffickingCaseNumberLabel: string;
     humanTraffickingCaseOutcomeLabel: string;
+  };
+
+  contact: {
+    title: string;
+    description: string;
+    prefersEnglishQuestion: string;
+    preferredLanguageLabel: string;
+    preferredLanguagePlaceholder: string;
+    workingWithAdvocateQuestion: string;
+    advocateNameLabel: string;
+    advocatePhoneLabel: string;
+    advocateOrganizationLabel: string;
+    advocateEmailLabel: string;
+    consentToTalkToAdvocateQuestion: string;
+    alternateContactQuestion: string;
+    alternateContactNameLabel: string;
+    alternateContactPhoneLabel: string;
+    alternateContactRelationshipLabel: string;
   };
 
   funeral: {
@@ -629,6 +681,17 @@ forms: {
     footerNote: string;
 
     uploaderContextLabel: string;
+
+    deathBenefits: {
+      title: string;
+      description: string;
+      deathBenefitChicagoFundLabel: string;
+      lifeHealthAccidentInsuranceLabel: string;
+      unemploymentPaymentsLabel: string;
+      veteransSocialSecurityBurialLabel: string;
+      workersCompDramShopLabel: string;
+      federalMedicarePublicAidLabel: string;
+    };
   };
 
   losses: {
@@ -837,7 +900,9 @@ forms: {
     actions: {
       downloadSummaryPdf: string;
       downloadOfficialIlPdf: string;
+      downloadOfficialIl: string;
       saveCaseForAdvocateReview: string;
+      saveCaseForAdvocate: string;
       inviteAdvocate: string;
       close: string;
       sendInvite: string;
@@ -915,9 +980,14 @@ forms: {
       };
     };
 
-    crime?: {
-      title: string;
-      fields: {
+    crime: {
+      title?: string;
+      dateOfCrime: string;
+      location: string;
+      cityCounty: string;
+      reportedTo: string;
+      policeReportNumber: string;
+      fields?: {
         dateOfCrime: string;
         location: string;
         cityCounty: string;
@@ -926,7 +996,7 @@ forms: {
       };
     };
 
-    medicalSnapshot?: {
+    medicalSnapshot: {
       title: string;
       fields: {
         provider: string;
@@ -937,7 +1007,7 @@ forms: {
       noneEntered: string;
     };
 
-    employmentSnapshot?: {
+    employmentSnapshot: {
       title: string;
       fields: {
         employer: string;
@@ -947,7 +1017,7 @@ forms: {
       noneEntered: string;
     };
 
-    funeralSnapshot?: {
+    funeralSnapshot: {
       title: string;
       fields: {
         funeralHome: string;
@@ -986,7 +1056,7 @@ forms: {
       };
     };
 
-    certification?: {
+    certification: {
       title: string;
       checks: {
         subrogation: string;
@@ -1038,6 +1108,7 @@ forms: {
     };
 
     losses: {
+      noneSelected: string;
       medical: string;
       counseling: string;
       funeral: string;
@@ -1047,6 +1118,32 @@ forms: {
       other: string;
       otherYes: string;
       estimatedTotal: string;
+      medicalHospital: string;
+      dental: string;
+      transportation: string;
+      accessibilityCosts: string;
+      crimeSceneCleanup: string;
+      relocationCosts: string;
+      temporaryLodging: string;
+      tattooRemoval: string;
+      lossOfEarnings: string;
+      tuition: string;
+      replacementServiceLoss: string;
+      locks: string;
+      windows: string;
+      clothing: string;
+      bedding: string;
+      prostheticAppliances: string;
+      eyeglassesContacts: string;
+      hearingAids: string;
+      replacementCosts: string;
+      lossOfSupport: string;
+      towingStorage: string;
+      funeralBurial: string;
+      lossOfFutureEarnings: string;
+      legalFees: string;
+      doors: string;
+      headstone: string;
     };
 
     medical: {
@@ -1057,6 +1154,10 @@ forms: {
       counseling: string;
       provider: string;
       sessions: string;
+      cityPhone: string;
+      serviceDates: string;
+      amount: string;
+      noneEntered: string;
     };
 
     employment: {
@@ -1065,15 +1166,25 @@ forms: {
       missedWork: string;
       missedDates: string;
       disabilityFromCrime: string;
+      employerPhone: string;
+      netMonthlyWages: string;
+      noneEntered: string;
     };
 
     funeral: {
       victimDeceased: string;
       funeralHome: string;
       funeralPhone: string;
+      funeralHomePhone: string;
       dependentsPresent: string;
       dependentCount: string;
       dependentNotes: string;
+      payer: string;
+      noPayer: string;
+      totalBill: string;
+      amountPaid: string;
+      relationshipNotSet: string;
+      noneEntered: string;
     };
 
     documents: {
@@ -1086,6 +1197,10 @@ forms: {
       notes: string;
     };
 
+    applicant: {
+      samePerson: string;
+    };
+
     certificationText: {
       disclaimer: string;
       fullNameLabel: string;
@@ -1095,4 +1210,5 @@ forms: {
       releaseLabel: string;
     };
   };
+};
 };

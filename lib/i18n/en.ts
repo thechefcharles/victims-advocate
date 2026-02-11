@@ -1281,14 +1281,6 @@ approxBillAmount: "Approx. bill amount",
     certification: "Certification",
   },
 
-  crime: {
-    dateOfCrime: "Date of crime",
-    location: "Location",
-    cityCounty: "City / County",
-    reportedTo: "Reported to",
-    policeReportNumber: "Police report #",
-  },
-
   labels: {
     name: "Name",
     dob: "DOB",

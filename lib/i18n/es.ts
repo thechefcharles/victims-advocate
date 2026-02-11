@@ -1009,6 +1009,9 @@ export const es: I18nDict = {
             humanTraffickingQuestion:
                 "¿La persona agresora ha estado involucrada en un proceso judicial por trata de personas relacionado con este incidente?",
 
+            humanTraffickingTestifiedQuestion:
+                "¿Te pidieron testificar en el caso judicial de trata de personas?",
+
             humanTraffickingCaseNumberLabel:
                 "Número del caso de trata de personas (si lo sabes)",
             humanTraffickingCaseOutcomeLabel:
