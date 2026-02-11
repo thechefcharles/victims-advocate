@@ -4052,7 +4052,7 @@ const handleFiles = async (files: FileList | null) => {
   return (
     <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
       <h3 className="font-semibold text-slate-100">
-        {t("forms.documents.uploader.title", { context: contextLabel })}
+        {tf("forms.documents.uploader.title", { context: contextLabel })}
       </h3>
       <p className="text-[11px] text-slate-400">
         {t("forms.documents.uploader.helper")}
