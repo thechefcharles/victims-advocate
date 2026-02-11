@@ -129,21 +129,31 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
 
   const application = body?.application;
-  if (!application) {
-    return NextResponse.json({ error: "Missing application" }, { status: 400 });
+  const name = body?.name;
+
+  if (!application && name === undefined) {
+    return NextResponse.json(
+      { error: "Provide application and/or name to update" },
+      { status: 400 }
+    );
   }
 
-  // ✅ Store consistently (your DB is currently storing stringified JSON)
-  const applicationToStore =
-    typeof application === "string" ? application : JSON.stringify(application);
+  const updates: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  };
+
+  if (application !== undefined) {
+    updates.application =
+      typeof application === "string" ? application : JSON.stringify(application);
+  }
+  if (name !== undefined) {
+    updates.name = typeof name === "string" ? name.trim() || null : null;
+  }
 
   // ✅ Update case
   const { data: updated, error: updateError } = await supabaseAdmin
     .from("cases")
-    .update({
-      application: applicationToStore,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updates)
     .eq("id", id)
     .select("*")
     .single();
@@ -157,4 +167,55 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
 
   return NextResponse.json({ case: updated });
+}
+
+export async function DELETE(req: Request, context: RouteParams) {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { id } = await context.params;
+
+  if (!id) {
+    return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  }
+
+  const userId = await requireUserId(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: accessRow, error: accessError } = await supabaseAdmin
+    .from("case_access")
+    .select("role, can_edit")
+    .eq("case_id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (accessError) {
+    return NextResponse.json({ error: "Permission lookup failed" }, { status: 500 });
+  }
+
+  if (!accessRow?.can_edit || accessRow.role !== "owner") {
+    return NextResponse.json(
+      { error: "Only the case owner can delete this case" },
+      { status: 403 }
+    );
+  }
+
+  // Delete case_access rows first (if no FK cascade)
+  await supabaseAdmin.from("case_access").delete().eq("case_id", id);
+
+  // Delete documents
+  await supabaseAdmin.from("documents").delete().eq("case_id", id);
+
+  const { error: deleteError } = await supabaseAdmin
+    .from("cases")
+    .delete()
+    .eq("id", id)
+    .eq("owner_user_id", userId);
+
+  if (deleteError) {
+    console.error("Case delete error:", deleteError);
+    return NextResponse.json({ error: "Failed to delete case" }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
 }
