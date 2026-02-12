@@ -68,8 +68,8 @@ function normalizeStatus(maybe: unknown): CaseStatus {
 
 function normalizeStateCode(maybe: unknown): string {
   const s = typeof maybe === "string" ? maybe.trim().toUpperCase() : "";
-  // MVP: default IL; you can expand later
-  return s || "IL";
+  const allowed = ["IL", "IN"];
+  return allowed.includes(s) ? s : "IL";
 }
 
 export async function GET(req: Request) {

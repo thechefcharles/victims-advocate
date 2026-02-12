@@ -1006,6 +1006,7 @@ forms: {
       downloadSummaryPdf: string;
       downloadOfficialIlPdf: string;
       downloadOfficialIl: string;
+      downloadOfficialIn: string;
       saveCaseForAdvocateReview: string;
       saveCaseForAdvocate: string;
       inviteAdvocate: string;

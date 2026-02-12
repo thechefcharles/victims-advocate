@@ -1210,6 +1210,7 @@ summary: {
     downloadOfficialIlPdf: "Download official Illinois CVC form",
     // Alias for UI key used in SummaryView
     downloadOfficialIl: "Download official Illinois CVC form",
+    downloadOfficialIn: "Download official Indiana CVC form",
     saveCaseForAdvocateReview: "Save as case for advocate review",
     // Alias for UI key used in SummaryView
     saveCaseForAdvocate: "Save as case for advocate review",

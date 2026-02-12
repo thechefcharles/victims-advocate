@@ -1229,6 +1229,7 @@ export const es: I18nDict = {
                 downloadOfficialIlPdf: "Descargar formulario oficial de CVC de Illinois",
                 // Alias para la clave usada en SummaryView
                 downloadOfficialIl: "Descargar formulario oficial de CVC de Illinois",
+                downloadOfficialIn: "Descargar formulario oficial de CVC de Indiana",
                 saveCaseForAdvocateReview: "Guardar como caso para revisión de un defensor",
                 // Alias para la clave usada en SummaryView
                 saveCaseForAdvocate: "Guardar como caso para revisión de un defensor",

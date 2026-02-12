@@ -71,6 +71,12 @@ export interface CrimeInfo {
   offenderNames?: string;
   offenderRelationship?: string;
   sexualAssaultKitPerformed?: boolean;
+  /** Indiana: time of crime AM/PM */
+  timeOfCrimeAmPm?: "AM" | "PM" | null;
+  /** Indiana: automobile accident */
+  isAutomobileAccident?: boolean | null;
+  suspectAutoInsurance?: string;
+  victimAutoInsurance?: string;
 }
 
 export interface CourtInfo {
@@ -82,9 +88,14 @@ export interface CourtInfo {
   restitutionOrdered?: boolean | null;
   restitutionAmount?: number;
   humanTraffickingCaseFiled?: boolean | null;
-  humanTraffickingTestified?: boolean | null; // NEW: separate testimony question for human trafficking case
+  humanTraffickingTestified?: boolean | null;
   humanTraffickingCaseOutcome?: string;
   humanTraffickingCaseNumber?: string;
+  /** Indiana: cause number */
+  causeNumber?: string;
+  /** Indiana: willing to assist prosecution */
+  willingToAssistProsecution?: boolean | null;
+  notWillingProsecutionExplain?: string;
 }
 
 export interface ProtectionAndCivilInfo {
