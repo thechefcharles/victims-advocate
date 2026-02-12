@@ -168,6 +168,7 @@ const { t, tf, lang } = useI18n();
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
+  const [stateCode, setStateCode] = useState<"IL" | "IN">("IL");
   const isReadOnly = !!caseId && !canEdit;
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
 const [saveToast, setSaveToast] = useState<string | null>(null);
@@ -221,6 +222,8 @@ useEffect(() => {
 
       const json = await res.json();
       setCanEdit(!!json.access?.can_edit);
+      const sc = json.case?.state_code;
+      setStateCode(sc === "IN" ? "IN" : "IL");
 
       const rawApp = json.case.application;
       const loadedApp = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
@@ -585,37 +588,58 @@ alert(t("intake.validation.victimRequired"));
   };
 
   const handleDownloadOfficialIlPdf = async () => {
-  try {
-    const res = await fetch("/api/compensation/official-pdf/il", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      // We send the whole application object so the backend can fill the form
-      body: JSON.stringify({ application: app }),
-    });
-
-    if (!res.ok) {
-      console.error("IL official PDF error:", await res.text());
-      
-alert(t("intake.pdf.officialFailed"));
-      return;
+    try {
+      const res = await fetch("/api/compensation/official-pdf/il", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ application: app }),
+      });
+      if (!res.ok) {
+        console.error("IL official PDF error:", await res.text());
+        alert(t("intake.pdf.officialFailed"));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Illinois_CVC_Application_Filled.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading IL official PDF", err);
+      alert(t("intake.pdf.officialUnexpected"));
     }
+  };
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "Illinois_CVC_Application_Filled.pdf";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error("Error downloading IL official PDF", err);
-alert(t("intake.pdf.officialUnexpected"));
-  }
-};
+  const handleDownloadOfficialInPdf = async () => {
+    try {
+      const res = await fetch("/api/compensation/official-pdf/in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ application: app }),
+      });
+      if (!res.ok) {
+        console.error("IN official PDF error:", await res.text());
+        alert(t("intake.pdf.officialFailed"));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Indiana_CVC_Application_Filled.pdf";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error downloading IN official PDF", err);
+      alert(t("intake.pdf.officialUnexpected"));
+    }
+  };
 
 const handleSaveCase = async () => {
   if (
@@ -910,8 +934,9 @@ const handleBack = () => {
 
 {step === "summary" && (
   <SummaryView
-    caseId={caseId} // ✅ ADD THIS LINE
-     isReadOnly={isReadOnly}
+    caseId={caseId}
+    stateCode={stateCode}
+    isReadOnly={isReadOnly}
     victim={victim}
     applicant={applicant}
     crime={crime}
@@ -923,6 +948,7 @@ const handleBack = () => {
     onChangeCertification={updateCertification}
     onDownloadSummaryPdf={handleDownloadPdf}
     onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}
+    onDownloadOfficialInPdf={handleDownloadOfficialInPdf}
     onSaveCase={handleSaveCase}
   />
 )}
@@ -3331,6 +3357,7 @@ function FuneralForm({
 
 function SummaryView({
   caseId,
+  stateCode,
   isReadOnly,
   victim,
   applicant,
@@ -3343,9 +3370,11 @@ function SummaryView({
   onChangeCertification,
   onDownloadSummaryPdf,
   onDownloadOfficialIlPdf,
+  onDownloadOfficialInPdf,
   onSaveCase,
 }: {
   caseId: string | null;
+  stateCode: "IL" | "IN";
   isReadOnly: boolean;
   victim: VictimInfo;
   applicant: ApplicantInfo;
@@ -3358,6 +3387,7 @@ function SummaryView({
   onChangeCertification: (patch: Partial<CertificationInfo>) => void;
   onDownloadSummaryPdf: () => void;
   onDownloadOfficialIlPdf: () => void;
+  onDownloadOfficialInPdf: () => void;
   onSaveCase: () => void;
 }) {
   const { t, tf } = useI18n();
@@ -3641,10 +3671,12 @@ setInviteResult(
 
         <button
           type="button"
-          onClick={onDownloadOfficialIlPdf}
+          onClick={stateCode === "IN" ? onDownloadOfficialInPdf : onDownloadOfficialIlPdf}
           className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
         >
-          {t("forms.summary.actions.downloadOfficialIl")}
+          {stateCode === "IN"
+            ? t("forms.summary.actions.downloadOfficialIn")
+            : t("forms.summary.actions.downloadOfficialIl")}
         </button>
 
         {!caseId && !isReadOnly && (

@@ -89,6 +89,7 @@ export default function VictimDashboard({
   const [editNameValue, setEditNameValue] = useState("");
   const [skipWarningCaseId, setSkipWarningCaseId] = useState<string | null>(null);
   const [creatingCase, setCreatingCase] = useState(false);
+  const [newCaseState, setNewCaseState] = useState<"IL" | "IN">("IL");
 
   const readActiveCase = useCallback(
     (uid: string) => safeGetItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`),
@@ -171,6 +172,7 @@ export default function VictimDashboard({
         body: JSON.stringify({
           application: emptyCompensationApplication,
           name: null,
+          state_code: newCaseState,
         }),
       });
       if (!res.ok) throw new Error("Create failed");
@@ -311,18 +313,28 @@ export default function VictimDashboard({
                 </button>
               </>
             )}
-            <button
-              type="button"
-              onClick={handleStartNew}
-              disabled={creatingCase}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                activeCaseId && activeCase
-                  ? "border border-slate-600 hover:bg-slate-900/60"
-                  : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-              } disabled:opacity-50`}
-            >
-              {creatingCase ? "Creating…" : "Start new case"}
-            </button>
+            <span className="flex items-center gap-2">
+              <select
+                value={newCaseState}
+                onChange={(e) => setNewCaseState(e.target.value as "IL" | "IN")}
+                className="rounded-full border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
+              >
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleStartNew}
+                disabled={creatingCase}
+                className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  activeCaseId && activeCase
+                    ? "border border-slate-600 hover:bg-slate-900/60"
+                    : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+                } disabled:opacity-50`}
+              >
+                {creatingCase ? "Creating…" : "Start new case"}
+              </button>
+            </span>
           </div>
         </section>
 
