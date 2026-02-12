@@ -11,12 +11,25 @@ const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
 
 type CaseRow = {
   id: string;
+  name?: string | null;
   created_at?: string;
   status?: string;
   state_code?: string;
   application?: any;
   access?: { role?: "owner" | "advocate"; can_view?: boolean; can_edit?: boolean };
 };
+
+function getCaseDisplayName(c: CaseRow): string {
+  if (c.name?.trim()) return c.name.trim();
+  const app = c.application;
+  if (app?.victim?.firstName || app?.victim?.lastName) {
+    const first = (app.victim.firstName ?? "").trim();
+    const last = (app.victim.lastName ?? "").trim();
+    const full = `${first} ${last}`.trim();
+    if (full) return full;
+  }
+  return `Case ${c.id.slice(0, 8)}…`;
+}
 
 function safeGetItem(key: string) {
   try {
@@ -51,6 +64,8 @@ export default function VictimDashboard({
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [editNameValue, setEditNameValue] = useState("");
 
   const readActiveCase = useCallback(
     (uid: string) => safeGetItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`),
@@ -118,6 +133,12 @@ export default function VictimDashboard({
       : "/compensation/intake";
   }, [activeCaseId]);
 
+  const activeCase = useMemo(
+    () => cases.find((c) => c.id === activeCaseId),
+    [cases, activeCaseId]
+  );
+  const activeCaseDisplayName = activeCase ? getCaseDisplayName(activeCase) : null;
+
   const handleStartNew = () => {
     clearPointers(userId);
     setActiveCaseId(null);
@@ -151,6 +172,48 @@ export default function VictimDashboard({
     router.push("/login");
   };
 
+  const handleSaveName = async (caseId: string, newName: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newName.trim() || null }),
+      });
+      if (res.ok) {
+        setEditingNameId(null);
+        refetch();
+      }
+    } catch {
+      console.error("Failed to save case name");
+    }
+  };
+
+  const handleDeleteCase = async (caseId: string, displayName: string) => {
+    if (!confirm(`Delete "${displayName}"? This cannot be undone.`)) return;
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        if (activeCaseId === caseId) {
+          clearPointers(userId);
+          setActiveCaseId(null);
+        }
+        refetch();
+      } else {
+        alert("Could not delete case. Try again.");
+      }
+    } catch {
+      alert("Could not delete case. Try again.");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -182,7 +245,11 @@ export default function VictimDashboard({
                   : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
               }`}
             >
-              {activeCaseId ? "Resume application" : "Start application"}
+              {activeCaseId && activeCaseDisplayName
+                ? `Resume application (${activeCaseDisplayName})`
+                : activeCaseId
+                  ? "Resume application"
+                  : "Start application"}
             </Link>
 
             <button
@@ -224,30 +291,98 @@ export default function VictimDashboard({
                   : "—";
                 const status = c.status ?? "draft";
                 const isActive = activeCaseId === c.id;
+                const displayName = getCaseDisplayName(c);
+                const isEditing = editingNameId === c.id;
 
                 return (
-                  <button
+                  <div
                     key={c.id}
-                    type="button"
-                    onClick={() => handleOpenCase(c.id)}
-                    className={`text-left rounded-2xl border px-4 py-3 transition ${
+                    className={`rounded-2xl border px-4 py-3 transition ${
                       isActive
                         ? "border-emerald-500/50 bg-emerald-500/10"
-                        : "border-slate-800 bg-slate-950/40 hover:bg-slate-900/40"
+                        : "border-slate-800 bg-slate-950/40"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <div className="text-xs font-semibold text-slate-100">
-                          Case {c.id.slice(0, 8)}…
-                        </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        {isEditing ? (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              handleSaveName(c.id, editNameValue);
+                            }}
+                            className="flex gap-2"
+                          >
+                            <input
+                              type="text"
+                              value={editNameValue}
+                              onChange={(e) => setEditNameValue(e.target.value)}
+                              placeholder="Case name"
+                              className="flex-1 rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
+                              autoFocus
+                            />
+                            <button
+                              type="submit"
+                              className="text-[11px] text-emerald-400 hover:text-emerald-300"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingNameId(null);
+                                setEditNameValue("");
+                              }}
+                              className="text-[11px] text-slate-400 hover:text-slate-300"
+                            >
+                              Cancel
+                            </button>
+                          </form>
+                        ) : (
+                          <div
+                            className="flex items-center gap-2 cursor-pointer"
+                            onClick={() => handleOpenCase(c.id)}
+                          >
+                            <div className="text-xs font-semibold text-slate-100 truncate">
+                              {displayName}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingNameId(c.id);
+                                setEditNameValue(c.name?.trim() ?? "");
+                              }}
+                              className="text-[10px] text-slate-500 hover:text-slate-300 shrink-0"
+                              title="Edit name"
+                            >
+                              Rename
+                            </button>
+                          </div>
+                        )}
                         <div className="text-[11px] text-slate-400">
                           Status: {status} • Created: {created}
                         </div>
                       </div>
-                      <div className="text-[11px] text-slate-300">Open →</div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCase(c.id)}
+                          className="text-[11px] text-slate-300 hover:text-slate-100"
+                        >
+                          Open →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteCase(c.id, displayName)}
+                          className="text-[11px] text-red-400 hover:text-red-300"
+                          title="Delete case"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

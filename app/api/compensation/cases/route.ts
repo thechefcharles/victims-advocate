@@ -159,6 +159,11 @@ export async function POST(req: Request) {
         ? normalizeStateCode((body as any).state_code)
         : "IL";
 
+    const name =
+      typeof body === "object" && body && "name" in body && typeof (body as any).name === "string"
+        ? (body as any).name.trim() || null
+        : null;
+
     // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
@@ -166,6 +171,7 @@ export async function POST(req: Request) {
         owner_user_id: userId,
         status,
         state_code,
+        name: name ?? undefined,
         application, // IMPORTANT: store as jsonb object (not string)
       })
       .select("*")

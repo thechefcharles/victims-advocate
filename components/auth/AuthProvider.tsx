@@ -18,6 +18,7 @@ type AuthState = {
   session: Session | null;
   accessToken: string | null;
   role: ProfileRole;
+  isAdmin: boolean;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -26,12 +27,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<ProfileRole>("victim");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     // 1) Bootstrap once
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session ?? null);
-      resolveRole(data.session);
+      resolveProfile(data.session);
       setLoading(false);
     });
 
@@ -40,16 +42,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      resolveRole(newSession);
+      resolveProfile(newSession);
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const resolveRole = async (sess: Session | null) => {
+  const resolveProfile = async (sess: Session | null) => {
     const metaRole = sess?.user?.user_metadata?.role;
     setRole(metaRole === "advocate" ? "advocate" : "victim");
+
+    const uid = sess?.user?.id;
+    if (!uid) {
+      setIsAdmin(false);
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", uid)
+        .single();
+      setIsAdmin(data?.is_admin === true);
+    } catch {
+      setIsAdmin(false);
+    }
   };
 
   const value = useMemo<AuthState>(() => {
@@ -59,8 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       accessToken: session?.access_token ?? null,
       role,
+      isAdmin,
     };
-  }, [loading, session, role]);
+  }, [loading, session, role, isAdmin]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

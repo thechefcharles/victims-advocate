@@ -41,7 +41,7 @@ export default function AdvocateSignupForm() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push("/coming-soon");
     } finally {
       setLoading(false);
     }

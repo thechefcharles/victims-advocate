@@ -9,7 +9,7 @@ import { useI18n } from "@/components/i18n/i18nProvider";
 
 export default function TopNav() {
   const router = useRouter();
-  const { loading, user, role } = useAuth();
+  const { loading, user, role, isAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
 
   const handleLogout = async () => {
@@ -22,8 +22,11 @@ export default function TopNav() {
     router.refresh();
   };
 
-  const dashboardLabel =
-    role === "advocate" ? t("nav.dashboardAdvocate") : t("nav.dashboardVictim");
+  const dashboardLabel = isAdmin
+    ? role === "advocate"
+      ? t("nav.dashboardAdvocate")
+      : t("nav.dashboardVictim")
+    : "My account";
 
   return (
     <header className="border-b border-slate-800 bg-gradient-to-b from-[#0A2239] to-[#020b16]/95">
@@ -59,7 +62,7 @@ export default function TopNav() {
           ) : user ? (
             <>
               <Link
-                href="/dashboard"
+                href={isAdmin ? "/dashboard" : "/coming-soon"}
                 className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
               >
                 {dashboardLabel}

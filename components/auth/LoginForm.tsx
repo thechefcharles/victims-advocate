@@ -33,20 +33,29 @@ export default function LoginForm() {
         return;
       }
 
-      // Optional: role fetch (kept for future routing)
+      // Redirect admins to MVP, non-admins to Coming Soon
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
 
-      if (uid) {
-        // best-effort; don't block navigation on failure
-        try {
-          await supabase.from("profiles").select("role").eq("id", uid).single();
-        } catch {
-          // ignore
-        }
+      if (!uid) {
+        router.push("/coming-soon");
+        return;
       }
 
-      router.push("/dashboard");
+      try {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("is_admin")
+          .eq("id", uid)
+          .single();
+        if (prof?.is_admin) {
+          router.push("/dashboard");
+        } else {
+          router.push("/coming-soon");
+        }
+      } catch {
+        router.push("/coming-soon");
+      }
     } finally {
       setLoading(false);
     }
