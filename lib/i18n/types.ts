@@ -18,6 +18,111 @@ export type I18nDict = {
     no: string;
   };
 
+  eligibility: {
+    purposeText: string;
+    questionOf: string;
+    q1: {
+      title: string;
+      question: string;
+      options: {
+        victim18Own: string;
+        parentMinor: string;
+        parentDisabled: string;
+        paidExpenses: string;
+        none: string;
+      };
+      helper: string;
+    };
+    q2: {
+      title: string;
+      question: string;
+      helper: string;
+      yes: string;
+      no: string;
+      notSure: string;
+    };
+    q3: {
+      title: string;
+      question: string;
+      options: {
+        applicant: string;
+        guardian: string;
+        notSure: string;
+      };
+      helper: string;
+    };
+    q4: {
+      title: string;
+      question: string;
+      helper: string;
+      yes: string;
+      no: string;
+      notSure: string;
+    };
+    q5: {
+      title: string;
+      question: string;
+      options: {
+        haveNumber: string;
+        haveAgency: string;
+        dontHave: string;
+      };
+      helper: string;
+    };
+    q6: {
+      title: string;
+      question: string;
+      options: {
+        medical: string;
+        funeral: string;
+        counseling: string;
+        notSure: string;
+      };
+      helper: string;
+    };
+    q7: {
+      title: string;
+      question: string;
+      helper: string;
+      yes: string;
+      notSure: string;
+      no: string;
+    };
+    resultEligible: {
+      headline: string;
+      body: string;
+      cta: string;
+      secondary: string;
+    };
+    resultNeedsAttention: {
+      headline: string;
+      body: string;
+      checklist: string[];
+      ctaReady: string;
+      ctaHelp: string;
+    };
+    resultNotEligible: {
+      headline: string;
+      body: string;
+      nextSteps: string[];
+      cta: string;
+    };
+    status: {
+      eligible: string;
+      needsReview: string;
+      notEligible: string;
+      notChecked: string;
+    };
+    dashboard: {
+      runCheck: string;
+      startIntake: string;
+      skipWarningTitle: string;
+      skipWarningBody: string;
+      continueAnyway: string;
+      runCheckFirst: string;
+    };
+  };
+
   authPanel: {
     signedInAs: string;
     signedInAsAdvocate: string;

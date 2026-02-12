@@ -5,9 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { emptyCompensationApplication } from "@/lib/compensationSchema";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
+
+type EligibilityResult = "eligible" | "needs_review" | "not_eligible" | null;
 
 type CaseRow = {
   id: string;
@@ -16,6 +20,9 @@ type CaseRow = {
   status?: string;
   state_code?: string;
   application?: any;
+  eligibility_result?: EligibilityResult;
+  eligibility_readiness?: string | null;
+  eligibility_completed_at?: string | null;
   access?: { role?: "owner" | "advocate"; can_view?: boolean; can_edit?: boolean };
 };
 
@@ -29,6 +36,19 @@ function getCaseDisplayName(c: CaseRow): string {
     if (full) return full;
   }
   return `Case ${c.id.slice(0, 8)}…`;
+}
+
+function getEligibilityStatusLabel(
+  c: CaseRow,
+  t: (key: string) => string
+): string {
+  if (!c.eligibility_result) return t("eligibility.status.notChecked");
+  if (c.eligibility_result === "eligible") return t("eligibility.status.eligible");
+  if (c.eligibility_result === "needs_review")
+    return t("eligibility.status.needsReview");
+  if (c.eligibility_result === "not_eligible")
+    return t("eligibility.status.notEligible");
+  return t("eligibility.status.notChecked");
 }
 
 function safeGetItem(key: string) {
@@ -59,6 +79,7 @@ export default function VictimDashboard({
   token: string | null;
 }) {
   const router = useRouter();
+  const { t } = useI18n();
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [cases, setCases] = useState<CaseRow[]>([]);
@@ -66,6 +87,8 @@ export default function VictimDashboard({
   const [err, setErr] = useState<string | null>(null);
   const [editingNameId, setEditingNameId] = useState<string | null>(null);
   const [editNameValue, setEditNameValue] = useState("");
+  const [skipWarningCaseId, setSkipWarningCaseId] = useState<string | null>(null);
+  const [creatingCase, setCreatingCase] = useState(false);
 
   const readActiveCase = useCallback(
     (uid: string) => safeGetItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`),
@@ -127,29 +150,54 @@ export default function VictimDashboard({
     return () => window.removeEventListener("storage", onStorage);
   }, [userId, readActiveCase]);
 
-  const resumeHref = useMemo(() => {
-    return activeCaseId
-      ? `/compensation/intake?case=${activeCaseId}`
-      : "/compensation/intake";
-  }, [activeCaseId]);
-
   const activeCase = useMemo(
     () => cases.find((c) => c.id === activeCaseId),
     [cases, activeCaseId]
   );
   const activeCaseDisplayName = activeCase ? getCaseDisplayName(activeCase) : null;
 
-  const handleStartNew = () => {
+  const handleStartNew = async () => {
+    if (!token) return;
     clearPointers(userId);
     setActiveCaseId(null);
-    router.push("/compensation/intake");
+    setCreatingCase(true);
+    try {
+      const res = await fetch("/api/compensation/cases", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          application: emptyCompensationApplication,
+          name: null,
+        }),
+      });
+      if (!res.ok) throw new Error("Create failed");
+      const json = await res.json();
+      const newCase = json.case;
+      if (newCase?.id) {
+        refetch();
+        router.push(`/compensation/eligibility/${newCase.id}`);
+      } else {
+        router.push("/compensation/intake");
+      }
+    } catch {
+      router.push("/compensation/intake");
+    } finally {
+      setCreatingCase(false);
+    }
   };
 
-  const handleOpenCase = (caseIdToOpen: string) => {
+  const handleRunEligibility = (caseId: string) => {
+    router.push(`/compensation/eligibility/${caseId}`);
+  };
+
+  const proceedToIntake = (caseIdToOpen: string) => {
+    setSkipWarningCaseId(null);
     safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, caseIdToOpen);
     setActiveCaseId(caseIdToOpen);
 
-    // keep progress pointer aligned
     try {
       const progKey = `${PROGRESS_KEY_PREFIX}${userId}`;
       const raw = safeGetItem(progKey);
@@ -165,6 +213,14 @@ export default function VictimDashboard({
     } catch {}
 
     router.push(`/compensation/intake?case=${caseIdToOpen}`);
+  };
+
+  const handleOpenCase = (caseIdToOpen: string, c: CaseRow) => {
+    if (c.eligibility_result) {
+      proceedToIntake(caseIdToOpen);
+    } else {
+      setSkipWarningCaseId(caseIdToOpen);
+    }
   };
 
   const handleLogout = async () => {
@@ -232,32 +288,40 @@ export default function VictimDashboard({
 
           <p className="text-[11px] text-slate-400">
             {activeCaseId
-              ? "Resume your in-progress case, or start a new case anytime."
-              : "Start a new case to begin an application."}
+              ? "Run the eligibility check for your case, then start the intake form when ready."
+              : "Start a new case to run the eligibility check and begin an application."}
           </p>
 
           <div className="flex flex-wrap gap-2">
-            <Link
-              href={resumeHref}
-              className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                activeCaseId
-                  ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
-                  : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-              }`}
-            >
-              {activeCaseId && activeCaseDisplayName
-                ? `Resume application (${activeCaseDisplayName})`
-                : activeCaseId
-                  ? "Resume application"
-                  : "Start application"}
-            </Link>
-
+            {activeCaseId && activeCase && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleRunEligibility(activeCaseId)}
+                  className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                >
+                  {t("eligibility.dashboard.runCheck")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenCase(activeCaseId, activeCase)}
+                  className="rounded-full border border-emerald-500/40 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/15"
+                >
+                  {t("eligibility.dashboard.startIntake")}
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={handleStartNew}
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+              disabled={creatingCase}
+              className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                activeCaseId && activeCase
+                  ? "border border-slate-600 hover:bg-slate-900/60"
+                  : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+              } disabled:opacity-50`}
             >
-              Start new case
+              {creatingCase ? "Creating…" : "Start new case"}
             </button>
           </div>
         </section>
@@ -341,7 +405,7 @@ export default function VictimDashboard({
                         ) : (
                           <div
                             className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => handleOpenCase(c.id)}
+                            onClick={() => handleOpenCase(c.id, c)}
                           >
                             <div className="text-xs font-semibold text-slate-100 truncate">
                               {displayName}
@@ -361,16 +425,24 @@ export default function VictimDashboard({
                           </div>
                         )}
                         <div className="text-[11px] text-slate-400">
-                          Status: {status} • Created: {created}
+                          Status: {status} • Eligibility:{" "}
+                          {getEligibilityStatusLabel(c, t)} • Created: {created}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
-                          onClick={() => handleOpenCase(c.id)}
+                          onClick={() => handleRunEligibility(c.id)}
+                          className="text-[11px] text-[#1C8C8C] hover:text-[#21a3a3]"
+                        >
+                          {t("eligibility.dashboard.runCheck")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenCase(c.id, c)}
                           className="text-[11px] text-slate-300 hover:text-slate-100"
                         >
-                          Open →
+                          {t("eligibility.dashboard.startIntake")} →
                         </button>
                         <button
                           type="button"
@@ -388,6 +460,49 @@ export default function VictimDashboard({
             </div>
           )}
         </section>
+
+        {/* Skip eligibility warning modal */}
+        {skipWarningCaseId && (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            onClick={() => setSkipWarningCaseId(null)}
+          >
+            <div
+              className="rounded-2xl border border-slate-700 bg-slate-950 p-6 max-w-md space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-semibold text-slate-100">
+                {t("eligibility.dashboard.skipWarningTitle")}
+              </h3>
+              <p className="text-xs text-slate-300">
+                {t("eligibility.dashboard.skipWarningBody")}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = cases.find((x) => x.id === skipWarningCaseId);
+                    if (c) proceedToIntake(skipWarningCaseId);
+                    setSkipWarningCaseId(null);
+                  }}
+                  className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+                >
+                  {t("eligibility.dashboard.continueAnyway")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    router.push(`/compensation/eligibility/${skipWarningCaseId}`);
+                    setSkipWarningCaseId(null);
+                  }}
+                  className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                >
+                  {t("eligibility.dashboard.runCheckFirst")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between text-[11px] text-slate-400">
           <Link href="/" className="hover:text-slate-200">

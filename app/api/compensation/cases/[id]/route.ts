@@ -130,10 +130,20 @@ export async function PATCH(req: Request, context: RouteParams) {
 
   const application = body?.application;
   const name = body?.name;
+  const eligibilityAnswers = body?.eligibility_answers;
+  const eligibilityResult = body?.eligibility_result;
+  const eligibilityReadiness = body?.eligibility_readiness;
 
-  if (!application && name === undefined) {
+  const hasUpdates =
+    application !== undefined ||
+    name !== undefined ||
+    eligibilityAnswers !== undefined ||
+    eligibilityResult !== undefined ||
+    eligibilityReadiness !== undefined;
+
+  if (!hasUpdates) {
     return NextResponse.json(
-      { error: "Provide application and/or name to update" },
+      { error: "Provide application, name, and/or eligibility fields to update" },
       { status: 400 }
     );
   }
@@ -148,6 +158,30 @@ export async function PATCH(req: Request, context: RouteParams) {
   }
   if (name !== undefined) {
     updates.name = typeof name === "string" ? name.trim() || null : null;
+  }
+  if (eligibilityAnswers !== undefined) {
+    updates.eligibility_answers =
+      typeof eligibilityAnswers === "object" && eligibilityAnswers
+        ? eligibilityAnswers
+        : null;
+  }
+  if (eligibilityResult !== undefined) {
+    const allowed = ["eligible", "needs_review", "not_eligible"];
+    updates.eligibility_result =
+      typeof eligibilityResult === "string" && allowed.includes(eligibilityResult)
+        ? eligibilityResult
+        : null;
+  }
+  if (eligibilityReadiness !== undefined) {
+    const allowed = ["ready", "missing_info", "not_ready"];
+    updates.eligibility_readiness =
+      typeof eligibilityReadiness === "string" &&
+      allowed.includes(eligibilityReadiness)
+        ? eligibilityReadiness
+        : null;
+  }
+  if (eligibilityAnswers !== undefined || eligibilityResult !== undefined) {
+    updates.eligibility_completed_at = new Date().toISOString();
   }
 
   // ✅ Update case

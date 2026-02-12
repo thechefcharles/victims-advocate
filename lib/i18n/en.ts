@@ -24,6 +24,137 @@ export const en: I18nDict = {
   },
 
   /* =========================
+     ELIGIBILITY CHECK
+  ========================== */
+  eligibility: {
+    purposeText:
+      "This short check helps confirm whether you can apply for Illinois Crime Victims Compensation and whether you're ready to start. It does not submit an application and does not affect your eligibility.",
+    questionOf: "Question {current} of {total}",
+    q1: {
+      title: "Who is applying?",
+      question: "Which option best describes you?",
+      options: {
+        victim18Own:
+          "I am the victim, I am 18 or older, and I am applying for my own expenses",
+        parentMinor: "I am the parent or legal guardian of a victim who is under 18",
+        parentDisabled:
+          "I am the parent or legal guardian of a victim under a legal disability",
+        paidExpenses:
+          "I paid or became legally responsible for paying the victim's medical, hospital, funeral, or burial expenses",
+        none: "None of these / I'm not sure",
+      },
+      helper:
+        "Illinois law limits who can submit an application. This question helps confirm whether you're allowed to apply.",
+    },
+    q2: {
+      title: "Victim age or legal status",
+      question: "Is the victim under 18 years old or under a legal disability?",
+      helper:
+        "If the victim is under 18 or under a legal disability, the application must be completed and signed by a parent or legal guardian.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q3: {
+      title: "Who will sign the application?",
+      question: "Who will sign the application?",
+      options: {
+        applicant: "I will sign as the applicant",
+        guardian: "I am the parent or legal guardian and will sign on the victim's behalf",
+        notSure: "I'm not sure or I can't get the required signature",
+      },
+      helper:
+        "The application must be signed by the applicant or, if the victim is under 18 or under a legal disability, by a parent or legal guardian.",
+    },
+    q4: {
+      title: "Police report",
+      question: "Was the crime reported to law enforcement?",
+      helper:
+        "The Attorney General's Office will request a police report to investigate the claim. If you don't have one now, you can still continue.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q5: {
+      title: "Police report details",
+      question: "Do you have any police report information?",
+      options: {
+        haveNumber: "Yes, I have the police report number",
+        haveAgency:
+          "I know the police department or agency, but not the report number",
+        dontHave: "I don't have this information yet",
+      },
+      helper:
+        "If you don't have the report number, you'll be asked to provide as much information as you can about the crime later.",
+    },
+    q6: {
+      title: "Expenses related to the crime",
+      question: "What expenses are you seeking reimbursement for?",
+      options: {
+        medical: "Medical or hospital expenses",
+        funeral: "Funeral or burial expenses",
+        counseling: "Counseling or other crime-related expenses",
+        notSure: "I'm not sure yet",
+      },
+      helper:
+        "Compensation is limited to certain expenses related to the crime. You do not need final bills to complete this check.",
+    },
+    q7: {
+      title: "Staying in contact",
+      question:
+        "Can you reliably receive mail or phone calls and return requested documents within 45 days?",
+      helper:
+        "After you apply, the Attorney General's Office may request additional forms or documents. If they can't reach you or documents aren't returned within 45 days, the claim may be closed.",
+      yes: "Yes",
+      notSure: "I'm not sure",
+      no: "No",
+    },
+    resultEligible: {
+      headline: "You appear eligible to apply.",
+      body: "Based on your answers, you meet the basic requirements to submit an Illinois Crime Victims Compensation application.",
+      cta: "Start Application",
+      secondary: "You can save your progress and return at any time.",
+    },
+    resultNeedsAttention: {
+      headline: "You may be eligible, but a few things need attention first.",
+      body: "You can apply, but missing information or contact issues may delay or prevent payment.",
+      checklist: [
+        "Confirm who will sign the application",
+        "Gather police report information (if available)",
+        "Make sure your address and phone number are reliable",
+        "Be prepared to return requested documents within 45 days",
+      ],
+      ctaReady: "Continue When Ready",
+      ctaHelp: "Get Help From an Advocate",
+    },
+    resultNotEligible: {
+      headline:
+        "You may not be eligible to apply under Illinois Crime Victims Compensation rules.",
+      body: "Only certain individuals are allowed to submit an application, such as the victim (18+), a parent or legal guardian of a minor or disabled victim, or someone who paid qualifying expenses.",
+      nextSteps: [
+        "If you believe someone else should apply, ask them to complete the application",
+        "If you need help or referrals, contact the Illinois Attorney General's Office at 1-800-228-3368",
+      ],
+      cta: "Find Other Support Options",
+    },
+    status: {
+      eligible: "Eligible",
+      needsReview: "Needs review",
+      notEligible: "Not eligible",
+      notChecked: "Not checked",
+    },
+    dashboard: {
+      runCheck: "Run eligibility check",
+      startIntake: "Start intake",
+      skipWarningTitle: "Run eligibility check first?",
+      skipWarningBody:
+        "The eligibility check helps confirm you can apply and what to expect. We recommend running it before starting the intake form.",
+      continueAnyway: "Continue to intake anyway",
+      runCheckFirst: "Run eligibility check first",
+    },
+  },
+
+  /* =========================
      AUTH PANEL / LOGIN
   ========================== */
   authPanel: {
