@@ -138,6 +138,20 @@ The DELETE API will remove the case and rely on foreign keys. Ensure `case_acces
 
 ---
 
+---
+
+## 7. Eligibility check columns (per case)
+
+```sql
+alter table public.cases
+  add column if not exists eligibility_answers jsonb,
+  add column if not exists eligibility_result text check (eligibility_result in ('eligible', 'needs_review', 'not_eligible')),
+  add column if not exists eligibility_readiness text check (eligibility_readiness in ('ready', 'missing_info', 'not_ready')),
+  add column if not exists eligibility_completed_at timestamptz;
+```
+
+---
+
 ## Summary
 
 | Change | Purpose |
@@ -146,3 +160,4 @@ The DELETE API will remove the case and rely on foreign keys. Ensure `case_acces
 | `profiles.is_admin` | Flag admin users (4 cofounders) for MVP access |
 | `profiles.organization` | Optional org from full signup |
 | `cases.name` | User-defined label for each case |
+| `cases.eligibility_*` | Eligibility check answers, result, readiness per case |

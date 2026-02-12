@@ -24,6 +24,143 @@ export const es: I18nDict = {
     },
 
     /* =========================
+       ELIGIBILITY CHECK
+    ========================== */
+    eligibility: {
+        purposeText:
+            "Esta breve verificación ayuda a confirmar si puedes solicitar la Compensación para Víctimas de Delitos de Illinois y si estás listo/a para comenzar. No envía una solicitud ni afecta tu elegibilidad.",
+        questionOf: "Pregunta {current} de {total}",
+        q1: {
+            title: "¿Quién presenta la solicitud?",
+            question: "¿Qué opción te describe mejor?",
+            options: {
+                victim18Own:
+                    "Soy la víctima, tengo 18 años o más y solicito mis propios gastos",
+                parentMinor:
+                    "Soy el padre o tutor legal de una víctima menor de 18 años",
+                parentDisabled:
+                    "Soy el padre o tutor legal de una víctima con discapacidad legal",
+                paidExpenses:
+                    "Pagué o soy legalmente responsable de pagar los gastos médicos, hospitalarios, funerarios o de entierro de la víctima",
+                none: "Ninguna de estas / No estoy seguro/a",
+            },
+            helper:
+                "La ley de Illinois limita quién puede presentar una solicitud. Esta pregunta ayuda a confirmar si tienes permiso para solicitar.",
+        },
+        q2: {
+            title: "Edad o estado legal de la víctima",
+            question:
+                "¿La víctima es menor de 18 años o tiene una discapacidad legal?",
+            helper:
+                "Si la víctima es menor de 18 años o tiene discapacidad legal, la solicitud debe ser completada y firmada por un padre o tutor legal.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q3: {
+            title: "¿Quién firmará la solicitud?",
+            question: "¿Quién firmará la solicitud?",
+            options: {
+                applicant: "Yo firmaré como solicitante",
+                guardian:
+                    "Soy el padre o tutor legal y firmaré en nombre de la víctima",
+                notSure:
+                    "No estoy seguro/a o no puedo obtener la firma requerida",
+            },
+            helper:
+                "La solicitud debe ser firmada por el solicitante o, si la víctima es menor de 18 años o tiene discapacidad legal, por un padre o tutor legal.",
+        },
+        q4: {
+            title: "Reporte policial",
+            question: "¿Se reportó el delito a las autoridades?",
+            helper:
+                "La Oficina del Fiscal General solicitará un reporte policial para investigar el reclamo. Si no tienes uno ahora, aún puedes continuar.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q5: {
+            title: "Detalles del reporte policial",
+            question: "¿Tienes información del reporte policial?",
+            options: {
+                haveNumber: "Sí, tengo el número del reporte policial",
+                haveAgency:
+                    "Conozco el departamento de policía o agencia, pero no el número del reporte",
+                dontHave: "Aún no tengo esta información",
+            },
+            helper:
+                "Si no tienes el número del reporte, más adelante te pediremos que proporciones la mayor información posible sobre el delito.",
+        },
+        q6: {
+            title: "Gastos relacionados con el delito",
+            question: "¿Por qué gastos buscas reembolso?",
+            options: {
+                medical: "Gastos médicos u hospitalarios",
+                funeral: "Gastos funerarios o de entierro",
+                counseling:
+                    "Consejería u otros gastos relacionados con el delito",
+                notSure: "Aún no estoy seguro/a",
+            },
+            helper:
+                "La compensación se limita a ciertos gastos relacionados con el delito. No necesitas facturas finales para completar esta verificación.",
+        },
+        q7: {
+            title: "Mantener contacto",
+            question:
+                "¿Puedes recibir de forma confiable correo o llamadas y devolver los documentos solicitados en 45 días?",
+            helper:
+                "Después de solicitar, la Oficina del Fiscal General puede solicitar formularios o documentos adicionales. Si no pueden comunicarse contigo o si no devuelves los documentos en 45 días, el reclamo puede cerrarse.",
+            yes: "Sí",
+            notSure: "No estoy seguro/a",
+            no: "No",
+        },
+        resultEligible: {
+            headline: "Pareces elegible para solicitar.",
+            body: "Según tus respuestas, cumples con los requisitos básicos para presentar una solicitud de Compensación para Víctimas de Delitos de Illinois.",
+            cta: "Iniciar solicitud",
+            secondary: "Puedes guardar tu progreso y volver cuando quieras.",
+        },
+        resultNeedsAttention: {
+            headline:
+                "Puedes ser elegible, pero algunas cosas necesitan atención primero.",
+            body: "Puedes solicitar, pero la información faltante o problemas de contacto pueden retrasar o impedir el pago.",
+            checklist: [
+                "Confirma quién firmará la solicitud",
+                "Reúne información del reporte policial (si está disponible)",
+                "Asegúrate de que tu dirección y teléfono sean confiables",
+                "Prepárate para devolver los documentos solicitados en 45 días",
+            ],
+            ctaReady: "Continuar cuando estés listo/a",
+            ctaHelp: "Obtener ayuda de un defensor/a",
+        },
+        resultNotEligible: {
+            headline:
+                "Puede que no seas elegible para solicitar según las reglas de Compensación para Víctimas de Delitos de Illinois.",
+            body: "Solo ciertas personas pueden presentar una solicitud, como la víctima (18+), un padre o tutor legal de una víctima menor o con discapacidad, o alguien que pagó gastos elegibles.",
+            nextSteps: [
+                "Si crees que otra persona debería solicitar, pídele que complete la solicitud",
+                "Si necesitas ayuda o referencias, contacta a la Oficina del Fiscal General de Illinois al 1-800-228-3368",
+            ],
+            cta: "Buscar otras opciones de apoyo",
+        },
+        status: {
+            eligible: "Elegible",
+            needsReview: "Requiere revisión",
+            notEligible: "No elegible",
+            notChecked: "No verificado",
+        },
+        dashboard: {
+            runCheck: "Ejecutar verificación de elegibilidad",
+            startIntake: "Iniciar solicitud",
+            skipWarningTitle: "¿Ejecutar verificación de elegibilidad primero?",
+            skipWarningBody:
+                "La verificación de elegibilidad ayuda a confirmar si puedes solicitar y qué esperar. Recomendamos ejecutarla antes de iniciar el formulario de solicitud.",
+            continueAnyway: "Continuar a la solicitud de todos modos",
+            runCheckFirst: "Ejecutar verificación de elegibilidad primero",
+        },
+    },
+
+    /* =========================
        AUTH PANEL / LOGIN
     ========================== */
     authPanel: {
