@@ -92,7 +92,7 @@ create or replace trigger on_auth_user_created
 
 ## 3. Set cofounders as admin (run after profiles exist)
 
-Replace the emails with your four cofounder emails:
+Replace the emails with your admin emails:
 
 ```sql
 update public.profiles
@@ -100,13 +100,16 @@ set is_admin = true
 where id in (
   select id from auth.users
   where email in (
-    'cofounder1@nxtstps.org',
-    'cofounder2@nxtstps.org',
-    'cofounder3@nxtstps.org',
-    'cofounder4@nxtstps.org'
+    'christinanrice@gmail.com',
+    'admin2@example.com',
+    'admin3@example.com',
+    'admin4@example.com'
   )
 );
 ```
+
+**Troubleshooting:** See `TROUBLESHOOT_ADMIN.md` for detailed steps, or use the debug endpoint:
+- `GET /api/debug-admin-check?email=christinanrice@gmail.com`
 
 ---
 

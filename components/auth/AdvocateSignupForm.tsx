@@ -11,6 +11,8 @@ export default function AdvocateSignupForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreeWaiver, setAgreeWaiver] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -87,6 +89,50 @@ export default function AdvocateSignupForm() {
           />
         </label>
 
+        <fieldset className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
+          <legend className="text-[11px] text-slate-400">
+            Required agreements (must check both to continue)
+          </legend>
+          <label className="flex items-start gap-3 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+            />
+            <span>
+              I have read and agree to the{" "}
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-emerald-400"
+              >
+                Terms of Use
+              </Link>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={agreeWaiver}
+              onChange={(e) => setAgreeWaiver(e.target.checked)}
+              className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+            />
+            <span>
+              I have read and agree to the{" "}
+              <Link
+                href="/waiver"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-emerald-400"
+              >
+                Liability Waiver & Release of Claims
+              </Link>
+            </span>
+          </label>
+        </fieldset>
+
         {err && (
           <div className="text-[11px] text-red-300 border border-red-500/30 bg-red-500/10 rounded-lg px-3 py-2">
             {err}
@@ -100,7 +146,7 @@ export default function AdvocateSignupForm() {
 
         <button
           className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading || !email.trim() || password.length < 8}
+          disabled={loading || !email.trim() || password.length < 8 || !agreeTerms || !agreeWaiver}
           type="submit"
         >
           {loading ? "Creating…" : "Create advocate account"}
@@ -117,11 +163,7 @@ export default function AdvocateSignupForm() {
         </div>
 
         <p className="text-[11px] text-slate-500">
-          By continuing, you agree to our{" "}
-          <Link href="/terms" className="underline underline-offset-2 hover:text-slate-300">
-            Terms
-          </Link>{" "}
-          and{" "}
+          Also see our{" "}
           <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-300">
             Privacy Policy
           </Link>

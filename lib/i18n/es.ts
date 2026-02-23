@@ -204,6 +204,33 @@ export const es: I18nDict = {
         forgotPassword: "Olvidé mi contraseña",
     },
 
+    forgotPassword: {
+        title: "Restablecer contraseña",
+        subtitle: "Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.",
+        emailPlaceholder: "Correo electrónico",
+        submit: "Enviar enlace",
+        sending: "Enviando…",
+        sentHint: "Revisa tu correo para el enlace. Puede tardar unos minutos.",
+        backToLogin: "← Volver a iniciar sesión",
+    },
+
+    resetPassword: {
+        title: "Establecer nueva contraseña",
+        subtitle: "Ingresa tu nueva contraseña abajo.",
+        newPasswordPlaceholder: "Nueva contraseña",
+        confirmPasswordPlaceholder: "Confirmar contraseña",
+        passwordsMismatch: "Las contraseñas no coinciden",
+        passwordTooShort: "La contraseña debe tener al menos 6 caracteres",
+        submit: "Actualizar contraseña",
+        updating: "Actualizando…",
+        backToLogin: "← Volver a iniciar sesión",
+        invalidOrExpired: "Enlace inválido o vencido",
+        invalidOrExpiredHint: "Los enlaces de restablecimiento caducan después de 1 hora. Solicita uno nuevo abajo.",
+        requestNewLink: "Solicitar nuevo enlace",
+        successTitle: "Contraseña actualizada",
+        successHint: "Redirigiendo al inicio de sesión…",
+    },
+
     /* =========================
        HOME PAGE
     ========================== */

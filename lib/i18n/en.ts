@@ -198,6 +198,33 @@ export const en: I18nDict = {
     forgotPassword: "Forgot password",
   },
 
+  forgotPassword: {
+    title: "Reset password",
+    subtitle: "Enter your email and we'll send you a link to reset your password.",
+    emailPlaceholder: "Email",
+    submit: "Send reset link",
+    sending: "Sending…",
+    sentHint: "Check your email for a reset link. It may take a few minutes.",
+    backToLogin: "← Back to login",
+  },
+
+  resetPassword: {
+    title: "Set new password",
+    subtitle: "Enter your new password below.",
+    newPasswordPlaceholder: "New password",
+    confirmPasswordPlaceholder: "Confirm password",
+    passwordsMismatch: "Passwords do not match",
+    passwordTooShort: "Password must be at least 6 characters",
+    submit: "Update password",
+    updating: "Updating…",
+    backToLogin: "← Back to login",
+    invalidOrExpired: "Invalid or expired link",
+    invalidOrExpiredHint: "Password reset links expire after 1 hour. Request a new one below.",
+    requestNewLink: "Request new reset link",
+    successTitle: "Password updated",
+    successHint: "Redirecting you to login…",
+  },
+
   /* =========================
      HOME PAGE
   ========================== */

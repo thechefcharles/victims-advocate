@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const metadata = {
   title: "Privacy Policy · NxtStps",
 };
@@ -6,6 +8,11 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex flex-wrap gap-4 text-sm text-slate-400 mb-4">
+          <Link href="/" className="hover:text-slate-200">← Home</Link>
+          <Link href="/terms" className="hover:text-slate-200">Terms</Link>
+          <Link href="/waiver" className="hover:text-slate-200">Liability Waiver</Link>
+        </div>
         <header className="space-y-2">
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
             Legal

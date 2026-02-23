@@ -163,6 +163,33 @@ export type I18nDict = {
     forgotPassword: string;
   };
 
+  forgotPassword: {
+    title: string;
+    subtitle: string;
+    emailPlaceholder: string;
+    submit: string;
+    sending: string;
+    sentHint: string;
+    backToLogin: string;
+  };
+
+  resetPassword: {
+    title: string;
+    subtitle: string;
+    newPasswordPlaceholder: string;
+    confirmPasswordPlaceholder: string;
+    passwordsMismatch: string;
+    passwordTooShort: string;
+    submit: string;
+    updating: string;
+    backToLogin: string;
+    invalidOrExpired: string;
+    invalidOrExpiredHint: string;
+    requestNewLink: string;
+    successTitle: string;
+    successHint: string;
+  };
+
   home: {
     hero: {
       title: string;
