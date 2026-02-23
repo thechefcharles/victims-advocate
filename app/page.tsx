@@ -177,6 +177,9 @@ export default function HomePage() {
             <Link href="/terms" className="hover:text-slate-200">
               Terms
             </Link>
+            <Link href="/waiver" className="hover:text-slate-200">
+              Liability Waiver
+            </Link>
             <a href="tel:988" className="font-semibold text-[#FF7A7A] hover:text-[#ff9c9c]">
               Crisis line: 988
             </a>

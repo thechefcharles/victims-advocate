@@ -40,7 +40,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // 2) Single auth listener (SOURCE OF TRUTH)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      // Suppress "TOKEN_REFRESHED" errors that show as "Failed to fetch"
+      if (event === "TOKEN_REFRESHED" && !newSession) {
+        // Token refresh failed but session still valid - ignore
+        return;
+      }
       setSession(newSession);
       resolveProfile(newSession);
       setLoading(false);
@@ -60,13 +65,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("is_admin")
         .eq("id", uid)
         .single();
-      setIsAdmin(data?.is_admin === true);
-    } catch {
+      
+      if (error) {
+        if (process.env.NODE_ENV === "development") {
+          console.error(
+            `[AuthProvider] Profile lookup failed for ${sess?.user?.email} (${uid}):`,
+            error.message,
+            error.code,
+            "\nThis might be an RLS policy issue. Check Supabase policies."
+          );
+        } else {
+          console.warn("[AuthProvider] Profile lookup error:", error.message, "for user:", uid);
+        }
+        setIsAdmin(false);
+        return;
+      }
+      
+      const adminStatus = data?.is_admin === true;
+      setIsAdmin(adminStatus);
+      
+      // Debug logging
+      if (process.env.NODE_ENV === "development") {
+        if (adminStatus) {
+          console.log(`[AuthProvider] ✅ Admin access granted for ${sess?.user?.email} (${uid})`);
+        } else if (sess?.user?.email) {
+          console.warn(
+            `[AuthProvider] ⚠️ User ${sess.user.email} (${uid}) is NOT admin. ` +
+            `Profile data:`, data,
+            `\nCheck in Supabase: SELECT * FROM profiles WHERE id = '${uid}';`
+          );
+        }
+      }
+      
+    } catch (err) {
+      console.error("[AuthProvider] Unexpected error checking admin status:", err);
       setIsAdmin(false);
     }
   };
