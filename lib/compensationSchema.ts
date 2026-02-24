@@ -20,7 +20,12 @@ export interface VictimInfo {
   ethnicity?: string;
   hasDisability?: boolean;
   disabilityType?: "physical" | "mental" | "developmental" | "other" | null;
+  /** Indiana: Last 4 digits of SSN or Tax ID */
+  last4SSN?: string;
 }
+
+/** Indiana: Who is submitting the claim */
+export type WhoIsSubmitting = "victim" | "claimant" | "advocate";
 
 export interface ApplicantInfo {
   isSameAsVictim: boolean;
@@ -40,9 +45,13 @@ export interface ApplicantInfo {
   seekingOwnExpenses?: boolean;
   descriptionOfExpensesSought?: string;
   hasLegalGuardianship?: boolean; // for minor/incapacitated victims
+  /** Indiana: Last 4 digits of SSN or Tax ID */
+  last4SSN?: string;
 }
 
 export interface AdvocateContact {
+  /** Indiana: Who is submitting the claim */
+  whoIsSubmitting?: WhoIsSubmitting;
   prefersEnglish: boolean;
   preferredLanguage?: string;
   workingWithAdvocate: boolean;
@@ -77,6 +86,12 @@ export interface CrimeInfo {
   isAutomobileAccident?: boolean | null;
   suspectAutoInsurance?: string;
   victimAutoInsurance?: string;
+  /** Indiana: Crime type */
+  crimeType?: string;
+  /** Indiana: Does victim have physical injuries? */
+  victimHasPhysicalInjuries?: boolean | null;
+  /** Indiana: Name of medical facility for treatment */
+  medicalFacilityForTreatment?: string;
 }
 
 export interface CourtInfo {
@@ -146,6 +161,9 @@ export interface LossesClaimed {
   legalFees: boolean;
   doors: boolean;
   headstone: boolean;
+  /** Indiana: Other expenses (with description) */
+  otherExpenses?: boolean;
+  otherExpensesDescription?: string;
 }
 
 // SECTION 4 – Medical info

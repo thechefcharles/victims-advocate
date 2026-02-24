@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
@@ -19,8 +19,15 @@ import {
   type ContactReliabilityAnswer,
   type EligibilityOutcome,
 } from "@/lib/eligibilitySchema";
+import {
+  emptyEligibilityAnswersIN,
+  computeEligibilityOutcomeIN,
+  type EligibilityCheckAnswersIN,
+  type INApplicantType,
+  type INYesNoNotSure,
+} from "@/lib/eligibilitySchemaIN";
 
-const QUESTIONS = [
+const QUESTIONS_IL = [
   "q1",
   "q2",
   "q3",
@@ -30,20 +37,29 @@ const QUESTIONS = [
   "q7",
 ] as const;
 
+const QUESTIONS_IN = ["q1", "q2", "q3", "q4", "q5", "q6", "q7"] as const;
+
+type StateCode = "IL" | "IN";
+
 export default function EligibilityCheckPage() {
   const params = useParams();
-  const router = useRouter();
   const { t, tf } = useI18n();
   const { accessToken } = useAuth();
 
   const caseId = typeof params.id === "string" ? params.id : null;
+  const [stateCode, setStateCode] = useState<StateCode | null>(null);
   const [answers, setAnswers] = useState<EligibilityCheckAnswers>(emptyEligibilityAnswers);
+  const [answersIN, setAnswersIN] = useState<EligibilityCheckAnswersIN>(emptyEligibilityAnswersIN);
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<EligibilityOutcome | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
 
-  // Verify case access
+  const isIN = stateCode === "IN";
+  const QUESTIONS = isIN ? QUESTIONS_IN : QUESTIONS_IL;
+  const prefix = isIN ? "eligibilityIN" : "eligibility";
+
+  // Fetch case and verify access
   useEffect(() => {
     if (!caseId || !accessToken) return;
 
@@ -53,7 +69,11 @@ export default function EligibilityCheckPage() {
       });
       if (!res.ok) {
         setLoadErr("Case not found or access denied");
+        return;
       }
+      const json = await res.json();
+      const sc = json.case?.state_code;
+      setStateCode(sc === "IN" ? "IN" : "IL");
     };
     check();
   }, [caseId, accessToken]);
@@ -61,7 +81,10 @@ export default function EligibilityCheckPage() {
   const saveResult = useCallback(async () => {
     if (!caseId || !accessToken) return;
 
-    const outcome = computeEligibilityOutcome(answers);
+    const outcome = isIN
+      ? computeEligibilityOutcomeIN(answersIN)
+      : computeEligibilityOutcome(answers);
+    const payload = isIN ? answersIN : answers;
     setSaving(true);
     try {
       const res = await fetch(`/api/compensation/cases/${caseId}`, {
@@ -71,7 +94,7 @@ export default function EligibilityCheckPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          eligibility_answers: answers,
+          eligibility_answers: payload,
           eligibility_result: outcome.result,
           eligibility_readiness: outcome.readiness,
         }),
@@ -86,7 +109,7 @@ export default function EligibilityCheckPage() {
     } finally {
       setSaving(false);
     }
-  }, [caseId, accessToken, answers]);
+  }, [caseId, accessToken, answers, answersIN, isIN]);
 
   const handleNext = () => {
     if (step < QUESTIONS.length - 1) {
@@ -100,13 +123,23 @@ export default function EligibilityCheckPage() {
 
   const canProceed = () => {
     const q = QUESTIONS[step];
-    if (q === "q1") return answers.applicantType !== null;
-    if (q === "q2") return answers.victimUnder18OrDisabled !== null;
-    if (q === "q3") return answers.whoWillSign !== null;
-    if (q === "q4") return answers.crimeReportedToPolice !== null;
-    if (q === "q5") return answers.policeReportDetails !== null;
-    if (q === "q6") return answers.expensesSought.length > 0;
-    if (q === "q7") return answers.canReceiveContact45Days !== null;
+    if (isIN) {
+      if (q === "q1") return answersIN.applicantType !== null;
+      if (q === "q2") return answersIN.crimeInIndiana !== null;
+      if (q === "q3") return answersIN.reported72HoursCooperate !== null;
+      if (q === "q4") return answersIN.min100OutOfPocket !== null;
+      if (q === "q5") return answersIN.victimDidNotContribute !== null;
+      if (q === "q6") return answersIN.within180Days !== null;
+      if (q === "q7") return answersIN.minorGuardianWillSign !== null;
+    } else {
+      if (q === "q1") return answers.applicantType !== null;
+      if (q === "q2") return answers.victimUnder18OrDisabled !== null;
+      if (q === "q3") return answers.whoWillSign !== null;
+      if (q === "q4") return answers.crimeReportedToPolice !== null;
+      if (q === "q5") return answers.policeReportDetails !== null;
+      if (q === "q6") return answers.expensesSought.length > 0;
+      if (q === "q7") return answers.canReceiveContact45Days !== null;
+    }
     return false;
   };
 
@@ -123,6 +156,17 @@ export default function EligibilityCheckPage() {
     return (
       <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-red-300">Invalid case</div>
+        <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
+          ← Back to dashboard
+        </Link>
+      </main>
+    );
+  }
+
+  if (stateCode === null && !loadErr) {
+    return (
+      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+        <div className="max-w-xl mx-auto text-slate-400">Loading…</div>
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
           ← Back to dashboard
         </Link>
@@ -160,19 +204,19 @@ export default function EligibilityCheckPage() {
           {result.result === "eligible" && result.readiness === "ready" && (
             <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-6 space-y-4">
               <h1 className="text-xl font-semibold text-emerald-100">
-                {t("eligibility.resultEligible.headline")}
+                {t(`${prefix}.resultEligible.headline`)}
               </h1>
               <p className="text-sm text-slate-300">
-                {t("eligibility.resultEligible.body")}
+                {t(`${prefix}.resultEligible.body`)}
               </p>
               <p className="text-xs text-slate-400">
-                {t("eligibility.resultEligible.secondary")}
+                {t(`${prefix}.resultEligible.secondary`)}
               </p>
               <Link
                 href={intakeHref}
                 className="inline-block rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
               >
-                {t("eligibility.resultEligible.cta")}
+                {t(`${prefix}.resultEligible.cta`)}
               </Link>
             </div>
           )}
@@ -181,15 +225,15 @@ export default function EligibilityCheckPage() {
           result.result === "needs_review" ? (
             <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-6 space-y-4">
               <h1 className="text-xl font-semibold text-amber-100">
-                {t("eligibility.resultNeedsAttention.headline")}
+                {t(`${prefix}.resultNeedsAttention.headline`)}
               </h1>
               <p className="text-sm text-slate-300">
-                {t("eligibility.resultNeedsAttention.body")}
+                {t(`${prefix}.resultNeedsAttention.body`)}
               </p>
               <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
                 {[0, 1, 2, 3].map((i) => (
                   <li key={i}>
-                    {t(`eligibility.resultNeedsAttention.checklist.${i}`)}
+                    {t(`${prefix}.resultNeedsAttention.checklist.${i}`)}
                   </li>
                 ))}
               </ul>
@@ -198,13 +242,13 @@ export default function EligibilityCheckPage() {
                   href={intakeHref}
                   className="rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
                 >
-                  {t("eligibility.resultNeedsAttention.ctaReady")}
+                  {t(`${prefix}.resultNeedsAttention.ctaReady`)}
                 </Link>
                 <Link
                   href="/help"
                   className="rounded-full border border-slate-600 px-6 py-2.5 text-sm hover:bg-slate-900/60"
                 >
-                  {t("eligibility.resultNeedsAttention.ctaHelp")}
+                  {t(`${prefix}.resultNeedsAttention.ctaHelp`)}
                 </Link>
               </div>
             </div>
@@ -213,15 +257,15 @@ export default function EligibilityCheckPage() {
           {result.result === "not_eligible" && (
             <div className="rounded-2xl border border-slate-700 bg-slate-950/70 p-6 space-y-4">
               <h1 className="text-xl font-semibold text-slate-100">
-                {t("eligibility.resultNotEligible.headline")}
+                {t(`${prefix}.resultNotEligible.headline`)}
               </h1>
               <p className="text-sm text-slate-300">
-                {t("eligibility.resultNotEligible.body")}
+                {t(`${prefix}.resultNotEligible.body`)}
               </p>
               <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
                 {[0, 1].map((i) => (
                   <li key={i}>
-                    {t(`eligibility.resultNotEligible.nextSteps.${i}`)}
+                    {t(`${prefix}.resultNotEligible.nextSteps.${i}`)}
                   </li>
                 ))}
               </ul>
@@ -239,7 +283,7 @@ export default function EligibilityCheckPage() {
                   href="/help"
                   className="rounded-full border border-slate-600 px-6 py-2.5 text-sm hover:bg-slate-900/60"
                 >
-                  {t("eligibility.resultNotEligible.cta")}
+                  {t(`${prefix}.resultNotEligible.cta`)}
                 </Link>
               </div>
             </div>
@@ -266,16 +310,16 @@ export default function EligibilityCheckPage() {
 
         {step === 0 && (
           <p className="text-sm text-slate-300">
-            {t("eligibility.purposeText")}
+            {t(`${prefix}.purposeText`)}
           </p>
         )}
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-6">
           <p className="text-[11px] uppercase tracking-wider text-slate-400">
-            {tf("eligibility.questionOf", { current: String(stepNum), total: String(totalNum) })}
+            {tf(`${prefix}.questionOf`, { current: String(stepNum), total: String(totalNum) })}
           </p>
 
-          {q === "q1" && (
+          {q === "q1" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q1.title")}
@@ -319,7 +363,39 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q2" && (
+          {q === "q1" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q1.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q1.question")}</p>
+              <div className="space-y-2">
+                {(["victim", "surviving_spouse", "dependent_child", "none"] as INApplicantType[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q1in"
+                      value={v}
+                      checked={answersIN.applicantType === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, applicantType: v }))
+                      }
+                      className="mt-1"
+                    />
+                    <span className="text-sm">
+                      {t(`eligibilityIN.q1.options.${v === "surviving_spouse" ? "surviving_spouse" : v === "dependent_child" ? "dependent_child" : v}`)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q1.helper")}</p>
+            </>
+          )}
+
+          {q === "q2" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q2.title")}
@@ -351,7 +427,36 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q3" && (
+          {q === "q2" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q2.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q2.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q2in"
+                      value={v}
+                      checked={answersIN.crimeInIndiana === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, crimeInIndiana: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q2.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q2.helper")}</p>
+            </>
+          )}
+
+          {q === "q3" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q3.title")}
@@ -383,7 +488,36 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q4" && (
+          {q === "q3" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q3.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q3.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q3in"
+                      value={v}
+                      checked={answersIN.reported72HoursCooperate === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, reported72HoursCooperate: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q3.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q3.helper")}</p>
+            </>
+          )}
+
+          {q === "q4" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q4.title")}
@@ -415,7 +549,36 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q5" && (
+          {q === "q4" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q4.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q4.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q4in"
+                      value={v}
+                      checked={answersIN.min100OutOfPocket === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, min100OutOfPocket: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q4.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q4.helper")}</p>
+            </>
+          )}
+
+          {q === "q5" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q5.title")}
@@ -450,7 +613,36 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q6" && (
+          {q === "q5" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q5.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q5.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q5in"
+                      value={v}
+                      checked={answersIN.victimDidNotContribute === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, victimDidNotContribute: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q5.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q5.helper")}</p>
+            </>
+          )}
+
+          {q === "q6" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q6.title")}
@@ -478,7 +670,36 @@ export default function EligibilityCheckPage() {
             </>
           )}
 
-          {q === "q7" && (
+          {q === "q6" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q6.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q6.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q6in"
+                      value={v}
+                      checked={answersIN.within180Days === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, within180Days: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q6.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q6.helper")}</p>
+            </>
+          )}
+
+          {q === "q7" && !isIN && (
             <>
               <h2 className="text-sm font-semibold text-slate-100">
                 {t("eligibility.q7.title")}
@@ -507,6 +728,35 @@ export default function EligibilityCheckPage() {
                 ))}
               </div>
               <p className="text-xs text-slate-400">{t("eligibility.q7.helper")}</p>
+            </>
+          )}
+
+          {q === "q7" && isIN && (
+            <>
+              <h2 className="text-sm font-semibold text-slate-100">
+                {t("eligibilityIN.q7.title")}
+              </h2>
+              <p className="text-sm text-slate-300">{t("eligibilityIN.q7.question")}</p>
+              <div className="flex flex-wrap gap-2">
+                {(["yes", "no", "not_sure", "na"] as const).map((v) => (
+                  <label
+                    key={v}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                  >
+                    <input
+                      type="radio"
+                      name="q7in"
+                      value={v}
+                      checked={answersIN.minorGuardianWillSign === v}
+                      onChange={() =>
+                        setAnswersIN((a) => ({ ...a, minorGuardianWillSign: v }))
+                      }
+                    />
+                    <span className="text-sm">{t(`eligibilityIN.q7.${v === "not_sure" ? "notSure" : v}`)}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{t("eligibilityIN.q7.helper")}</p>
             </>
           )}
 

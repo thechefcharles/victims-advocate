@@ -160,6 +160,99 @@ export const es: I18nDict = {
         },
     },
 
+    eligibilityIN: {
+        purposeText:
+            "Esta breve verificación ayuda a confirmar si puedes solicitar la Compensación para Víctimas de Crímenes Violentos de Indiana. No envía una solicitud ni afecta tu elegibilidad.",
+        questionOf: "Pregunta {current} de {total}",
+        q1: {
+            title: "¿Quién está solicitando?",
+            question: "¿Qué opción te describe mejor?",
+            options: {
+                victim: "Soy la víctima del crimen",
+                surviving_spouse: "Soy el cónyuge sobreviviente de la víctima",
+                dependent_child: "Soy hijo/a dependiente de la víctima",
+                none: "Ninguna de estas / No estoy seguro/a",
+            },
+            helper: "La ley de Indiana limita quién puede solicitar a víctimas, cónyuges sobrevivientes o hijos dependientes.",
+        },
+        q2: {
+            title: "Ubicación del crimen",
+            question: "¿El crimen ocurrió en Indiana?",
+            helper: "El Fondo de Compensación para Víctimas de Crímenes Violentos de Indiana solo cubre crímenes ocurridos en Indiana.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q3: {
+            title: "Reporte policial y cooperación",
+            question: "¿El crimen fue reportado a las autoridades en 72 horas y estás dispuesto/a a cooperar durante la investigación y el juicio?",
+            helper: "Indiana requiere que el crimen sea reportado en 72 horas. Contacta a ICJI al 1-800-353-1484 si tienes preguntas.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q4: {
+            title: "Gastos de bolsillo",
+            question: "¿La víctima tuvo al menos $100 en gastos de bolsillo como resultado del crimen?",
+            helper: "Facturas médicas, costos funerarios, consejería y otros gastos elegibles cuentan para el mínimo de $100.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q5: {
+            title: "Conducta de la víctima",
+            question: "¿La víctima contribuyó al crimen o a su lesión?",
+            helper: "Si la víctima contribuyó al crimen o su lesión, puede no ser elegible.",
+            yes: "No, la víctima no contribuyó",
+            no: "Sí, la víctima contribuyó",
+            notSure: "No estoy seguro/a",
+        },
+        q6: {
+            title: "Plazo de presentación",
+            question: "¿La solicitud puede presentarse dentro de 180 días de la fecha del crimen?",
+            helper: "Indiana requiere solicitudes en 180 días. Hay excepciones. Contacta a ICJI para más información.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+        },
+        q7: {
+            title: "Si el solicitante es menor de 18",
+            question: "Si eres menor de 18, ¿un padre o tutor legal firmará y fechará la solicitud?",
+            helper: "Indiana requiere que un padre o tutor legal firme para solicitantes menores de 18. Si no aplica, elige N/A.",
+            yes: "Sí",
+            no: "No",
+            notSure: "No estoy seguro/a",
+            na: "N/A (tengo 18 años o más)",
+        },
+        resultEligible: {
+            headline: "Pareces elegible para solicitar.",
+            body: "Según tus respuestas, cumples los requisitos básicos para presentar una solicitud de Compensación para Víctimas de Indiana.",
+            cta: "Iniciar solicitud",
+            secondary: "Puedes guardar tu progreso y volver en cualquier momento.",
+        },
+        resultNeedsAttention: {
+            headline: "Puedes ser elegible, pero algunas cosas necesitan atención primero.",
+            body: "Puedes solicitar, pero información faltante puede retrasar o impedir el pago.",
+            checklist: [
+                "Confirma el reporte en 72 horas y disposición a cooperar con las autoridades",
+                "Verifica al menos $100 en gastos de bolsillo",
+                "Asegúrate de que la solicitud se presente en 180 días del crimen",
+                "Si eres menor de 18, coordina la firma del padre o tutor legal",
+            ],
+            ctaReady: "Continuar cuando estés listo/a",
+            ctaHelp: "Obtener ayuda de un defensor/a",
+        },
+        resultNotEligible: {
+            headline: "Puedes no ser elegible según las reglas de Indiana.",
+            body: "La elegibilidad requiere que seas víctima, cónyuge sobreviviente o hijo dependiente; que el crimen ocurrió en Indiana; y otros requisitos. Contacta a ICJI al 1-800-353-1484.",
+            nextSteps: [
+                "Contacta al Instituto de Justicia Penal de Indiana al 1-800-353-1484",
+                "Si el crimen ocurrió en otro estado, consulta el programa de compensación de ese estado",
+            ],
+            cta: "Encontrar otras opciones de apoyo",
+        },
+    },
+
     /* =========================
        AUTH PANEL / LOGIN
     ========================== */
@@ -648,6 +741,31 @@ export const es: I18nDict = {
        FORMS (REUSABLE + PAGE/FORM COPY)
     ========================== */
     forms: {
+        int: {
+            whoIsSubmitting: "¿Quién presenta la reclamación?",
+            whoOptions: {
+                victim: "Víctima",
+                claimant: "Reclamante",
+                advocate: "Defensor/a",
+            },
+            last4SSN: "Últimos 4 dígitos del SSN o Tax ID",
+            autoAccident: "¿Es un accidente automovilístico?",
+            autoInsuranceName: "Nombre del seguro de auto",
+            physicalInjuries: "¿La víctima tiene lesiones físicas?",
+            medicalFacilityName: "Nombre del centro médico de tratamiento",
+            timeOfCrime: "Hora en que ocurrió el crimen",
+            crimeType: "Tipo de crimen",
+            causeNumber: "Número de causa",
+            willingToAssistProsecution: "¿Está dispuesto/a a colaborar con las autoridades en el proceso?",
+            notWillingExplain: "Si no está dispuesto/a a colaborar (explique por qué)",
+            compensationRequesting: "¿Qué formas de compensación solicita?",
+            medicalDentalCounseling: "Médico / dental / consejería",
+            lossOfIncome: "Pérdida de ingresos",
+            funeralBurial: "Funeral / entierro",
+            lossOfSupport: "Pérdida de apoyo",
+            other: "Otro",
+            otherDescribe: "Otro (describa)",
+        },
         victim: {
             title: "Información de la víctima",
             description:

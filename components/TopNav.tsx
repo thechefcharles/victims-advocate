@@ -6,12 +6,10 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
-
 export default function TopNav() {
   const router = useRouter();
   const { loading, user, role, isAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
-
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -44,7 +42,6 @@ export default function TopNav() {
         </Link>
 
         <nav className="flex items-center gap-3 text-xs text-slate-200">
-          {/* Language dropdown always visible */}
           <label className="flex items-center gap-2 rounded-full border border-slate-600 px-3 py-1.5">
             <span className="text-[11px] text-slate-300">{t("nav.language")}</span>
             <select
