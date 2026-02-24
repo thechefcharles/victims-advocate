@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 /**
- * Wraps MVP routes. Requires auth + isAdmin.
+ * Wraps admin routes. Requires auth + (isAdmin OR role advocate).
  * - Not logged in → redirect to /login
- * - Logged in but not admin → redirect to /coming-soon
+ * - Logged in but not admin/advocate → redirect to /coming-soon
+ * Advocates can access admin/cases for "View all saved cases" / "Open your case dashboard".
  */
 export default function RequireAdmin({
   children,
@@ -15,7 +16,8 @@ export default function RequireAdmin({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const { loading, user, isAdmin } = useAuth();
+  const { loading, user, isAdmin, role } = useAuth();
+  const canAccess = isAdmin || role === "advocate";
 
   useEffect(() => {
     if (loading) return;
@@ -25,12 +27,12 @@ export default function RequireAdmin({
       return;
     }
 
-    if (!isAdmin) {
+    if (!canAccess) {
       router.replace("/coming-soon");
     }
-  }, [loading, user, isAdmin, router]);
+  }, [loading, user, canAccess, router]);
 
-  if (loading || !user || !isAdmin) {
+  if (loading || !user || !canAccess) {
     return (
       <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
         <p className="text-sm text-slate-400">Loading…</p>

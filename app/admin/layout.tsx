@@ -1,9 +1,9 @@
-import RequireAdmin from "@/components/auth/RequireAdmin";
+import { RequireAuth } from "@/components/auth/RequireAuth";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <RequireAdmin>{children}</RequireAdmin>;
+  return <RequireAuth redirectTo="/login">{children}</RequireAuth>;
 }
