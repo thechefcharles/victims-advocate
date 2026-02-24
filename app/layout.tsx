@@ -5,6 +5,7 @@ import "./globals.css";
 import TopNav from "@/components/TopNav";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { I18nProvider } from "@/components/i18n/i18nProvider";
+import { StateProvider } from "@/components/state/StateProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,10 +27,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-screen bg-[#020b16] text-slate-50 antialiased">
         <AuthProvider>
-          <I18nProvider>
-            <TopNav />
+          <StateProvider>
+            <I18nProvider>
+              <TopNav />
             {children}
-          </I18nProvider>
+            </I18nProvider>
+          </StateProvider>
         </AuthProvider>
       </body>
     </html>

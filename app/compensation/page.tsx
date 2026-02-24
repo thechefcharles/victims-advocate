@@ -1,14 +1,26 @@
 // app/compensation/page.tsx
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function CompensationPage() {
+  const router = useRouter();
+  const [showStatePrompt, setShowStatePrompt] = useState(false);
+
+  const handleStartIntake = (state: "IL" | "IN") => {
+    setShowStatePrompt(false);
+    router.push(`/compensation/intake?state=${state}`);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <header className="space-y-2">
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            Illinois Crime Victims Compensation
+            Crime Victims Compensation
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">
             Get help applying for Crime Victims Compensation & Emergency
@@ -73,17 +85,18 @@ export default function CompensationPage() {
     href="/knowledge/compensation"
     className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
   >
-    Read the plain-language guide to Illinois CVC.
+    Read the plain-language guide to CVC.
   </a>
 </p>
 
           <div className="flex flex-wrap gap-3 items-center">
-            <Link
-              href="/compensation/intake"
+            <button
+              type="button"
+              onClick={() => setShowStatePrompt(true)}
               className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition"
             >
               Start guided intake
-            </Link>
+            </button>
             <span className="text-[11px] text-slate-400">
               Approximate time: 15–25 minutes. You don&apos;t need every
               document ready to begin.
@@ -110,6 +123,49 @@ export default function CompensationPage() {
           </div>
         </section>
 
+        {/* State selection modal */}
+        {showStatePrompt && (
+          <div
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowStatePrompt(false)}
+          >
+            <div
+              className="rounded-2xl border border-slate-700 bg-slate-950 p-6 max-w-sm w-full space-y-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-semibold text-slate-100">
+                Select your state
+              </h3>
+              <p className="text-sm text-slate-300">
+                Which state&apos;s Crime Victims Compensation program are you applying to?
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStartIntake("IL")}
+                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-emerald-500/50 transition text-left"
+                >
+                  Illinois
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleStartIntake("IN")}
+                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-emerald-500/50 transition text-left"
+                >
+                  Indiana
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStatePrompt(false)}
+                className="w-full text-sm text-slate-400 hover:text-slate-200"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* FAQ / reassurance */}
         <section className="grid gap-4 md:grid-cols-2">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 text-sm space-y-2">
@@ -134,14 +190,14 @@ export default function CompensationPage() {
               Who this is for
             </h3>
             <ul className="list-disc list-inside text-xs text-slate-300 space-y-1.5">
-              <li>Victims of violent crime in Illinois</li>
+              <li>Victims of violent crime in Illinois or Indiana</li>
               <li>Family members of a deceased victim</li>
               <li>Anyone who has paid medical or funeral costs</li>
               <li>Advocates helping someone complete the application</li>
             </ul>
             <p className="text-[11px] text-slate-400 mt-2">
               This tool is not an official government website, but it is based
-              on the official Illinois Crime Victims Compensation application.
+              on the official Illinois and Indiana Crime Victims Compensation applications.
             </p>
           </div>
         </section>

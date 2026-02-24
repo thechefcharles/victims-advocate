@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { useStateSelection } from "@/components/state/StateProvider";
 
 import type {
   VictimInfo,
@@ -148,6 +149,8 @@ function CompensationIntakeInner() {
     const router = useRouter();
   const searchParams = useSearchParams();
 const caseId = searchParams.get("case"); // ✅ if present, we load case from Supabase
+const urlState = searchParams.get("state"); // ?state=IN for Indiana
+const { stateCode: globalState } = useStateSelection();
 const { t, tf, lang } = useI18n();
 
   useEffect(() => {
@@ -168,7 +171,9 @@ const { t, tf, lang } = useI18n();
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(true); // ✅ local mode default true
-  const [stateCode, setStateCode] = useState<"IL" | "IN">("IL");
+  const [stateCode, setStateCode] = useState<"IL" | "IN">(
+    urlState === "IN" ? "IN" : globalState
+  );
   const isReadOnly = !!caseId && !canEdit;
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
 const [saveToast, setSaveToast] = useState<string | null>(null);
@@ -244,6 +249,12 @@ useEffect(() => {
   })();
 }, [caseId, router, t]); // ✅ add t
 
+  // When no case, sync state from URL or global
+  useEffect(() => {
+    if (caseId) return;
+    if (urlState === "IN") setStateCode("IN");
+    else setStateCode(globalState);
+  }, [caseId, urlState, globalState]);
 
 // 🟢 1. Load saved intake once on mount
 useEffect(() => {
@@ -293,14 +304,13 @@ useEffect(() => {
       const token = sessionData.session?.access_token;
       if (!token) return;
 
-      // ✅ IMPORTANT: your /api/compensation/cases POST currently expects the BODY to be the application object
       const res = await fetch("/api/compensation/cases", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(app), // ✅ FIXED (was {status, application})
+        body: JSON.stringify({ application: app, state_code: stateCode }),
       });
 
       if (!res.ok) {
@@ -333,7 +343,7 @@ setSaveToast(t("intake.started"));
     }
     // ✅ DO NOT set creatingCaseRef.current back to false (prevents double-create in dev)
   })();
-}, [caseId, userId, loadedFromStorage, router, app]);
+}, [caseId, userId, loadedFromStorage, router, app, stateCode]);
 
 // ✅ Remember the most recent active case for this user (used by "Resume Application")
 useEffect(() => {
@@ -665,7 +675,7 @@ const res = await fetch("/api/compensation/cases", {
     "Content-Type": "application/json",
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
   },
-  body: JSON.stringify(app),
+  body: JSON.stringify({ application: app, state_code: stateCode }),
 });
 
     if (!res.ok) {
@@ -897,25 +907,25 @@ const handleBack = () => {
 
         {/* Step content */}
 {step === "victim" && (
-<VictimForm victim={victim} onChange={updateVictim} isReadOnly={isReadOnly} />
+<VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
 )}
 
 {step === "applicant" && (
   <>
-    <ApplicantForm applicant={applicant} onChange={updateApplicant} isReadOnly={isReadOnly} />
-    <ContactForm contact={contact} onChange={updateContact} isReadOnly={isReadOnly} />
+    <ApplicantForm applicant={applicant} onChange={updateApplicant} stateCode={stateCode} isReadOnly={isReadOnly} />
+    <ContactForm contact={contact} onChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
   </>
 )}
 
 {step === "crime" && (
   <>
-<CrimeForm crime={crime} onChange={updateCrime} isReadOnly={isReadOnly} />
-<CourtForm court={court} onChange={updateCourt} isReadOnly={isReadOnly} />
+<CrimeForm crime={crime} onChange={updateCrime} stateCode={stateCode} isReadOnly={isReadOnly} />
+<CourtForm court={court} onChange={updateCourt} stateCode={stateCode} isReadOnly={isReadOnly} />
   </>
 )}
 
 {step === "losses" && (
-<LossesForm losses={losses} onChange={updateLosses} isReadOnly={isReadOnly} />
+<LossesForm losses={losses} onChange={updateLosses} stateCode={stateCode} isReadOnly={isReadOnly} />
 )}
 
 {step === "medical" && (
@@ -1207,15 +1217,22 @@ function StepBadge({
 
 function VictimForm({
   victim,
+  contact,
   onChange,
+  onContactChange,
+  stateCode,
   isReadOnly,
 }: {
   victim: VictimInfo;
+  contact?: AdvocateContact;
   onChange: (patch: Partial<VictimInfo>) => void;
+  onContactChange?: (patch: Partial<AdvocateContact>) => void;
+  stateCode: "IL" | "IN";
   isReadOnly: boolean;
 }) {
 const { t } = useI18n();
 const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+const isIN = stateCode === "IN";
 
   const disabilityTypes = ["physical", "mental", "developmental", "other"] as const;
 
@@ -1228,6 +1245,29 @@ const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
       <p className="text-xs text-slate-300">
         {t("forms.victim.description")}
       </p>
+
+      {isIN && onContactChange && (
+        <div className="space-y-2 text-xs pb-3 border-b border-slate-800">
+          <p className="text-slate-200">{t("forms.int.whoIsSubmitting")}</p>
+          <div className="flex flex-wrap gap-2">
+            {(["victim", "claimant", "advocate"] as const).map((v) => (
+              <button
+                key={v}
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onContactChange({ whoIsSubmitting: v })}
+                className={`px-3 py-1.5 rounded-full border text-[11px] ${disBtn} ${
+                  contact?.whoIsSubmitting === v
+                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t(`forms.int.whoOptions.${v}`)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
@@ -1252,6 +1292,15 @@ const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
           onChange={(v) => onChange({ dateOfBirth: v })}
           disabled={isReadOnly}
         />
+        {isIN && (
+          <Field
+            label={t("forms.int.last4SSN")}
+            placeholder="####"
+            value={victim.last4SSN ?? ""}
+            onChange={(v) => onChange({ last4SSN: v || undefined })}
+            disabled={isReadOnly}
+          />
+        )}
         <Field
           label={t("fields.cellPhone.label")}
           placeholder={t("fields.cellPhone.placeholder")}
@@ -1403,14 +1452,17 @@ const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 function ApplicantForm({
   applicant,
   onChange,
+  stateCode,
   isReadOnly,
 }: {
   applicant: ApplicantInfo;
   onChange: (patch: Partial<ApplicantInfo>) => void;
+  stateCode?: "IL" | "IN";
   isReadOnly: boolean;
 }) {
-  const { t } = useI18n(); // NEW: match VictimForm structure
+  const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+  const isIN = stateCode === "IN";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
@@ -1479,6 +1531,15 @@ function ApplicantForm({
               onChange={(v) => onChange({ dateOfBirth: v })}
               disabled={isReadOnly}
             />
+            {isIN && (
+              <Field
+                label={t("forms.int.last4SSN")}
+                placeholder="####"
+                value={applicant.last4SSN ?? ""}
+                onChange={(v) => onChange({ last4SSN: v || undefined })}
+                disabled={isReadOnly}
+              />
+            )}
             <Field
               label={t("forms.labels.relationship")}
               placeholder={t("forms.applicant.relationshipPlaceholder")}
@@ -1633,10 +1694,12 @@ function ApplicantForm({
 function ContactForm({
   contact,
   onChange,
+  stateCode: _stateCode,
   isReadOnly,
 }: {
   contact: AdvocateContact;
   onChange: (patch: Partial<AdvocateContact>) => void;
+  stateCode?: "IL" | "IN";
   isReadOnly: boolean;
 }) {
   const { t } = useI18n();
@@ -1879,14 +1942,17 @@ function ContactForm({
 function CrimeForm({
   crime,
   onChange,
+  stateCode,
   isReadOnly,
 }: {
   crime: CrimeInfo;
   onChange: (patch: Partial<CrimeInfo>) => void;
+  stateCode?: "IL" | "IN";
   isReadOnly: boolean;
 }) {
   const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+  const isIN = stateCode === "IN";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
@@ -1896,6 +1962,77 @@ function CrimeForm({
 
       <p className="text-xs text-slate-300">{t("forms.crime.description")}</p>
 
+      {isIN && (
+        <>
+          <div className="space-y-2 text-xs">
+            <p className="text-slate-200">{t("forms.int.autoAccident")}</p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ isAutomobileAccident: true })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  crime.isAutomobileAccident === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.yes")}
+              </button>
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ isAutomobileAccident: false })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  crime.isAutomobileAccident === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.no")}
+              </button>
+            </div>
+            {crime.isAutomobileAccident && (
+              <Field
+                label={t("forms.int.autoInsuranceName")}
+                value={crime.suspectAutoInsurance ?? ""}
+                onChange={(v) => onChange({ suspectAutoInsurance: v })}
+                disabled={isReadOnly}
+              />
+            )}
+          </div>
+          <div className="space-y-2 text-xs">
+            <p className="text-slate-200">{t("forms.int.physicalInjuries")}</p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: true })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  crime.victimHasPhysicalInjuries === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.yes")}
+              </button>
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: false })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  crime.victimHasPhysicalInjuries === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.no")}
+              </button>
+            </div>
+            {crime.victimHasPhysicalInjuries && (
+              <Field
+                label={t("forms.int.medicalFacilityName")}
+                value={crime.medicalFacilityForTreatment ?? ""}
+                onChange={(v) => onChange({ medicalFacilityForTreatment: v })}
+                disabled={isReadOnly}
+              />
+            )}
+          </div>
+        </>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
           label={t("forms.crime.dateOfCrimeLabel")}
@@ -1904,6 +2041,33 @@ function CrimeForm({
           onChange={(v) => onChange({ dateOfCrime: v })}
           disabled={isReadOnly}
         />
+        {isIN && (
+          <div className="space-y-1">
+            <label className="text-[11px] text-slate-400 block">{t("forms.int.timeOfCrime")}</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "AM" })}
+                className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
+                  crime.timeOfCrimeAmPm === "AM" ? "border-emerald-400 bg-emerald-500/10" : "border-slate-700"
+                }`}
+              >
+                AM
+              </button>
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "PM" })}
+                className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
+                  crime.timeOfCrimeAmPm === "PM" ? "border-emerald-400 bg-emerald-500/10" : "border-slate-700"
+                }`}
+              >
+                PM
+              </button>
+            </div>
+          </div>
+        )}
         <Field
           label={t("forms.crime.dateReportedLabel")}
           type="date"
@@ -1950,6 +2114,15 @@ function CrimeForm({
         onChange={(v) => onChange({ policeReportNumber: v })}
         disabled={isReadOnly}
       />
+
+      {isIN && (
+        <Field
+          label={t("forms.int.crimeType")}
+          value={crime.crimeType ?? ""}
+          onChange={(v) => onChange({ crimeType: v })}
+          disabled={isReadOnly}
+        />
+      )}
 
       <Field
         label={t("forms.crime.crimeDescriptionLabel")}
@@ -2067,14 +2240,17 @@ function CrimeForm({
 function CourtForm({
   court,
   onChange,
+  stateCode,
   isReadOnly,
 }: {
   court: CourtInfo;
   onChange: (patch: Partial<CourtInfo>) => void;
+  stateCode?: "IL" | "IN";
   isReadOnly: boolean;
 }) {
   const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+  const isIN = stateCode === "IN";
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
@@ -2181,6 +2357,50 @@ function CourtForm({
           </button>
         </div>
       </div>
+
+      {isIN && (
+        <>
+          <div className="space-y-2 text-xs">
+            <p className="text-slate-200">{t("forms.int.willingToAssistProsecution")}</p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: true })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  court.willingToAssistProsecution === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.yes")}
+              </button>
+              <button
+                type="button"
+                disabled={isReadOnly}
+                onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: false })}
+                className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
+                  court.willingToAssistProsecution === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                }`}
+              >
+                {t("common.no")}
+              </button>
+            </div>
+            {court.willingToAssistProsecution === false && (
+              <Field
+                label={t("forms.int.notWillingExplain")}
+                value={court.notWillingProsecutionExplain ?? ""}
+                onChange={(v) => onChange({ notWillingProsecutionExplain: v })}
+                disabled={isReadOnly}
+              />
+            )}
+          </div>
+          <Field
+            label={t("forms.int.causeNumber")}
+            value={court.causeNumber ?? ""}
+            onChange={(v) => onChange({ causeNumber: v })}
+            disabled={isReadOnly}
+          />
+        </>
+      )}
 
       <Field
         label={t("forms.court.criminalCaseNumberLabel")}
@@ -2343,18 +2563,86 @@ function CourtForm({
 function LossesForm({
   losses,
   onChange,
+  stateCode,
   isReadOnly,
 }: {
   losses: LossesClaimed;
   onChange: (patch: Partial<LossesClaimed>) => void;
+  stateCode?: "IL" | "IN";
   isReadOnly: boolean;
 }) {
   const { t } = useI18n();
+  const isIN = stateCode === "IN";
 
   const toggle = (key: keyof LossesClaimed) => {
     if (isReadOnly) return;
     onChange({ [key]: !losses[key] } as Partial<LossesClaimed>);
   };
+
+  // Indiana simplified 5-category view
+  if (isIN) {
+    return (
+      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
+        <h2 className="text-lg font-semibold text-slate-50">
+          {t("forms.int.compensationRequesting")}
+        </h2>
+        <p className="text-xs text-slate-300">
+          {t("forms.lossesExtended.description")}
+        </p>
+        <div className="space-y-3 text-xs">
+          <Checkbox
+            label={t("forms.int.medicalDentalCounseling")}
+            checked={losses.medicalHospital || losses.dental || losses.counseling}
+            onChange={() => {
+              if (isReadOnly) return;
+              const v = !(losses.medicalHospital || losses.dental || losses.counseling);
+              onChange({ medicalHospital: v, dental: v, counseling: v });
+            }}
+            disabled={isReadOnly}
+          />
+          <Checkbox
+            label={t("forms.int.lossOfIncome")}
+            checked={losses.lossOfEarnings}
+            onChange={() => toggle("lossOfEarnings")}
+            disabled={isReadOnly}
+          />
+          <Checkbox
+            label={t("forms.int.funeralBurial")}
+            checked={losses.funeralBurial}
+            onChange={() => toggle("funeralBurial")}
+            disabled={isReadOnly}
+          />
+          <Checkbox
+            label={t("forms.int.lossOfSupport")}
+            checked={losses.lossOfSupport}
+            onChange={() => toggle("lossOfSupport")}
+            disabled={isReadOnly}
+          />
+          <div>
+            <Checkbox
+              label={t("forms.int.other")}
+              checked={!!losses.otherExpenses}
+              onChange={() => {
+                if (isReadOnly) return;
+                onChange({ otherExpenses: !losses.otherExpenses });
+              }}
+              disabled={isReadOnly}
+            />
+            {losses.otherExpenses && (
+              <div className="mt-2 ml-5">
+                <Field
+                  label={t("forms.int.otherDescribe")}
+                  value={losses.otherExpensesDescription ?? ""}
+                  onChange={(v) => onChange({ otherExpensesDescription: v })}
+                  disabled={isReadOnly}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">

@@ -123,6 +123,21 @@ export type I18nDict = {
     };
   };
 
+  eligibilityIN: {
+    purposeText: string;
+    questionOf: string;
+    q1: { title: string; question: string; options: Record<string, string>; helper: string };
+    q2: { title: string; question: string; helper: string; yes: string; no: string; notSure: string };
+    q3: { title: string; question: string; helper: string; yes: string; no: string; notSure: string };
+    q4: { title: string; question: string; helper: string; yes: string; no: string; notSure: string };
+    q5: { title: string; question: string; helper: string; yes: string; no: string; notSure: string };
+    q6: { title: string; question: string; helper: string; yes: string; no: string; notSure: string };
+    q7: { title: string; question: string; helper: string; yes: string; no: string; notSure: string; na: string };
+    resultEligible: { headline: string; body: string; cta: string; secondary: string };
+    resultNeedsAttention: { headline: string; body: string; checklist: string[]; ctaReady: string; ctaHelp: string };
+    resultNotEligible: { headline: string; body: string; nextSteps: string[]; cta: string };
+  };
+
   authPanel: {
     signedInAs: string;
     signedInAsAdvocate: string;
@@ -505,6 +520,27 @@ export type I18nDict = {
   };
 
 forms: {
+  int: {
+    whoIsSubmitting: string;
+    whoOptions: Record<string, string>;
+    last4SSN: string;
+    autoAccident: string;
+    autoInsuranceName: string;
+    physicalInjuries: string;
+    medicalFacilityName: string;
+    timeOfCrime: string;
+    crimeType: string;
+    causeNumber: string;
+    willingToAssistProsecution: string;
+    notWillingExplain: string;
+    compensationRequesting: string;
+    medicalDentalCounseling: string;
+    lossOfIncome: string;
+    funeralBurial: string;
+    lossOfSupport: string;
+    other: string;
+    otherDescribe: string;
+  };
   victim: {
     title: string;
     description: string;

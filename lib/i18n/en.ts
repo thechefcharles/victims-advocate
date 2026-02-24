@@ -154,6 +154,99 @@ export const en: I18nDict = {
     },
   },
 
+  eligibilityIN: {
+    purposeText:
+      "This short check helps confirm whether you can apply for Indiana Violent Crime Victim Compensation and whether you're ready to start. It does not submit an application and does not affect your eligibility.",
+    questionOf: "Question {current} of {total}",
+    q1: {
+      title: "Who is applying?",
+      question: "Which option best describes you?",
+      options: {
+        victim: "I am the victim of the crime",
+        surviving_spouse: "I am the surviving spouse of the victim",
+        dependent_child: "I am a dependent child of the victim",
+        none: "None of these / I'm not sure",
+      },
+      helper: "Indiana law limits who can submit an application to victims, surviving spouses, or dependent children.",
+    },
+    q2: {
+      title: "Location of crime",
+      question: "Did the crime occur in Indiana?",
+      helper: "The Indiana Violent Crime Victim Compensation Fund only covers crimes that occurred in Indiana.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q3: {
+      title: "Police report & cooperation",
+      question: "Was the crime reported to law enforcement within 72 hours, and are you willing to cooperate with law enforcement during the investigation and prosecution?",
+      helper: "Indiana requires the crime to be reported within 72 hours. Contact ICJI at 1-800-353-1484 if you have questions about this requirement.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q4: {
+      title: "Out-of-pocket expenses",
+      question: "Did the victim incur at least $100 in out-of-pocket expenses as a result of the crime?",
+      helper: "Medical bills, funeral costs, counseling, and other eligible expenses count toward the $100 minimum.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q5: {
+      title: "Victim conduct",
+      question: "Did the victim contribute to the crime or to their injury?",
+      helper: "If the victim contributed to the crime or their injury, they may not be eligible.",
+      yes: "No, the victim did not contribute",
+      no: "Yes, the victim contributed",
+      notSure: "I'm not sure",
+    },
+    q6: {
+      title: "Filing deadline",
+      question: "Can the application be filed within 180 days of the date of the crime?",
+      helper: "Indiana requires applications within 180 days. Exceptions exist for exigent circumstances and victims of child sex crimes. Contact ICJI for details.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+    },
+    q7: {
+      title: "If claimant is under 18",
+      question: "If you (the claimant) are under 18, will a parent or legal guardian sign and date the application?",
+      helper: "Indiana requires a parent or legal guardian to sign for claimants under 18. If this does not apply, select N/A.",
+      yes: "Yes",
+      no: "No",
+      notSure: "I'm not sure",
+      na: "N/A (I am 18 or older)",
+    },
+    resultEligible: {
+      headline: "You appear eligible to apply.",
+      body: "Based on your answers, you meet the basic requirements to submit an Indiana Violent Crime Victim Compensation application.",
+      cta: "Start Application",
+      secondary: "You can save your progress and return at any time.",
+    },
+    resultNeedsAttention: {
+      headline: "You may be eligible, but a few things need attention first.",
+      body: "You can apply, but missing information may delay or prevent payment.",
+      checklist: [
+        "Confirm reporting within 72 hours and willingness to cooperate with law enforcement",
+        "Verify at least $100 in out-of-pocket expenses",
+        "Ensure application will be filed within 180 days of the crime",
+        "If under 18, arrange for parent or legal guardian to sign",
+      ],
+      ctaReady: "Continue When Ready",
+      ctaHelp: "Get Help From an Advocate",
+    },
+    resultNotEligible: {
+      headline: "You may not be eligible under Indiana Violent Crime Victim Compensation rules.",
+      body: "Eligibility requires that you are a victim, surviving spouse, or dependent child; the crime occurred in Indiana; and other requirements are met. Contact ICJI at 1-800-353-1484 for questions.",
+      nextSteps: [
+        "Contact the Indiana Criminal Justice Institute at 1-800-353-1484 for eligibility questions",
+        "If the crime occurred in another state, check that state's victim compensation program",
+      ],
+      cta: "Find Other Support Options",
+    },
+  },
+
   /* =========================
      AUTH PANEL / LOGIN
   ========================== */
@@ -640,6 +733,31 @@ intake: {
        - Keep reusable labels/placeholders/validation in forms.labels/forms.placeholders/forms.validation
   ========================== */
   forms: {
+    int: {
+      whoIsSubmitting: "Who is submitting the claim?",
+      whoOptions: {
+        victim: "Victim",
+        claimant: "Claimant",
+        advocate: "Advocate",
+      },
+      last4SSN: "Last 4 digits of Social Security or Tax ID",
+      autoAccident: "Is this an automobile accident?",
+      autoInsuranceName: "Name of auto insurance",
+      physicalInjuries: "Does the victim have physical injuries?",
+      medicalFacilityName: "Name of medical facility for treatment",
+      timeOfCrime: "Time crime occurred",
+      crimeType: "Crime type",
+      causeNumber: "Cause number",
+      willingToAssistProsecution: "Are you willing to assist law enforcement with prosecution?",
+      notWillingExplain: "If not willing to prosecute (please explain why)",
+      compensationRequesting: "What forms of compensation are you requesting?",
+      medicalDentalCounseling: "Medical / dental / counseling",
+      lossOfIncome: "Loss of income",
+      funeralBurial: "Funeral / burial",
+      lossOfSupport: "Loss of support",
+      other: "Other",
+      otherDescribe: "Other (describe)",
+    },
     victim: {
       title: "Victim information",
       description:
