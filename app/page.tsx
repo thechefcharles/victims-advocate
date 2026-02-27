@@ -47,6 +47,17 @@ export default function HomePage() {
             available in English and Spanish.
           </p>
 
+          <div className="w-full max-w-4xl mx-auto pt-8">
+            <video
+              className="w-full rounded-2xl border border-slate-800 shadow-2xl"
+              controls
+              preload="metadata"
+            >
+              <source src="/mvp-demo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
             <Link
               href="/signup"
