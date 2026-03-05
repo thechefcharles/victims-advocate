@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 import { emptyCompensationApplication } from "@/lib/compensationSchema";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
@@ -226,6 +227,8 @@ export default function VictimDashboard({
   };
 
   const handleLogout = async () => {
+    const { data } = await supabase.auth.getSession();
+    await logAuthEvent("auth.logout", data.session?.access_token);
     await supabase.auth.signOut();
     router.push("/login");
   };

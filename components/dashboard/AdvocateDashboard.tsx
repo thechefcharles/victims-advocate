@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { logAuthEvent } from "@/lib/auditClient";
 
 type ClientRow = {
   client_user_id: string;
@@ -78,6 +79,8 @@ export default function AdvocateDashboard({
   }, [refetch]);
 
   const handleLogout = async () => {
+    const { data } = await supabase.auth.getSession();
+    await logAuthEvent("auth.logout", data.session?.access_token);
     await supabase.auth.signOut();
     // Don’t router.push here if your AuthProvider handles redirect.
     // If you want it, do it in the parent page effect.

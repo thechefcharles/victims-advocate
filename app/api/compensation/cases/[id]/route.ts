@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireAuth } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
+import { logEvent } from "@/lib/server/audit/logEvent";
 import { getCaseById } from "@/lib/server/data";
 
 interface RouteParams {
@@ -24,7 +25,14 @@ export async function GET(req: Request, context: RouteParams) {
       return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }
 
-    // PHASE 1: call logEvent(...) here
+    logEvent({
+      ctx,
+      action: "case.view",
+      resourceType: "case",
+      resourceId: id,
+      metadata: { method: "GET", path: `/api/compensation/cases/${id}` },
+      req,
+    }).catch(() => {});
     logger.info("compensation.cases.get", { caseId: id, userId: ctx.userId });
     return NextResponse.json({
       case: result.case,

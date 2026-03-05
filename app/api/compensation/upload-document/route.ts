@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireAuth } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
+import { logEvent } from "@/lib/server/audit/logEvent";
 
 export const runtime = "nodejs";
 
@@ -10,7 +11,6 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
-    // PHASE 1: call logEvent(...) here
 
     const formData = await req.formData();
     const file = formData.get("file");
@@ -78,9 +78,18 @@ export async function POST(req: Request) {
       );
     }
 
+    const docId = (data as any)?.id;
+    logEvent({
+      ctx,
+      action: "document.upload",
+      resourceType: "document",
+      resourceId: docId,
+      metadata: { method: "POST", doc_type: docType },
+      req,
+    }).catch(() => {});
     logger.info("compensation.upload_document.success", {
       userId: ctx.userId,
-      documentId: (data as any)?.id,
+      documentId: docId,
     });
     return NextResponse.json({ document: data });
   } catch (err) {

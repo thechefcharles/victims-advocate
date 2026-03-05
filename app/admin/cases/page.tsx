@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -76,6 +77,12 @@ const res = await fetch("/api/compensation/cases", {
           <h1 className="text-2xl sm:text-3xl font-bold">
             Saved compensation cases
           </h1>
+          <Link
+            href="/admin/audit"
+            className="text-sm text-slate-400 hover:text-slate-200"
+          >
+            View audit logs →
+          </Link>
           <p className="text-sm text-slate-300">
             These cases are loaded from your Supabase database (not
             localStorage). Each one includes the full application and any

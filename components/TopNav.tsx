@@ -6,11 +6,14 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 export default function TopNav() {
   const router = useRouter();
   const { loading, user, role, isAdmin } = useAuth();
   const { lang, setLang, t } = useI18n();
   const handleLogout = async () => {
+    const { data } = await supabase.auth.getSession();
+    await logAuthEvent("auth.logout", data.session?.access_token);
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error("Logout failed:", error);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logAuthEvent } from "@/lib/auditClient";
 
 type AccountType = "victim" | "advocate";
 
@@ -52,6 +53,7 @@ export default function SignupPage() {
         return;
       }
 
+      await logAuthEvent("auth.signup", data.session.access_token);
       router.push("/coming-soon");
     } finally {
       setLoading(false);

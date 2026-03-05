@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -53,6 +54,8 @@ export default function ResetPasswordForm() {
       }
 
       setSuccess(true);
+      const { data } = await supabase.auth.getSession();
+      await logAuthEvent("auth.password_reset_completed", data.session?.access_token);
       await supabase.auth.signOut();
       setTimeout(() => router.push("/login"), 2000);
     } finally {

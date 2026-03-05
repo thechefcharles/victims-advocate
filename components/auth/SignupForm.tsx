@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logAuthEvent } from "@/lib/auditClient";
 
 export default function SignupForm() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function SignupForm() {
         return;
       }
 
+      await logAuthEvent("auth.signup", data.session.access_token);
       router.push("/dashboard");
     } finally {
       setLoading(false);

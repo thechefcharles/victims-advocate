@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -32,6 +33,9 @@ export default function LoginForm() {
         setErr(error.message);
         return;
       }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      await logAuthEvent("auth.login", sessionData.session?.access_token);
 
       // Redirect admins to MVP, non-admins to Coming Soon
       const { data: userData } = await supabase.auth.getUser();

@@ -155,6 +155,12 @@ alter table public.cases
 
 ---
 
+## 8. Audit log table (Phase 1)
+
+Run the migration in `supabase/migrations/20250127000001_audit_log.sql` (or paste its contents into the Supabase SQL Editor). Creates `audit_log` with indexes and RLS. Inserts use service role only.
+
+---
+
 ## Summary
 
 | Change | Purpose |
@@ -164,3 +170,4 @@ alter table public.cases
 | `profiles.organization` | Optional org from full signup |
 | `cases.name` | User-defined label for each case |
 | `cases.eligibility_*` | Eligibility check answers, result, readiness per case |
+| `audit_log` table | Phase 1 immutable audit log for identity/security events |
