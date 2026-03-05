@@ -1,5 +1,8 @@
 // app/api/translate/route.ts
 import { NextResponse } from "next/server";
+import { config } from "@/lib/config";
+import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
+import { logger } from "@/lib/server/logging";
 
 export const runtime = "nodejs";
 
@@ -38,17 +41,15 @@ function langLabel(l: Lang | TargetLang) {
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = config.openaiApiKey;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing OPENAI_API_KEY" },
-        { status: 500 }
-      );
+      logger.error("translate.config_missing", { missing: "OPENAI_API_KEY" });
+      return apiFail("INTERNAL", "Missing OPENAI_API_KEY", undefined, 500);
     }
 
     const body = (await req.json().catch(() => null)) as RequestBody | null;
     if (!body) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
     }
 
     const sourceLang: Lang = (body as any).sourceLang ?? "auto";
@@ -56,9 +57,11 @@ export async function POST(req: Request) {
     const context = (body as any).context ?? "Victim compensation application intake";
 
     if (targetLang !== "en" && targetLang !== "es") {
-      return NextResponse.json(
-        { error: `Invalid targetLang. Expected "en" or "es".` },
-        { status: 400 }
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Invalid targetLang. Expected \"en\" or \"es\".",
+        undefined,
+        400
       );
     }
 
@@ -70,9 +73,11 @@ export async function POST(req: Request) {
     if (isBatch(body)) {
       const items = Array.isArray(body.items) ? body.items : [];
       if (!items.length) {
-        return NextResponse.json(
-          { error: "items[] is required for batch translation" },
-          { status: 400 }
+        return apiFail(
+          "VALIDATION_ERROR",
+          "items[] is required for batch translation",
+          undefined,
+          400
         );
       }
 
@@ -85,10 +90,7 @@ export async function POST(req: Request) {
     } else {
       const text = cleanText((body as TranslateSingleBody).text);
       if (!text) {
-        return NextResponse.json(
-          { error: "text is required for translation" },
-          { status: 400 }
-        );
+        return apiFail("VALIDATION_ERROR", "text is required for translation", undefined, 400);
       }
       payload = { mode: "single", text };
     }
@@ -157,20 +159,16 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      return NextResponse.json(
-        { error: "OpenAI request failed", details: errText },
-        { status: 500 }
-      );
+      logger.error("translate.openai_failed", { status: res.status });
+      return apiFail("INTERNAL", "OpenAI request failed", undefined, 500);
     }
 
     const data = (await res.json()) as any;
     const content = data?.choices?.[0]?.message?.content ?? "";
 
     if (!content) {
-      return NextResponse.json(
-        { error: "Empty translation response" },
-        { status: 500 }
-      );
+      logger.warn("translate.empty_response", {});
+      return apiFail("INTERNAL", "Empty translation response", undefined, 500);
     }
 
     if (payload.mode === "single") {
@@ -193,19 +191,17 @@ export async function POST(req: Request) {
           .filter((it: any) => it.key && it.text),
       });
     } catch {
-      // If model returned non-JSON, fail clearly (so you know immediately)
-      return NextResponse.json(
-        {
-          error: "Batch translation returned non-JSON output",
-          raw: content,
-        },
-        { status: 500 }
+      logger.warn("translate.batch_parse_failed", {});
+      return apiFail(
+        "INTERNAL",
+        "Batch translation returned non-JSON output",
+        undefined,
+        500
       );
     }
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message ?? "Unexpected error in /api/translate" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("translate.error", { code: appErr.code, message: appErr.message });
+    return apiFailFromError(appErr);
   }
 }

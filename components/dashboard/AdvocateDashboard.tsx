@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type ClientRow = {
   client_user_id: string;
@@ -59,7 +60,7 @@ export default function AdvocateDashboard({
 
       if (!res.ok) {
         setClients([]);
-        setErr(json?.error ?? "Couldn’t load your clients.");
+        setErr(getApiErrorMessage(json, "Couldn’t load your clients."));
         return;
       }
 

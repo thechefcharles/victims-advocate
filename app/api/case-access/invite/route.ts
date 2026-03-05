@@ -1,76 +1,53 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-
-function getToken(req: Request) {
-  const authHeader = req.headers.get("authorization") || "";
-  return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-}
-
-async function requireUserId(req: Request): Promise<string | null> {
-  const token = getToken(req);
-  if (!token) return null;
-
-  const supabaseAnon = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  const { data, error } = await supabaseAnon.auth.getUser(token);
-  if (error || !data.user) return null;
-
-  return data.user.id;
-}
+import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
+import { logger } from "@/lib/server/logging";
 
 export async function POST(req: Request) {
   try {
-    const userId = await requireUserId(req);
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const ctx = await getAuthContext(req);
+    requireAuth(ctx);
+    // PHASE 1: call logEvent(...) here
 
-    const { caseId, advocateEmail, canEdit } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const { caseId, advocateEmail, canEdit } = body;
 
-    const cleanCaseId = String(caseId || "");
+    const cleanCaseId = String(caseId || "").trim();
     const cleanEmail = String(advocateEmail || "").toLowerCase().trim();
     const allowEdit = Boolean(canEdit);
 
     if (!cleanCaseId || !cleanEmail) {
-      return NextResponse.json(
-        { error: "Missing caseId or advocateEmail" },
-        { status: 400 }
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Missing caseId or advocateEmail",
+        undefined,
+        400
       );
     }
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // ✅ caller must be OWNER of the case
     const { data: callerAccess, error: callerErr } = await supabaseAdmin
       .from("case_access")
       .select("role, can_edit")
       .eq("case_id", cleanCaseId)
-      .eq("user_id", userId)
+      .eq("user_id", ctx.userId)
       .maybeSingle();
 
     if (callerErr) {
-      console.error("Owner check error:", callerErr);
-      return NextResponse.json(
-        { error: "Permission check failed" },
-        { status: 500 }
-      );
+      throw new AppError("INTERNAL", "Permission check failed", undefined, 500);
     }
 
     if (!callerAccess || callerAccess.role !== "owner" || !callerAccess.can_edit) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return apiFail("FORBIDDEN", "Forbidden", undefined, 403);
     }
 
-    // ✅ Look up advocate in Supabase Auth (NOT public.users)
     const { data: usersPage, error: listErr } =
       await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
 
     if (listErr) {
-      console.error("auth.admin.listUsers error:", listErr);
-      return NextResponse.json({ error: "Advocate lookup failed" }, { status: 500 });
+      throw new AppError("INTERNAL", "Advocate lookup failed", undefined, 500);
     }
 
     const match = usersPage?.users?.find(
@@ -78,18 +55,16 @@ export async function POST(req: Request) {
     );
 
     if (!match?.id) {
-      return NextResponse.json(
-        {
-          error:
-            "No account found for that email. Ask the advocate to create an account first.",
-        },
-        { status: 404 }
+      return apiFail(
+        "NOT_FOUND",
+        "No account found for that email. Ask the advocate to create an account first.",
+        undefined,
+        404
       );
     }
 
     const advocateUserId = match.id;
 
-    // ✅ grant access (upsert)
     const { error: upsertErr } = await supabaseAdmin
       .from("case_access")
       .upsert(
@@ -104,21 +79,26 @@ export async function POST(req: Request) {
       );
 
     if (upsertErr) {
-      console.error("case_access upsert error:", upsertErr);
-      return NextResponse.json({ error: "Failed to grant access" }, { status: 500 });
+      throw new AppError("INTERNAL", "Failed to grant access", undefined, 500);
     }
 
+    logger.info("case_access.invite", {
+      caseId: cleanCaseId,
+      inviterId: ctx.userId,
+      advocateId: advocateUserId,
+    });
     return NextResponse.json({
       ok: true,
       shareUrl: `/compensation/intake?case=${cleanCaseId}`,
       advocateUserId,
       canEdit: allowEdit,
     });
-  } catch (err: any) {
-    console.error("Invite route error:", err);
-    return NextResponse.json(
-      { error: err?.message || "Unexpected error" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("case_access.invite.error", {
+      code: appErr.code,
+      message: appErr.message,
+    });
+    return apiFailFromError(appErr);
   }
 }
