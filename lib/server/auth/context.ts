@@ -10,11 +10,14 @@ import { AppError } from "@/lib/server/api";
 
 export type ProfileRole = "victim" | "advocate";
 
+export type OrgRole = "staff" | "supervisor" | "org_admin";
+
 export type AuthContext = {
   user: { id: string; email?: string };
   userId: string;
   role: ProfileRole;
   orgId: string | null;
+  orgRole: OrgRole | null;
   isAdmin: boolean;
 };
 
@@ -47,17 +50,34 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
   }
 
   const role = (profile?.role === "advocate" ? "advocate" : "victim") as ProfileRole;
-  const orgId =
-    typeof profile?.organization === "string" && profile.organization.trim()
-      ? profile.organization.trim()
-      : null;
   const isAdmin = Boolean(profile?.is_admin);
+
+  // Phase 2: org membership from org_memberships (replaces profiles.organization)
+  const { data: membership } = await supabaseAdmin
+    .from("org_memberships")
+    .select("organization_id, org_role")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  const orgId = membership?.organization_id ?? null;
+  const orgRole =
+    membership?.org_role && ["staff", "supervisor", "org_admin"].includes(membership.org_role)
+      ? (membership.org_role as OrgRole)
+      : null;
 
   return {
     user: { id: userId, email: data.user.email ?? undefined },
     userId,
     role,
     orgId,
+    orgRole,
     isAdmin,
   };
+}
+
+/** Phase 2: Extract org context from auth (convenience helper). */
+export function getOrgContext(ctx: AuthContext): { orgId: string; orgRole: OrgRole } | null {
+  if (!ctx.orgId || !ctx.orgRole) return null;
+  return { orgId: ctx.orgId, orgRole: ctx.orgRole };
 }

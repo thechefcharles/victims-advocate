@@ -16,7 +16,14 @@ export type AuditAction =
   | "auth.password_reset_completed"
   | "case.view"
   | "document.upload"
-  | "document.access";
+  | "document.access"
+  | "org.create"
+  | "org.update"
+  | "org.invite.create"
+  | "org.invite.revoke"
+  | "org.invite.accept"
+  | "org.member.role_change"
+  | "org.member.revoke";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

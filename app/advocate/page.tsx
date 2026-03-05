@@ -79,7 +79,15 @@ export default function AdvocateDashboardPage() {
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
             Advocate
           </p>
-          <h1 className="text-2xl font-semibold">Case inbox</h1>
+          <div className="flex items-center justify-between gap-4">
+            <h1 className="text-2xl font-semibold">Case inbox</h1>
+            <Link
+              href="/advocate/org"
+              className="text-xs text-slate-400 hover:text-slate-200"
+            >
+              Manage organization →
+            </Link>
+          </div>
           <p className="text-sm text-slate-300">
             These are cases you’ve been granted permission to view or edit.
           </p>
