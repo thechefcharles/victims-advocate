@@ -5,27 +5,48 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { requireAcceptedPolicies } from "@/lib/server/policies";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
+import { logEvent } from "@/lib/server/audit/logEvent";
+import { sha256Hex } from "@/lib/server/audit/hash";
+import { buildExplainSystemPrompt, buildExplainUserPrompt } from "@/lib/server/translator/buildPrompt";
+import type { ExplainRequest, ExplainContextType } from "@/lib/server/translator/types";
+import { DEFAULT_DISCLAIMER, MAX_EXPLANATION_LENGTH } from "@/lib/server/translator/types";
 
 export const runtime = "nodejs";
 
 type Lang = "auto" | "en" | "es";
 type TargetLang = "en" | "es";
 
+/** Phase 9: "Explain this" request body */
+type ExplainBody = {
+  sourceText: string;
+  contextType?: ExplainContextType | string;
+  workflowKey?: string;
+  fieldKey?: string | null;
+  programKey?: string | null;
+  stateCode?: string | null;
+  userRole?: string | null;
+};
+
 type TranslateSingleBody = {
-  sourceLang?: Lang;          // default "auto"
-  targetLang: TargetLang;     // required
-  text: string;               // required
-  context?: string;           // optional (e.g., "Victim compensation application")
+  sourceLang?: Lang;
+  targetLang: TargetLang;
+  text: string;
+  context?: string;
 };
 
 type TranslateBatchBody = {
-  sourceLang?: Lang;          // default "auto"
-  targetLang: TargetLang;     // required
-  items: Array<{ key: string; text: string }>; // required
-  context?: string;           // optional
+  sourceLang?: Lang;
+  targetLang: TargetLang;
+  items: Array<{ key: string; text: string }>;
+  context?: string;
 };
 
-type RequestBody = TranslateSingleBody | TranslateBatchBody;
+type RequestBody = ExplainBody | TranslateSingleBody | TranslateBatchBody;
+
+function isExplainBody(body: unknown): body is ExplainBody {
+  const b = body as Record<string, unknown>;
+  return typeof b?.sourceText === "string" && b.sourceText.trim().length > 0;
+}
 
 function isBatch(body: RequestBody): body is TranslateBatchBody {
   return (body as TranslateBatchBody).items !== undefined;
@@ -63,6 +84,146 @@ export async function POST(req: Request) {
       return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
     }
 
+    // ——— Phase 9: "Explain this" path ———
+    if (isExplainBody(body)) {
+      const sourceText = (body.sourceText ?? "").trim();
+      const explainReq: ExplainRequest = {
+        sourceText,
+        contextType: (body.contextType as ExplainContextType) ?? "general",
+        workflowKey: body.workflowKey ?? "translator",
+        fieldKey: body.fieldKey ?? null,
+        programKey: body.programKey ?? null,
+        stateCode: body.stateCode ?? null,
+        userRole: body.userRole ?? ctx.role ?? null,
+      };
+
+      let sourceHash: string;
+      try {
+        sourceHash = await sha256Hex(sourceText);
+      } catch {
+        sourceHash = "[hash_failed]";
+      }
+
+      await logEvent({
+        ctx,
+        action: "translator.requested",
+        resourceType: "translator",
+        metadata: {
+          context_type: explainReq.contextType,
+          workflow_key: explainReq.workflowKey,
+          field_key: explainReq.fieldKey ?? null,
+          state_code: explainReq.stateCode ?? null,
+          program_key: explainReq.programKey ?? null,
+          source_text_hash: sourceHash,
+          source_text_length: sourceText.length,
+        },
+        req,
+      }).catch(() => {});
+
+      try {
+        const systemPrompt = buildExplainSystemPrompt();
+        const userPrompt = buildExplainUserPrompt(explainReq);
+        const model = process.env.OPENAI_TRANSLATE_MODEL ?? "gpt-4o-mini";
+
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0.3,
+            max_tokens: 400,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+          }),
+        });
+
+        if (!res.ok) {
+          logger.error("translate.explain_openai_failed", { status: res.status });
+          await logEvent({
+            ctx,
+            action: "translator.blocked",
+            resourceType: "translator",
+            metadata: {
+              context_type: explainReq.contextType,
+              workflow_key: explainReq.workflowKey,
+              source_text_hash: sourceHash,
+              source_text_length: sourceText.length,
+              result_status: "openai_error",
+            },
+            req,
+          }).catch(() => {});
+          return apiFail("INTERNAL", "Explanation request failed", undefined, 500);
+        }
+
+        const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        const raw = (data?.choices?.[0]?.message?.content ?? "").trim();
+
+        if (!raw) {
+          await logEvent({
+            ctx,
+            action: "translator.blocked",
+            resourceType: "translator",
+            metadata: {
+              context_type: explainReq.contextType,
+              workflow_key: explainReq.workflowKey,
+              source_text_hash: sourceHash,
+              result_status: "empty_response",
+            },
+            req,
+          }).catch(() => {});
+          return apiFail("INTERNAL", "Empty explanation response", undefined, 500);
+        }
+
+        let explanation = raw.length > MAX_EXPLANATION_LENGTH
+          ? raw.slice(0, MAX_EXPLANATION_LENGTH - 3) + "..."
+          : raw;
+        const hasDisclaimer = /legal advice|general information/i.test(explanation);
+        const disclaimer = hasDisclaimer ? undefined : DEFAULT_DISCLAIMER;
+
+        await logEvent({
+          ctx,
+          action: "translator.completed",
+          resourceType: "translator",
+          metadata: {
+            context_type: explainReq.contextType,
+            workflow_key: explainReq.workflowKey,
+            field_key: explainReq.fieldKey ?? null,
+            source_text_hash: sourceHash,
+            source_text_length: sourceText.length,
+            result_status: "completed",
+          },
+          req,
+        }).catch(() => {});
+
+        return NextResponse.json({
+          ok: true,
+          data: { explanation, disclaimer },
+        });
+      } catch (err) {
+        const appErr = toAppError(err);
+        logger.error("translate.explain_error", { code: appErr.code, message: appErr.message });
+        await logEvent({
+          ctx,
+          action: "translator.blocked",
+          resourceType: "translator",
+          metadata: {
+            context_type: explainReq.contextType,
+            workflow_key: explainReq.workflowKey,
+            source_text_hash: sourceHash,
+            result_status: "error",
+          },
+          req,
+        }).catch(() => {});
+        return apiFailFromError(appErr);
+      }
+    }
+
+    // ——— Legacy translation path ———
     const sourceLang: Lang = (body as any).sourceLang ?? "auto";
     const targetLang: TargetLang = (body as any).targetLang;
     const context = (body as any).context ?? "Victim compensation application intake";

@@ -395,6 +395,9 @@ export type I18nDict = {
     skipForNow: string;
     answerLater: string;
 
+    explainThis: string;
+    explainThisNeedHelp: string;
+
     review: {
       missing: string;
       skipped: string;

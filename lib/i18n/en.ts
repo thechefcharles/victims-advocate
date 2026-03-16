@@ -577,6 +577,9 @@ intake: {
   skipForNow: "Skip for now",
   answerLater: "Answer later",
 
+  explainThis: "Explain this",
+  explainThisNeedHelp: "Need help understanding what we're asking?",
+
   review: {
     missing: "Missing",
     skipped: "Skipped for now",

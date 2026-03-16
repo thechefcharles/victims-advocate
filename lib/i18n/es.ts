@@ -584,6 +584,9 @@ export const es: I18nDict = {
         skipForNow: "Omitir por ahora",
         answerLater: "Responder más tarde",
 
+        explainThis: "Explicar esto",
+        explainThisNeedHelp: "¿Necesitas ayuda para entender qué pedimos?",
+
         review: {
             missing: "Falta",
             skipped: "Omitido por ahora",

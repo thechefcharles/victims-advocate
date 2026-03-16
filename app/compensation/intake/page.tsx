@@ -32,6 +32,7 @@ import {
 } from "../../../lib/intake/fieldState";
 import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
+import { ExplainThisButton } from "@/components/ExplainThis";
 
 type IntakeStep =
   | "victim"
@@ -2262,6 +2263,18 @@ function CrimeForm({
       {/* Phase 8: high-sensitivity block – safe-mode copy + skip/defer */}
       <div className="rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
         <p>{t("intake.safeMode.takeYourTime")}</p>
+        <p className="mt-1.5">
+          {t("intake.explainThisNeedHelp")}{" "}
+          <ExplainThisButton
+            sourceText={t("forms.crime.crimeDescriptionLabel")}
+            contextType="intake_question"
+            workflowKey="compensation_intake"
+            fieldKey="crime.crimeDescription"
+            stateCode={stateCode ?? undefined}
+            label={t("intake.explainThis")}
+            variant="link"
+          />
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -2330,6 +2343,18 @@ function CrimeForm({
         {fieldState["crime.injuryDescription"]?.status === "deferred" && (
           <p className="text-[11px] text-amber-200/80">{t("intake.review.deferred")}</p>
         )}
+        <p className="text-[11px] text-slate-400">
+          {t("intake.explainThisNeedHelp")}{" "}
+          <ExplainThisButton
+            sourceText={t("forms.crime.injuryDescriptionLabel")}
+            contextType="intake_question"
+            workflowKey="compensation_intake"
+            fieldKey="crime.injuryDescription"
+            stateCode={stateCode ?? undefined}
+            label={t("intake.explainThis")}
+            variant="link"
+          />
+        </p>
       </div>
 
       <div className="space-y-2 text-xs">
@@ -4349,7 +4374,18 @@ setInviteResult(
               }
               className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>{t("forms.summary.certification.checks.subrogation")}</span>
+            <span className="flex flex-wrap items-center gap-1">
+              {t("forms.summary.certification.checks.subrogation")}{" "}
+              <ExplainThisButton
+                sourceText={t("forms.summary.certification.checks.subrogation")}
+                contextType="form_label"
+                workflowKey="compensation_intake"
+                fieldKey="certification.acknowledgesSubrogation"
+                stateCode={stateCode ?? undefined}
+                label={t("intake.explainThis")}
+                variant="link"
+              />
+            </span>
           </label>
 
           <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>

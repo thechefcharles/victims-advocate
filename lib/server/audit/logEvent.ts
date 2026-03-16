@@ -57,7 +57,10 @@ export type AuditAction =
   | "intake.field_skipped"
   | "intake.field_deferred"
   | "intake.field_amended"
-  | "intake.completed";
+  | "intake.completed"
+  | "translator.requested"
+  | "translator.completed"
+  | "translator.blocked";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
