@@ -1,7 +1,7 @@
 // app/dashboard/page.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import VictimDashboard from "@/components/dashboard/VictimDashboard";
@@ -10,14 +10,41 @@ import AdvocateDashboard from "@/components/dashboard/AdvocateDashboard";
 export default function DashboardPage() {
   const router = useRouter();
   const { loading, user, role, accessToken } = useAuth();
+  const [consentChecked, setConsentChecked] = useState(false);
 
   useEffect(() => {
     if (loading) return;
-    if (!user) router.replace("/login");
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
   }, [loading, user, router]);
 
-  // 1) still booting auth
-  if (loading) {
+  useEffect(() => {
+    if (loading || !user || !accessToken || consentChecked) return;
+
+    const check = async () => {
+      const res = await fetch("/api/policies/active", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) {
+        setConsentChecked(true);
+        return;
+      }
+      const json = await res.json();
+      const missing = (json.data?.missing_doc_types ?? []) as string[];
+      const needsTermsOrPrivacy =
+        missing.includes("terms_of_use") || missing.includes("privacy_policy");
+      setConsentChecked(true);
+      if (needsTermsOrPrivacy) {
+        router.replace("/consent?redirect=/dashboard");
+      }
+    };
+
+    check();
+  }, [loading, user, accessToken, consentChecked, router]);
+
+  if (loading || !consentChecked) {
     return (
       <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto">Loading…</div>

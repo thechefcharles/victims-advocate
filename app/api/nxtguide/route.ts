@@ -4,6 +4,8 @@ import OpenAI from "openai";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getAuthContext, requireAuth } from "@/lib/server/auth";
 import { getCaseById } from "@/lib/server/data";
+import { requireAcceptedPolicies } from "@/lib/server/policies";
+import { apiFailFromError, toAppError } from "@/lib/server/api";
 import type { AuthContext } from "@/lib/server/auth";
 
 export const runtime = "nodejs"; // ✅ safest for OpenAI + server + Supabase
@@ -32,6 +34,12 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
+
+    await requireAcceptedPolicies({
+      ctx,
+      requiredDocs: [{ docType: "ai_disclaimer", workflowKey: "ai_chat" }],
+      req,
+    });
 
     const body = await req.json().catch(() => null);
     if (!body) {
@@ -92,6 +100,13 @@ export async function POST(req: Request) {
       reply: completion.choices[0]?.message?.content || "",
     });
   } catch (err) {
+    const appErr = toAppError(err);
+    if (appErr.code === "CONSENT_REQUIRED") {
+      return NextResponse.json(
+        { ok: false, error: { code: appErr.code, message: appErr.message, details: appErr.details } },
+        { status: 403 }
+      );
+    }
     console.error("[NxtGuide] Error:", err);
     return NextResponse.json({ error: "Failed to contact NxtGuide" }, { status: 500 });
   }

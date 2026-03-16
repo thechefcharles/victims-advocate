@@ -23,7 +23,11 @@ export type AuditAction =
   | "org.invite.revoke"
   | "org.invite.accept"
   | "org.member.role_change"
-  | "org.member.revoke";
+  | "org.member.revoke"
+  | "policy.create"
+  | "policy.activate"
+  | "policy.accept"
+  | "policy.blocked";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

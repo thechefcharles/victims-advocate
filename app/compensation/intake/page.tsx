@@ -162,6 +162,33 @@ const { t, tf, lang } = useI18n();
   })();
 }, [router]);
 
+  // Phase 4: require non_legal_advice acceptance before compensation intake
+  const [consentChecked, setConsentChecked] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setConsentChecked(true);
+        return;
+      }
+      const res = await fetch("/api/policies/active?workflow_key=compensation_intake", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setConsentChecked(true);
+        return;
+      }
+      const json = await res.json();
+      const missing = (json.data?.missing_doc_types ?? []) as string[];
+      setConsentChecked(true);
+      if (missing.includes("non_legal_advice")) {
+        const path = `/compensation/intake${caseId ? `?case=${caseId}` : ""}`;
+        router.replace(`/consent?workflow=compensation_intake&redirect=${encodeURIComponent(path)}`);
+      }
+    })();
+  }, [caseId, router]);
+
   const [step, setStep] = useState<IntakeStep>("victim");
   const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(
@@ -717,17 +744,32 @@ alert(t("intake.saveCase.unexpected"));
     setChatLoading(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch("/api/nxtguide", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-  messages: newMessages,
-  currentRoute: "/compensation/intake",
-  currentStep: step,
-  application: app,
-  locale: lang,
-}),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: newMessages,
+          currentRoute: "/compensation/intake",
+          currentStep: step,
+          application: app,
+          locale: lang,
+        }),
       });
+
+      if (res.status === 403) {
+        const json = await res.json().catch(() => ({}));
+        if ((json as { error?: { code?: string } })?.error?.code === "CONSENT_REQUIRED") {
+          const path = `/compensation/intake${caseId ? `?case=${caseId}` : ""}`;
+          router.replace(`/consent?workflow=ai_chat&redirect=${encodeURIComponent(path)}`);
+          return;
+        }
+      }
 
       if (!res.ok) {
         console.error("NxtGuide error:", await res.text());
@@ -735,8 +777,7 @@ body: JSON.stringify({
           ...prev,
           {
             role: "assistant",
-
-content: t("nxtGuide.errors.respondFailed")
+            content: t("nxtGuide.errors.respondFailed"),
           },
         ]);
         return;

@@ -1,6 +1,8 @@
 // app/api/translate/route.ts
 import { NextResponse } from "next/server";
 import { config } from "@/lib/config";
+import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { requireAcceptedPolicies } from "@/lib/server/policies";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 
@@ -41,6 +43,15 @@ function langLabel(l: Lang | TargetLang) {
 
 export async function POST(req: Request) {
   try {
+    const ctx = await getAuthContext(req);
+    requireAuth(ctx);
+
+    await requireAcceptedPolicies({
+      ctx,
+      requiredDocs: [{ docType: "ai_disclaimer", workflowKey: "translator" }],
+      req,
+    });
+
     const apiKey = config.openaiApiKey;
     if (!apiKey) {
       logger.error("translate.config_missing", { missing: "OPENAI_API_KEY" });

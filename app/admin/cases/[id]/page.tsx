@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -24,6 +25,7 @@ interface SavedCase {
 
 export default function CaseDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const caseId = params.id;
 
   const [loadedCase, setLoadedCase] = useState<SavedCase | null>(null);
@@ -135,16 +137,32 @@ export default function CaseDetailPage() {
     setChatLoading(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch("/api/nxtguide", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           messages: newMessages,
-          currentRoute: "/admin/cases", // we don't need the full path; just signal it's advocate-side
+          currentRoute: "/admin/cases",
           currentStep: null,
-          caseId, // 👈 let NxtGuide load and analyze this case
+          caseId,
         }),
       });
+
+      if (res.status === 403) {
+        const json = await res.json().catch(() => ({}));
+        if ((json as { error?: { code?: string } })?.error?.code === "CONSENT_REQUIRED") {
+          router.replace(
+            `/consent?workflow=ai_chat&redirect=${encodeURIComponent(`/admin/cases/${caseId}`)}`
+          );
+          return;
+        }
+      }
 
       if (!res.ok) {
         console.error("NxtGuide error:", await res.text());

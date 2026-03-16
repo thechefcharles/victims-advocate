@@ -8,6 +8,7 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
+  | "CONSENT_REQUIRED"
   | "INTERNAL";
 
 const STATUS_MAP: Record<ErrorCode, number> = {
@@ -16,6 +17,7 @@ const STATUS_MAP: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   VALIDATION_ERROR: 422,
   RATE_LIMITED: 429,
+  CONSENT_REQUIRED: 403,
   INTERNAL: 500,
 };
 

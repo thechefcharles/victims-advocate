@@ -24,6 +24,7 @@ export function apiFail(
     NOT_FOUND: 404,
     VALIDATION_ERROR: 422,
     RATE_LIMITED: 429,
+    CONSENT_REQUIRED: 403,
     INTERNAL: 500,
   };
   const httpStatus = status ?? statusMap[code] ?? 500;
