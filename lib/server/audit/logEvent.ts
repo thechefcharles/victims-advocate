@@ -75,7 +75,13 @@ export type AuditAction =
   | "routing.run_failed"
   | "completeness.run_started"
   | "completeness.run_completed"
-  | "completeness.run_failed";
+  | "completeness.run_failed"
+  | "ocr.run_started"
+  | "ocr.run_completed"
+  | "ocr.run_failed"
+  | "ocr.field_confirmed"
+  | "ocr.field_corrected"
+  | "ocr.field_rejected";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

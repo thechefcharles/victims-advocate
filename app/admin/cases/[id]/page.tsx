@@ -136,6 +136,19 @@ export default function CaseDetailPage() {
   const canAmendIntake = caseAccess?.can_edit && caseAccess.role !== "owner";
   const canRunRouting = caseAccess?.can_edit && caseAccess.role !== "owner";
   const canRunCompleteness = caseAccess?.can_edit && caseAccess.role !== "owner";
+  const canRunOcr = caseAccess?.can_edit && caseAccess.role !== "owner";
+
+  // Phase 13: OCR per document (advocate/admin only)
+  type OcrDocState = {
+    run: { id: string; status: string; created_at: string };
+    fields: Array<{ id: string; field_key: string; field_label: string | null; value_text: string | null; value_number: number | null; value_date: string | null; confidence_score: number | null; status: string }>;
+    inconsistencies: Array<{ message: string }>;
+    warnings: string[];
+    type_mismatch?: boolean;
+  };
+  const [ocrByDocId, setOcrByDocId] = useState<Record<string, OcrDocState | null>>({});
+  const [ocrLoadingDocId, setOcrLoadingDocId] = useState<string | null>(null);
+  const [ocrExpandedDocId, setOcrExpandedDocId] = useState<string | null>(null);
 
   // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
@@ -1442,9 +1455,190 @@ export default function CaseDetailPage() {
                         >
                           Delete
                         </button>
+                        {canRunOcr && (
+                          <button
+                            type="button"
+                            disabled={ocrLoadingDocId === d.id}
+                            onClick={async () => {
+                              if (ocrByDocId[d.id]) {
+                                setOcrExpandedDocId((prev) => (prev === d.id ? null : d.id));
+                                if (ocrExpandedDocId !== d.id) return;
+                              }
+                              setOcrLoadingDocId(d.id);
+                              try {
+                                const { data: sessionData } = await supabase.auth.getSession();
+                                const token = sessionData.session?.access_token;
+                                const res = await fetch(`/api/documents/${d.id}/ocr`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                                  body: JSON.stringify({}),
+                                });
+                                const json = await res.json();
+                                const data = json.data ?? json;
+                                if (res.ok && data.run) {
+                                  setOcrByDocId((prev) => ({
+                                    ...prev,
+                                    [d.id]: {
+                                      run: data.run,
+                                      fields: data.fields ?? [],
+                                      inconsistencies: data.inconsistencies ?? [],
+                                      warnings: data.warnings ?? [],
+                                      type_mismatch: data.type_mismatch,
+                                    },
+                                  }));
+                                  setOcrExpandedDocId(d.id);
+                                } else if (res.ok) {
+                                  const getRes = await fetch(`/api/documents/${d.id}/ocr`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                  const getJson = await getRes.json();
+                                  const g = getJson.data ?? getJson;
+                                  setOcrByDocId((prev) => ({ ...prev, [d.id]: g.run ? { run: g.run, fields: g.fields ?? [], inconsistencies: g.inconsistencies ?? [], warnings: g.warnings ?? [], type_mismatch: g.type_mismatch } : null }));
+                                  setOcrExpandedDocId(d.id);
+                                } else {
+                                  alert(data?.error?.message ?? "OCR failed");
+                                }
+                              } catch (e) {
+                                alert("OCR request failed");
+                              } finally {
+                                setOcrLoadingDocId(null);
+                              }
+                            }}
+                            className="text-[11px] text-sky-400 hover:text-sky-300 disabled:opacity-50"
+                          >
+                            {ocrLoadingDocId === d.id ? "…" : ocrByDocId[d.id] ? "OCR" : "Run OCR"}
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
+                  {canRunOcr && (ocrLoadingDocId === d.id || ocrByDocId[d.id]) && (
+                    <div className="sm:col-span-2 mt-2 pt-2 border-t border-slate-800">
+                      {ocrLoadingDocId === d.id ? (
+                        <p className="text-slate-500 text-[11px]">Running OCR…</p>
+                      ) : !ocrByDocId[d.id] ? null : (() => {
+                        const ocrData = ocrByDocId[d.id]!;
+                        return (
+                        <>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] text-slate-500">
+                              OCR: {ocrData.run.status} · {ocrData.fields.length} field(s)
+                            </span>
+                            <button type="button" onClick={() => setOcrExpandedDocId((prev) => (prev === d.id ? null : d.id))} className="text-[10px] text-slate-400 hover:text-slate-300">
+                              {ocrExpandedDocId === d.id ? "Collapse" : "Expand"}
+                            </button>
+                          </div>
+                          {ocrExpandedDocId === d.id && (
+                            <>
+                              {(ocrData.inconsistencies?.length > 0 || ocrData.warnings?.length > 0) && (
+                                <div className="mb-2 space-y-1">
+                                  {ocrData.inconsistencies?.map((inc, i) => (
+                                    <p key={i} className="text-[11px] text-amber-200/90">{inc.message}</p>
+                                  ))}
+                                  {ocrData.warnings?.map((w, i) => (
+                                    <p key={i} className="text-[11px] text-slate-400">{w}</p>
+                                  ))}
+                                </div>
+                              )}
+                              <table className="w-full text-[11px] border border-slate-700 rounded overflow-hidden">
+                                <thead>
+                                  <tr className="bg-slate-800/80 text-left">
+                                    <th className="p-1.5 text-slate-400">Field</th>
+                                    <th className="p-1.5 text-slate-400">Value</th>
+                                    <th className="p-1.5 text-slate-400">Conf.</th>
+                                    <th className="p-1.5 text-slate-400">Status</th>
+                                    {canRunOcr && <th className="p-1.5 text-slate-400">Actions</th>}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {ocrData.fields.map((f) => (
+                                    <tr key={f.id} className="border-t border-slate-700">
+                                      <td className="p-1.5 text-slate-300">{f.field_label ?? f.field_key}</td>
+                                      <td className="p-1.5 text-slate-200">
+                                        {f.value_text ?? (f.value_number != null ? String(f.value_number) : f.value_date ?? "—")}
+                                      </td>
+                                      <td className="p-1.5 text-slate-400">{f.confidence_score != null ? Math.round(f.confidence_score * 100) + "%" : "—"}</td>
+                                      <td className="p-1.5 text-slate-400">{f.status}</td>
+                                      {canRunOcr && (
+                                        <td className="p-1.5 flex gap-1 flex-wrap">
+                                          {f.status === "extracted" && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={async () => {
+                                                  const { data: sessionData } = await supabase.auth.getSession();
+                                                  const token = sessionData.session?.access_token;
+                                                  const res = await fetch(`/api/ocr/fields/${f.id}/confirm`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: "{}" });
+                                                  if (res.ok) {
+                                                    const j = await fetch(`/api/documents/${d.id}/ocr`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                    const jd = await j.json();
+                                                    const g = jd.data ?? jd;
+                                                    setOcrByDocId((prev) => {
+                                                      const cur = prev[d.id];
+                                                      return cur ? { ...prev, [d.id]: { ...cur, fields: g.fields ?? cur.fields, inconsistencies: g.inconsistencies ?? [], warnings: g.warnings ?? [], type_mismatch: g.type_mismatch } } : prev;
+                                                    });
+                                                  }
+                                                }}
+                                                className="text-[10px] text-emerald-400 hover:underline"
+                                              >
+                                                Confirm
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={async () => {
+                                                  const val = prompt("Corrected value (or leave blank to keep):", f.value_text ?? String(f.value_number ?? f.value_date ?? ""));
+                                                  if (val === null) return;
+                                                  const { data: sessionData } = await supabase.auth.getSession();
+                                                  const token = sessionData.session?.access_token;
+                                                  const res = await fetch(`/api/ocr/fields/${f.id}/correct`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ corrected_value: val || f.value_text, reason: "User correction" }) });
+                                                  if (res.ok) {
+                                                    const j = await fetch(`/api/documents/${d.id}/ocr`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                    const jd = await j.json();
+                                                    const g = jd.data ?? jd;
+                                                    setOcrByDocId((prev) => {
+                                                      const cur = prev[d.id];
+                                                      return cur ? { ...prev, [d.id]: { ...cur, fields: g.fields ?? cur.fields, inconsistencies: g.inconsistencies ?? [], warnings: g.warnings ?? [], type_mismatch: g.type_mismatch } } : prev;
+                                                    });
+                                                  }
+                                                }}
+                                                className="text-[10px] text-amber-400 hover:underline"
+                                              >
+                                                Correct
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={async () => {
+                                                  if (!confirm("Reject this extracted value?")) return;
+                                                  const { data: sessionData } = await supabase.auth.getSession();
+                                                  const token = sessionData.session?.access_token;
+                                                  const res = await fetch(`/api/ocr/fields/${f.id}/reject`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: "{}" });
+                                                  if (res.ok) {
+                                                    const j = await fetch(`/api/documents/${d.id}/ocr`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+                                                    const jd = await j.json();
+                                                    const g = jd.data ?? jd;
+                                                    setOcrByDocId((prev) => {
+                                                      const cur = prev[d.id];
+                                                      return cur ? { ...prev, [d.id]: { ...cur, fields: g.fields ?? cur.fields, inconsistencies: g.inconsistencies ?? [], warnings: g.warnings ?? [], type_mismatch: g.type_mismatch } } : prev;
+                                                    });
+                                                  }
+                                                }}
+                                                className="text-[10px] text-red-400 hover:underline"
+                                              >
+                                                Reject
+                                              </button>
+                                            </>
+                                          )}
+                                        </td>
+                                      )}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </>
+                          )}
+                        </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
