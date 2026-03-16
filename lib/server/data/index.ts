@@ -1,6 +1,7 @@
 export {
   getCaseById,
   listCasesForUser,
+  listCasesForOrganization,
   type GetCaseByIdResult,
   type CaseListItem,
   type CaseAccess,

@@ -153,3 +153,20 @@ export async function listCasesForUser(params: {
     };
   }) as CaseListItem[];
 }
+
+/**
+ * Phase 14: List all cases for an organization. Use only when caller is org_admin, supervisor, or admin.
+ */
+export async function listCasesForOrganization(params: {
+  organizationId: string;
+}): Promise<CaseRow[]> {
+  const { organizationId } = params;
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data, error } = await supabaseAdmin
+    .from("cases")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .order("created_at", { ascending: false });
+  if (error) throw new AppError("INTERNAL", "Failed to list org cases", undefined, 500);
+  return (data ?? []) as CaseRow[];
+}

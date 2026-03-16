@@ -81,7 +81,10 @@ export type AuditAction =
   | "ocr.run_failed"
   | "ocr.field_confirmed"
   | "ocr.field_corrected"
-  | "ocr.field_rejected";
+  | "ocr.field_rejected"
+  | "command_center.viewed"
+  | "command_center.search_used"
+  | "command_center.filter_used";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
