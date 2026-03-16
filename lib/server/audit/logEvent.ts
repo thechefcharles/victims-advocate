@@ -60,7 +60,12 @@ export type AuditAction =
   | "intake.completed"
   | "translator.requested"
   | "translator.completed"
-  | "translator.blocked";
+  | "translator.blocked"
+  | "knowledge.create"
+  | "knowledge.update"
+  | "knowledge.activate"
+  | "knowledge.archive"
+  | "knowledge.search";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

@@ -7,7 +7,8 @@ import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { sha256Hex } from "@/lib/server/audit/hash";
-import { buildExplainSystemPrompt, buildExplainUserPrompt } from "@/lib/server/translator/buildPrompt";
+import { buildExplainSystemPrompt, buildExplainUserPrompt, buildKnowledgeContextBlock } from "@/lib/server/translator/buildPrompt";
+import { getKnowledgeForExplain } from "@/lib/server/knowledge";
 import type { ExplainRequest, ExplainContextType } from "@/lib/server/translator/types";
 import { DEFAULT_DISCLAIMER, MAX_EXPLANATION_LENGTH } from "@/lib/server/translator/types";
 
@@ -121,8 +122,20 @@ export async function POST(req: Request) {
       }).catch(() => {});
 
       try {
-        const systemPrompt = buildExplainSystemPrompt();
-        const userPrompt = buildExplainUserPrompt(explainReq);
+        const kbEntries = await getKnowledgeForExplain({
+          stateCode: explainReq.stateCode ?? null,
+          programKey: explainReq.programKey ?? null,
+          workflowKey: explainReq.workflowKey ?? null,
+          fieldKey: explainReq.fieldKey ?? null,
+          contextType: explainReq.contextType ?? null,
+          limit: 5,
+        });
+        const hasKb = kbEntries.length > 0;
+        const systemPrompt = buildExplainSystemPrompt(hasKb);
+        const baseUserPrompt = buildExplainUserPrompt(explainReq);
+        const userPrompt = hasKb
+          ? buildKnowledgeContextBlock(kbEntries) + baseUserPrompt
+          : baseUserPrompt;
         const model = process.env.OPENAI_TRANSLATE_MODEL ?? "gpt-4o-mini";
 
         const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -202,7 +215,11 @@ export async function POST(req: Request) {
 
         return NextResponse.json({
           ok: true,
-          data: { explanation, disclaimer },
+          data: {
+            explanation,
+            disclaimer,
+            knowledgeEntryKeys: hasKb ? kbEntries.map((e) => e.entry_key) : undefined,
+          },
         });
       } catch (err) {
         const appErr = toAppError(err);

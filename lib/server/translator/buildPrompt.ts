@@ -1,10 +1,11 @@
 /**
  * Phase 9: Centralized prompt builder for "Explain this" translator.
- * Bounded, trauma-informed, non-legal-advice explanations only.
+ * Phase 10: Optional knowledge-base grounding.
  */
 
 import type { ExplainRequest } from "./types";
 import { MAX_EXPLANATION_LENGTH } from "./types";
+import type { KnowledgeEntryRow } from "@/lib/server/knowledge";
 
 const BEHAVIOR_RULES = [
   "Use plain language only. Avoid jargon unless you briefly define it.",
@@ -28,8 +29,8 @@ function contextNote(req: ExplainRequest): string {
   return parts.join(". ");
 }
 
-export function buildExplainSystemPrompt(): string {
-  return [
+export function buildExplainSystemPrompt(hasKnowledgeContext = false): string {
+  const lines = [
     "You are a plain-language explainer for victim compensation and related forms.",
     "Your job is to explain legal or bureaucratic text in simple terms so people can understand what is being asked or stated.",
     "",
@@ -39,7 +40,26 @@ export function buildExplainSystemPrompt(): string {
     `Keep your response under ${MAX_EXPLANATION_LENGTH} characters.`,
     "Structure if helpful: a short explanation, optionally 'Why you are seeing this' or 'What this usually means', then a one-line disclaimer if relevant.",
     "Do not output anything that could be construed as legal advice or an eligibility conclusion.",
-  ].join("\n");
+  ];
+  if (hasKnowledgeContext) {
+    lines.push(
+      "",
+      "When AUTHORITATIVE CONTEXT from the knowledge base is provided in the user message, base your explanation on it. Do not add specific rules, deadlines, or program details that are not in that context. If the text to explain is not covered by the context, give a short general explanation only."
+    );
+  }
+  return lines.join("\n");
+}
+
+/** Phase 10: Build the knowledge-grounding block for the user prompt. */
+export function buildKnowledgeContextBlock(entries: KnowledgeEntryRow[]): string {
+  if (!entries.length) return "";
+  return [
+    "AUTHORITATIVE CONTEXT (use this when relevant to the text to explain):",
+    "---",
+    ...entries.map((e) => `[${e.title}]\n${e.body}`),
+    "---",
+    "",
+  ].join("\n\n");
 }
 
 export function buildExplainUserPrompt(req: ExplainRequest): string {
