@@ -572,6 +572,27 @@ export const es: I18nDict = {
             officialUnexpected: "Ocurrió un error al crear el formulario oficial.",
         },
 
+        safeMode: {
+            takeYourTime: "Tómate tu tiempo. Puedes volver a esto más tarde.",
+            crimeDescription:
+                "Puedes omitir esto por ahora o responder solo con lo que te sientas cómodo compartiendo.",
+            injuryDescription:
+                "Puedes omitir esto por ahora o responder solo con lo que te sientas cómodo compartiendo.",
+            optionalDetail: "Puedes omitir esto por ahora o responder más tarde.",
+        },
+
+        skipForNow: "Omitir por ahora",
+        answerLater: "Responder más tarde",
+
+        review: {
+            missing: "Falta",
+            skipped: "Omitido por ahora",
+            deferred: "Responder más tarde",
+            editSection: "Editar sección",
+            completenessNote:
+                "Algunos campos son opcionales o se pueden omitir. Los obligatorios se listan abajo.",
+        },
+
         validation: {
             victimRequired:
                 "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",

@@ -74,7 +74,14 @@ export default function CaseDetailPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingNoteContent, setEditingNoteContent] = useState("");
 
+  // Phase 8: advocate amend intake
+  const [amendFieldKey, setAmendFieldKey] = useState("");
+  const [amendNewValue, setAmendNewValue] = useState("");
+  const [amendReason, setAmendReason] = useState("");
+  const [amendLoading, setAmendLoading] = useState(false);
+
   const canViewNotes = caseAccess && caseAccess.role !== "owner";
+  const canAmendIntake = caseAccess?.can_edit && caseAccess.role !== "owner";
 
   // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
@@ -598,15 +605,38 @@ export default function CaseDetailPage() {
   }
 
   const app = loadedCase.application;
-  const victim = app.victim || {};
-  const applicant = app.applicant || {};
-  const crime = app.crime || {};
-  const losses = app.losse || app.losses || {};
-  const medical = app.medical || {};
-  const employment = app.employment || {};
-  const funeral = app.funeral || {};
-  const certification = app.certification || {};
+  const victim = app?.victim || {};
+  const applicant = app?.applicant || {};
+  const crime = app?.crime || {};
+  const losses = app?.losses || {};
+  const medical = app?.medical || {};
+  const employment = app?.employment || {};
+  const funeral = app?.funeral || {};
+  const certification = app?.certification || {};
   const docs: UploadedDoc[] = loadedCase.documents || [];
+
+  const fieldState = app?._fieldState ?? {};
+  const getNested = (obj: any, path: string): unknown => {
+    const parts = path.split(".");
+    let cur = obj;
+    for (const p of parts) {
+      cur = cur?.[p];
+    }
+    return cur;
+  };
+  const currentValueForAmend = amendFieldKey
+    ? getNested(app, amendFieldKey)
+    : undefined;
+  const amendedEntry = amendFieldKey ? fieldState[amendFieldKey] : null;
+  const isAmended = amendedEntry?.status === "amended";
+
+  const AMENDABLE_FIELDS: { key: string; label: string }[] = [
+    { key: "crime.crimeDescription", label: "Crime description" },
+    { key: "crime.injuryDescription", label: "Injury description" },
+    { key: "victim.firstName", label: "Victim first name" },
+    { key: "victim.lastName", label: "Victim last name" },
+    { key: "victim.cellPhone", label: "Victim phone" },
+  ];
 
   const selectedLossTypes = Object.entries(losses)
     .filter(([_, v]) => v)
@@ -720,14 +750,128 @@ export default function CaseDetailPage() {
           {crime.crimeDescription && (
             <p className="text-slate-300">
               Description: {crime.crimeDescription}
+              {fieldState["crime.crimeDescription"]?.status === "amended" && (
+                <span className="ml-2 text-amber-300 text-[10px]">(Amended)</span>
+              )}
             </p>
           )}
           {crime.injuryDescription && (
             <p className="text-slate-300">
               Injuries: {crime.injuryDescription}
+              {fieldState["crime.injuryDescription"]?.status === "amended" && (
+                <span className="ml-2 text-amber-300 text-[10px]">(Amended)</span>
+              )}
             </p>
           )}
         </section>
+
+        {/* Phase 8: Advocate amend intake */}
+        {canAmendIntake && (
+          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+            <h2 className="text-sm font-semibold text-slate-50">Amend intake field</h2>
+            <p className="text-slate-400">
+              Change a value with a required reason. Original value is preserved in the audit trail.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <label className="block text-slate-400 mb-1">Field</label>
+                <select
+                  value={amendFieldKey}
+                  onChange={(e) => {
+                    setAmendFieldKey(e.target.value);
+                    const val = e.target.value ? getNested(app, e.target.value) : "";
+                    setAmendNewValue(typeof val === "string" ? val : val != null ? String(val) : "");
+                  }}
+                  className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                >
+                  <option value="">Select field…</option>
+                  {AMENDABLE_FIELDS.map((f) => (
+                    <option key={f.key} value={f.key}>{f.label}</option>
+                  ))}
+                </select>
+              </div>
+              {amendFieldKey && (
+                <>
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-400 mb-1">Current value</label>
+                    <p className="text-slate-200 break-words">
+                      {currentValueForAmend !== undefined && currentValueForAmend !== null && currentValueForAmend !== ""
+                        ? String(currentValueForAmend)
+                        : "(empty)"}
+                      {isAmended && amendedEntry?.previous_value != null && (
+                        <span className="block text-amber-200/80 mt-1 text-[10px]">
+                          Original: {String(amendedEntry.previous_value)}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-400 mb-1">New value</label>
+                    <input
+                      type="text"
+                      value={amendNewValue}
+                      onChange={(e) => setAmendNewValue(e.target.value)}
+                      className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                      placeholder="Enter new value"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-slate-400 mb-1">Reason (required)</label>
+                    <textarea
+                      value={amendReason}
+                      onChange={(e) => setAmendReason(e.target.value)}
+                      rows={2}
+                      className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                      placeholder="Why is this being amended?"
+                    />
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      disabled={amendLoading || !amendReason.trim()}
+                      onClick={async () => {
+                        if (!caseId || !amendFieldKey || !amendReason.trim()) return;
+                        setAmendLoading(true);
+                        try {
+                          const { data: sessionData } = await supabase.auth.getSession();
+                          const token = sessionData.session?.access_token;
+                          const res = await fetch("/api/intake/amend", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                            },
+                            body: JSON.stringify({
+                              caseId,
+                              fieldKey: amendFieldKey,
+                              newValue: amendNewValue,
+                              reason: amendReason.trim(),
+                            }),
+                          });
+                          if (res.ok) {
+                            const json = await res.json();
+                            const updatedApp = json?.data?.application;
+                            if (updatedApp && loadedCase) {
+                              setLoadedCase({ ...loadedCase, application: updatedApp });
+                            }
+                            setAmendReason("");
+                            setAmendNewValue("");
+                            setAmendFieldKey("");
+                          }
+                        } finally {
+                          setAmendLoading(false);
+                        }
+                      }}
+                      className="rounded border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                    >
+                      {amendLoading ? "Amending…" : "Amend"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Losses */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">

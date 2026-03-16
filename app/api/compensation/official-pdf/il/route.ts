@@ -7,6 +7,7 @@ import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getCaseById } from "@/lib/server/data";
+import { stripFieldState } from "@/lib/intake/fieldState";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
 export const runtime = "nodejs";
@@ -225,9 +226,12 @@ export async function POST(req: Request) {
 
     let appData: CompensationApplication | null = null;
 
-    // Option 1: direct application from intake
+    // Option 1: direct application from intake (strip Phase 8 _fieldState for PDF)
     if ("application" in body) {
-      appData = body.application;
+      const raw = body.application;
+      appData = raw && typeof raw === "object" && "_fieldState" in raw
+        ? (stripFieldState(raw as Record<string, unknown>) as unknown as CompensationApplication)
+        : (raw as CompensationApplication);
     }
 
     // Option 2: caseId → load from Supabase (org-scoped)
@@ -245,7 +249,7 @@ export async function POST(req: Request) {
           { status: 500 }
         );
       }
-      appData = normalized;
+      appData = stripFieldState(normalized as unknown as Record<string, unknown>) as unknown as CompensationApplication;
     }
 
     if (!appData) {

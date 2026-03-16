@@ -565,6 +565,27 @@ intake: {
     officialUnexpected: "Something went wrong creating the official form.",
   },
 
+  safeMode: {
+    takeYourTime: "Take your time. You can come back to this later.",
+    crimeDescription:
+      "You can skip this for now or answer only what you feel comfortable sharing.",
+    injuryDescription:
+      "You can skip this for now or answer only what you feel comfortable sharing.",
+    optionalDetail: "You can skip this for now or answer later.",
+  },
+
+  skipForNow: "Skip for now",
+  answerLater: "Answer later",
+
+  review: {
+    missing: "Missing",
+    skipped: "Skipped for now",
+    deferred: "Answer later",
+    editSection: "Edit section",
+    completenessNote:
+      "Some items are optional or can be skipped. Required items are listed below so you know what’s needed.",
+  },
+
   validation: {
     victimRequired:
       "Please fill in the victim's name, date of birth, and address before continuing.",

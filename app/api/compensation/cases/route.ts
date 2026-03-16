@@ -5,6 +5,7 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser, appendCaseTimelineEvent } from "@/lib/server/data";
+import { logEvent } from "@/lib/server/audit/logEvent";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
@@ -168,6 +169,25 @@ export async function POST(req: Request) {
       title: "Case created",
       description: status !== "draft" ? `Status: ${status}` : null,
       metadata: { status },
+    }).catch(() => {});
+
+    appendCaseTimelineEvent({
+      caseId: newCase.id,
+      organizationId: orgId,
+      actor: { userId: ctx.userId, role: "owner" },
+      eventType: "case.intake_completed",
+      title: "Intake completed",
+      description: null,
+      metadata: {},
+    }).catch(() => {});
+
+    logEvent({
+      ctx,
+      action: "intake.completed",
+      resourceType: "case",
+      resourceId: newCase.id,
+      metadata: { case_id: newCase.id, org_id: orgId },
+      req,
     }).catch(() => {});
 
     // 3) Attach any unassigned documents from this user to the new case (set org on docs)

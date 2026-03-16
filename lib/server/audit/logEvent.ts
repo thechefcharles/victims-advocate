@@ -48,7 +48,16 @@ export type AuditAction =
   | "case.note_edited"
   | "case.note_deleted"
   | "case.timeline_viewed"
-  | "case.notes_viewed";
+  | "case.notes_viewed"
+  | "case.intake_started"
+  | "case.intake_completed"
+  | "case.intake_field_deferred"
+  | "case.intake_field_skipped"
+  | "case.intake_amended"
+  | "intake.field_skipped"
+  | "intake.field_deferred"
+  | "intake.field_amended"
+  | "intake.completed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

@@ -385,6 +385,24 @@ export type I18nDict = {
       officialUnexpected: string;
     };
 
+    safeMode: {
+      takeYourTime: string;
+      crimeDescription: string;
+      injuryDescription: string;
+      optionalDetail: string;
+    };
+
+    skipForNow: string;
+    answerLater: string;
+
+    review: {
+      missing: string;
+      skipped: string;
+      deferred: string;
+      editSection: string;
+      completenessNote: string;
+    };
+
     validation: {
       victimRequired: string;
       crimeMinimumRequired: string;
