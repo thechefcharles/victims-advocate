@@ -72,7 +72,10 @@ export type AuditAction =
   | "routing.program_definition_archive"
   | "routing.run_started"
   | "routing.run_completed"
-  | "routing.run_failed";
+  | "routing.run_failed"
+  | "completeness.run_started"
+  | "completeness.run_completed"
+  | "completeness.run_failed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

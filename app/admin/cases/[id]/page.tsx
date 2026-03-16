@@ -102,9 +102,40 @@ export default function CaseDetailPage() {
   const [routingLoading, setRoutingLoading] = useState(false);
   const [routingRunAt, setRoutingRunAt] = useState<string | null>(null);
 
+  // Phase 12: completeness
+  type CompletenessResult = {
+    overall_status: string;
+    program_results: Array<{
+      program_key: string;
+      program_name: string;
+      required_documents: string[];
+      missing_documents: string[];
+      missing_fields: string[];
+      issues: Array<{
+        code: string;
+        type: string;
+        severity: string;
+        message: string;
+        field_key?: string | null;
+        document_type?: string | null;
+        program_key?: string | null;
+        resolution_hint?: string | null;
+      }>;
+      next_steps: string[];
+    }>;
+    missing_items: Array<{ type: string; severity: string; message: string; resolution_hint?: string | null }>;
+    inconsistencies: Array<{ message: string; resolution_hint?: string | null }>;
+    recommended_next_actions: string[];
+    summary_counts: { missing_count: number; blocking_count: number; warning_count: number; informational_count: number };
+  };
+  const [completenessResult, setCompletenessResult] = useState<CompletenessResult | null>(null);
+  const [completenessLoading, setCompletenessLoading] = useState(false);
+  const [completenessRunAt, setCompletenessRunAt] = useState<string | null>(null);
+
   const canViewNotes = caseAccess && caseAccess.role !== "owner";
   const canAmendIntake = caseAccess?.can_edit && caseAccess.role !== "owner";
   const canRunRouting = caseAccess?.can_edit && caseAccess.role !== "owner";
+  const canRunCompleteness = caseAccess?.can_edit && caseAccess.role !== "owner";
 
   // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
@@ -198,12 +229,33 @@ export default function CaseDetailPage() {
           setRoutingResult(null);
           setRoutingRunAt(null);
         }
+
+        const completenessRes = await fetch(`/api/compensation/cases/${caseId}/completeness`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (completenessRes.ok) {
+          const cJson = await completenessRes.json();
+          const cResult = cJson.data?.result ?? cJson.result;
+          const cRun = cJson.data?.completeness ?? cJson.completeness;
+          if (cResult?.overall_status != null) {
+            setCompletenessResult(cResult);
+            setCompletenessRunAt(cRun?.created_at ?? cResult.evaluated_at ?? null);
+          } else {
+            setCompletenessResult(null);
+            setCompletenessRunAt(null);
+          }
+        } else {
+          setCompletenessResult(null);
+          setCompletenessRunAt(null);
+        }
       } catch (err) {
         console.error("Failed to load case from API", err);
         setLoadedCase(null);
         setCaseAccess(null);
         setTimelineEvents([]);
         setNotes([]);
+        setRoutingResult(null);
+        setCompletenessResult(null);
       } finally {
         setLoading(false);
       }
@@ -787,6 +839,51 @@ export default function CaseDetailPage() {
                 {routingLoading ? "Evaluating…" : "Evaluate programs"}
               </button>
             )}
+            {canRunCompleteness && (
+              <button
+                type="button"
+                disabled={completenessLoading}
+                onClick={async () => {
+                  if (!caseId) return;
+                  setCompletenessLoading(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const token = sessionData.session?.access_token;
+                    const res = await fetch(`/api/compensation/cases/${caseId}/completeness`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                      },
+                      body: JSON.stringify({}),
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      const result = json.data?.result ?? json.result;
+                      if (result?.overall_status != null) {
+                        setCompletenessResult(result);
+                        setCompletenessRunAt(result.evaluated_at ?? new Date().toISOString());
+                      }
+                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                      });
+                      if (timelineRes.ok) {
+                        const tJson = await timelineRes.json();
+                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                      }
+                    } else {
+                      const err = await res.json();
+                      alert(err?.error?.message ?? "Completeness evaluation failed");
+                    }
+                  } finally {
+                    setCompletenessLoading(false);
+                  }
+                }}
+                className="inline-flex items-center rounded-lg border border-amber-500/60 bg-amber-500/20 px-3 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/30 disabled:opacity-50 transition"
+              >
+                {completenessLoading ? "Evaluating…" : "Evaluate completeness"}
+              </button>
+            )}
           </div>
         </header>
 
@@ -1034,6 +1131,125 @@ export default function CaseDetailPage() {
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+        )}
+
+        {/* Phase 12: Documentation completeness */}
+        {(completenessResult || canRunCompleteness) && (
+          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+            <h2 className="text-sm font-semibold text-slate-50">Documentation completeness</h2>
+            {completenessRunAt && (
+              <p className="text-[11px] text-slate-500">
+                Last evaluated: {formatDate(completenessRunAt)}
+              </p>
+            )}
+            {!completenessResult ? (
+              <p className="text-slate-400">
+                Run &quot;Evaluate completeness&quot; to see what documents and information are missing. Run &quot;Evaluate programs&quot; first.
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      completenessResult.overall_status === "complete"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                        : completenessResult.overall_status === "mostly_complete"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                          : completenessResult.overall_status === "incomplete"
+                            ? "bg-red-500/20 text-red-300 border border-red-500/40"
+                            : "bg-slate-500/20 text-slate-300 border border-slate-500/40"
+                    }`}
+                  >
+                    {completenessResult.overall_status.replace(/_/g, " ")}
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Blocking: {completenessResult.summary_counts.blocking_count} · Warnings: {completenessResult.summary_counts.warning_count} · Info: {completenessResult.summary_counts.informational_count}
+                  </span>
+                </div>
+                {completenessResult.recommended_next_actions.length > 0 && (
+                  <div>
+                    <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Recommended next actions</p>
+                    <ul className="list-disc list-inside text-slate-300 space-y-0.5">
+                      {completenessResult.recommended_next_actions.slice(0, 5).map((a, i) => (
+                        <li key={i}>{a}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {completenessResult.missing_items.filter((m) => m.type === "missing_document").length > 0 && (
+                    <div>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Missing documents</p>
+                      <ul className="text-slate-400 space-y-0.5">
+                        {completenessResult.missing_items
+                          .filter((m) => m.type === "missing_document")
+                          .slice(0, 6)
+                          .map((m, i) => (
+                            <li key={i}>{m.message}</li>
+                          ))}
+                      </ul>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        <a href="/compensation/documents" className="text-amber-400 hover:underline">Upload document</a>
+                      </p>
+                    </div>
+                  )}
+                  {completenessResult.missing_items.filter((m) => m.type === "missing_field").length > 0 && (
+                    <div>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Missing information</p>
+                      <ul className="text-slate-400 space-y-0.5">
+                        {completenessResult.missing_items
+                          .filter((m) => m.type === "missing_field")
+                          .slice(0, 6)
+                          .map((m, i) => (
+                            <li key={i}>{m.message}</li>
+                          ))}
+                      </ul>
+                      <p className="text-[10px] text-slate-500 mt-1">
+                        <a href={`/compensation/intake?case=${caseId}`} className="text-amber-400 hover:underline">Go to intake</a>
+                      </p>
+                    </div>
+                  )}
+                  {completenessResult.inconsistencies.length > 0 && (
+                    <div>
+                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Warnings / inconsistencies</p>
+                      <ul className="text-slate-400 space-y-0.5">
+                        {completenessResult.inconsistencies.slice(0, 4).map((m, i) => (
+                          <li key={i}>{m.message}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+                {completenessResult.program_results.length > 0 && (
+                  <div className="border-t border-slate-800 pt-3 mt-3">
+                    <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-2">By program</p>
+                    <ul className="space-y-3">
+                      {completenessResult.program_results.map((prog) => (
+                        <li key={prog.program_key} className="border border-slate-700 rounded-lg p-3">
+                          <p className="font-medium text-slate-200">{prog.program_name}</p>
+                          {prog.missing_documents.length > 0 && (
+                            <p className="text-[11px] text-slate-400 mt-1">
+                              Missing docs: {prog.missing_documents.join(", ")}
+                            </p>
+                          )}
+                          {prog.missing_fields.length > 0 && (
+                            <p className="text-[11px] text-slate-400">
+                              Missing fields: {prog.missing_fields.slice(0, 3).join(", ")}{prog.missing_fields.length > 3 ? "…" : ""}
+                            </p>
+                          )}
+                          {prog.next_steps.length > 0 && (
+                            <p className="text-[11px] text-amber-200/90 mt-1">
+                              Next: {prog.next_steps[0]}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             )}
           </section>
         )}
