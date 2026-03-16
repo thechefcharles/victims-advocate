@@ -80,8 +80,31 @@ export default function CaseDetailPage() {
   const [amendReason, setAmendReason] = useState("");
   const [amendLoading, setAmendLoading] = useState(false);
 
+  // Phase 11: routing
+  type RoutingResult = {
+    programs: Array<{
+      program_key: string;
+      program_name: string;
+      eligibility_status: string;
+      matched_conditions: unknown[];
+      failed_conditions: unknown[];
+      unknown_conditions: unknown[];
+      missing_requirements: string[];
+      next_steps: string[];
+      confidence: string;
+      deadline_summary?: string | null;
+      required_documents: string[];
+      explanation?: string | null;
+    }>;
+    evaluated_at?: string;
+  };
+  const [routingResult, setRoutingResult] = useState<RoutingResult | null>(null);
+  const [routingLoading, setRoutingLoading] = useState(false);
+  const [routingRunAt, setRoutingRunAt] = useState<string | null>(null);
+
   const canViewNotes = caseAccess && caseAccess.role !== "owner";
   const canAmendIntake = caseAccess?.can_edit && caseAccess.role !== "owner";
+  const canRunRouting = caseAccess?.can_edit && caseAccess.role !== "owner";
 
   // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
@@ -155,6 +178,25 @@ export default function CaseDetailPage() {
           }
         } else {
           setNotes([]);
+        }
+
+        const routingRes = await fetch(`/api/compensation/cases/${caseId}/routing`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (routingRes.ok) {
+          const rJson = await routingRes.json();
+          const result = rJson.data?.result ?? rJson.result;
+          const routing = rJson.data?.routing ?? rJson.routing;
+          if (result?.programs) {
+            setRoutingResult(result);
+            setRoutingRunAt(routing?.created_at ?? result.evaluated_at ?? null);
+          } else {
+            setRoutingResult(null);
+            setRoutingRunAt(null);
+          }
+        } else {
+          setRoutingResult(null);
+          setRoutingRunAt(null);
         }
       } catch (err) {
         console.error("Failed to load case from API", err);
@@ -700,6 +742,51 @@ export default function CaseDetailPage() {
             >
               Download summary PDF
             </button>
+            {canRunRouting && (
+              <button
+                type="button"
+                disabled={routingLoading}
+                onClick={async () => {
+                  if (!caseId) return;
+                  setRoutingLoading(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const token = sessionData.session?.access_token;
+                    const res = await fetch(`/api/compensation/cases/${caseId}/routing`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                      },
+                      body: JSON.stringify({}),
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      const result = json.data?.result ?? json.result;
+                      if (result?.programs) {
+                        setRoutingResult(result);
+                        setRoutingRunAt(result.evaluated_at ?? new Date().toISOString());
+                      }
+                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                      });
+                      if (timelineRes.ok) {
+                        const tJson = await timelineRes.json();
+                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                      }
+                    } else {
+                      const err = await res.json();
+                      alert(err?.error?.message ?? "Routing failed");
+                    }
+                  } finally {
+                    setRoutingLoading(false);
+                  }
+                }}
+                className="inline-flex items-center rounded-lg border border-[#1C8C8C] bg-[#1C8C8C] px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 transition"
+              >
+                {routingLoading ? "Evaluating…" : "Evaluate programs"}
+              </button>
+            )}
           </div>
         </header>
 
@@ -870,6 +957,84 @@ export default function CaseDetailPage() {
                 </>
               )}
             </div>
+          </section>
+        )}
+
+        {/* Phase 11: Program routing result */}
+        {(routingResult || canRunRouting) && (
+          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+            <h2 className="text-sm font-semibold text-slate-50">Program routing</h2>
+            {routingRunAt && (
+              <p className="text-[11px] text-slate-500">
+                Last evaluated: {formatDate(routingRunAt)}
+              </p>
+            )}
+            {!routingResult ? (
+              <p className="text-slate-400">
+                Run &quot;Evaluate programs&quot; to see which programs may apply based on this intake.
+              </p>
+            ) : (
+              <ul className="divide-y divide-slate-800 space-y-4">
+                {routingResult.programs.map((prog) => (
+                  <li key={prog.program_key} className="py-3 first:pt-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-slate-100">{prog.program_name}</span>
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] ${
+                          prog.eligibility_status === "likely_eligible"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                            : prog.eligibility_status === "possibly_eligible"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                              : prog.eligibility_status === "insufficient_information"
+                                ? "bg-slate-500/20 text-slate-300 border border-slate-500/40"
+                                : "bg-red-500/20 text-red-300 border border-red-500/40"
+                        }`}
+                      >
+                        {prog.eligibility_status.replace(/_/g, " ")}
+                      </span>
+                      <span className="text-[10px] text-slate-500">confidence: {prog.confidence}</span>
+                    </div>
+                    {prog.explanation && (
+                      <p className="text-slate-400 mt-1">{prog.explanation}</p>
+                    )}
+                    {prog.missing_requirements.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-slate-500 text-[10px] uppercase tracking-wide">Missing / unknown</p>
+                        <ul className="list-disc list-inside text-slate-400 mt-0.5">
+                          {prog.missing_requirements.slice(0, 8).map((m, i) => (
+                            <li key={i}>{m}</li>
+                          ))}
+                          {prog.missing_requirements.length > 8 && (
+                            <li>… and {prog.missing_requirements.length - 8} more</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                    {prog.required_documents.length > 0 && (
+                      <p className="mt-1.5 text-slate-400">
+                        <span className="text-slate-500">Required documents:</span>{" "}
+                        {prog.required_documents.join(", ")}
+                      </p>
+                    )}
+                    {prog.deadline_summary && (
+                      <p className="mt-1 text-slate-400">
+                        <span className="text-slate-500">Deadline:</span> {prog.deadline_summary}
+                      </p>
+                    )}
+                    {prog.next_steps.length > 0 && (
+                      <div className="mt-1.5">
+                        <p className="text-slate-500 text-[10px] uppercase tracking-wide">Next steps</p>
+                        <ul className="list-disc list-inside text-slate-400 mt-0.5">
+                          {prog.next_steps.slice(0, 5).map((s, i) => (
+                            <li key={i}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         )}
 

@@ -65,7 +65,14 @@ export type AuditAction =
   | "knowledge.update"
   | "knowledge.activate"
   | "knowledge.archive"
-  | "knowledge.search";
+  | "knowledge.search"
+  | "routing.program_definition_create"
+  | "routing.program_definition_update"
+  | "routing.program_definition_activate"
+  | "routing.program_definition_archive"
+  | "routing.run_started"
+  | "routing.run_completed"
+  | "routing.run_failed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
