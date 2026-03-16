@@ -4,5 +4,14 @@ export {
   type AuthContext,
   type ProfileRole,
   type OrgRole,
+  type AccountStatus,
 } from "./context";
-export { requireAuth, requireRole, requireOrg, requireOrgRole } from "./guards";
+export {
+  requireAuth,
+  requireRole,
+  requireOrg,
+  requireOrgRole,
+  requireVerifiedEmail,
+  requireActiveAccount,
+  requireFullAccess,
+} from "./guards";

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     const formData = await req.formData();
     const file = formData.get("file");

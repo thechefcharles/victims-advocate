@@ -3,7 +3,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAuthContext, requireAuth, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -12,7 +12,7 @@ import { logger } from "@/lib/server/logging";
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     // Admin can revoke any invite; org_admin must be in the org
     const isAdmin = ctx.isAdmin;

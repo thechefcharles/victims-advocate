@@ -2,7 +2,7 @@
  * Phase 4: Admin – activate a policy version (deactivates prior active for same slot).
  */
 
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -11,7 +11,7 @@ import { logger } from "@/lib/server/logging";
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     if (!ctx.isAdmin) {
       return apiFail("FORBIDDEN", "Admin only", undefined, 403);
     }

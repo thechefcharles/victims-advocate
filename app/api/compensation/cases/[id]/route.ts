@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -13,7 +13,7 @@ interface RouteParams {
 export async function GET(req: Request, context: RouteParams) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     const { id } = await context.params;
 
     if (!id) {
@@ -52,7 +52,7 @@ export async function GET(req: Request, context: RouteParams) {
 export async function PATCH(req: Request, context: RouteParams) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     const { id } = await context.params;
 
     if (!id) {
@@ -158,7 +158,7 @@ export async function PATCH(req: Request, context: RouteParams) {
 export async function DELETE(req: Request, context: RouteParams) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     const { id } = await context.params;
 
     if (!id) {

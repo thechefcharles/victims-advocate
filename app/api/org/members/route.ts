@@ -5,7 +5,7 @@
 import { NextResponse } from "next/server";
 import {
   getAuthContext,
-  requireAuth,
+  requireFullAccess,
   requireOrg,
   requireOrgRole,
 } from "@/lib/server/auth";
@@ -16,7 +16,7 @@ import { logger } from "@/lib/server/logging";
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {

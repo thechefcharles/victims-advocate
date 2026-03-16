@@ -295,6 +295,7 @@ export const es: I18nDict = {
         createAccount: "Crear cuenta",
         createAdvocateAccount: "Crear cuenta de defensor/a",
         forgotPassword: "Olvidé mi contraseña",
+        tooManyAttempts: "Demasiados intentos fallidos. Intente más tarde.",
     },
 
     forgotPassword: {

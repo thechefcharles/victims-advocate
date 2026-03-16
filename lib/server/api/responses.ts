@@ -25,6 +25,10 @@ export function apiFail(
     VALIDATION_ERROR: 422,
     RATE_LIMITED: 429,
     CONSENT_REQUIRED: 403,
+    EMAIL_VERIFICATION_REQUIRED: 403,
+    ACCOUNT_LOCKED: 429,
+    ACCOUNT_DISABLED: 403,
+    ACCOUNT_DELETED: 403,
     INTERNAL: 500,
   };
   const httpStatus = status ?? statusMap[code] ?? 500;

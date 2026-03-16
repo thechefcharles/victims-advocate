@@ -24,42 +24,68 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+      const lockRes = await fetch(
+        `/api/auth/check-lockout?email=${encodeURIComponent(normalizedEmail)}`
+      );
+      if (lockRes.ok) {
+        const lockJson = await lockRes.json();
+        if (lockJson.data?.locked) {
+          setErr(t("loginForm.tooManyAttempts"));
+          return;
+        }
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
       });
 
       if (error) {
-        setErr(error.message);
+        const failRes = await fetch("/api/auth/login-failed", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalizedEmail }),
+        });
+        const failJson = await failRes.json().catch(() => ({}));
+        if (failJson.data?.locked) {
+          setErr(t("loginForm.tooManyAttempts"));
+        } else {
+          setErr(error.message);
+        }
         return;
       }
 
       const { data: sessionData } = await supabase.auth.getSession();
-      await logAuthEvent("auth.login", sessionData.session?.access_token);
+      const token = sessionData.session?.access_token;
+      await logAuthEvent("auth.login", token);
 
-      // Redirect admins to MVP, non-admins to Coming Soon
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
+      await fetch("/api/auth/login-success", {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
 
-      if (!uid) {
-        router.push("/coming-soon");
-        return;
-      }
-
-      try {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("is_admin")
-          .eq("id", uid)
-          .single();
-        if (prof?.is_admin) {
-          router.push("/dashboard");
-        } else {
-          router.push("/coming-soon");
+      const meRes = await fetch("/api/me", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (meRes.ok) {
+        const meJson = await meRes.json();
+        const data = meJson.data ?? {};
+        if (data.accountStatus !== "active") {
+          router.push("/account-disabled");
+          return;
         }
-      } catch {
-        router.push("/coming-soon");
+        if (!data.emailVerified) {
+          router.push("/verify-email");
+          return;
+        }
+        if (data.isAdmin) {
+          router.push("/dashboard");
+          return;
+        }
       }
+
+      router.push("/coming-soon");
     } finally {
       setLoading(false);
     }

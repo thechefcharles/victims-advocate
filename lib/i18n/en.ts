@@ -289,6 +289,7 @@ export const en: I18nDict = {
     createAccount: "Create account",
     createAdvocateAccount: "Create Victim Advocate account",
     forgotPassword: "Forgot password",
+    tooManyAttempts: "Too many failed attempts. Try again later.",
   },
 
   forgotPassword: {

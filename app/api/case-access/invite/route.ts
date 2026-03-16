@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     // PHASE 1: call logEvent(...) here
 
     const body = await req.json().catch(() => ({}));

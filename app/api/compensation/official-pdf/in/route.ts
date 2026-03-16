@@ -7,7 +7,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getCaseById } from "@/lib/server/data";
 import { IN_CVC_COORDS } from "@/lib/pdfMaps/in_cvc_coords";
 
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       appData = normalizeApplication(body.application);
     } else if (body && "caseId" in body && typeof body.caseId === "string") {
       const ctx = await getAuthContext(req);
-      requireAuth(ctx);
+      requireFullAccess(ctx, req);
       const result = await getCaseById({ caseId: body.caseId, ctx });
       if (!result) {
         return NextResponse.json({ error: "Case not found or no application data" }, { status: 404 });

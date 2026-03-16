@@ -21,6 +21,8 @@ export async function GET(req: Request) {
       isAdmin: ctx.isAdmin,
       orgId: ctx.orgId,
       orgRole: ctx.orgRole,
+      emailVerified: ctx.emailVerified,
+      accountStatus: ctx.accountStatus,
     });
   } catch (err) {
     const appErr = toAppError(err);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/auth";
 import { apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser } from "@/lib/server/data";
@@ -19,7 +19,7 @@ function parseApp(app: unknown) {
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     requireRole(ctx, "advocate");
     // PHASE 1: call logEvent(...) here
 

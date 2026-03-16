@@ -5,7 +5,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getCaseById } from "@/lib/server/data";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
@@ -233,7 +233,7 @@ export async function POST(req: Request) {
     // Option 2: caseId → load from Supabase (org-scoped)
     if (!appData && "caseId" in body) {
       const ctx = await getAuthContext(req);
-      requireAuth(ctx);
+      requireFullAccess(ctx, req);
       const result = await getCaseById({ caseId: body.caseId, ctx });
       if (!result) {
         return NextResponse.json({ error: "Could not load case application" }, { status: 404 });

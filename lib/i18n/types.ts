@@ -176,6 +176,7 @@ export type I18nDict = {
     createAccount: string;
     createAdvocateAccount: string;
     forgotPassword: string;
+    tooManyAttempts: string;
   };
 
   forgotPassword: {

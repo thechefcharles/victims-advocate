@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabaseClient";
 
 export type ProfileRole = "victim" | "advocate";
 
+export type AccountStatus = "active" | "disabled" | "deleted";
+
 type AuthState = {
   loading: boolean;
   user: User | null;
@@ -19,6 +21,8 @@ type AuthState = {
   accessToken: string | null;
   role: ProfileRole;
   isAdmin: boolean;
+  emailVerified: boolean;
+  accountStatus: AccountStatus;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -28,6 +32,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<ProfileRole>("victim");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
 
   useEffect(() => {
     // 1) Bootstrap once
@@ -55,19 +61,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resolveProfile = async (sess: Session | null) => {
+    setEmailVerified(!!sess?.user?.email_confirmed_at);
+
     const metaRole = sess?.user?.user_metadata?.role;
     setRole(metaRole === "advocate" ? "advocate" : "victim");
 
     const uid = sess?.user?.id;
     if (!uid) {
       setIsAdmin(false);
+      setAccountStatus("active");
       return;
     }
 
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("is_admin")
+        .select("is_admin, account_status")
         .eq("id", uid)
         .single();
       
@@ -83,8 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn("[AuthProvider] Profile lookup error:", error.message, "for user:", uid);
         }
         setIsAdmin(false);
+        setAccountStatus("active");
         return;
       }
+
+      const rawStatus = data?.account_status;
+      setAccountStatus(
+        rawStatus === "disabled" || rawStatus === "deleted" ? rawStatus : "active"
+      );
       
       const adminStatus = data?.is_admin === true;
       setIsAdmin(adminStatus);
@@ -105,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("[AuthProvider] Unexpected error checking admin status:", err);
       setIsAdmin(false);
+      setAccountStatus("active");
     }
   };
 
@@ -116,8 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       accessToken: session?.access_token ?? null,
       role,
       isAdmin,
+      emailVerified,
+      accountStatus,
     };
-  }, [loading, session, role, isAdmin]);
+  }, [loading, session, role, isAdmin, emailVerified, accountStatus]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

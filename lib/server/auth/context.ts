@@ -12,6 +12,8 @@ export type ProfileRole = "victim" | "advocate";
 
 export type OrgRole = "staff" | "supervisor" | "org_admin";
 
+export type AccountStatus = "active" | "disabled" | "deleted";
+
 export type AuthContext = {
   user: { id: string; email?: string };
   userId: string;
@@ -19,6 +21,8 @@ export type AuthContext = {
   orgId: string | null;
   orgRole: OrgRole | null;
   isAdmin: boolean;
+  emailVerified: boolean;
+  accountStatus: AccountStatus;
 };
 
 function getToken(req: Request): string | null {
@@ -41,7 +45,7 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
 
   const { data: profile, error: profError } = await supabaseAdmin
     .from("profiles")
-    .select("role, organization, is_admin")
+    .select("role, organization, is_admin, account_status")
     .eq("id", userId)
     .maybeSingle();
 
@@ -51,6 +55,14 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
 
   const role = (profile?.role === "advocate" ? "advocate" : "victim") as ProfileRole;
   const isAdmin = Boolean(profile?.is_admin);
+
+  const rawStatus = profile?.account_status;
+  const accountStatus: AccountStatus =
+    rawStatus === "disabled" || rawStatus === "deleted"
+      ? rawStatus
+      : "active";
+
+  const emailVerified = Boolean(data.user.email_confirmed_at);
 
   // Phase 2: org membership from org_memberships (replaces profiles.organization)
   const { data: membership } = await supabaseAdmin
@@ -73,6 +85,8 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     orgId,
     orgRole,
     isAdmin,
+    emailVerified,
+    accountStatus,
   };
 }
 

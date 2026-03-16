@@ -27,7 +27,16 @@ export type AuditAction =
   | "policy.create"
   | "policy.activate"
   | "policy.accept"
-  | "policy.blocked";
+  | "policy.blocked"
+  | "auth.email_verification_required"
+  | "auth.email_verification_resent"
+  | "auth.email_verified"
+  | "auth.login_failed"
+  | "auth.locked"
+  | "auth.login_rate_limited"
+  | "auth.account_disabled"
+  | "auth.account_deleted"
+  | "auth.access_revoked";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

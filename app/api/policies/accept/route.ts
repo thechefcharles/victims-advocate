@@ -2,7 +2,7 @@
  * Phase 4: Record policy acceptance(s). Append-only; validates active version.
  */
 
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getActivePolicyDocument } from "@/lib/server/policies";
@@ -21,7 +21,7 @@ function parseInet(ip: string | null): string | null {
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {

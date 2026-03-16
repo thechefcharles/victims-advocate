@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { getCaseById } from "@/lib/server/data";
 import { requireAcceptedPolicies } from "@/lib/server/policies";
 import { apiFailFromError, toAppError } from "@/lib/server/api";
@@ -33,7 +33,7 @@ type IntakeStep =
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     await requireAcceptedPolicies({
       ctx,

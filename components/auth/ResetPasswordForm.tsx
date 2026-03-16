@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
+import { validatePassword } from "@/lib/passwordPolicy";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -39,8 +40,9 @@ export default function ResetPasswordForm() {
       return;
     }
 
-    if (password.length < 6) {
-      setErr(t("resetPassword.passwordTooShort"));
+    const pv = validatePassword(password);
+    if (!pv.valid) {
+      setErr(pv.errors[0] ?? t("resetPassword.passwordTooShort"));
       return;
     }
 
@@ -145,7 +147,7 @@ export default function ResetPasswordForm() {
         <button
           className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
           type="submit"
-          disabled={loading || !password || !confirmPassword}
+          disabled={loading || !password || !confirmPassword || !validatePassword(password).valid}
         >
           {loading ? t("resetPassword.updating") : t("resetPassword.submit")}
         </button>

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser } from "@/lib/server/data";
@@ -22,7 +22,7 @@ export async function GET(
 ) {
   try {
     const authCtx = await getAuthContext(req);
-    requireAuth(authCtx);
+    requireFullAccess(authCtx, req);
     requireRole(authCtx, "advocate");
 
     const { clientId } = await ctx.params;

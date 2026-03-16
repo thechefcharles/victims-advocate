@@ -9,7 +9,7 @@ import AdvocateDashboard from "@/components/dashboard/AdvocateDashboard";
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { loading, user, role, accessToken } = useAuth();
+  const { loading, user, role, accessToken, emailVerified, accountStatus } = useAuth();
   const [consentChecked, setConsentChecked] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,15 @@ export default function DashboardPage() {
       router.replace("/login");
       return;
     }
-  }, [loading, user, router]);
+    if (!emailVerified) {
+      router.replace("/verify-email");
+      return;
+    }
+    if (accountStatus !== "active") {
+      router.replace("/account-disabled");
+      return;
+    }
+  }, [loading, user, emailVerified, accountStatus, router]);
 
   useEffect(() => {
     if (loading || !user || !accessToken || consentChecked) return;

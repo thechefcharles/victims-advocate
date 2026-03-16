@@ -2,7 +2,7 @@
  * Phase 4: Get active policies relevant to current user/role/workflow.
  */
 
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getActivePolicyDocument, getMissingAcceptances } from "@/lib/server/policies";
 import { logger } from "@/lib/server/logging";
@@ -10,7 +10,7 @@ import { logger } from "@/lib/server/logging";
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
 
     const { searchParams } = new URL(req.url);
     const workflowKey = searchParams.get("workflow_key")?.trim() || null;

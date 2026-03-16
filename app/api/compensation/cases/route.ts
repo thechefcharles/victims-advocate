@@ -1,7 +1,7 @@
 // app/api/compensation/cases/route.ts
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser } from "@/lib/server/data";
@@ -58,7 +58,7 @@ function normalizeStateCode(maybe: unknown): string {
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     const cases = await listCasesForUser({ ctx });
     logger.info("compensation.cases.list", { userId: ctx.userId, count: cases.length });
     return NextResponse.json({ cases });
@@ -72,7 +72,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
+    requireFullAccess(ctx, req);
     const supabaseAdmin = getSupabaseAdmin();
 
     const body = (await req.json().catch(() => null)) as CreateCaseBody | null;
