@@ -7,6 +7,8 @@ import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getCaseById } from "@/lib/server/data";
 import { IN_CVC_COORDS } from "@/lib/pdfMaps/in_cvc_coords";
 
 export const runtime = "nodejs";
@@ -41,16 +43,13 @@ export async function POST(req: Request) {
     if (body && "application" in body && body.application) {
       appData = normalizeApplication(body.application);
     } else if (body && "caseId" in body && typeof body.caseId === "string") {
-      const supabase = getSupabaseAdmin();
-      const { data: caseRow, error } = await supabase
-        .from("cases")
-        .select("application")
-        .eq("id", body.caseId)
-        .single();
-      if (error || !caseRow?.application) {
+      const ctx = await getAuthContext(req);
+      requireAuth(ctx);
+      const result = await getCaseById({ caseId: body.caseId, ctx });
+      if (!result) {
         return NextResponse.json({ error: "Case not found or no application data" }, { status: 404 });
       }
-      const raw = caseRow.application;
+      const raw = result.case.application;
       appData = typeof raw === "string" ? normalizeApplication(raw) : normalizeApplication(raw);
     }
 

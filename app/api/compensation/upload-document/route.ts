@@ -50,10 +50,30 @@ export async function POST(req: Request) {
       return apiFail("INTERNAL", "Failed to upload file", undefined, 500);
     }
 
+    let orgId: string | null = ctx.orgId ?? null;
+    if (!orgId) {
+      const { data: legacyOrg } = await supabaseAdmin
+        .from("organizations")
+        .select("id")
+        .eq("name", "Legacy (pre-tenant)")
+        .limit(1)
+        .maybeSingle();
+      orgId = legacyOrg?.id ?? null;
+    }
+    if (!orgId) {
+      return apiFail(
+        "FORBIDDEN",
+        "Organization membership or legacy org required to upload documents",
+        undefined,
+        403
+      );
+    }
+
     const { data, error: insertError } = await supabaseAdmin
       .from("documents")
       .insert({
         case_id: null,
+        organization_id: orgId,
         uploaded_by_user_id: ctx.userId,
         doc_type: docType,
         description,

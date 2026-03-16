@@ -1,6 +1,6 @@
 /**
  * Phase 0: Centralized document data access.
- * Phase 3: will add organization_id filtering.
+ * Phase 3: Org-scoped; verifies case belongs to ctx.orgId (or admin) before listing.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -16,7 +16,28 @@ export async function listCaseDocuments(params: {
   const { caseId, ctx } = params;
   const supabaseAdmin = getSupabaseAdmin();
 
-  // Ensure user has access to the case
+  const { data: caseRow, error: caseErr } = await supabaseAdmin
+    .from("cases")
+    .select("id, organization_id")
+    .eq("id", caseId)
+    .maybeSingle();
+
+  if (caseErr) {
+    throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
+  }
+
+  if (!caseRow) {
+    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+  }
+
+  const caseOrgId = caseRow.organization_id as string | null;
+  const allowed =
+    ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+
+  if (!allowed) {
+    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+  }
+
   const { data: accessRow, error: accessError } = await supabaseAdmin
     .from("case_access")
     .select("can_view")

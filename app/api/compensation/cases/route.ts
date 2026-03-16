@@ -104,11 +104,31 @@ export async function POST(req: Request) {
         ? (body as any).name.trim() || null
         : null;
 
+    let orgId: string | null = ctx.orgId ?? null;
+    if (!orgId) {
+      const { data: legacyOrg } = await supabaseAdmin
+        .from("organizations")
+        .select("id")
+        .eq("name", "Legacy (pre-tenant)")
+        .limit(1)
+        .maybeSingle();
+      orgId = legacyOrg?.id ?? null;
+    }
+    if (!orgId) {
+      return apiFail(
+        "FORBIDDEN",
+        "Organization membership or legacy org required to create a case",
+        undefined,
+        403
+      );
+    }
+
     // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
         owner_user_id: ctx.userId,
+        organization_id: orgId,
         status,
         state_code,
         name: name ?? undefined,
@@ -129,6 +149,7 @@ export async function POST(req: Request) {
     const { error: accessError } = await supabaseAdmin.from("case_access").insert({
       case_id: newCase.id,
       user_id: ctx.userId,
+      organization_id: orgId,
       role: "owner",
       can_view: true,
       can_edit: true,
@@ -139,10 +160,10 @@ export async function POST(req: Request) {
       // do not fail creation
     }
 
-    // 3) Attach any unassigned documents from this user to the new case
+    // 3) Attach any unassigned documents from this user to the new case (set org on docs)
     const { error: attachError } = await supabaseAdmin
       .from("documents")
-      .update({ case_id: newCase.id })
+      .update({ case_id: newCase.id, organization_id: orgId })
       .eq("uploaded_by_user_id", ctx.userId)
       .is("case_id", null);
 

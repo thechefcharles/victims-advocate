@@ -5,6 +5,8 @@ import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireAuth } from "@/lib/server/auth";
+import { getCaseById } from "@/lib/server/data";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
 export const runtime = "nodejs";
@@ -228,28 +230,21 @@ export async function POST(req: Request) {
       appData = body.application;
     }
 
-    // Option 2: caseId → load from Supabase
+    // Option 2: caseId → load from Supabase (org-scoped)
     if (!appData && "caseId" in body) {
-      const { data, error } = await supabaseAdmin
-        .from("cases")
-        .select("application")
-        .eq("id", body.caseId)
-        .single();
-
-      if (error || !data?.application) {
-        console.error("[IL PDF] Failed to load application for case", body.caseId, error);
+      const ctx = await getAuthContext(req);
+      requireAuth(ctx);
+      const result = await getCaseById({ caseId: body.caseId, ctx });
+      if (!result) {
         return NextResponse.json({ error: "Could not load case application" }, { status: 404 });
       }
-
-      const normalized = normalizeApplication(data.application);
+      const normalized = normalizeApplication(result.case.application);
       if (!normalized) {
-        console.error("[IL PDF] application column is not valid JSON (or is double-encoded)");
         return NextResponse.json(
           { error: "Case application is not valid JSON" },
           { status: 500 }
         );
       }
-
       appData = normalized;
     }
 

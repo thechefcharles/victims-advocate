@@ -59,22 +59,12 @@ export async function PATCH(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing id", undefined, 400);
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: accessRow, error: accessError } = await supabaseAdmin
-      .from("case_access")
-      .select("can_edit")
-      .eq("case_id", id)
-      .eq("user_id", ctx.userId)
-      .maybeSingle();
-
-    if (accessError) {
-      throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
-    }
-
-    if (!accessRow?.can_edit) {
+    const result = await getCaseById({ caseId: id, ctx });
+    if (!result || !result.access.can_edit) {
       return apiFail("FORBIDDEN", "Forbidden", undefined, 403);
     }
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     let body: unknown = null;
     try {
@@ -175,23 +165,15 @@ export async function DELETE(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing id", undefined, 400);
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: accessRow, error: accessError } = await supabaseAdmin
-      .from("case_access")
-      .select("role, can_edit")
-      .eq("case_id", id)
-      .eq("user_id", ctx.userId)
-      .maybeSingle();
-
-    if (accessError) {
-      throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
+    const result = await getCaseById({ caseId: id, ctx });
+    if (!result) {
+      return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }
-
-    if (!accessRow?.can_edit || accessRow.role !== "owner") {
+    if (!result.access.can_edit || result.access.role !== "owner") {
       return apiFail("FORBIDDEN", "Only the case owner can delete this case", undefined, 403);
     }
 
+    const supabaseAdmin = getSupabaseAdmin();
     await supabaseAdmin.from("case_access").delete().eq("case_id", id);
     await supabaseAdmin.from("documents").delete().eq("case_id", id);
 

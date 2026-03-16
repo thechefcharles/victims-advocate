@@ -1,6 +1,6 @@
 /**
  * Phase 0: Centralized case data access.
- * Phase 3: will add organization_id filtering.
+ * Phase 3: Org-scoped; returns NOT_FOUND for cross-org access (no existence leak).
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -28,6 +28,28 @@ export async function getCaseById(
   const { caseId, ctx } = params;
   const supabaseAdmin = getSupabaseAdmin();
 
+  const { data: caseRow, error: caseError } = await supabaseAdmin
+    .from("cases")
+    .select("*")
+    .eq("id", caseId)
+    .maybeSingle();
+
+  if (caseError) {
+    throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
+  }
+
+  if (!caseRow) {
+    return null;
+  }
+
+  const caseOrgId = caseRow.organization_id as string | null;
+  const allowed =
+    ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+
+  if (!allowed) {
+    return null;
+  }
+
   const { data: accessRow, error: accessError } = await supabaseAdmin
     .from("case_access")
     .select("role, can_view, can_edit")
@@ -41,16 +63,6 @@ export async function getCaseById(
 
   if (!accessRow || !accessRow.can_view) {
     return null;
-  }
-
-  const { data: caseRow, error: caseError } = await supabaseAdmin
-    .from("cases")
-    .select("*")
-    .eq("id", caseId)
-    .single();
-
-  if (caseError || !caseRow) {
-    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
   }
 
   const { data: docs, error: docsError } = await supabaseAdmin
@@ -81,6 +93,10 @@ export async function listCasesForUser(params: {
   const { ctx, filters } = params;
   const supabaseAdmin = getSupabaseAdmin();
 
+  if (!ctx.isAdmin && !ctx.orgId) {
+    return [];
+  }
+
   let query = supabaseAdmin
     .from("case_access")
     .select(
@@ -88,11 +104,16 @@ export async function listCasesForUser(params: {
       role,
       can_view,
       can_edit,
+      organization_id,
       cases:cases ( * )
     `
     )
     .eq("user_id", ctx.userId)
     .eq("can_view", true);
+
+  if (!ctx.isAdmin && ctx.orgId) {
+    query = query.eq("organization_id", ctx.orgId);
+  }
 
   if (filters?.role) {
     query = query.eq("role", filters.role);
@@ -108,6 +129,10 @@ export async function listCasesForUser(params: {
   }
 
   let rows = (data ?? []).filter((r: any) => r?.cases);
+
+  if (!ctx.isAdmin && ctx.orgId) {
+    rows = rows.filter((r: any) => r.cases?.organization_id === ctx.orgId);
+  }
 
   if (filters?.clientId) {
     const clientId = filters.clientId.trim();

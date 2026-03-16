@@ -28,6 +28,23 @@ export async function POST(req: Request) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
+    const { data: caseRow, error: caseErr } = await supabaseAdmin
+      .from("cases")
+      .select("id, organization_id")
+      .eq("id", cleanCaseId)
+      .maybeSingle();
+
+    if (caseErr || !caseRow) {
+      return apiFail("NOT_FOUND", "Case not found", undefined, 404);
+    }
+
+    const caseOrgId = caseRow.organization_id as string | null;
+    const allowed =
+      ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+    if (!allowed) {
+      return apiFail("FORBIDDEN", "Forbidden", undefined, 403);
+    }
+
     const { data: callerAccess, error: callerErr } = await supabaseAdmin
       .from("case_access")
       .select("role, can_edit")
@@ -71,6 +88,7 @@ export async function POST(req: Request) {
         {
           case_id: cleanCaseId,
           user_id: advocateUserId,
+          organization_id: caseOrgId,
           role: "advocate",
           can_view: true,
           can_edit: allowEdit,
