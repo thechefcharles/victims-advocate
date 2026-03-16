@@ -43,7 +43,12 @@ export type AuditAction =
   | "auth.login_rate_limited"
   | "auth.account_disabled"
   | "auth.account_deleted"
-  | "auth.access_revoked";
+  | "auth.access_revoked"
+  | "case.note_created"
+  | "case.note_edited"
+  | "case.note_deleted"
+  | "case.timeline_viewed"
+  | "case.notes_viewed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

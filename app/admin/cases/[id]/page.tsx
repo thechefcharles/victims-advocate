@@ -24,6 +24,32 @@ interface SavedCase {
   documents?: UploadedDoc[];
 }
 
+interface CaseAccess {
+  role: string;
+  can_view: boolean;
+  can_edit: boolean;
+}
+
+interface TimelineEvent {
+  id: string;
+  created_at: string;
+  event_type: string;
+  title: string;
+  description: string | null;
+  actor_role?: string | null;
+}
+
+interface CaseNote {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  author_user_id: string;
+  author_role: string | null;
+  content: string;
+  status: string;
+  edited_at: string | null;
+}
+
 export default function CaseDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -40,6 +66,15 @@ export default function CaseDetailPage() {
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [documentActioning, setDocumentActioning] = useState<string | null>(null);
+  const [caseAccess, setCaseAccess] = useState<CaseAccess | null>(null);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [notes, setNotes] = useState<CaseNote[]>([]);
+  const [noteContent, setNoteContent] = useState("");
+  const [noteActioning, setNoteActioning] = useState<string | null>(null);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingNoteContent, setEditingNoteContent] = useState("");
+
+  const canViewNotes = caseAccess && caseAccess.role !== "owner";
 
   // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
@@ -60,11 +95,15 @@ export default function CaseDetailPage() {
         const json = await res.json();
         const caseRow = json.case;
         const docs = (json.documents ?? []) as any[];
+        const access = json.access as CaseAccess | undefined;
 
         if (!caseRow) {
           setLoadedCase(null);
+          setCaseAccess(null);
           return;
         }
+
+        setCaseAccess(access ?? null);
 
         const mappedCase: SavedCase = {
           id: caseRow.id,
@@ -86,9 +125,36 @@ export default function CaseDetailPage() {
         };
 
         setLoadedCase(mappedCase);
+
+        const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (timelineRes.ok) {
+          const tJson = await timelineRes.json();
+          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+        } else {
+          setTimelineEvents([]);
+        }
+
+        if (access?.role !== "owner") {
+          const notesRes = await fetch(`/api/compensation/cases/${caseId}/notes`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (notesRes.ok) {
+            const nJson = await notesRes.json();
+            setNotes(nJson.data?.notes ?? nJson.notes ?? []);
+          } else {
+            setNotes([]);
+          }
+        } else {
+          setNotes([]);
+        }
       } catch (err) {
         console.error("Failed to load case from API", err);
         setLoadedCase(null);
+        setCaseAccess(null);
+        setTimelineEvents([]);
+        setNotes([]);
       } finally {
         setLoading(false);
       }
@@ -100,35 +166,128 @@ export default function CaseDetailPage() {
   }, [caseId]);
 
   const reloadCase = () => {
-    if (caseId) {
-      setLoading(true);
-      supabase.auth.getSession().then(({ data }) => {
-        const token = data.session?.access_token;
-        fetch(`/api/compensation/cases/${caseId}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+    if (!caseId) return;
+    setLoading(true);
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {};
+      fetch(`/api/compensation/cases/${caseId}`, { headers })
+        .then((res) => (res.ok ? res.json() : null))
+        .then(async (json) => {
+          if (!json?.case) return;
+          const docs = (json.documents ?? []) as any[];
+          const access = json.access as CaseAccess | undefined;
+          setCaseAccess(access ?? null);
+          setLoadedCase((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              documents: docs.map((d: any) => ({
+                id: d.id,
+                type: d.doc_type || "other",
+                description: d.description ?? "",
+                fileName: d.file_name,
+                fileSize: d.file_size ?? 0,
+                lastModified: Date.parse(d.created_at || new Date().toISOString()),
+                status: d.status ?? "active",
+              })),
+            };
+          });
+          const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, { headers });
+          if (timelineRes.ok) {
+            const tJson = await timelineRes.json();
+            setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+          }
+          if (access?.role !== "owner" && token) {
+            const notesRes = await fetch(`/api/compensation/cases/${caseId}/notes`, { headers });
+            if (notesRes.ok) {
+              const nJson = await notesRes.json();
+              setNotes(nJson.data?.notes ?? nJson.notes ?? []);
+            }
+          }
         })
-          .then((res) => res.ok ? res.json() : null)
-          .then((json) => {
-            if (!json?.case) return;
-            const docs = (json.documents ?? []) as any[];
-            setLoadedCase((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                documents: docs.map((d: any) => ({
-                  id: d.id,
-                  type: d.doc_type || "other",
-                  description: d.description ?? "",
-                  fileName: d.file_name,
-                  fileSize: d.file_size ?? 0,
-                  lastModified: Date.parse(d.created_at || new Date().toISOString()),
-                  status: d.status ?? "active",
-                })),
-              };
-            });
-          })
-          .finally(() => setLoading(false));
+        .finally(() => setLoading(false));
+    });
+  };
+
+  const handleAddNote = async () => {
+    if (!caseId || !noteContent.trim()) return;
+    setNoteActioning("add");
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const res = await fetch(`/api/compensation/cases/${caseId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: noteContent.trim() }),
       });
+      if (res.ok) {
+        setNoteContent("");
+        const nJson = await res.json();
+        setNotes((prev) => [nJson.data?.note ?? nJson.note, ...prev]);
+        const tRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (tRes.ok) {
+          const tJson = await tRes.json();
+          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+        }
+      } else {
+        const err = await res.json();
+        alert(err?.error?.message ?? "Failed to add note.");
+      }
+    } finally {
+      setNoteActioning(null);
+    }
+  };
+
+  const handleEditNote = async (noteId: string) => {
+    if (!editingNoteContent.trim()) return;
+    setNoteActioning(noteId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const res = await fetch(`/api/case-notes/${noteId}/edit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: editingNoteContent.trim() }),
+      });
+      if (res.ok) {
+        setEditingNoteId(null);
+        setEditingNoteContent("");
+        const nJson = await res.json();
+        setNotes((prev) =>
+          prev.map((n) => (n.id === noteId ? (nJson.data?.note ?? nJson.note) : n))
+        );
+      } else {
+        const err = await res.json();
+        alert(err?.error?.message ?? "Failed to update note.");
+      }
+    } finally {
+      setNoteActioning(null);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+    if (!confirm("Delete this note?")) return;
+    setNoteActioning(noteId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const res = await fetch(`/api/case-notes/${noteId}/delete`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      else {
+        const err = await res.json();
+        alert(err?.error?.message ?? "Failed to delete note.");
+      }
+    } finally {
+      setNoteActioning(null);
     }
   };
 
@@ -767,6 +926,125 @@ export default function CaseDetailPage() {
           </>
         )}
       </section>
+
+      {/* Timeline */}
+      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+        <h2 className="text-sm font-semibold text-slate-50">Case timeline</h2>
+        {timelineEvents.length === 0 ? (
+          <p className="text-slate-400">No timeline events yet.</p>
+        ) : (
+          <ul className="divide-y divide-slate-800 space-y-2">
+            {timelineEvents.map((e) => (
+              <li key={e.id} className="py-2 first:pt-0">
+                <p className="text-[11px] text-slate-500">
+                  {new Date(e.created_at).toLocaleString()}
+                  {e.actor_role ? ` · ${e.actor_role}` : ""}
+                </p>
+                <p className="font-medium text-slate-200">{e.title}</p>
+                {e.description && (
+                  <p className="text-slate-400 mt-0.5">{e.description}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Internal notes (advocates/admins only) */}
+      {canViewNotes && (
+        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+          <h2 className="text-sm font-semibold text-slate-50">Internal notes</h2>
+          <div>
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Add an internal note…"
+              rows={2}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            />
+            <button
+              type="button"
+              onClick={handleAddNote}
+              disabled={!noteContent.trim() || noteActioning === "add"}
+              className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {noteActioning === "add" ? "Adding…" : "Add note"}
+            </button>
+          </div>
+          {notes.length === 0 ? (
+            <p className="text-slate-400">No internal notes.</p>
+          ) : (
+            <ul className="divide-y divide-slate-800 space-y-3">
+              {notes.map((n) => (
+                <li key={n.id} className="py-2">
+                  {editingNoteId === n.id ? (
+                    <div>
+                      <textarea
+                        value={editingNoteContent}
+                        onChange={(e) => setEditingNoteContent(e.target.value)}
+                        rows={3}
+                        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100"
+                      />
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditNote(n.id)}
+                          disabled={noteActioning === n.id}
+                          className="text-[11px] text-emerald-400 hover:text-emerald-300"
+                        >
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingNoteId(null);
+                            setEditingNoteContent("");
+                          }}
+                          className="text-[11px] text-slate-400 hover:text-slate-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-500">
+                        {new Date(n.created_at).toLocaleString()}
+                        {n.author_role ? ` · ${n.author_role}` : ""}
+                        {n.status === "edited" && n.edited_at
+                          ? ` · edited ${new Date(n.edited_at).toLocaleString()}`
+                          : ""}
+                      </p>
+                      <p className="text-slate-200 whitespace-pre-wrap">{n.content}</p>
+                      <div className="mt-1 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingNoteId(n.id);
+                            setEditingNoteContent(n.content);
+                          }}
+                          disabled={noteActioning === n.id}
+                          className="text-[11px] text-amber-400 hover:text-amber-300"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteNote(n.id)}
+                          disabled={noteActioning === n.id}
+                          className="text-[11px] text-red-400 hover:text-red-300"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {/* Certification */}
       <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5">

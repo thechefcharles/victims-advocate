@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { listCasesForUser } from "@/lib/server/data";
+import { listCasesForUser, appendCaseTimelineEvent } from "@/lib/server/data";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
@@ -160,12 +160,23 @@ export async function POST(req: Request) {
       // do not fail creation
     }
 
+    appendCaseTimelineEvent({
+      caseId: newCase.id,
+      organizationId: orgId,
+      actor: { userId: ctx.userId, role: "owner" },
+      eventType: "case.created",
+      title: "Case created",
+      description: status !== "draft" ? `Status: ${status}` : null,
+      metadata: { status },
+    }).catch(() => {});
+
     // 3) Attach any unassigned documents from this user to the new case (set org on docs)
-    const { error: attachError } = await supabaseAdmin
+    const { data: attachedDocs, error: attachError } = await supabaseAdmin
       .from("documents")
       .update({ case_id: newCase.id, organization_id: orgId })
       .eq("uploaded_by_user_id", ctx.userId)
-      .is("case_id", null);
+      .is("case_id", null)
+      .select("id");
 
     if (attachError) {
       logger.warn("compensation.cases.create.attach_docs_failed", { caseId: newCase.id });
@@ -179,6 +190,19 @@ export async function POST(req: Request) {
         },
         { status: 201 }
       );
+    }
+
+    const attachedCount = Array.isArray(attachedDocs) ? attachedDocs.length : 0;
+    if (attachedCount > 0) {
+      appendCaseTimelineEvent({
+        caseId: newCase.id,
+        organizationId: orgId,
+        actor: { userId: ctx.userId, role: "owner" },
+        eventType: "case.document_uploaded",
+        title: "Documents attached to case",
+        description: `${attachedCount} document(s) attached`,
+        metadata: { count: attachedCount },
+      }).catch(() => {});
     }
 
     return NextResponse.json(

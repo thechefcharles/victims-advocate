@@ -16,3 +16,16 @@ export {
   type DocumentRow,
   type CaseAccessInfo,
 } from "./documents";
+export {
+  appendCaseTimelineEvent,
+  listCaseTimeline,
+  type TimelineEventRow,
+  type AppendTimelineParams,
+} from "./timeline";
+export {
+  listCaseNotes,
+  createCaseNote,
+  editCaseNote,
+  deleteCaseNote,
+  type CaseNoteRow,
+} from "./notes";

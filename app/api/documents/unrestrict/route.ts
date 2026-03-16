@@ -4,7 +4,7 @@
 
 import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { setDocumentRestriction } from "@/lib/server/data/documents";
+import { setDocumentRestriction, appendCaseTimelineEvent } from "@/lib/server/data";
 import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
@@ -28,6 +28,18 @@ export async function POST(req: Request) {
       restricted: false,
       ctx,
     });
+
+    if (doc.case_id && doc.organization_id) {
+      appendCaseTimelineEvent({
+        caseId: doc.case_id,
+        organizationId: doc.organization_id,
+        actor: { userId: ctx.userId, role: ctx.orgRole ?? ctx.role },
+        eventType: "case.document_unrestricted",
+        title: "Document unrestricted",
+        description: doc.file_name ? `File: ${doc.file_name}` : null,
+        metadata: { document_id: doc.id },
+      }).catch(() => {});
+    }
 
     await logEvent({
       ctx,
