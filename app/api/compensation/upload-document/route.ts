@@ -4,6 +4,7 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { validateUpload } from "@/lib/server/documents/uploadValidation";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,22 @@ export async function POST(req: Request) {
 
     if (!(file instanceof File)) {
       return apiFail("VALIDATION_ERROR", "File is required", undefined, 400);
+    }
+
+    const validation = validateUpload(file);
+    if (!validation.valid) {
+      logEvent({
+        ctx,
+        action: "document.upload_rejected",
+        metadata: { errors: validation.errors, file_name: file.name, file_size: file.size },
+        req,
+      }).catch(() => {});
+      return apiFail(
+        "DOCUMENT_UPLOAD_INVALID",
+        validation.errors[0] ?? "Invalid file",
+        { errors: validation.errors },
+        422
+      );
     }
 
     const docType = String(formData.get("docType") || "other");
@@ -81,6 +98,7 @@ export async function POST(req: Request) {
         file_size: file.size,
         mime_type: file.type || null,
         storage_path: storagePath,
+        status: "active",
       })
       .select("*")
       .single();

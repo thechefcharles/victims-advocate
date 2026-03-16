@@ -29,6 +29,10 @@ export function apiFail(
     ACCOUNT_LOCKED: 429,
     ACCOUNT_DISABLED: 403,
     ACCOUNT_DELETED: 403,
+    DOCUMENT_ACCESS_DENIED: 403,
+    DOCUMENT_RESTRICTED: 403,
+    DOCUMENT_DELETED: 404,
+    DOCUMENT_UPLOAD_INVALID: 422,
     INTERNAL: 500,
   };
   const httpStatus = status ?? statusMap[code] ?? 500;

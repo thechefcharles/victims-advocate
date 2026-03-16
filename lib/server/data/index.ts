@@ -6,4 +6,13 @@ export {
   type CaseAccess,
   type CaseRow,
 } from "./cases";
-export { listCaseDocuments } from "./documents";
+export {
+  listCaseDocuments,
+  getDocumentById,
+  assertDocumentAccess,
+  softDeleteDocument,
+  setDocumentRestriction,
+  canAccessDocument,
+  type DocumentRow,
+  type CaseAccessInfo,
+} from "./documents";

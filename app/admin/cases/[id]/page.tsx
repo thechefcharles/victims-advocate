@@ -13,6 +13,7 @@ interface UploadedDoc {
   fileName: string;
   fileSize: number;
   lastModified: number;
+  status?: "active" | "restricted" | "deleted";
 }
 
 interface SavedCase {
@@ -38,13 +39,18 @@ export default function CaseDetailPage() {
     { role: "user" | "assistant"; content: string }[]
   >([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [documentActioning, setDocumentActioning] = useState<string | null>(null);
 
-  // Load case + docs from API instead of localStorage
+  // Load case + docs from API (with auth so document list is returned)
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/compensation/cases/${caseId}`);
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const res = await fetch(`/api/compensation/cases/${caseId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.ok) {
           console.error("Failed to fetch case", await res.text());
           setLoadedCase(null);
@@ -70,11 +76,12 @@ export default function CaseDetailPage() {
             type: d.doc_type || "other",
             description: d.description ?? "",
             fileName: d.file_name,
-            fileSize: d.file_size,
+            fileSize: d.file_size ?? 0,
             lastModified:
               typeof d.lastModified === "number"
                 ? d.lastModified
                 : Date.parse(d.created_at || new Date().toISOString()),
+            status: d.status ?? "active",
           })),
         };
 
@@ -91,6 +98,118 @@ export default function CaseDetailPage() {
       load();
     }
   }, [caseId]);
+
+  const reloadCase = () => {
+    if (caseId) {
+      setLoading(true);
+      supabase.auth.getSession().then(({ data }) => {
+        const token = data.session?.access_token;
+        fetch(`/api/compensation/cases/${caseId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+          .then((res) => res.ok ? res.json() : null)
+          .then((json) => {
+            if (!json?.case) return;
+            const docs = (json.documents ?? []) as any[];
+            setLoadedCase((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                documents: docs.map((d: any) => ({
+                  id: d.id,
+                  type: d.doc_type || "other",
+                  description: d.description ?? "",
+                  fileName: d.file_name,
+                  fileSize: d.file_size ?? 0,
+                  lastModified: Date.parse(d.created_at || new Date().toISOString()),
+                  status: d.status ?? "active",
+                })),
+              };
+            });
+          })
+          .finally(() => setLoading(false));
+      });
+    }
+  };
+
+  const handleDocumentAccess = async (docId: string, accessType: "view" | "download") => {
+    setDocumentActioning(docId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        alert("Please log in again.");
+        return;
+      }
+      const res = await fetch("/api/documents/access-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ document_id: docId, access_type: accessType }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        alert(json?.error?.message ?? "Could not open document.");
+        return;
+      }
+      const url = json.data?.url ?? json.url;
+      if (url) {
+        if (accessType === "download") {
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "";
+          a.target = "_blank";
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        } else {
+          window.open(url, "_blank", "noopener");
+        }
+      }
+    } catch (err) {
+      console.error("Document access error", err);
+      alert("Something went wrong opening the document.");
+    } finally {
+      setDocumentActioning(null);
+    }
+  };
+
+  const handleDocumentDelete = async (docId: string) => {
+    if (!confirm("Soft-delete this document? It will be hidden from lists.")) return;
+    setDocumentActioning(docId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const res = await fetch("/api/documents/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ document_id: docId }),
+      });
+      if (res.ok) reloadCase();
+      else alert((await res.json())?.error?.message ?? "Failed to delete.");
+    } finally {
+      setDocumentActioning(null);
+    }
+  };
+
+  const handleDocumentRestrict = async (docId: string, restrict: boolean) => {
+    setDocumentActioning(docId);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const path = restrict ? "/api/documents/restrict" : "/api/documents/unrestrict";
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(restrict ? { document_id: docId } : { document_id: docId }),
+      });
+      if (res.ok) reloadCase();
+      else alert((await res.json())?.error?.message ?? "Failed to update.");
+    } finally {
+      setDocumentActioning(null);
+    }
+  };
 
   const handleDownloadSummaryPdf = async () => {
     if (!loadedCase) return;
@@ -576,23 +695,72 @@ export default function CaseDetailPage() {
               {docs.map((d) => (
                 <li
                   key={d.id}
-                  className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1"
+                  className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-slate-100">
-                      {d.type.replace(/_/g, " ")}
-                    </p>
-                    <p className="text-slate-300">{d.fileName}</p>
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="font-semibold text-slate-100">
+                        {d.type.replace(/_/g, " ")}
+                      </p>
+                      {d.status === "restricted" && (
+                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                          Restricted
+                        </span>
+                      )}
+                      {d.status === "deleted" && (
+                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] bg-slate-600 text-slate-400">
+                          Deleted
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-slate-300 truncate">{d.fileName}</p>
                     {d.description && (
                       <p className="text-[11px] text-slate-400">
                         {d.description}
                       </p>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500">
-                    Added:{" "}
-                    {new Date(d.lastModified).toLocaleDateString("en-US")}
-                  </p>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-[11px] text-slate-500">
+                      {new Date(d.lastModified).toLocaleDateString("en-US")}
+                    </span>
+                    {d.status !== "deleted" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleDocumentAccess(d.id, "view")}
+                          disabled={documentActioning === d.id}
+                          className="text-[11px] text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+                        >
+                          {documentActioning === d.id ? "…" : "View"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDocumentAccess(d.id, "download")}
+                          disabled={documentActioning === d.id}
+                          className="text-[11px] text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+                        >
+                          Download
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDocumentRestrict(d.id, d.status !== "restricted")}
+                          disabled={documentActioning === d.id}
+                          className="text-[11px] text-amber-400 hover:text-amber-300 disabled:opacity-50"
+                        >
+                          {d.status === "restricted" ? "Unrestrict" : "Restrict"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDocumentDelete(d.id)}
+                          disabled={documentActioning === d.id}
+                          className="text-[11px] text-red-400 hover:text-red-300 disabled:opacity-50"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

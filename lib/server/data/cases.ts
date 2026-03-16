@@ -1,11 +1,13 @@
 /**
  * Phase 0: Centralized case data access.
  * Phase 3: Org-scoped; returns NOT_FOUND for cross-org access (no existence leak).
+ * Phase 6: Documents via listCaseDocuments (status + restricted visibility).
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
+import { listCaseDocuments } from "./documents";
 
 export type CaseAccess = {
   role: string;
@@ -65,19 +67,19 @@ export async function getCaseById(
     return null;
   }
 
-  const { data: docs, error: docsError } = await supabaseAdmin
-    .from("documents")
-    .select("*")
-    .eq("case_id", caseId)
-    .order("created_at", { ascending: false });
-
-  if (docsError) {
-    throw new AppError("INTERNAL", "Failed to fetch documents", undefined, 500);
-  }
+  const includeRestricted =
+    ctx.isAdmin ||
+    ctx.orgRole === "org_admin" ||
+    ctx.orgRole === "supervisor";
+  const documents = await listCaseDocuments({
+    caseId,
+    ctx,
+    includeRestricted,
+  });
 
   return {
     case: caseRow as CaseRow,
-    documents: (docs ?? []) as DocumentRow[],
+    documents: documents as DocumentRow[],
     access: accessRow as CaseAccess,
   };
 }
