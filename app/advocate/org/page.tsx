@@ -92,6 +92,41 @@ export default function AdvocateOrgPage() {
 
   const canEditProfile =
     myOrgRole === "org_admin" || myOrgRole === "supervisor";
+  const canViewDesignation = canEditProfile;
+
+  const [designation, setDesignation] = useState<{
+    designation_tier: string;
+    designation_confidence: string;
+    public_summary: string | null;
+  } | null>(null);
+  const [designationMsg, setDesignationMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!canViewDesignation || loading) return;
+    const run = async () => {
+      const token = await getToken();
+      if (!token) return;
+      const q = profileQuerySuffix();
+      const res = await fetch(`/api/org/designation${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) return;
+      const d = json.data?.designation ?? json.designation;
+      if (d) {
+        setDesignation({
+          designation_tier: d.designation_tier,
+          designation_confidence: d.designation_confidence,
+          public_summary: d.public_summary ?? null,
+        });
+        setDesignationMsg(null);
+      } else {
+        setDesignation(null);
+        setDesignationMsg(json.data?.message ?? null);
+      }
+    };
+    run();
+  }, [canViewDesignation, loading, profileLoading]);
 
   const loadMembers = async (token: string) => {
     const { searchParams } = new URL(window.location.href);
@@ -365,6 +400,38 @@ export default function AdvocateOrgPage() {
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
             {err}
           </div>
+        )}
+
+        {canViewDesignation && (
+          <section className="rounded-2xl border border-teal-900/40 bg-slate-950/70 p-5 space-y-2">
+            <h2 className="text-sm font-semibold text-teal-200/90">
+              Platform designation (internal preview)
+            </h2>
+            <p className="text-[11px] text-slate-500">
+              Readiness tier on NxtStps — not a public rating or clinical score. Numeric grades are
+              not shown here.
+            </p>
+            {designation ? (
+              <>
+                <p className="text-lg font-medium text-teal-300 capitalize">
+                  {designation.designation_tier.replace(/_/g, " ")}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Confidence: {designation.designation_confidence}
+                </p>
+                {designation.public_summary && (
+                  <p className="text-sm text-slate-300 leading-relaxed mt-2">
+                    {designation.public_summary}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">
+                {designationMsg ??
+                  "No designation on file yet. Administrators update this after internal review."}
+              </p>
+            )}
+          </section>
         )}
 
         <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">

@@ -107,7 +107,10 @@ export type AuditAction =
   | "matching.run_failed"
   | "grading.run_started"
   | "grading.run_completed"
-  | "grading.run_failed";
+  | "grading.run_failed"
+  | "designation.run_started"
+  | "designation.run_completed"
+  | "designation.run_failed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

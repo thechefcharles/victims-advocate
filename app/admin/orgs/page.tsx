@@ -109,6 +109,12 @@ export default function AdminOrgsPage() {
             >
               Grading
             </Link>
+            <Link
+              href="/admin/designations"
+              className="text-sm text-teal-400 hover:text-teal-200"
+            >
+              Designations
+            </Link>
           </div>
         </header>
 
