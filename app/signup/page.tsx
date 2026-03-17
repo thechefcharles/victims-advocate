@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logAuthEvent } from "@/lib/auditClient";
 
 type AccountType = "victim" | "advocate";
 
@@ -50,6 +51,33 @@ export default function SignupPage() {
           "Account created. Please check your email to confirm, then sign in."
         );
         return;
+      }
+
+      await logAuthEvent("auth.signup", data.session.access_token);
+
+      try {
+        const activeRes = await fetch("/api/policies/active", {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        });
+        if (activeRes.ok) {
+          const activeJson = await activeRes.json();
+          const policies = (activeJson.data?.policies ?? []) as { id: string; doc_type: string }[];
+          const toAccept = policies
+            .filter((p) => p.doc_type === "terms_of_use" || p.doc_type === "privacy_policy")
+            .map((p) => p.id);
+          if (toAccept.length > 0) {
+            await fetch("/api/policies/accept", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ policy_ids: toAccept }),
+            });
+          }
+        }
+      } catch {
+        // Non-blocking
       }
 
       router.push("/coming-soon");

@@ -21,6 +21,19 @@ import type {
   FuneralInfo,
   CertificationInfo,
 } from "../../../lib/compensationSchema";
+import {
+  getFieldStateMap,
+  setFieldState,
+  mergeFieldState,
+  stripFieldState,
+  makeSkippedEntry,
+  makeDeferredEntry,
+  type FieldStateMap,
+} from "../../../lib/intake/fieldState";
+import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
+import { getReviewStatus } from "../../../lib/intake/reviewStatus";
+import { ExplainThisButton } from "@/components/ExplainThis";
+import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
 
 type IntakeStep =
   | "victim"
@@ -162,11 +175,40 @@ const { t, tf, lang } = useI18n();
   })();
 }, [router]);
 
+  // Phase 4: require non_legal_advice acceptance before compensation intake
+  const [consentChecked, setConsentChecked] = useState(false);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setConsentChecked(true);
+        return;
+      }
+      const res = await fetch("/api/policies/active?workflow_key=compensation_intake", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        setConsentChecked(true);
+        return;
+      }
+      const json = await res.json();
+      const missing = (json.data?.missing_doc_types ?? []) as string[];
+      setConsentChecked(true);
+      if (missing.includes("non_legal_advice")) {
+        const path = `/compensation/intake${caseId ? `?case=${caseId}` : ""}`;
+        router.replace(`/consent?workflow=compensation_intake&redirect=${encodeURIComponent(path)}`);
+      }
+    })();
+  }, [caseId, router]);
+
   const [step, setStep] = useState<IntakeStep>("victim");
   const [maxStepIndex, setMaxStepIndex] = useState(0);
   const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
+  /** Phase 8: per-field state (skipped, deferred, amended). Preserved with application. */
+  const [fieldState, setFieldStateLocal] = useState<FieldStateMap>({});
 
   const [loadedFromStorage, setLoadedFromStorage] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -231,9 +273,13 @@ useEffect(() => {
       setStateCode(sc === "IN" ? "IN" : "IL");
 
       const rawApp = json.case.application;
-      const loadedApp = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
+      const loaded = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
+      // Phase 8: backward compat – strip _fieldState for form, keep for fieldState
+      const loadedApp = stripFieldState((loaded ?? {}) as Record<string, unknown>) as unknown as CompensationApplication;
+      const initialFieldState = getFieldStateMap((loaded ?? {}) as Record<string, unknown>);
 
       setApp(loadedApp);
+      setFieldStateLocal(initialFieldState);
       setStep("victim");
       setMaxStepIndex(0);
       setLoadedFromStorage(true);
@@ -268,12 +314,17 @@ useEffect(() => {
 
     if (raw) {
       const parsed = JSON.parse(raw) as {
-        app?: CompensationApplication;
+        app?: CompensationApplication & { _fieldState?: FieldStateMap };
         step?: IntakeStep;
         maxStepIndex?: number;
       };
 
-      if (parsed.app) setApp(parsed.app);
+      if (parsed.app) {
+        const loaded = parsed.app as unknown as Record<string, unknown>;
+        const stripped = stripFieldState(loaded) as unknown as CompensationApplication;
+        setApp(stripped);
+        setFieldStateLocal(getFieldStateMap(loaded));
+      }
       if (parsed.step) setStep(parsed.step);
       if (typeof parsed.maxStepIndex === "number") setMaxStepIndex(parsed.maxStepIndex);
     } else {
@@ -394,12 +445,16 @@ useEffect(() => {
   if (!storageKey) return;
 
   try {
-    const payload = { app, step, maxStepIndex };
+    const appToStore =
+      Object.keys(fieldState).length > 0
+        ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
+        : app;
+    const payload = { app: appToStore, step, maxStepIndex };
     localStorage.setItem(storageKey, JSON.stringify(payload));
   } catch (err) {
     console.error("Failed to save compensation intake to localStorage", err);
   }
-}, [caseId, loadedFromStorage, storageKey, app, step, maxStepIndex]);
+}, [caseId, loadedFromStorage, storageKey, app, fieldState, step, maxStepIndex]);
 
 // ✅ Case-mode autosave: when ?case=... exists, save edits to Supabase via PATCH
 useEffect(() => {
@@ -416,13 +471,16 @@ useEffect(() => {
       const token = sessionData.session?.access_token;
       if (!token) return;
 
+      const payload = Object.keys(fieldState).length
+        ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
+        : app;
       const res = await fetch(`/api/compensation/cases/${caseId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ application: app }),
+        body: JSON.stringify({ application: payload }),
       });
 
       if (!res.ok) {
@@ -436,7 +494,7 @@ useEffect(() => {
   }, 800); // debounce: prevents spam while typing
 
   return () => clearTimeout(timeout);
-}, [caseId, loadedFromStorage, canEdit, app]);
+}, [caseId, loadedFromStorage, canEdit, app, fieldState]);
 
 const victim = app.victim;
 const applicant = app.applicant;
@@ -664,19 +722,22 @@ alert(t("intake.validation.certificationRequired"));
   }
 
   try {
-    console.log("Saving case with application:", app);
+    const applicationPayload =
+      Object.keys(fieldState).length > 0
+        ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
+        : app;
 
-const { data: sessionData } = await supabase.auth.getSession();
-const accessToken = sessionData.session?.access_token;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData.session?.access_token;
 
-const res = await fetch("/api/compensation/cases", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-  },
-  body: JSON.stringify({ application: app, state_code: stateCode }),
-});
+    const res = await fetch("/api/compensation/cases", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify({ application: applicationPayload, state_code: stateCode }),
+    });
 
     if (!res.ok) {
       const text = await res.text();
@@ -717,17 +778,32 @@ alert(t("intake.saveCase.unexpected"));
     setChatLoading(true);
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch("/api/nxtguide", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-  messages: newMessages,
-  currentRoute: "/compensation/intake",
-  currentStep: step,
-  application: app,
-  locale: lang,
-}),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: newMessages,
+          currentRoute: "/compensation/intake",
+          currentStep: step,
+          application: app,
+          locale: lang,
+        }),
       });
+
+      if (res.status === 403) {
+        const json = await res.json().catch(() => ({}));
+        if ((json as { error?: { code?: string } })?.error?.code === "CONSENT_REQUIRED") {
+          const path = `/compensation/intake${caseId ? `?case=${caseId}` : ""}`;
+          router.replace(`/consent?workflow=ai_chat&redirect=${encodeURIComponent(path)}`);
+          return;
+        }
+      }
 
       if (!res.ok) {
         console.error("NxtGuide error:", await res.text());
@@ -735,8 +811,7 @@ body: JSON.stringify({
           ...prev,
           {
             role: "assistant",
-
-content: t("nxtGuide.errors.respondFailed")
+            content: t("nxtGuide.errors.respondFailed"),
           },
         ]);
         return;
@@ -919,8 +994,59 @@ const handleBack = () => {
 
 {step === "crime" && (
   <>
-<CrimeForm crime={crime} onChange={updateCrime} stateCode={stateCode} isReadOnly={isReadOnly} />
-<CourtForm court={court} onChange={updateCourt} stateCode={stateCode} isReadOnly={isReadOnly} />
+    <CrimeForm
+      crime={crime}
+      onChange={updateCrime}
+      stateCode={stateCode}
+      isReadOnly={isReadOnly}
+      fieldState={fieldState}
+      caseId={caseId}
+      onSkip={async (fieldKey) => {
+        if (caseId) {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData.session?.access_token;
+            const res = await fetch("/api/intake/skip", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+              body: JSON.stringify({ caseId, fieldKey }),
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const updated = json?.data?.application;
+              if (updated?._fieldState) setFieldStateLocal(updated._fieldState);
+            }
+          } catch (e) {
+            console.error("Skip failed", e);
+          }
+        } else {
+          setFieldStateLocal((prev) => setFieldState(prev, fieldKey, makeSkippedEntry("user")));
+        }
+      }}
+      onDefer={async (fieldKey) => {
+        if (caseId) {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession();
+            const token = sessionData.session?.access_token;
+            const res = await fetch("/api/intake/defer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+              body: JSON.stringify({ caseId, fieldKey }),
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const updated = json?.data?.application;
+              if (updated?._fieldState) setFieldStateLocal(updated._fieldState);
+            }
+          } catch (e) {
+            console.error("Defer failed", e);
+          }
+        } else {
+          setFieldStateLocal((prev) => setFieldState(prev, fieldKey, makeDeferredEntry("user")));
+        }
+      }}
+    />
+    <CourtForm court={court} onChange={updateCourt} stateCode={stateCode} isReadOnly={isReadOnly} />
   </>
 )}
 
@@ -960,6 +1086,9 @@ const handleBack = () => {
     onDownloadOfficialIlPdf={handleDownloadOfficialIlPdf}
     onDownloadOfficialInPdf={handleDownloadOfficialInPdf}
     onSaveCase={handleSaveCase}
+    fieldState={fieldState}
+    app={app}
+    onGoToStep={setStep}
   />
 )}
 
@@ -1096,6 +1225,8 @@ title={
         <p className="text-[11px] text-slate-500">
 {t("intake.footer.draftDisclaimer")}
         </p>
+
+        <CaseMessagesPanel caseId={caseId} />
       </div>
 
             {/* NxtGuide chat widget (intake) */}
@@ -1944,11 +2075,19 @@ function CrimeForm({
   onChange,
   stateCode,
   isReadOnly,
+  fieldState = {},
+  caseId = null,
+  onSkip,
+  onDefer,
 }: {
   crime: CrimeInfo;
   onChange: (patch: Partial<CrimeInfo>) => void;
   stateCode?: "IL" | "IN";
   isReadOnly: boolean;
+  fieldState?: FieldStateMap;
+  caseId?: string | null;
+  onSkip?: (fieldKey: string) => void;
+  onDefer?: (fieldKey: string) => void;
 }) {
   const { t } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
@@ -2124,21 +2263,102 @@ function CrimeForm({
         />
       )}
 
-      <Field
-        label={t("forms.crime.crimeDescriptionLabel")}
-        placeholder={t("forms.crime.crimeDescriptionPlaceholder")}
-        value={crime.crimeDescription ?? ""}
-        onChange={(v) => onChange({ crimeDescription: v })}
-        disabled={isReadOnly}
-      />
+      {/* Phase 8: high-sensitivity block – safe-mode copy + skip/defer */}
+      <div className="rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+        <p>{t("intake.safeMode.takeYourTime")}</p>
+        <p className="mt-1.5">
+          {t("intake.explainThisNeedHelp")}{" "}
+          <ExplainThisButton
+            sourceText={t("forms.crime.crimeDescriptionLabel")}
+            contextType="intake_question"
+            workflowKey="compensation_intake"
+            fieldKey="crime.crimeDescription"
+            stateCode={stateCode ?? undefined}
+            label={t("intake.explainThis")}
+            variant="link"
+          />
+        </p>
+      </div>
 
-      <Field
-        label={t("forms.crime.injuryDescriptionLabel")}
-        placeholder={t("forms.crime.injuryDescriptionPlaceholder")}
-        value={crime.injuryDescription ?? ""}
-        onChange={(v) => onChange({ injuryDescription: v })}
-        disabled={isReadOnly}
-      />
+      <div className="space-y-2">
+        <Field
+          label={t("forms.crime.crimeDescriptionLabel")}
+          placeholder={t("forms.crime.crimeDescriptionPlaceholder")}
+          value={crime.crimeDescription ?? ""}
+          onChange={(v) => onChange({ crimeDescription: v })}
+          disabled={isReadOnly}
+        />
+        {canSkip("crime.crimeDescription") && !isReadOnly && onSkip && onDefer && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onSkip("crime.crimeDescription")}
+              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+            >
+              {t("intake.skipForNow")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDefer("crime.crimeDescription")}
+              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+            >
+              {t("intake.answerLater")}
+            </button>
+          </div>
+        )}
+        {fieldState["crime.crimeDescription"]?.status === "skipped" && (
+          <p className="text-[11px] text-amber-200/80">{t("intake.review.skipped")}</p>
+        )}
+        {fieldState["crime.crimeDescription"]?.status === "deferred" && (
+          <p className="text-[11px] text-amber-200/80">{t("intake.review.deferred")}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Field
+          label={t("forms.crime.injuryDescriptionLabel")}
+          placeholder={t("forms.crime.injuryDescriptionPlaceholder")}
+          value={crime.injuryDescription ?? ""}
+          onChange={(v) => onChange({ injuryDescription: v })}
+          disabled={isReadOnly}
+        />
+        {canSkip("crime.injuryDescription") && !isReadOnly && onSkip && onDefer && (
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onSkip("crime.injuryDescription")}
+              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+            >
+              {t("intake.skipForNow")}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDefer("crime.injuryDescription")}
+              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+            >
+              {t("intake.answerLater")}
+            </button>
+          </div>
+        )}
+        {fieldState["crime.injuryDescription"]?.status === "skipped" && (
+          <p className="text-[11px] text-amber-200/80">{t("intake.review.skipped")}</p>
+        )}
+        {fieldState["crime.injuryDescription"]?.status === "deferred" && (
+          <p className="text-[11px] text-amber-200/80">{t("intake.review.deferred")}</p>
+        )}
+        <p className="text-[11px] text-slate-400">
+          {t("intake.explainThisNeedHelp")}{" "}
+          <ExplainThisButton
+            sourceText={t("forms.crime.injuryDescriptionLabel")}
+            contextType="intake_question"
+            workflowKey="compensation_intake"
+            fieldKey="crime.injuryDescription"
+            stateCode={stateCode ?? undefined}
+            label={t("intake.explainThis")}
+            variant="link"
+          />
+        </p>
+      </div>
 
       <div className="space-y-2 text-xs">
         <p className="text-slate-200">{t("forms.crime.offenderKnownQuestion")}</p>
@@ -3660,6 +3880,9 @@ function SummaryView({
   onDownloadOfficialIlPdf,
   onDownloadOfficialInPdf,
   onSaveCase,
+  fieldState = {},
+  app,
+  onGoToStep,
 }: {
   caseId: string | null;
   stateCode: "IL" | "IN";
@@ -3677,9 +3900,18 @@ function SummaryView({
   onDownloadOfficialIlPdf: () => void;
   onDownloadOfficialInPdf: () => void;
   onSaveCase: () => void;
+  fieldState?: FieldStateMap;
+  app?: CompensationApplication;
+  onGoToStep?: (step: IntakeStep) => void;
 }) {
   const { t, tf } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
+
+  const storedApp =
+    app && Object.keys(fieldState).length > 0
+      ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
+      : (app ?? {}) as Record<string, unknown> & { _fieldState?: FieldStateMap };
+  const review = getReviewStatus(storedApp as Parameters<typeof getReviewStatus>[0]);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -3762,6 +3994,73 @@ setInviteResult(
       )}
 
       <p className="text-xs text-slate-300">{t("forms.summary.description")}</p>
+
+      {/* Phase 8: review completeness – missing / skipped / deferred */}
+      {(review.missing.length > 0 || review.skipped.length > 0 || review.deferred.length > 0) && (
+        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-3 text-xs space-y-2">
+          <p className="text-slate-300">{t("intake.review.completenessNote")}</p>
+          {review.missing.length > 0 && (
+            <div>
+              <span className="font-semibold text-amber-200">{t("intake.review.missing")}:</span>{" "}
+              {review.missing.map((item) => (
+                <span key={item.fieldKey} className="mr-2">
+                  {onGoToStep ? (
+                    <button
+                      type="button"
+                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                      className="text-emerald-300 hover:text-emerald-200 underline"
+                    >
+                      {t("intake.steps." + item.stepHint)}
+                    </button>
+                  ) : (
+                    t("intake.steps." + item.stepHint)
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+          {review.skipped.length > 0 && (
+            <div>
+              <span className="text-slate-400">{t("intake.review.skipped")}:</span>{" "}
+              {review.skipped.map((item) => (
+                <span key={item.fieldKey} className="mr-2">
+                  {onGoToStep ? (
+                    <button
+                      type="button"
+                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                      className="text-slate-300 hover:text-slate-200 underline"
+                    >
+                      {t("intake.steps." + item.stepHint)}
+                    </button>
+                  ) : (
+                    t("intake.steps." + item.stepHint)
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+          {review.deferred.length > 0 && (
+            <div>
+              <span className="text-slate-400">{t("intake.review.deferred")}:</span>{" "}
+              {review.deferred.map((item) => (
+                <span key={item.fieldKey} className="mr-2">
+                  {onGoToStep ? (
+                    <button
+                      type="button"
+                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                      className="text-slate-300 hover:text-slate-200 underline"
+                    >
+                      {t("intake.steps." + item.stepHint)}
+                    </button>
+                  ) : (
+                    t("intake.steps." + item.stepHint)
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 text-xs">
         <div className="space-y-1.5">
@@ -4078,7 +4377,18 @@ setInviteResult(
               }
               className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
             />
-            <span>{t("forms.summary.certification.checks.subrogation")}</span>
+            <span className="flex flex-wrap items-center gap-1">
+              {t("forms.summary.certification.checks.subrogation")}{" "}
+              <ExplainThisButton
+                sourceText={t("forms.summary.certification.checks.subrogation")}
+                contextType="form_label"
+                workflowKey="compensation_intake"
+                fieldKey="certification.acknowledgesSubrogation"
+                stateCode={stateCode ?? undefined}
+                label={t("intake.explainThis")}
+                variant="link"
+              />
+            </span>
           </label>
 
           <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>

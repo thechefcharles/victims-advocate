@@ -5,6 +5,9 @@ import { readFile } from "fs/promises";
 import path from "path";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { getCaseById } from "@/lib/server/data";
+import { stripFieldState } from "@/lib/intake/fieldState";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 
 export const runtime = "nodejs";
@@ -223,34 +226,30 @@ export async function POST(req: Request) {
 
     let appData: CompensationApplication | null = null;
 
-    // Option 1: direct application from intake
+    // Option 1: direct application from intake (strip Phase 8 _fieldState for PDF)
     if ("application" in body) {
-      appData = body.application;
+      const raw = body.application;
+      appData = raw && typeof raw === "object" && "_fieldState" in raw
+        ? (stripFieldState(raw as Record<string, unknown>) as unknown as CompensationApplication)
+        : (raw as CompensationApplication);
     }
 
-    // Option 2: caseId → load from Supabase
+    // Option 2: caseId → load from Supabase (org-scoped)
     if (!appData && "caseId" in body) {
-      const { data, error } = await supabaseAdmin
-        .from("cases")
-        .select("application")
-        .eq("id", body.caseId)
-        .single();
-
-      if (error || !data?.application) {
-        console.error("[IL PDF] Failed to load application for case", body.caseId, error);
+      const ctx = await getAuthContext(req);
+      requireFullAccess(ctx, req);
+      const result = await getCaseById({ caseId: body.caseId, ctx });
+      if (!result) {
         return NextResponse.json({ error: "Could not load case application" }, { status: 404 });
       }
-
-      const normalized = normalizeApplication(data.application);
+      const normalized = normalizeApplication(result.case.application);
       if (!normalized) {
-        console.error("[IL PDF] application column is not valid JSON (or is double-encoded)");
         return NextResponse.json(
           { error: "Case application is not valid JSON" },
           { status: 500 }
         );
       }
-
-      appData = normalized;
+      appData = stripFieldState(normalized as unknown as Record<string, unknown>) as unknown as CompensationApplication;
     }
 
     if (!appData) {

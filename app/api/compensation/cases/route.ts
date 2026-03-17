@@ -1,7 +1,11 @@
 // app/api/compensation/cases/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
+import { logger } from "@/lib/server/logging";
+import { listCasesForUser, appendCaseTimelineEvent } from "@/lib/server/data";
+import { logEvent } from "@/lib/server/audit/logEvent";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
@@ -10,26 +14,6 @@ type CreateCaseBody =
   | { application: unknown; status?: CaseStatus; state_code?: string }
   | { caseId?: string; application: unknown; status?: CaseStatus; state_code?: string } // tolerated
   | unknown; // legacy: raw application object
-
-function getToken(req: Request) {
-  const authHeader = req.headers.get("authorization") || "";
-  return authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-}
-
-async function requireUserId(req: Request): Promise<string> {
-  const token = getToken(req);
-  if (!token) throw new Error("Unauthorized (missing token)");
-
-  const supabaseAnon = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
-  const { data, error } = await supabaseAnon.auth.getUser(token);
-  if (error || !data.user) throw new Error("Unauthorized (invalid token)");
-
-  return data.user.id;
-}
 
 /**
  * Prevents the "jsonb contains a stringified JSON" problem.
@@ -74,66 +58,26 @@ function normalizeStateCode(maybe: unknown): string {
 
 export async function GET(req: Request) {
   try {
-    const userId = await requireUserId(req);
-    const supabaseAdmin = getSupabaseAdmin();
-
-    // Return cases the user can_view via case_access (owner OR advocate)
-    const { data, error } = await supabaseAdmin
-      .from("case_access")
-      .select(
-        `
-        role,
-        can_view,
-        can_edit,
-        cases:cases ( * )
-      `
-      )
-      .eq("user_id", userId)
-      .eq("can_view", true)
-      .order("created_at", { ascending: false, foreignTable: "cases" });
-
-    if (error) {
-      console.error("Supabase case_access SELECT error:", error);
-      return NextResponse.json(
-        { error: error.message || "Supabase error" },
-        { status: 500 }
-      );
-    }
-
-    const cases = (data ?? [])
-      .map((row: any) => {
-        const c = row?.cases;
-        if (!c) return null;
-
-        return {
-          ...c,
-          access: {
-            role: row.role,
-            can_view: row.can_view,
-            can_edit: row.can_edit,
-          },
-        };
-      })
-      .filter(Boolean);
-
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
+    const cases = await listCasesForUser({ ctx });
+    logger.info("compensation.cases.list", { userId: ctx.userId, count: cases.length });
     return NextResponse.json({ cases });
-  } catch (err: any) {
-    console.error("Unexpected error in GET /api/compensation/cases:", err);
-    const msg = err?.message ?? "Unexpected error";
-    return NextResponse.json(
-      { error: msg },
-      { status: msg.includes("Unauthorized") ? 401 : 500 }
-    );
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("compensation.cases.list.error", { code: appErr.code, message: appErr.message });
+    return apiFailFromError(appErr);
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const userId = await requireUserId(req);
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
     const supabaseAdmin = getSupabaseAdmin();
 
     const body = (await req.json().catch(() => null)) as CreateCaseBody | null;
-    if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    if (!body) return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
 
     // Accept either:
     // 1) { application: <app>, status?: ..., state_code?: ... }
@@ -143,10 +87,7 @@ export async function POST(req: Request) {
 
     const application = normalizeApplication(rawApp);
     if (!application) {
-      return NextResponse.json(
-        { error: "Invalid application payload (must be JSON object)" },
-        { status: 400 }
-      );
+      return apiFail("VALIDATION_ERROR", "Invalid application payload (must be JSON object)", undefined, 400);
     }
 
     const status =
@@ -164,11 +105,31 @@ export async function POST(req: Request) {
         ? (body as any).name.trim() || null
         : null;
 
+    let orgId: string | null = ctx.orgId ?? null;
+    if (!orgId) {
+      const { data: legacyOrg } = await supabaseAdmin
+        .from("organizations")
+        .select("id")
+        .eq("name", "Legacy (pre-tenant)")
+        .limit(1)
+        .maybeSingle();
+      orgId = legacyOrg?.id ?? null;
+    }
+    if (!orgId) {
+      return apiFail(
+        "FORBIDDEN",
+        "Organization membership or legacy org required to create a case",
+        undefined,
+        403
+      );
+    }
+
     // 1) Create the case
     const { data: newCase, error: caseError } = await supabaseAdmin
       .from("cases")
       .insert({
-        owner_user_id: userId,
+        owner_user_id: ctx.userId,
+        organization_id: orgId,
         status,
         state_code,
         name: name ?? undefined,
@@ -188,7 +149,8 @@ export async function POST(req: Request) {
     // 2) Create owner access row
     const { error: accessError } = await supabaseAdmin.from("case_access").insert({
       case_id: newCase.id,
-      user_id: userId,
+      user_id: ctx.userId,
+      organization_id: orgId,
       role: "owner",
       can_view: true,
       can_edit: true,
@@ -199,15 +161,45 @@ export async function POST(req: Request) {
       // do not fail creation
     }
 
-    // 3) Attach any unassigned documents from this user to the new case
-    const { error: attachError } = await supabaseAdmin
+    appendCaseTimelineEvent({
+      caseId: newCase.id,
+      organizationId: orgId,
+      actor: { userId: ctx.userId, role: "owner" },
+      eventType: "case.created",
+      title: "Case created",
+      description: status !== "draft" ? `Status: ${status}` : null,
+      metadata: { status },
+    }).catch(() => {});
+
+    appendCaseTimelineEvent({
+      caseId: newCase.id,
+      organizationId: orgId,
+      actor: { userId: ctx.userId, role: "owner" },
+      eventType: "case.intake_completed",
+      title: "Intake completed",
+      description: null,
+      metadata: {},
+    }).catch(() => {});
+
+    logEvent({
+      ctx,
+      action: "intake.completed",
+      resourceType: "case",
+      resourceId: newCase.id,
+      metadata: { case_id: newCase.id, org_id: orgId },
+      req,
+    }).catch(() => {});
+
+    // 3) Attach any unassigned documents from this user to the new case (set org on docs)
+    const { data: attachedDocs, error: attachError } = await supabaseAdmin
       .from("documents")
-      .update({ case_id: newCase.id })
-      .eq("uploaded_by_user_id", userId)
-      .is("case_id", null);
+      .update({ case_id: newCase.id, organization_id: orgId })
+      .eq("uploaded_by_user_id", ctx.userId)
+      .is("case_id", null)
+      .select("id");
 
     if (attachError) {
-      console.error("Error attaching documents to case", attachError);
+      logger.warn("compensation.cases.create.attach_docs_failed", { caseId: newCase.id });
       return NextResponse.json(
         {
           case: newCase,
@@ -220,6 +212,19 @@ export async function POST(req: Request) {
       );
     }
 
+    const attachedCount = Array.isArray(attachedDocs) ? attachedDocs.length : 0;
+    if (attachedCount > 0) {
+      appendCaseTimelineEvent({
+        caseId: newCase.id,
+        organizationId: orgId,
+        actor: { userId: ctx.userId, role: "owner" },
+        eventType: "case.document_uploaded",
+        title: "Documents attached to case",
+        description: `${attachedCount} document(s) attached`,
+        metadata: { count: attachedCount },
+      }).catch(() => {});
+    }
+
     return NextResponse.json(
       {
         case: newCase,
@@ -228,12 +233,9 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-  } catch (err: any) {
-    console.error("Error in POST /api/compensation/cases", err);
-    const msg = err?.message ?? "Invalid request body";
-    return NextResponse.json(
-      { error: msg },
-      { status: msg.includes("Unauthorized") ? 401 : 400 }
-    );
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("compensation.cases.create.error", { code: appErr.code, message: appErr.message });
+    return apiFailFromError(appErr);
   }
 }

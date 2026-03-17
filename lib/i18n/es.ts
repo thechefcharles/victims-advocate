@@ -295,6 +295,7 @@ export const es: I18nDict = {
         createAccount: "Crear cuenta",
         createAdvocateAccount: "Crear cuenta de defensor/a",
         forgotPassword: "Olvidé mi contraseña",
+        tooManyAttempts: "Demasiados intentos fallidos. Intente más tarde.",
     },
 
     forgotPassword: {
@@ -569,6 +570,30 @@ export const es: I18nDict = {
             officialFailed:
                 "Hubo un problema al generar el formulario oficial de Illinois. Por favor intenta de nuevo.",
             officialUnexpected: "Ocurrió un error al crear el formulario oficial.",
+        },
+
+        safeMode: {
+            takeYourTime: "Tómate tu tiempo. Puedes volver a esto más tarde.",
+            crimeDescription:
+                "Puedes omitir esto por ahora o responder solo con lo que te sientas cómodo compartiendo.",
+            injuryDescription:
+                "Puedes omitir esto por ahora o responder solo con lo que te sientas cómodo compartiendo.",
+            optionalDetail: "Puedes omitir esto por ahora o responder más tarde.",
+        },
+
+        skipForNow: "Omitir por ahora",
+        answerLater: "Responder más tarde",
+
+        explainThis: "Explicar esto",
+        explainThisNeedHelp: "¿Necesitas ayuda para entender qué pedimos?",
+
+        review: {
+            missing: "Falta",
+            skipped: "Omitido por ahora",
+            deferred: "Responder más tarde",
+            editSection: "Editar sección",
+            completenessNote:
+                "Algunos campos son opcionales o se pueden omitir. Los obligatorios se listan abajo.",
         },
 
         validation: {

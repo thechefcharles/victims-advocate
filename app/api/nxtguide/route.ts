@@ -2,7 +2,11 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import type { CompensationApplication } from "@/lib/compensationSchema";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { getCaseById } from "@/lib/server/data";
+import { requireAcceptedPolicies } from "@/lib/server/policies";
+import { apiFailFromError, toAppError } from "@/lib/server/api";
+import type { AuthContext } from "@/lib/server/auth";
 
 export const runtime = "nodejs"; // ✅ safest for OpenAI + server + Supabase
 
@@ -28,7 +32,14 @@ type IntakeStep =
 
 export async function POST(req: Request) {
   try {
-    const supabaseAdmin = getSupabaseAdmin(); // ✅ per-request client
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
+
+    await requireAcceptedPolicies({
+      ctx,
+      requiredDocs: [{ docType: "ai_disclaimer", workflowKey: "ai_chat" }],
+      req,
+    });
 
     const body = await req.json().catch(() => null);
     if (!body) {
@@ -66,9 +77,9 @@ export async function POST(req: Request) {
       missingSummary = buildMissingSummary(contextStep, application);
     }
 
-    // ✅ Advocate case summary (case + docs)
+    // ✅ Advocate case summary (case + docs) — org-scoped
     if (contextRoute.startsWith("/admin/cases") && caseId) {
-      const { caseSummary } = await buildAdvocateCaseSummary(supabaseAdmin, caseId);
+      const { caseSummary } = await buildAdvocateCaseSummary(ctx, caseId);
       if (caseSummary) advocateCaseSummary = caseSummary;
     }
 
@@ -89,39 +100,34 @@ export async function POST(req: Request) {
       reply: completion.choices[0]?.message?.content || "",
     });
   } catch (err) {
+    const appErr = toAppError(err);
+    if (appErr.code === "CONSENT_REQUIRED") {
+      return NextResponse.json(
+        { ok: false, error: { code: appErr.code, message: appErr.message, details: appErr.details } },
+        { status: 403 }
+      );
+    }
     console.error("[NxtGuide] Error:", err);
     return NextResponse.json({ error: "Failed to contact NxtGuide" }, { status: 500 });
   }
 }
 
 /* -----------------------------
-   Advocate Case Summary Helper
+   Advocate Case Summary Helper (org-scoped)
 ------------------------------ */
 
 async function buildAdvocateCaseSummary(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
+  ctx: AuthContext,
   caseId: string
 ): Promise<{ caseSummary: string | null; error?: string }> {
   try {
-    const { data: caseRow, error: caseError } = await supabaseAdmin
-      .from("cases")
-      .select("*")
-      .eq("id", caseId)
-      .single();
-
-    if (caseError || !caseRow) {
+    const result = await getCaseById({ caseId, ctx });
+    if (!result) {
       return { caseSummary: null, error: "Case not found" };
     }
 
-    const { data: docs, error: docsError } = await supabaseAdmin
-      .from("documents")
-      .select("*")
-      .eq("case_id", caseId);
-
-    if (docsError) {
-      return { caseSummary: null, error: "Documents fetch error" };
-    }
-
+    const caseRow = result.case as Record<string, unknown>;
+    const docs = result.documents;
     const app = caseRow.application as CompensationApplication;
     const status = String(caseRow.status ?? "unknown");
     const stateCode = String(caseRow.state_code ?? "unknown");

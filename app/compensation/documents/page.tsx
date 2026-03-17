@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type DocumentType =
   | "police_report"
@@ -49,8 +50,15 @@ export default function DocumentsPage() {
     }
   }, [docs]);
 
-const handleFiles = (files: FileList | null) => {
+const handleFiles = async (files: FileList | null) => {
   if (!files) return;
+
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) {
+    alert("Please log in to upload documents.");
+    return;
+  }
 
   const uploads: UploadedDoc[] = [];
 
@@ -65,11 +73,8 @@ const handleFiles = (files: FileList | null) => {
       fileSize: file.size,
       lastModified: file.lastModified,
     };
-
-    // Update local UI immediately
     uploads.push(localDoc);
 
-    // Kick off background upload to Supabase via API
     const formData = new FormData();
     formData.append("file", file);
     formData.append("docType", selectedType);
@@ -77,23 +82,27 @@ const handleFiles = (files: FileList | null) => {
 
     fetch("/api/compensation/upload-document", {
       method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
       body: formData,
     })
       .then(async (res) => {
+        const json = await res.json().catch(() => ({}));
         if (!res.ok) {
-          console.error("Upload failed", await res.text());
+          const msg = json?.error?.message ?? json?.message ?? "Upload failed";
+          alert(msg);
           return;
         }
-        const { document } = await res.json();
-        console.log("Stored document in Supabase:", document);
-        // In the future, you can sync your local docs state with `document`
+        const { document } = json;
+        if (document?.id) {
+          setDocs((prev) => prev.map((d) => (d.id === localDoc.id ? { ...d, id: document.id } : d)));
+        }
       })
       .catch((err) => {
         console.error("Error uploading document", err);
+        alert("Network error. Please try again.");
       });
   });
 
-  // Update local UI list
   setDocs((prev) => [...prev, ...uploads]);
   setDescription("");
 };
@@ -192,9 +201,8 @@ const handleFiles = (files: FileList | null) => {
               />
             </label>
             <p className="text-[11px] text-slate-500">
-              Files are not being uploaded to a server yet in this early version
-              – they are only listed here in your browser session. In a future
-              release, they will be securely stored and shared with advocates.
+              Allowed: PDF, JPG, PNG (max 15 MB). Files are stored securely and
+              can be attached to your case when you save.
             </p>
           </div>
         </section>

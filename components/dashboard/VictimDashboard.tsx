@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 import { emptyCompensationApplication } from "@/lib/compensationSchema";
+import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
@@ -80,6 +82,7 @@ export default function VictimDashboard({
 }) {
   const router = useRouter();
   const { t } = useI18n();
+  const { strictPreviews } = useSafetySettings(token);
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [cases, setCases] = useState<CaseRow[]>([]);
@@ -155,7 +158,11 @@ export default function VictimDashboard({
     () => cases.find((c) => c.id === activeCaseId),
     [cases, activeCaseId]
   );
-  const activeCaseDisplayName = activeCase ? getCaseDisplayName(activeCase) : null;
+  const activeCaseDisplayName = activeCase
+    ? strictPreviews
+      ? `Case ${activeCase.id.slice(0, 8)}…`
+      : getCaseDisplayName(activeCase)
+    : null;
 
   const handleStartNew = async () => {
     if (!token) return;
@@ -226,6 +233,8 @@ export default function VictimDashboard({
   };
 
   const handleLogout = async () => {
+    const { data } = await supabase.auth.getSession();
+    await logAuthEvent("auth.logout", data.session?.access_token);
     await supabase.auth.signOut();
     router.push("/login");
   };
@@ -367,7 +376,7 @@ export default function VictimDashboard({
                   : "—";
                 const status = c.status ?? "draft";
                 const isActive = activeCaseId === c.id;
-                const displayName = getCaseDisplayName(c);
+                const displayName = strictPreviews ? `Case ${c.id.slice(0, 8)}…` : getCaseDisplayName(c);
                 const isEditing = editingNameId === c.id;
 
                 return (
@@ -437,8 +446,9 @@ export default function VictimDashboard({
                           </div>
                         )}
                         <div className="text-[11px] text-slate-400">
-                          Status: {status} • Eligibility:{" "}
-                          {getEligibilityStatusLabel(c, t)} • Created: {created}
+                          {strictPreviews
+                            ? `Status: ${status} • Created: ${created}`
+                            : `Status: ${status} • Eligibility: ${getEligibilityStatusLabel(c, t)} • Created: ${created}`}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

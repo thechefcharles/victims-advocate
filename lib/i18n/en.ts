@@ -289,6 +289,7 @@ export const en: I18nDict = {
     createAccount: "Create account",
     createAdvocateAccount: "Create Victim Advocate account",
     forgotPassword: "Forgot password",
+    tooManyAttempts: "Too many failed attempts. Try again later.",
   },
 
   forgotPassword: {
@@ -562,6 +563,30 @@ intake: {
     officialFailed:
       "There was an issue generating the official Illinois form. Please try again.",
     officialUnexpected: "Something went wrong creating the official form.",
+  },
+
+  safeMode: {
+    takeYourTime: "Take your time. You can come back to this later.",
+    crimeDescription:
+      "You can skip this for now or answer only what you feel comfortable sharing.",
+    injuryDescription:
+      "You can skip this for now or answer only what you feel comfortable sharing.",
+    optionalDetail: "You can skip this for now or answer later.",
+  },
+
+  skipForNow: "Skip for now",
+  answerLater: "Answer later",
+
+  explainThis: "Explain this",
+  explainThisNeedHelp: "Need help understanding what we're asking?",
+
+  review: {
+    missing: "Missing",
+    skipped: "Skipped for now",
+    deferred: "Answer later",
+    editSection: "Edit section",
+    completenessNote:
+      "Some items are optional or can be skipped. Required items are listed below so you know what’s needed.",
   },
 
   validation: {

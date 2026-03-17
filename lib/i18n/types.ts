@@ -176,6 +176,7 @@ export type I18nDict = {
     createAccount: string;
     createAdvocateAccount: string;
     forgotPassword: string;
+    tooManyAttempts: string;
   };
 
   forgotPassword: {
@@ -382,6 +383,27 @@ export type I18nDict = {
       summaryUnexpected: string;
       officialFailed: string;
       officialUnexpected: string;
+    };
+
+    safeMode: {
+      takeYourTime: string;
+      crimeDescription: string;
+      injuryDescription: string;
+      optionalDetail: string;
+    };
+
+    skipForNow: string;
+    answerLater: string;
+
+    explainThis: string;
+    explainThisNeedHelp: string;
+
+    review: {
+      missing: string;
+      skipped: string;
+      deferred: string;
+      editSection: string;
+      completenessNote: string;
     };
 
     validation: {

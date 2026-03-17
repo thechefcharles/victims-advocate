@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,13 +13,21 @@ import { supabase } from "@/lib/supabaseClient";
 
 export type ProfileRole = "victim" | "advocate";
 
+export type AccountStatus = "active" | "disabled" | "deleted";
+
 type AuthState = {
   loading: boolean;
   user: User | null;
   session: Session | null;
   accessToken: string | null;
   role: ProfileRole;
+  /** For admins: underlying profile role when using "view as". */
+  realRole: ProfileRole | null;
   isAdmin: boolean;
+  emailVerified: boolean;
+  accountStatus: AccountStatus;
+  /** Refetch /api/me and update role (e.g. after admin "view as" change). */
+  refetchMe: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -26,28 +35,94 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
-  const [role, setRole] = useState<ProfileRole>("victim");
+  const [roleFromMetadata, setRoleFromMetadata] = useState<ProfileRole>("victim");
+  const [roleFromApi, setRoleFromApi] = useState<ProfileRole | null>(null);
+  const [realRoleFromApi, setRealRoleFromApi] = useState<ProfileRole | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
+
+  const role = roleFromApi ?? roleFromMetadata;
+
+  const refetchMe = useCallback(async () => {
+    const token = session?.access_token ?? null;
+    if (!token) return;
+    try {
+      const res = await fetch("/api/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const data = json?.data ?? json;
+        if (data?.role === "victim" || data?.role === "advocate") {
+          setRoleFromApi(data.role);
+        }
+        if (data?.realRole === "victim" || data?.realRole === "advocate") {
+          setRealRoleFromApi(data.realRole);
+        }
+        if (typeof data?.emailVerified === "boolean") setEmailVerified(data.emailVerified);
+        if (data?.accountStatus) setAccountStatus(data.accountStatus);
+      }
+    } catch {
+      setRoleFromApi(null);
+      setRealRoleFromApi(null);
+    }
+  }, [session?.access_token]);
 
   useEffect(() => {
     // 1) Bootstrap once
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       setSession(data.session ?? null);
       resolveProfile(data.session);
+      if (data.session?.access_token) {
+        try {
+          const res = await fetch("/api/me", {
+            headers: { Authorization: `Bearer ${data.session.access_token}` },
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const d = json?.data ?? json;
+            if (d?.role === "victim" || d?.role === "advocate") setRoleFromApi(d.role);
+            if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
+            if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
+            if (d?.accountStatus) setAccountStatus(d.accountStatus);
+          }
+        } catch {
+          // keep role from metadata
+        }
+      }
       setLoading(false);
     });
 
     // 2) Single auth listener (SOURCE OF TRUTH)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, newSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       // Suppress "TOKEN_REFRESHED" errors that show as "Failed to fetch"
       if (event === "TOKEN_REFRESHED" && !newSession) {
-        // Token refresh failed but session still valid - ignore
         return;
       }
       setSession(newSession);
       resolveProfile(newSession);
+      if (newSession?.access_token) {
+        try {
+          const res = await fetch("/api/me", {
+            headers: { Authorization: `Bearer ${newSession.access_token}` },
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const d = json?.data ?? json;
+            if (d?.role === "victim" || d?.role === "advocate") setRoleFromApi(d.role);
+            if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
+          }
+        } catch {
+          setRoleFromApi(null);
+          setRealRoleFromApi(null);
+        }
+      } else {
+        setRoleFromApi(null);
+        setRealRoleFromApi(null);
+      }
       setLoading(false);
     });
 
@@ -55,19 +130,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const resolveProfile = async (sess: Session | null) => {
+    setEmailVerified(!!sess?.user?.email_confirmed_at);
+
     const metaRole = sess?.user?.user_metadata?.role;
-    setRole(metaRole === "advocate" ? "advocate" : "victim");
+    setRoleFromMetadata(metaRole === "advocate" ? "advocate" : "victim");
+    setRoleFromApi(null);
 
     const uid = sess?.user?.id;
     if (!uid) {
       setIsAdmin(false);
+      setAccountStatus("active");
       return;
     }
 
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("is_admin")
+        .select("is_admin, account_status")
         .eq("id", uid)
         .single();
       
@@ -83,8 +162,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.warn("[AuthProvider] Profile lookup error:", error.message, "for user:", uid);
         }
         setIsAdmin(false);
+        setAccountStatus("active");
         return;
       }
+
+      const rawStatus = data?.account_status;
+      setAccountStatus(
+        rawStatus === "disabled" || rawStatus === "deleted" ? rawStatus : "active"
+      );
       
       const adminStatus = data?.is_admin === true;
       setIsAdmin(adminStatus);
@@ -105,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("[AuthProvider] Unexpected error checking admin status:", err);
       setIsAdmin(false);
+      setAccountStatus("active");
     }
   };
 
@@ -115,9 +201,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       accessToken: session?.access_token ?? null,
       role,
+      realRole: realRoleFromApi ?? roleFromMetadata,
       isAdmin,
+      emailVerified,
+      accountStatus,
+      refetchMe,
     };
-  }, [loading, session, role, isAdmin]);
+  }, [loading, session, role, realRoleFromApi, roleFromMetadata, isAdmin, emailVerified, accountStatus, refetchMe]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

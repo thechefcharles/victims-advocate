@@ -1,26 +1,53 @@
 // app/api/translate/route.ts
 import { NextResponse } from "next/server";
+import { config } from "@/lib/config";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { requireAcceptedPolicies } from "@/lib/server/policies";
+import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
+import { logger } from "@/lib/server/logging";
+import { logEvent } from "@/lib/server/audit/logEvent";
+import { sha256Hex } from "@/lib/server/audit/hash";
+import { buildExplainSystemPrompt, buildExplainUserPrompt, buildKnowledgeContextBlock } from "@/lib/server/translator/buildPrompt";
+import { getKnowledgeForExplain } from "@/lib/server/knowledge";
+import type { ExplainRequest, ExplainContextType } from "@/lib/server/translator/types";
+import { DEFAULT_DISCLAIMER, MAX_EXPLANATION_LENGTH } from "@/lib/server/translator/types";
 
 export const runtime = "nodejs";
 
 type Lang = "auto" | "en" | "es";
 type TargetLang = "en" | "es";
 
+/** Phase 9: "Explain this" request body */
+type ExplainBody = {
+  sourceText: string;
+  contextType?: ExplainContextType | string;
+  workflowKey?: string;
+  fieldKey?: string | null;
+  programKey?: string | null;
+  stateCode?: string | null;
+  userRole?: string | null;
+};
+
 type TranslateSingleBody = {
-  sourceLang?: Lang;          // default "auto"
-  targetLang: TargetLang;     // required
-  text: string;               // required
-  context?: string;           // optional (e.g., "Victim compensation application")
+  sourceLang?: Lang;
+  targetLang: TargetLang;
+  text: string;
+  context?: string;
 };
 
 type TranslateBatchBody = {
-  sourceLang?: Lang;          // default "auto"
-  targetLang: TargetLang;     // required
-  items: Array<{ key: string; text: string }>; // required
-  context?: string;           // optional
+  sourceLang?: Lang;
+  targetLang: TargetLang;
+  items: Array<{ key: string; text: string }>;
+  context?: string;
 };
 
-type RequestBody = TranslateSingleBody | TranslateBatchBody;
+type RequestBody = ExplainBody | TranslateSingleBody | TranslateBatchBody;
+
+function isExplainBody(body: unknown): body is ExplainBody {
+  const b = body as Record<string, unknown>;
+  return typeof b?.sourceText === "string" && b.sourceText.trim().length > 0;
+}
 
 function isBatch(body: RequestBody): body is TranslateBatchBody {
   return (body as TranslateBatchBody).items !== undefined;
@@ -38,27 +65,192 @@ function langLabel(l: Lang | TargetLang) {
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
+
+    await requireAcceptedPolicies({
+      ctx,
+      requiredDocs: [{ docType: "ai_disclaimer", workflowKey: "translator" }],
+      req,
+    });
+
+    const apiKey = config.openaiApiKey;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing OPENAI_API_KEY" },
-        { status: 500 }
-      );
+      logger.error("translate.config_missing", { missing: "OPENAI_API_KEY" });
+      return apiFail("INTERNAL", "Missing OPENAI_API_KEY", undefined, 500);
     }
 
     const body = (await req.json().catch(() => null)) as RequestBody | null;
     if (!body) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
     }
 
+    // ——— Phase 9: "Explain this" path ———
+    if (isExplainBody(body)) {
+      const sourceText = (body.sourceText ?? "").trim();
+      const explainReq: ExplainRequest = {
+        sourceText,
+        contextType: (body.contextType as ExplainContextType) ?? "general",
+        workflowKey: body.workflowKey ?? "translator",
+        fieldKey: body.fieldKey ?? null,
+        programKey: body.programKey ?? null,
+        stateCode: body.stateCode ?? null,
+        userRole: body.userRole ?? ctx.role ?? null,
+      };
+
+      let sourceHash: string;
+      try {
+        sourceHash = await sha256Hex(sourceText);
+      } catch {
+        sourceHash = "[hash_failed]";
+      }
+
+      await logEvent({
+        ctx,
+        action: "translator.requested",
+        resourceType: "translator",
+        metadata: {
+          context_type: explainReq.contextType,
+          workflow_key: explainReq.workflowKey,
+          field_key: explainReq.fieldKey ?? null,
+          state_code: explainReq.stateCode ?? null,
+          program_key: explainReq.programKey ?? null,
+          source_text_hash: sourceHash,
+          source_text_length: sourceText.length,
+        },
+        req,
+      }).catch(() => {});
+
+      try {
+        const kbEntries = await getKnowledgeForExplain({
+          stateCode: explainReq.stateCode ?? null,
+          programKey: explainReq.programKey ?? null,
+          workflowKey: explainReq.workflowKey ?? null,
+          fieldKey: explainReq.fieldKey ?? null,
+          contextType: explainReq.contextType ?? null,
+          limit: 5,
+        });
+        const hasKb = kbEntries.length > 0;
+        const systemPrompt = buildExplainSystemPrompt(hasKb);
+        const baseUserPrompt = buildExplainUserPrompt(explainReq);
+        const userPrompt = hasKb
+          ? buildKnowledgeContextBlock(kbEntries) + baseUserPrompt
+          : baseUserPrompt;
+        const model = process.env.OPENAI_TRANSLATE_MODEL ?? "gpt-4o-mini";
+
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model,
+            temperature: 0.3,
+            max_tokens: 400,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+          }),
+        });
+
+        if (!res.ok) {
+          logger.error("translate.explain_openai_failed", { status: res.status });
+          await logEvent({
+            ctx,
+            action: "translator.blocked",
+            resourceType: "translator",
+            metadata: {
+              context_type: explainReq.contextType,
+              workflow_key: explainReq.workflowKey,
+              source_text_hash: sourceHash,
+              source_text_length: sourceText.length,
+              result_status: "openai_error",
+            },
+            req,
+          }).catch(() => {});
+          return apiFail("INTERNAL", "Explanation request failed", undefined, 500);
+        }
+
+        const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+        const raw = (data?.choices?.[0]?.message?.content ?? "").trim();
+
+        if (!raw) {
+          await logEvent({
+            ctx,
+            action: "translator.blocked",
+            resourceType: "translator",
+            metadata: {
+              context_type: explainReq.contextType,
+              workflow_key: explainReq.workflowKey,
+              source_text_hash: sourceHash,
+              result_status: "empty_response",
+            },
+            req,
+          }).catch(() => {});
+          return apiFail("INTERNAL", "Empty explanation response", undefined, 500);
+        }
+
+        let explanation = raw.length > MAX_EXPLANATION_LENGTH
+          ? raw.slice(0, MAX_EXPLANATION_LENGTH - 3) + "..."
+          : raw;
+        const hasDisclaimer = /legal advice|general information/i.test(explanation);
+        const disclaimer = hasDisclaimer ? undefined : DEFAULT_DISCLAIMER;
+
+        await logEvent({
+          ctx,
+          action: "translator.completed",
+          resourceType: "translator",
+          metadata: {
+            context_type: explainReq.contextType,
+            workflow_key: explainReq.workflowKey,
+            field_key: explainReq.fieldKey ?? null,
+            source_text_hash: sourceHash,
+            source_text_length: sourceText.length,
+            result_status: "completed",
+          },
+          req,
+        }).catch(() => {});
+
+        return NextResponse.json({
+          ok: true,
+          data: {
+            explanation,
+            disclaimer,
+            knowledgeEntryKeys: hasKb ? kbEntries.map((e) => e.entry_key) : undefined,
+          },
+        });
+      } catch (err) {
+        const appErr = toAppError(err);
+        logger.error("translate.explain_error", { code: appErr.code, message: appErr.message });
+        await logEvent({
+          ctx,
+          action: "translator.blocked",
+          resourceType: "translator",
+          metadata: {
+            context_type: explainReq.contextType,
+            workflow_key: explainReq.workflowKey,
+            source_text_hash: sourceHash,
+            result_status: "error",
+          },
+          req,
+        }).catch(() => {});
+        return apiFailFromError(appErr);
+      }
+    }
+
+    // ——— Legacy translation path ———
     const sourceLang: Lang = (body as any).sourceLang ?? "auto";
     const targetLang: TargetLang = (body as any).targetLang;
     const context = (body as any).context ?? "Victim compensation application intake";
 
     if (targetLang !== "en" && targetLang !== "es") {
-      return NextResponse.json(
-        { error: `Invalid targetLang. Expected "en" or "es".` },
-        { status: 400 }
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Invalid targetLang. Expected \"en\" or \"es\".",
+        undefined,
+        400
       );
     }
 
@@ -70,9 +262,11 @@ export async function POST(req: Request) {
     if (isBatch(body)) {
       const items = Array.isArray(body.items) ? body.items : [];
       if (!items.length) {
-        return NextResponse.json(
-          { error: "items[] is required for batch translation" },
-          { status: 400 }
+        return apiFail(
+          "VALIDATION_ERROR",
+          "items[] is required for batch translation",
+          undefined,
+          400
         );
       }
 
@@ -85,10 +279,7 @@ export async function POST(req: Request) {
     } else {
       const text = cleanText((body as TranslateSingleBody).text);
       if (!text) {
-        return NextResponse.json(
-          { error: "text is required for translation" },
-          { status: 400 }
-        );
+        return apiFail("VALIDATION_ERROR", "text is required for translation", undefined, 400);
       }
       payload = { mode: "single", text };
     }
@@ -157,20 +348,16 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
-      return NextResponse.json(
-        { error: "OpenAI request failed", details: errText },
-        { status: 500 }
-      );
+      logger.error("translate.openai_failed", { status: res.status });
+      return apiFail("INTERNAL", "OpenAI request failed", undefined, 500);
     }
 
     const data = (await res.json()) as any;
     const content = data?.choices?.[0]?.message?.content ?? "";
 
     if (!content) {
-      return NextResponse.json(
-        { error: "Empty translation response" },
-        { status: 500 }
-      );
+      logger.warn("translate.empty_response", {});
+      return apiFail("INTERNAL", "Empty translation response", undefined, 500);
     }
 
     if (payload.mode === "single") {
@@ -193,19 +380,17 @@ export async function POST(req: Request) {
           .filter((it: any) => it.key && it.text),
       });
     } catch {
-      // If model returned non-JSON, fail clearly (so you know immediately)
-      return NextResponse.json(
-        {
-          error: "Batch translation returned non-JSON output",
-          raw: content,
-        },
-        { status: 500 }
+      logger.warn("translate.batch_parse_failed", {});
+      return apiFail(
+        "INTERNAL",
+        "Batch translation returned non-JSON output",
+        undefined,
+        500
       );
     }
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message ?? "Unexpected error in /api/translate" },
-      { status: 500 }
-    );
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("translate.error", { code: appErr.code, message: appErr.message });
+    return apiFailFromError(appErr);
   }
 }

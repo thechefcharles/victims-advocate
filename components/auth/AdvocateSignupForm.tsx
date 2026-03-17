@@ -5,6 +5,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { logAuthEvent } from "@/lib/auditClient";
+import { validatePassword } from "@/lib/passwordPolicy";
 
 export default function AdvocateSignupForm() {
   const router = useRouter();
@@ -17,11 +19,20 @@ export default function AdvocateSignupForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+
+  const passwordValidation = validatePassword(password);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
     setSuccess(null);
+    setPasswordErrors([]);
+    const pv = validatePassword(password);
+    if (!pv.valid) {
+      setPasswordErrors(pv.errors);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -41,6 +52,33 @@ export default function AdvocateSignupForm() {
       if (!data.session) {
         setSuccess("Account created. Please check your email to confirm, then log in.");
         return;
+      }
+
+      await logAuthEvent("auth.signup", data.session.access_token);
+
+      try {
+        const activeRes = await fetch("/api/policies/active", {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        });
+        if (activeRes.ok) {
+          const activeJson = await activeRes.json();
+          const policies = (activeJson.data?.policies ?? []) as { id: string; doc_type: string }[];
+          const toAccept = policies
+            .filter((p) => p.doc_type === "terms_of_use" || p.doc_type === "privacy_policy")
+            .map((p) => p.id);
+          if (toAccept.length > 0) {
+            await fetch("/api/policies/accept", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.session.access_token}`,
+              },
+              body: JSON.stringify({ policy_ids: toAccept }),
+            });
+          }
+        }
+      } catch {
+        // Non-blocking
       }
 
       router.push("/coming-soon");
@@ -81,12 +119,19 @@ export default function AdvocateSignupForm() {
           <span className="text-[11px] text-slate-400">Password</span>
           <input
             className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
-            placeholder="Minimum 8 characters"
+            placeholder="At least 12 characters; 3 of: lowercase, uppercase, number, symbol"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
           />
+          {passwordValidation.errors.length > 0 && (
+            <ul className="text-[11px] text-amber-300 list-disc list-inside">
+              {passwordValidation.errors.map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          )}
         </label>
 
         <fieldset className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
@@ -146,7 +191,7 @@ export default function AdvocateSignupForm() {
 
         <button
           className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={loading || !email.trim() || password.length < 8 || !agreeTerms || !agreeWaiver}
+          disabled={loading || !email.trim() || !passwordValidation.valid || !agreeTerms || !agreeWaiver}
           type="submit"
         >
           {loading ? "Creating…" : "Create advocate account"}

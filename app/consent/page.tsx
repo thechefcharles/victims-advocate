@@ -1,0 +1,189 @@
+"use client";
+
+import { useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
+
+type PolicyDetail = {
+  id: string;
+  doc_type: string;
+  version: string;
+  title: string;
+  content: string;
+  workflow_key: string | null;
+};
+
+function ConsentContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const workflowKey = searchParams.get("workflow") ?? null;
+
+  const [missing, setMissing] = useState<PolicyDetail[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const run = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+      const params = workflowKey ? `?workflow_key=${encodeURIComponent(workflowKey)}` : "";
+      const res = await fetch(`/api/policies/active${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        router.replace("/login");
+        return;
+      }
+      const json = await res.json();
+      const details = json.data?.missing_details ?? [];
+      setMissing(details);
+      setLoading(false);
+    };
+    run();
+  }, [router, workflowKey]);
+
+  const handleAcceptAll = async () => {
+    if (missing.length === 0) return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    setSubmitting(true);
+    setErr(null);
+    try {
+      const res = await fetch("/api/policies/accept", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          policy_ids: missing.map((m) => m.id),
+          workflow_key: workflowKey,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setErr(getApiErrorMessage(json, "Failed to record acceptance"));
+        return;
+      }
+      router.replace(searchParams.get("redirect") || "/dashboard");
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const toggleAccept = (id: string) => {
+    setAccepted((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allAccepted = missing.length > 0 && missing.every((m) => accepted.has(m.id));
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+        <p className="text-slate-400">Loading…</p>
+      </main>
+    );
+  }
+
+  if (missing.length === 0) {
+    router.replace(searchParams.get("redirect") || "/dashboard");
+    return (
+      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+        <p className="text-slate-400">Redirecting…</p>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-10">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold text-slate-100">Required agreements</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Please read and accept the following to continue.
+          </p>
+        </header>
+
+        {err && (
+          <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
+            {err}
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {missing.map((p) => (
+            <div
+              key={p.id}
+              className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3"
+            >
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id={p.id}
+                  checked={accepted.has(p.id)}
+                  onChange={() => toggleAccept(p.id)}
+                  className="mt-1 rounded border-slate-600 bg-slate-900 text-emerald-500"
+                />
+                <div className="flex-1 min-w-0">
+                  <label htmlFor={p.id} className="font-medium text-slate-200 cursor-pointer">
+                    {p.title}
+                  </label>
+                  <p className="text-xs text-slate-500 mt-0.5">Version {p.version}</p>
+                  <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-300 whitespace-pre-wrap">
+                    {p.content || "No content."}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            type="button"
+            onClick={handleAcceptAll}
+            disabled={!allAccepted || submitting}
+            className="rounded-lg bg-[#1C8C8C] px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+          >
+            {submitting ? "Saving…" : "I accept and continue"}
+          </button>
+          <Link
+            href="/login"
+            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:text-slate-100 text-center"
+          >
+            Sign out
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function ConsentPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+          <p className="text-slate-400">Loading…</p>
+        </main>
+      }
+    >
+      <ConsentContent />
+    </Suspense>
+  );
+}

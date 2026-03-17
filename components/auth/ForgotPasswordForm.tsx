@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { logAuthEvent } from "@/lib/auditClient";
 
 export default function ForgotPasswordForm() {
   const { t } = useI18n();
@@ -21,6 +22,7 @@ export default function ForgotPasswordForm() {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) return setErr(error.message);
+      await logAuthEvent("auth.password_reset_requested");
       setSent(true);
     } finally {
       setLoading(false);
