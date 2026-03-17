@@ -39,6 +39,18 @@ interface TimelineEvent {
   actor_role?: string | null;
 }
 
+type Appointment = {
+  id: string;
+  title: string;
+  service_type: string;
+  status: string;
+  start_at: string;
+  end_at: string;
+  location: string | null;
+  is_virtual: boolean;
+  assigned_to: string | null;
+};
+
 interface CaseNote {
   id: string;
   created_at: string;

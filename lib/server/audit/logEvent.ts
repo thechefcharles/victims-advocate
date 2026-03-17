@@ -94,7 +94,12 @@ export type AuditAction =
   | "safety_mode.enabled"
   | "safety_mode.disabled"
   | "safety_mode.updated"
-  | "safety_mode.quick_exit";
+  | "safety_mode.quick_exit"
+  | "appointment.created"
+  | "appointment.updated"
+  | "appointment.cancelled"
+  | "appointment.completed"
+  | "appointment.rescheduled";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
