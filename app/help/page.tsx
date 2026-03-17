@@ -24,8 +24,29 @@ export default function HelpPage() {
           <p>Call or text 988 (Suicide &amp; Crisis Lifeline).</p>
 
           <p className="pt-2 text-[11px] text-slate-400">
-            Coming soon: account help, document help, and advocate sharing help.
+            Coming soon: more account and document help.
           </p>
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-2 text-sm text-slate-200">
+          <p className="font-semibold text-slate-100">Transparency</p>
+          <ul className="space-y-2 text-slate-300">
+            <li>
+              <a href="/help/transparency" className="text-teal-400 hover:text-teal-300">
+                Overview — what we show vs. internal
+              </a>
+            </li>
+            <li>
+              <a href="/help/how-matching-works" className="text-teal-400 hover:text-teal-300">
+                How survivor–organization matching works
+              </a>
+            </li>
+            <li>
+              <a href="/help/how-designations-work" className="text-teal-400 hover:text-teal-300">
+                How organization designations work
+              </a>
+            </li>
+          </ul>
         </section>
       </div>
     </main>

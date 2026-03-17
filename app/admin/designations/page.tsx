@@ -127,6 +127,9 @@ export default function AdminDesignationsPage() {
             <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
               Orgs
             </Link>
+            <Link href="/admin/designation-reviews" className="text-amber-400 hover:text-amber-200">
+              Review requests
+            </Link>
           </div>
         </header>
 
