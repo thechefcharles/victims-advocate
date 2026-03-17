@@ -113,7 +113,8 @@ export type AuditAction =
   | "designation.run_failed"
   | "designation.review_submitted"
   | "designation.review_resolved"
-  | "designation.review_withdrawn";
+  | "designation.review_withdrawn"
+  | "ecosystem.viewed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

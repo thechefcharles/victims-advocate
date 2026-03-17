@@ -127,6 +127,9 @@ export default function AdminUsersPage() {
             <Link href="/admin/policies" className="hover:text-slate-200">
               Policies →
             </Link>
+            <Link href="/admin/ecosystem" className="hover:text-teal-400">
+              Ecosystem →
+            </Link>
           </div>
         </header>
 

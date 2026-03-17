@@ -90,6 +90,9 @@ const res = await fetch("/api/compensation/cases", {
             <Link href="/admin/users" className="hover:text-slate-200">
               Users →
             </Link>
+            <Link href="/admin/ecosystem" className="hover:text-teal-400">
+              Ecosystem →
+            </Link>
           </div>
           <p className="text-sm text-slate-300">
             These cases are loaded from your Supabase database (not
