@@ -18,6 +18,8 @@ export type AuthContext = {
   user: { id: string; email?: string };
   userId: string;
   role: ProfileRole;
+  /** For admins: underlying profile role when using "view as" override. */
+  realRole?: ProfileRole;
   orgId: string | null;
   orgRole: OrgRole | null;
   isAdmin: boolean;
@@ -78,16 +80,33 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
       ? (membership.org_role as OrgRole)
       : null;
 
+  let effectiveRole = role;
+  const viewAsActive = isAdmin && req ? parseViewAsRoleCookie(req) : null;
+  if (viewAsActive === "victim" || viewAsActive === "advocate") {
+    effectiveRole = viewAsActive;
+  }
+
   return {
     user: { id: userId, email: data.user.email ?? undefined },
     userId,
-    role,
+    role: effectiveRole,
+    /** When admin uses "view as", this is the underlying profile role. */
+    realRole: role,
     orgId,
     orgRole,
     isAdmin,
     emailVerified,
     accountStatus,
   };
+}
+
+/** Parse view_as_role cookie (admin-only override for testing). */
+function parseViewAsRoleCookie(req: Request): string | null {
+  const raw = req.headers.get("cookie");
+  if (!raw) return null;
+  const match = raw.match(/\bview_as_role=([^;]*)/);
+  const value = match?.[1]?.trim().toLowerCase();
+  return value === "victim" || value === "advocate" ? value : null;
 }
 
 /** Phase 2: Extract org context from auth (convenience helper). */

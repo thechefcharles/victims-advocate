@@ -18,6 +18,7 @@ export async function GET(req: Request) {
       userId: ctx.userId,
       email: ctx.user.email ?? null,
       role: ctx.role,
+      realRole: ctx.realRole ?? ctx.role,
       isAdmin: ctx.isAdmin,
       orgId: ctx.orgId,
       orgRole: ctx.orgRole,

@@ -3,14 +3,37 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
 export default function TopNav() {
   const router = useRouter();
-  const { loading, user, role, isAdmin } = useAuth();
+  const { loading, user, role, realRole, isAdmin, accessToken, refetchMe } = useAuth();
+  const usingDefaultRole = realRole != null && role === realRole;
   const { lang, setLang, t } = useI18n();
+  const [viewAsLoading, setViewAsLoading] = useState(false);
+
+  const setViewAs = async (viewRole: "victim" | "advocate" | "clear") => {
+    if (!accessToken || !isAdmin) return;
+    setViewAsLoading(true);
+    try {
+      const res = await fetch("/api/me/view-as", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ role: viewRole === "clear" ? "" : viewRole }),
+        credentials: "include",
+      });
+      if (res.ok) await refetchMe();
+    } finally {
+      setViewAsLoading(false);
+    }
+  };
+
   const handleLogout = async () => {
     const { data } = await supabase.auth.getSession();
     await logAuthEvent("auth.logout", data.session?.access_token);
@@ -61,6 +84,36 @@ export default function TopNav() {
             <span className="text-[11px] text-slate-400">{t("common.loading")}</span>
           ) : user ? (
             <>
+              {isAdmin && (
+                <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                  <span>View as:</span>
+                  <button
+                    type="button"
+                    disabled={viewAsLoading}
+                    onClick={() => setViewAs("victim")}
+                    className={`rounded px-2 py-0.5 ${role === "victim" ? "bg-slate-600 text-slate-100" : "hover:bg-slate-700/60 text-slate-400"}`}
+                  >
+                    Victim
+                  </button>
+                  <button
+                    type="button"
+                    disabled={viewAsLoading}
+                    onClick={() => setViewAs("advocate")}
+                    className={`rounded px-2 py-0.5 ${role === "advocate" ? "bg-slate-600 text-slate-100" : "hover:bg-slate-700/60 text-slate-400"}`}
+                  >
+                    Advocate
+                  </button>
+                  <button
+                    type="button"
+                    disabled={viewAsLoading}
+                    onClick={() => setViewAs("clear")}
+                    className={`rounded px-2 py-0.5 ${usingDefaultRole ? "bg-slate-600 text-slate-100" : "hover:bg-slate-700/60 text-slate-500"}`}
+                    title="Use my actual account role"
+                  >
+                    Default
+                  </button>
+                </span>
+              )}
               <Link
                 href={isAdmin ? "/dashboard" : "/coming-soon"}
                 className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
