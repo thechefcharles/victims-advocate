@@ -87,7 +87,10 @@ export type AuditAction =
   | "command_center.filter_used"
   | "message.sent"
   | "message.deleted"
-  | "message.thread_viewed";
+  | "message.thread_viewed"
+  | "notification.created"
+  | "notification.read"
+  | "notification.dismissed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

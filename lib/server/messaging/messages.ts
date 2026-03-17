@@ -3,6 +3,7 @@ import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { appendCaseTimelineEvent } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { notifyNewMessage } from "@/lib/server/notifications/triggers";
 import type { CaseConversationRow, CaseMessageRow } from "./types";
 
 function truncatePreview(text: string, max = 160): string {
@@ -85,6 +86,14 @@ export async function sendMessage(params: {
     resourceId: msg.id,
     organizationId: conversation.organization_id,
     metadata: { caseId: conversation.case_id },
+  });
+
+  await notifyNewMessage({
+    caseId: conversation.case_id,
+    organizationId: conversation.organization_id,
+    senderId: ctx.userId,
+    senderRole: ctx.role === "advocate" ? "advocate" : "victim",
+    ctx,
   });
 
   return msg;

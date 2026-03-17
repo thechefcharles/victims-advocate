@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
@@ -14,6 +14,36 @@ export default function TopNav() {
   const usingDefaultRole = realRole != null && role === realRole;
   const { lang, setLang, t } = useI18n();
   const [viewAsLoading, setViewAsLoading] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!accessToken) {
+        setUnreadCount(null);
+        return;
+      }
+      try {
+        const res = await fetch("/api/notifications?unreadOnly=true&limit=50", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) {
+          const items = Array.isArray(json.notifications) ? json.notifications : [];
+          setUnreadCount(items.length);
+        }
+      } catch {
+        if (!cancelled) setUnreadCount(null);
+      }
+    }
+    load();
+    const id = setInterval(load, 60_000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [accessToken]);
 
   const setViewAs = async (viewRole: "victim" | "advocate" | "clear") => {
     if (!accessToken || !isAdmin) return;
@@ -119,6 +149,19 @@ export default function TopNav() {
                 className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
               >
                 {dashboardLabel}
+              </Link>
+
+              <Link
+                href="/notifications"
+                className="relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-600 text-slate-200 hover:bg-slate-900/60"
+                aria-label="Notifications"
+              >
+                <span className="text-lg leading-none">🔔</span>
+                {unreadCount && unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 min-h-[16px] min-w-[16px] rounded-full bg-rose-500 px-1 text-[10px] font-semibold leading-none text-white flex items-center justify-center">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
               </Link>
 
               <button
