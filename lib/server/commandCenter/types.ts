@@ -10,6 +10,7 @@ export type AlertType =
   | "missing_required_information"
   | "completeness_blocking_issues"
   | "ocr_inconsistency"
+  | "unread_survivor_message"
   | "unassigned_case"
   | "needs_program_routing"
   | "needs_completeness_review"

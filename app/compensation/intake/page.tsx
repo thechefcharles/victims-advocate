@@ -33,6 +33,7 @@ import {
 import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
 import { ExplainThisButton } from "@/components/ExplainThis";
+import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
 
 type IntakeStep =
   | "victim"
@@ -1224,6 +1225,8 @@ title={
         <p className="text-[11px] text-slate-500">
 {t("intake.footer.draftDisclaimer")}
         </p>
+
+        <CaseMessagesPanel caseId={caseId} />
       </div>
 
             {/* NxtGuide chat widget (intake) */}

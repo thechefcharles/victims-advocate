@@ -98,7 +98,15 @@ export async function loadCommandCenterData(params: {
     };
   }
 
-  const [routingRows, completenessRows, ocrRows, timelineRows, docCounts, advocateAccess] =
+  const [
+    routingRows,
+    completenessRows,
+    ocrRows,
+    timelineRows,
+    docCounts,
+    advocateAccess,
+    unreadSurvivorByCase,
+  ] =
     await Promise.all([
       supabase
         .from("routing_runs")
@@ -153,6 +161,38 @@ export async function loadCommandCenterData(params: {
           }
           return firstByCase;
         }),
+      supabase
+        .from("case_messages")
+        .select("id, case_id, sender_role, sender_user_id, status")
+        .in("case_id", caseIds)
+        .neq("status", "deleted")
+        .then(async (r) => {
+          const msgs = (r.data ?? []) as Array<{
+            id: string;
+            case_id: string;
+            sender_role: string | null;
+            sender_user_id: string;
+            status: string;
+          }>;
+
+          const survivorMsgs = msgs.filter((m) => (m.sender_role ?? "").toLowerCase() === "victim");
+          if (survivorMsgs.length === 0) return new Map<string, number>();
+
+          const ids = survivorMsgs.map((m) => m.id);
+          const { data: reads } = await supabase
+            .from("message_reads")
+            .select("message_id")
+            .in("message_id", ids)
+            .eq("user_id", ctx.userId);
+          const readSet = new Set((reads ?? []).map((x: any) => x.message_id as string));
+
+          const byCase = new Map<string, number>();
+          for (const m of survivorMsgs) {
+            if (readSet.has(m.id)) continue;
+            byCase.set(m.case_id, (byCase.get(m.case_id) ?? 0) + 1);
+          }
+          return byCase;
+        }),
     ]);
 
   const latestRouting = latestByCase(routingRows);
@@ -187,6 +227,7 @@ export async function loadCommandCenterData(params: {
     const docInfo = docCounts.get(caseId) ?? { total: 0, restricted: 0 };
     const assignedAdvocateId = advocateAccess.get(caseId) ?? null;
     const ocrWarning = ocrWarningByCase.has(caseId);
+    const unreadSurvivorCount = unreadSurvivorByCase.get(caseId) ?? 0;
 
     const alertInputs: AlertInputs = {
       case_id: caseId,
@@ -203,6 +244,7 @@ export async function loadCommandCenterData(params: {
       restricted_document_count: docInfo.restricted,
       assigned_advocate_id: assignedAdvocateId,
       last_activity_at: lastActivity,
+      unread_survivor_message_count: unreadSurvivorCount,
       missing_required_docs:
         compResult?.missing_items?.some(
           (i) => i.severity === "blocking" && i.type === "missing_document"

@@ -84,7 +84,10 @@ export type AuditAction =
   | "ocr.field_rejected"
   | "command_center.viewed"
   | "command_center.search_used"
-  | "command_center.filter_used";
+  | "command_center.filter_used"
+  | "message.sent"
+  | "message.deleted"
+  | "message.thread_viewed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
