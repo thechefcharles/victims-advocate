@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { designationTierTrustLabel } from "@/lib/matchingTrustLabels";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -157,6 +158,11 @@ export default function CaseDetailPage() {
     strong_match: boolean;
     possible_match: boolean;
     limited_match: boolean;
+    designation_tier: string | null;
+    designation_confidence: string | null;
+    designation_summary: string | null;
+    designation_influenced_match: boolean;
+    designation_reason: string | null;
   };
   const [orgMatches, setOrgMatches] = useState<OrgMatchRow[]>([]);
   const [orgMatchGlobalFlags, setOrgMatchGlobalFlags] = useState<string[]>([]);
@@ -1248,7 +1254,15 @@ export default function CaseDetailPage() {
             <h2 className="text-sm font-semibold text-slate-50">Recommended organizations</h2>
             <p className="text-slate-400 text-[11px]">
               Based on this application&apos;s needs — not rankings or public ratings. Confirm fit directly
-              with each organization.
+              with each organization.{" "}
+              <a
+                href="/help/how-matching-works"
+                className="text-violet-300 hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                How recommendations work
+              </a>
             </p>
             {orgMatchRunAt && (
               <p className="text-[11px] text-slate-500">Last run: {formatDate(orgMatchRunAt)}</p>
@@ -1297,7 +1311,36 @@ export default function CaseDetailPage() {
                             : m.capacity_signal}
                         </span>
                       )}
+                      {designationTierTrustLabel(m.designation_tier) && (
+                        <span
+                          className="text-[10px] text-slate-500 border border-slate-600/80 rounded px-1.5 py-0.5"
+                          title="Platform readiness context — not a ranking"
+                        >
+                          {designationTierTrustLabel(m.designation_tier)}
+                        </span>
+                      )}
                     </div>
+                    {m.designation_summary && (
+                      <p className="text-slate-500 text-[10px] mt-1 line-clamp-2 max-w-xl">
+                        {m.designation_summary}
+                      </p>
+                    )}
+                    {m.designation_reason && (
+                      <p className="text-slate-400 text-[11px] mt-1 max-w-xl">{m.designation_reason}</p>
+                    )}
+                    {(m.designation_influenced_match ||
+                      designationTierTrustLabel(m.designation_tier)) && (
+                      <p className="text-[10px] mt-0.5">
+                        <a
+                          href="/help/how-designations-work"
+                          className="text-violet-400/90 hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          How designation is used
+                        </a>
+                      </p>
+                    )}
                     {m.service_overlap.length > 0 && (
                       <p className="text-slate-400 mt-1">
                         <span className="text-slate-500">Services aligned:</span>{" "}

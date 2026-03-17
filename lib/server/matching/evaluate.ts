@@ -138,6 +138,7 @@ export function evaluateOrgMatch(
     organization_id: org.id,
     organization_name: org.name,
     match_score,
+    fit_match_score: match_score,
     match_tier,
     strong_match,
     possible_match,
@@ -150,5 +151,12 @@ export function evaluateOrgMatch(
     capacity_signal: capR.signal,
     virtual_ok: ctx.geo_excluded_but_virtual ? true : null,
     profile_completeness_score: completeness,
+    designation_tier: null,
+    designation_confidence: null,
+    designation_summary: null,
+    designation_influenced_match: false,
+    designation_reason: null,
+    designation_boost_points: 0,
+    designation_tie_ordinal: 0,
   };
 }

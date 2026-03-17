@@ -4,6 +4,7 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { designationTierTrustLabel } from "@/lib/matchingTrustLabels";
 import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { useStateSelection } from "@/components/state/StateProvider";
@@ -3886,6 +3887,11 @@ function RecommendedSupportOrgsBlock({
       strong_match: boolean;
       possible_match: boolean;
       limited_match: boolean;
+      designation_tier?: string | null;
+      designation_confidence?: string | null;
+      designation_summary?: string | null;
+      designation_influenced_match?: boolean;
+      designation_reason?: string | null;
     }>
   >([]);
   const [globalFlags, setGlobalFlags] = useState<string[]>([]);
@@ -3982,7 +3988,15 @@ function RecommendedSupportOrgsBlock({
       </div>
       <p className="text-slate-400 mt-1 text-[11px]">
         Suggestions are based on your application — not rankings. Always confirm directly with the
-        organization.
+        organization.{" "}
+        <a
+          href="/help/how-matching-works"
+          className="text-violet-300 hover:underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          How recommendations work
+        </a>
       </p>
       {loading && <p className="text-slate-500 mt-2">Loading…</p>}
       {!loading && globalFlags.map((f, i) => (
@@ -4024,7 +4038,34 @@ function RecommendedSupportOrgsBlock({
                 {m.capacity_signal === "accepting" && (
                   <span className="text-[10px] text-slate-400">Accepting clients</span>
                 )}
+                {designationTierTrustLabel(m.designation_tier ?? null) && (
+                  <span
+                    className="text-[10px] text-slate-500 border border-slate-600 rounded px-1"
+                    title="Platform readiness — not a ranking"
+                  >
+                    {designationTierTrustLabel(m.designation_tier ?? null)}
+                  </span>
+                )}
               </div>
+              {m.designation_summary && (
+                <p className="text-slate-500 text-[10px] mt-1 line-clamp-2">{m.designation_summary}</p>
+              )}
+              {m.designation_reason && (
+                <p className="text-slate-400 text-[11px] mt-1">{m.designation_reason}</p>
+              )}
+              {(m.designation_influenced_match ||
+                designationTierTrustLabel(m.designation_tier ?? null)) && (
+                <p className="text-[10px] mt-0.5">
+                  <a
+                    href="/help/how-designations-work"
+                    className="text-violet-400/90 hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    How designation is used
+                  </a>
+                </p>
+              )}
               {m.service_overlap.length > 0 && (
                 <p className="text-slate-400 mt-1">
                   Likely able to help with:{" "}

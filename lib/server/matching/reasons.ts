@@ -154,3 +154,31 @@ export function buildCoverageUnclearFlag(coverageDefined: boolean): string | nul
   }
   return null;
 }
+
+/** Phase F: Non-comparative designation context for matches (no “rated”, “top”, etc.). */
+export function designationMatchReasonText(
+  tier: "comprehensive" | "established" | "foundational" | "insufficient_data"
+): string | null {
+  switch (tier) {
+    case "comprehensive":
+      return "Shows strong structured readiness in NxtStps";
+    case "established":
+      return "Has an established organization profile and workflow presence";
+    case "foundational":
+      return "More profile and workflow evidence is available for this organization";
+    default:
+      return null;
+  }
+}
+
+/** Optional calm flag when designation confidence is low — not punitive. */
+export function buildLimitedDesignationEvidenceFlag(params: {
+  hasDesignationRow: boolean;
+  confidence: string | null;
+  tier: string | null;
+}): string | null {
+  if (!params.hasDesignationRow) return null;
+  if (params.confidence !== "low") return null;
+  if (params.tier === "insufficient_data") return null;
+  return "Limited platform evidence on file for this organization — fit and services still drive this suggestion";
+}

@@ -33,9 +33,11 @@ export default function HowMatchingWorksPage() {
             contest, star rating, or “best in city” ranking.
           </p>
           <p>
-            <strong>Organization designations</strong> (readiness tiers on the platform) are separate
-            from matching. Matching does not sort organizations by a public score or tier in a way
-            that punishes organizations.
+            <strong>Designation context:</strong> When an organization has a current designation with
+            enough confidence, that may add a <strong>very small, capped</strong> signal after fit,
+            coverage, capacity, language, and accessibility are considered — never instead of them.
+            Sparse or low-confidence designation data does <strong>not</strong> push organizations
+            down; suggestions stay need-first.
           </p>
           <p className="text-xs text-slate-500 pt-2">
             Logic is deterministic and rule-based on the platform — not driven by opaque AI ranking.

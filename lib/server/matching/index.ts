@@ -21,7 +21,8 @@ export async function runOrganizationMatching(params: {
   input: MatchingInput;
 }): Promise<MatchEvaluation[]> {
   const orgs = await loadActiveOrganizations();
-  return runOrganizationMatchingWithOrgs(params.input, orgs);
+  const { matches } = await runOrganizationMatchingWithOrgs(params.input, orgs);
+  return matches;
 }
 
 /** Alias per Phase B spec */

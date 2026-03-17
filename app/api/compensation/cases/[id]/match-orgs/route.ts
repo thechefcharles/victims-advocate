@@ -12,6 +12,7 @@ import {
   persistOrganizationMatchRun,
   getLatestOrganizationMatchesForCase,
 } from "@/lib/server/matching/service";
+import { matchRunRowToApi } from "@/lib/server/matching/apiPayload";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -34,22 +35,7 @@ export async function GET(req: Request, context: RouteParams) {
     return apiOk({
       run_group_id: data.run_group_id,
       created_at: data.created_at,
-      matches: data.matches.map((m) => ({
-        organization_id: m.organization_id,
-        organization_name: m.organization_name,
-        match_score: m.match_score,
-        match_tier: m.match_tier,
-        strong_match: m.strong_match,
-        possible_match: m.possible_match,
-        limited_match: m.limited_match,
-        reasons: m.reasons,
-        flags: m.flags,
-        service_overlap: m.metadata.service_overlap ?? [],
-        language_match: m.metadata.language_match ?? false,
-        accessibility_match: m.metadata.accessibility_match ?? [],
-        capacity_signal: m.metadata.capacity_signal ?? null,
-        virtual_ok: m.metadata.virtual_ok ?? null,
-      })),
+      matches: data.matches.map((m) => matchRunRowToApi(m)),
       global_flags: data.global_flags,
     });
   } catch (err) {
@@ -117,6 +103,7 @@ export async function POST(req: Request, context: RouteParams) {
         actorUserId: ctx.userId,
         input: runResult.input,
         matches: runResult.matches,
+        designation_meta: runResult.designation_meta,
       });
     } catch (err) {
       await logEvent({
@@ -141,6 +128,9 @@ export async function POST(req: Request, context: RouteParams) {
         case_id: id,
         match_count: runResult.match_count,
         intake_sparse: runResult.input.intake_sparse,
+        designation_integration: true,
+        designation_policy_version: runResult.designation_meta.policy_version,
+        designations_loaded: runResult.designation_meta.designations_loaded,
       },
       req,
     }).catch(() => {});
@@ -166,23 +156,7 @@ export async function POST(req: Request, context: RouteParams) {
       run_group_id: runResult.run_group_id,
       match_count: runResult.match_count,
       intake_sparse: runResult.input.intake_sparse,
-      matches:
-        latest?.matches.map((m) => ({
-          organization_id: m.organization_id,
-          organization_name: m.organization_name,
-          match_score: m.match_score,
-          match_tier: m.match_tier,
-          strong_match: m.strong_match,
-          possible_match: m.possible_match,
-          limited_match: m.limited_match,
-          reasons: m.reasons,
-          flags: m.flags,
-          service_overlap: m.metadata.service_overlap ?? [],
-          language_match: m.metadata.language_match ?? false,
-          accessibility_match: m.metadata.accessibility_match ?? [],
-          capacity_signal: m.metadata.capacity_signal ?? null,
-          virtual_ok: m.metadata.virtual_ok ?? null,
-        })) ?? [],
+      matches: latest?.matches.map((m) => matchRunRowToApi(m)) ?? [],
       global_flags: latest?.global_flags ?? [],
     });
   } catch (err) {

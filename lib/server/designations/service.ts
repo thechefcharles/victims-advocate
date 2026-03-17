@@ -29,6 +29,32 @@ function mapDesignationRow(r: Record<string, unknown>): OrgDesignationRow {
   };
 }
 
+/** Batch-load current designations for matching (Phase F). Failures yield partial/empty map. */
+export async function getCurrentDesignationsForOrgIds(
+  organizationIds: string[]
+): Promise<Map<string, OrgDesignationRow>> {
+  const map = new Map<string, OrgDesignationRow>();
+  const unique = [...new Set(organizationIds)].filter(Boolean);
+  if (unique.length === 0) return map;
+
+  const supabase = getSupabaseAdmin();
+  const chunkSize = 150;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const slice = unique.slice(i, i + chunkSize);
+    const { data, error } = await supabase
+      .from("org_designations")
+      .select("*")
+      .in("organization_id", slice)
+      .eq("is_current", true);
+    if (error) continue;
+    for (const r of data ?? []) {
+      const row = mapDesignationRow(r as Record<string, unknown>);
+      map.set(row.organization_id, row);
+    }
+  }
+  return map;
+}
+
 export async function getCurrentOrgDesignation(
   organizationId: string
 ): Promise<OrgDesignationRow | null> {

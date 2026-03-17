@@ -36,7 +36,10 @@ export type OrgRowForMatching = {
 export type MatchEvaluation = {
   organization_id: string;
   organization_name: string;
+  /** Integrated score (Phase B fit + capped designation boost). */
   match_score: number;
+  /** Phase B fit-only score (before designation boost). */
+  fit_match_score: number;
   match_tier: "strong_match" | "possible_match" | "limited_match";
   strong_match: boolean;
   possible_match: boolean;
@@ -49,6 +52,16 @@ export type MatchEvaluation = {
   capacity_signal: string | null;
   virtual_ok: boolean | null;
   profile_completeness_score: number;
+  /** Public-safe designation context (nullable when none / not loaded). */
+  designation_tier: string | null;
+  designation_confidence: string | null;
+  designation_summary: string | null;
+  designation_influenced_match: boolean;
+  designation_reason: string | null;
+  /** Internal: points added from designation (omitted from API). */
+  designation_boost_points: number;
+  /** Internal: tie-break ordering (omitted from API). */
+  designation_tie_ordinal: number;
 };
 
 export type OrganizationMatchRunRow = {
@@ -61,6 +74,7 @@ export type OrganizationMatchRunRow = {
   organization_profile_snapshot: Record<string, unknown>;
   match_input_snapshot: Record<string, unknown>;
   match_score: number;
+  fit_match_score: number | null;
   match_tier: string;
   strong_match: boolean;
   possible_match: boolean;
@@ -70,4 +84,11 @@ export type OrganizationMatchRunRow = {
   metadata: Record<string, unknown>;
   run_group_id: string;
   actor_user_id: string | null;
+  designation_tier: string | null;
+  designation_confidence: string | null;
+  designation_summary: string | null;
+  designation_influenced_match: boolean;
+  designation_reason: string | null;
+  designation_snapshot: Record<string, unknown>;
+  designation_applied: boolean;
 };

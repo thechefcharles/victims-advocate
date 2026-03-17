@@ -10,7 +10,9 @@ import type { MatchingInput, MatchEvaluation, OrgRowForMatching } from "./types"
 import { buildMatchingInputFromCaseRow } from "./normalize";
 import { applyHardFilters } from "./filters";
 import { evaluateOrgMatch } from "./evaluate";
-import { rankMatches } from "./rank";
+import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/service";
+import { integrateDesignationIntoMatches } from "./integration";
+import type { DesignationIntegrationMeta } from "./integration";
 import type { OrganizationMatchRunRow } from "./types";
 
 function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
@@ -63,7 +65,7 @@ export async function loadActiveOrganizations(): Promise<OrgRowForMatching[]> {
 export async function runOrganizationMatchingWithOrgs(
   input: MatchingInput,
   orgs: OrgRowForMatching[]
-): Promise<MatchEvaluation[]> {
+): Promise<{ matches: MatchEvaluation[]; designation_meta: DesignationIntegrationMeta }> {
   const evaluations: MatchEvaluation[] = [];
   for (const org of orgs) {
     const hard = applyHardFilters(org, input);
@@ -72,7 +74,18 @@ export async function runOrganizationMatchingWithOrgs(
       evaluateOrgMatch(org, input, { geo_excluded_but_virtual: hard.geo_excluded_but_virtual })
     );
   }
-  return rankMatches(evaluations);
+
+  let designationByOrgId = new Map<string, import("@/lib/server/designations/types").OrgDesignationRow>();
+  try {
+    designationByOrgId = await getCurrentDesignationsForOrgIds(
+      evaluations.map((e) => e.organization_id)
+    );
+  } catch {
+    designationByOrgId = new Map();
+  }
+
+  const { matches, meta } = integrateDesignationIntoMatches(evaluations, designationByOrgId);
+  return { matches, designation_meta: meta };
 }
 
 export type RunCaseMatchingResult = {
@@ -80,6 +93,7 @@ export type RunCaseMatchingResult = {
   matches: MatchEvaluation[];
   match_count: number;
   input: MatchingInput;
+  designation_meta: DesignationIntegrationMeta;
   input_summary: {
     service_types_needed: string[];
     state_code: string | null;
@@ -105,7 +119,7 @@ export async function runCaseOrganizationMatching(params: {
 
   const input = buildMatchingInputFromCaseRow(caseRow);
   const orgs = await loadActiveOrganizations();
-  const matches = await runOrganizationMatchingWithOrgs(input, orgs);
+  const { matches, designation_meta } = await runOrganizationMatchingWithOrgs(input, orgs);
   const run_group_id = crypto.randomUUID();
 
   return {
@@ -113,6 +127,7 @@ export async function runCaseOrganizationMatching(params: {
     matches,
     match_count: matches.length,
     input,
+    designation_meta,
     input_summary: {
       service_types_needed: input.service_types_needed,
       state_code: input.state_code,
@@ -128,6 +143,7 @@ export async function persistOrganizationMatchRun(params: {
   actorUserId: string | null;
   input: MatchingInput;
   matches: MatchEvaluation[];
+  designation_meta: DesignationIntegrationMeta;
 }): Promise<void> {
   const supabase = getSupabaseAdmin();
   const inputSnapshot = {
@@ -168,6 +184,7 @@ export async function persistOrganizationMatchRun(params: {
       organization_profile_snapshot: profileSnap,
       match_input_snapshot: inputSnapshot,
       match_score: m.match_score,
+      fit_match_score: m.fit_match_score,
       match_tier: m.match_tier,
       strong_match: m.strong_match,
       possible_match: m.possible_match,
@@ -181,9 +198,23 @@ export async function persistOrganizationMatchRun(params: {
         capacity_signal: m.capacity_signal,
         virtual_ok: m.virtual_ok,
         profile_completeness_score: m.profile_completeness_score,
+        designation_integration: params.designation_meta,
       },
       run_group_id: params.runGroupId,
       actor_user_id: params.actorUserId,
+      designation_tier: m.designation_tier,
+      designation_confidence: m.designation_confidence,
+      designation_summary: m.designation_summary,
+      designation_influenced_match: m.designation_influenced_match,
+      designation_reason: m.designation_reason,
+      designation_applied: m.designation_boost_points > 0,
+      designation_snapshot: {
+        policy_version: params.designation_meta.policy_version,
+        fit_match_score: m.fit_match_score,
+        integrated_match_score: m.match_score,
+        designation_boost_points: m.designation_boost_points,
+        designation_tie_ordinal: m.designation_tie_ordinal,
+      },
     };
   });
 
@@ -196,15 +227,23 @@ export async function persistOrganizationMatchRun(params: {
       organization_profile_snapshot: {},
       match_input_snapshot: inputSnapshot,
       match_score: 0,
+      fit_match_score: 0,
       match_tier: "limited_match",
       strong_match: false,
       possible_match: false,
       limited_match: true,
       reasons: [],
       flags: ["No organizations matched the current criteria — try updating the application or org profiles"],
-      metadata: { empty_run: true },
+      metadata: { empty_run: true, designation_integration: params.designation_meta },
       run_group_id: params.runGroupId,
       actor_user_id: params.actorUserId,
+      designation_tier: null,
+      designation_confidence: null,
+      designation_summary: null,
+      designation_influenced_match: false,
+      designation_reason: null,
+      designation_applied: false,
+      designation_snapshot: { policy_version: params.designation_meta.policy_version, empty_run: true },
     });
     return;
   }
@@ -275,6 +314,10 @@ export async function getLatestOrganizationMatchesForCase(params: {
       organization_profile_snapshot: (r.organization_profile_snapshot as Record<string, unknown>) ?? {},
       match_input_snapshot: (r.match_input_snapshot as Record<string, unknown>) ?? {},
       match_score: Number(r.match_score),
+      fit_match_score:
+        r.fit_match_score != null && r.fit_match_score !== ""
+          ? Number(r.fit_match_score)
+          : Number(r.match_score),
       match_tier: String(r.match_tier),
       strong_match: Boolean(r.strong_match),
       possible_match: Boolean(r.possible_match),
@@ -284,6 +327,14 @@ export async function getLatestOrganizationMatchesForCase(params: {
       metadata: (r.metadata as Record<string, unknown>) ?? {},
       run_group_id: String(r.run_group_id),
       actor_user_id: r.actor_user_id != null ? String(r.actor_user_id) : null,
+      designation_tier: r.designation_tier != null ? String(r.designation_tier) : null,
+      designation_confidence:
+        r.designation_confidence != null ? String(r.designation_confidence) : null,
+      designation_summary: r.designation_summary != null ? String(r.designation_summary) : null,
+      designation_influenced_match: Boolean(r.designation_influenced_match),
+      designation_reason: r.designation_reason != null ? String(r.designation_reason) : null,
+      designation_snapshot: (r.designation_snapshot as Record<string, unknown>) ?? {},
+      designation_applied: Boolean(r.designation_applied),
     });
   }
 
