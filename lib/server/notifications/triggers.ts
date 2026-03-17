@@ -1,6 +1,7 @@
 import type { AuthContext } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { createCaseNotification } from "./create";
+import { getSafeNotificationMode } from "@/lib/server/safety/settings";
 
 export async function notifyNewMessage(params: {
   caseId: string;
@@ -11,6 +12,7 @@ export async function notifyNewMessage(params: {
 }): Promise<void> {
   const { caseId, organizationId, senderId, senderRole, ctx } = params;
   const supabase = getSupabaseAdmin();
+  const mode = await getSafeNotificationMode({ ctx }).catch(() => "normal" as const);
 
   const { data: caseRow } = await supabase
     .from("cases")
@@ -38,7 +40,7 @@ export async function notifyNewMessage(params: {
         caseId,
         organizationId,
         type: "message.survivor_to_advocate",
-        title: "New secure message on a case",
+        title: mode === "strict" ? "You have a new update" : "New secure message on a case",
         body: null,
         actionUrl: `/compensation/intake?case=${caseId}`,
         previewSafe: true,
@@ -53,7 +55,7 @@ export async function notifyNewMessage(params: {
         caseId,
         organizationId,
         type: "message.advocate_to_survivor",
-        title: "New secure message from your advocate",
+        title: mode === "strict" ? "You have a new update" : "New secure message from your advocate",
         body: null,
         actionUrl: `/compensation/intake?case=${caseId}`,
         previewSafe: true,

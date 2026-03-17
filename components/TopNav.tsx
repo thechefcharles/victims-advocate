@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
+import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
+import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
 export default function TopNav() {
   const router = useRouter();
   const { loading, user, role, realRole, isAdmin, accessToken, refetchMe } = useAuth();
@@ -15,6 +17,8 @@ export default function TopNav() {
   const { lang, setLang, t } = useI18n();
   const [viewAsLoading, setViewAsLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number | null>(null);
+  const { strictPreviews, settings } = useSafetySettings(accessToken);
+  const [quickExitLoading, setQuickExitLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +78,33 @@ export default function TopNav() {
     }
     router.replace("/login");
     router.refresh();
+  };
+
+  const handleQuickExit = async () => {
+    if (!accessToken) return;
+    setQuickExitLoading(true);
+    try {
+      const res = await fetch("/api/safety/quick-exit", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const json = await res.json().catch(() => ({}));
+      // Quick Exit should not leave an authenticated session behind.
+      // Signing out prevents background refresh attempts with missing tokens.
+      try {
+        await supabase.auth.signOut();
+      } catch {
+        // ignore
+      }
+      if (settings?.clear_local_state_on_quick_exit !== false) {
+        clearSensitiveLocalState(user?.id ?? null);
+      }
+      const redirectTo = typeof json?.redirectTo === "string" ? json.redirectTo : "/";
+      router.replace(redirectTo);
+      router.refresh();
+    } finally {
+      setQuickExitLoading(false);
+    }
   };
 
   const dashboardLabel = isAdmin
@@ -163,6 +194,24 @@ export default function TopNav() {
                   </span>
                 )}
               </Link>
+
+              <Link
+                href="/settings/safety"
+                className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60 text-[11px]"
+                title="Safety settings"
+              >
+                Safety
+              </Link>
+
+              <button
+                type="button"
+                onClick={handleQuickExit}
+                disabled={quickExitLoading}
+                className="rounded-full border border-rose-500/50 px-3 py-1.5 hover:bg-rose-500/10 text-[11px] text-rose-200 disabled:opacity-60"
+                title={strictPreviews ? "Quick Exit" : "Quick Exit (clears local state and redirects)"}
+              >
+                {quickExitLoading ? "Exiting…" : "Quick Exit"}
+              </button>
 
               <button
                 type="button"

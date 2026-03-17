@@ -90,7 +90,11 @@ export type AuditAction =
   | "message.thread_viewed"
   | "notification.created"
   | "notification.read"
-  | "notification.dismissed";
+  | "notification.dismissed"
+  | "safety_mode.enabled"
+  | "safety_mode.disabled"
+  | "safety_mode.updated"
+  | "safety_mode.quick_exit";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

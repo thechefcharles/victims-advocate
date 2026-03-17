@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 
 type Conversation = {
   id: string;
@@ -21,6 +23,8 @@ type Message = {
 };
 
 export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
+  const { accessToken } = useAuth();
+  const { strictPreviews } = useSafetySettings(accessToken);
   const [loading, setLoading] = useState(false);
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -140,10 +144,13 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
     <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <h2 className="text-sm font-semibold text-slate-100">Secure messages</h2>
+          <h2 className="text-sm font-semibold text-slate-100">
+            {strictPreviews ? "Messages" : "Secure messages"}
+          </h2>
           <p className="text-[11px] text-slate-400">
-            Case-based, in-app messaging. No email or SMS.
-            {unreadCount > 0 ? ` · ${unreadCount} unread` : ""}
+            {strictPreviews
+              ? "In-app messages."
+              : `Case-based, in-app messaging. No email or SMS.${unreadCount > 0 ? ` · ${unreadCount} unread` : ""}`}
           </p>
         </div>
         <button
