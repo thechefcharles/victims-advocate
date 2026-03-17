@@ -1068,6 +1068,10 @@ const handleBack = () => {
 
 {step === "documents" && <DocumentsStep isReadOnly={isReadOnly} />}
 
+{step === "summary" && caseId && (
+  <RecommendedSupportOrgsBlock caseId={caseId} canRunMatch={canEdit && !isReadOnly} />
+)}
+
 {step === "summary" && (
   <SummaryView
     caseId={caseId}
@@ -3859,6 +3863,192 @@ function FuneralForm({
         defaultDocType="funeral_bill"
         disabled={isReadOnly}
       />
+    </section>
+  );
+}
+
+function RecommendedSupportOrgsBlock({
+  caseId,
+  canRunMatch,
+}: {
+  caseId: string;
+  canRunMatch: boolean;
+}) {
+  const [matches, setMatches] = useState<
+    Array<{
+      organization_id: string;
+      organization_name: string;
+      reasons: string[];
+      flags: string[];
+      service_overlap: string[];
+      language_match: boolean;
+      capacity_signal: string | null;
+      strong_match: boolean;
+      possible_match: boolean;
+      limited_match: boolean;
+    }>
+  >([]);
+  const [globalFlags, setGlobalFlags] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [forbidden, setForbidden] = useState(false);
+  const [runAt, setRunAt] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setForbidden(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) {
+        setForbidden(true);
+        return;
+      }
+      const res = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 403) {
+        setForbidden(true);
+        return;
+      }
+      if (!res.ok) {
+        return;
+      }
+      const json = await res.json();
+      const d = json.data ?? json;
+      setMatches(Array.isArray(d.matches) ? d.matches : []);
+      setGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
+      setRunAt(d.created_at ?? null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [caseId]);
+
+  const handleRun = async () => {
+    setRunning(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      const res = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const d = json.data ?? json;
+        setMatches(Array.isArray(d.matches) ? d.matches : []);
+        setGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
+        setRunAt(new Date().toISOString());
+      }
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  if (forbidden) {
+    return (
+      <section className="rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-4 text-xs text-slate-400">
+        <p className="font-medium text-slate-200">Recommended support organizations</p>
+        <p className="mt-1">
+          Your advocate or care team can suggest organizations that fit your situation.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-xl border border-violet-900/40 bg-slate-900/50 p-4 mb-4 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="font-medium text-slate-100">Recommended support organizations</p>
+        {canRunMatch && (
+          <button
+            type="button"
+            disabled={running}
+            onClick={handleRun}
+            className="rounded-lg border border-violet-500/60 bg-violet-500/20 px-3 py-1 text-[11px] text-violet-200 hover:bg-violet-500/30 disabled:opacity-50"
+          >
+            {running ? "Updating…" : "Refresh suggestions"}
+          </button>
+        )}
+      </div>
+      <p className="text-slate-400 mt-1 text-[11px]">
+        Suggestions are based on your application — not rankings. Always confirm directly with the
+        organization.
+      </p>
+      {loading && <p className="text-slate-500 mt-2">Loading…</p>}
+      {!loading && globalFlags.map((f, i) => (
+        <p key={i} className="text-amber-200/90 mt-2 text-[11px]">
+          {f}
+        </p>
+      ))}
+      {!loading && matches.length === 0 && !globalFlags.length && (
+        <p className="text-slate-400 mt-2">
+          {canRunMatch
+            ? "No suggestions yet. Save your application, then tap “Refresh suggestions” to find organizations that may help."
+            : "Suggestions will appear here after your advocate runs organization matching for this case."}
+        </p>
+      )}
+      {!loading && matches.length > 0 && (
+        <ul className="mt-3 space-y-3 divide-y divide-slate-800">
+          {matches.map((m) => (
+            <li key={m.organization_id} className="pt-3 first:pt-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-slate-100">{m.organization_name}</span>
+                {m.strong_match && (
+                  <span className="text-[10px] text-emerald-300 border border-emerald-500/40 rounded px-1.5">
+                    Good fit
+                  </span>
+                )}
+                {m.possible_match && !m.strong_match && (
+                  <span className="text-[10px] text-sky-300 border border-sky-500/40 rounded px-1.5">
+                    Possible fit
+                  </span>
+                )}
+                {m.limited_match && (
+                  <span className="text-[10px] text-amber-300 border border-amber-500/40 rounded px-1.5">
+                    Tentative
+                  </span>
+                )}
+                {m.language_match && (
+                  <span className="text-[10px] text-slate-400">Language</span>
+                )}
+                {m.capacity_signal === "accepting" && (
+                  <span className="text-[10px] text-slate-400">Accepting clients</span>
+                )}
+              </div>
+              {m.service_overlap.length > 0 && (
+                <p className="text-slate-400 mt-1">
+                  Likely able to help with:{" "}
+                  {m.service_overlap.map((s) => s.replace(/_/g, " ")).join(", ")}
+                </p>
+              )}
+              {m.reasons.length > 0 && (
+                <ul className="list-disc list-inside text-slate-300 mt-1 space-y-0.5">
+                  {m.reasons.slice(0, 5).map((r, i) => (
+                    <li key={i}>{r}</li>
+                  ))}
+                </ul>
+              )}
+              {m.flags.length > 0 && (
+                <ul className="text-amber-200/80 text-[11px] list-disc list-inside mt-1">
+                  {m.flags.slice(0, 3).map((f, i) => (
+                    <li key={i}>{f}</li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

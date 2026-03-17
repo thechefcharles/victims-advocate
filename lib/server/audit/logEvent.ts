@@ -101,7 +101,10 @@ export type AuditAction =
   | "appointment.updated"
   | "appointment.cancelled"
   | "appointment.completed"
-  | "appointment.rescheduled";
+  | "appointment.rescheduled"
+  | "matching.run_started"
+  | "matching.run_completed"
+  | "matching.run_failed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
