@@ -31,6 +31,8 @@ export type AuditAction =
   | "org.invite.accept"
   | "org.member.role_change"
   | "org.member.revoke"
+  | "org.profile_updated"
+  | "org.profile_status_changed"
   | "policy.create"
   | "policy.activate"
   | "policy.accept"
