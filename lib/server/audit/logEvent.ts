@@ -104,7 +104,10 @@ export type AuditAction =
   | "appointment.rescheduled"
   | "matching.run_started"
   | "matching.run_completed"
-  | "matching.run_failed";
+  | "matching.run_failed"
+  | "grading.run_started"
+  | "grading.run_completed"
+  | "grading.run_failed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

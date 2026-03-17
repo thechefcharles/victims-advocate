@@ -103,6 +103,12 @@ export default function AdminOrgsPage() {
             >
               Audit logs
             </Link>
+            <Link
+              href="/admin/grading"
+              className="text-sm text-violet-400 hover:text-violet-200"
+            >
+              Grading
+            </Link>
           </div>
         </header>
 
