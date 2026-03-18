@@ -1,10 +1,14 @@
 // lib/i18n/types.ts
 export type I18nDict = {
   nav: {
+    dashboard: string;
     dashboardVictim: string;
     dashboardAdvocate: string;
     login: string;
     logout: string;
+    myAccount: string;
+    accountPlaceholderTitle: string;
+    accountPlaceholderBody: string;
     language: string;
     brandTagline: string;
   };

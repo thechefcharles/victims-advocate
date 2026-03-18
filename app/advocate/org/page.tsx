@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import {
+  ACCESSIBILITY_FEATURE_OPTIONS,
+  CAPACITY_STATUS_OPTIONS,
+  INTAKE_METHOD_OPTIONS,
+  PROFILE_STATUS_OPTIONS,
+  SERVICE_TYPE_OPTIONS,
+  SPECIAL_POPULATION_OPTIONS,
+} from "@/lib/organizations/profileOptions";
 
 type Member = {
   id: string;
@@ -22,6 +30,27 @@ type Invite = {
   created_at: string;
 };
 
+type OrgProfile = {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  service_types: string[];
+  languages: string[];
+  coverage_area: Record<string, unknown>;
+  intake_methods: string[];
+  hours: Record<string, unknown>;
+  accepting_clients: boolean;
+  capacity_status: string;
+  avg_response_time_hours: number | null;
+  special_populations: string[];
+  accessibility_features: string[];
+  profile_status: string;
+  profile_last_updated_at: string | null;
+};
+
+const QUICK_LANG = ["en", "es", "zh", "fr", "ar", "vi", "ko", "tl"] as const;
+
 export default function AdvocateOrgPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -32,8 +61,170 @@ export default function AdvocateOrgPage() {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [myOrgRole, setMyOrgRole] = useState<string | null>(null);
+  const [profile, setProfile] = useState<OrgProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileMsg, setProfileMsg] = useState<string | null>(null);
+
+  const [serviceTypes, setServiceTypes] = useState<string[]>([]);
+  const [intakeMethods, setIntakeMethods] = useState<string[]>([]);
+  const [specialPops, setSpecialPops] = useState<string[]>([]);
+  const [accessibility, setAccessibility] = useState<string[]>([]);
+  const [languagesQuick, setLanguagesQuick] = useState<string[]>([]);
+  const [languagesExtra, setLanguagesExtra] = useState("");
+  const [acceptingClients, setAcceptingClients] = useState(false);
+  const [capacityStatus, setCapacityStatus] = useState("unknown");
+  const [avgResponse, setAvgResponse] = useState("");
+  const [profileStatus, setProfileStatus] = useState("draft");
+  const [coverageJson, setCoverageJson] = useState("{}");
+  const [hoursJson, setHoursJson] = useState("{}");
+
   const getToken = () => {
     return supabase.auth.getSession().then(({ data }) => data.session?.access_token);
+  };
+
+  const profileQuerySuffix = () => {
+    if (typeof window === "undefined") return "";
+    const orgId = new URL(window.location.href).searchParams.get("organization_id");
+    return orgId ? `?organization_id=${encodeURIComponent(orgId)}` : "";
+  };
+
+  const canEditProfile =
+    myOrgRole === "org_admin" || myOrgRole === "supervisor";
+  const canViewDesignation = canEditProfile;
+
+  const [designation, setDesignation] = useState<{
+    designation_tier: string;
+    designation_confidence: string;
+    public_summary: string | null;
+  } | null>(null);
+  const [designationMsg, setDesignationMsg] = useState<string | null>(null);
+  const [designationExplain, setDesignationExplain] = useState<{
+    headline: string;
+    bullets: string[];
+  } | null>(null);
+  const [methodologyLinks, setMethodologyLinks] = useState<
+    { label: string; href: string; description: string }[]
+  >([]);
+
+  const [reviewRequests, setReviewRequests] = useState<
+    Array<{
+      id: string;
+      created_at: string;
+      request_kind: string;
+      subject: string;
+      body: string;
+      status: string;
+      admin_response_org_visible: string | null;
+      resolved_at: string | null;
+    }>
+  >([]);
+  const [reviewKind, setReviewKind] = useState<"clarification" | "correction" | "data_update">(
+    "clarification"
+  );
+  const [reviewSubject, setReviewSubject] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewMsg, setReviewMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!canViewDesignation || loading) return;
+    const run = async () => {
+      const token = await getToken();
+      if (!token) return;
+      const q = profileQuerySuffix();
+      const res = await fetch(`/api/org/designation${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) return;
+      const d = json.data?.designation ?? json.designation;
+      const expl = json.data?.explanation;
+      const meth = json.data?.methodology;
+      if (expl?.headline) {
+        setDesignationExplain({ headline: expl.headline, bullets: expl.bullets ?? [] });
+      }
+      if (Array.isArray(meth)) setMethodologyLinks(meth);
+      if (d) {
+        setDesignation({
+          designation_tier: d.designation_tier,
+          designation_confidence: d.designation_confidence,
+          public_summary: d.public_summary ?? null,
+        });
+        setDesignationMsg(null);
+      } else {
+        setDesignation(null);
+        setDesignationMsg(json.data?.message ?? null);
+      }
+    };
+    run();
+  }, [canViewDesignation, loading, profileLoading]);
+
+  const loadReviewRequests = async () => {
+    const token = await getToken();
+    if (!token) return;
+    const res = await fetch("/api/org/designation/review-requests", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return;
+    const json = await res.json();
+    setReviewRequests(json.data?.requests ?? []);
+  };
+
+  useEffect(() => {
+    if (!canViewDesignation || loading) return;
+    loadReviewRequests();
+  }, [canViewDesignation, loading]);
+
+  const submitReviewRequest = async (e: FormEvent) => {
+    e.preventDefault();
+    const sub = reviewSubject.trim();
+    const bod = reviewBody.trim();
+    if (sub.length < 5 || bod.length < 20) {
+      setReviewMsg("Subject (5+) and details (20+ characters) required.");
+      return;
+    }
+    setReviewSubmitting(true);
+    setReviewMsg(null);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch("/api/org/designation/review-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          request_kind: reviewKind,
+          subject: sub,
+          body: bod,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setReviewMsg(getApiErrorMessage(json, "Could not submit request"));
+        return;
+      }
+      setReviewSubject("");
+      setReviewBody("");
+      setReviewMsg("Request submitted. Platform staff will respond in writing.");
+      await loadReviewRequests();
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const withdrawReview = async (id: string) => {
+    if (!confirm("Withdraw this request?")) return;
+    const token = await getToken();
+    if (!token) return;
+    const res = await fetch(`/api/org/designation/review-request/${id}/withdraw`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) await loadReviewRequests();
   };
 
   const loadMembers = async (token: string) => {
@@ -46,7 +237,7 @@ export default function AdvocateOrgPage() {
       throw new Error(getApiErrorMessage(json, "Failed to load members"));
     }
     const json = await res.json();
-    return json.data?.members ?? [];
+    return (json.data?.members ?? []) as Member[];
   };
 
   const loadInvites = async (token: string) => {
@@ -67,9 +258,18 @@ export default function AdvocateOrgPage() {
         return;
       }
       try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        const uid = user?.id;
+
         const [m, inv] = await Promise.all([loadMembers(token), loadInvites(token)]);
         setMembers(m);
         setInvites(inv);
+        if (uid) {
+          const me = m.find((x) => x.user_id === uid);
+          setMyOrgRole(me?.org_role ?? null);
+        }
         setErr(null);
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load");
@@ -81,6 +281,122 @@ export default function AdvocateOrgPage() {
     };
     run();
   }, []);
+
+  useEffect(() => {
+    const run = async () => {
+      setProfileLoading(true);
+      setProfileMsg(null);
+      const token = await getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(`/api/org/profile${profileQuerySuffix()}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(getApiErrorMessage(json, "Failed to load org profile"));
+        }
+        const p = json.data?.profile as OrgProfile | undefined;
+        if (p) {
+          setProfile(p);
+          setServiceTypes(p.service_types ?? []);
+          setIntakeMethods(p.intake_methods ?? []);
+          setSpecialPops(p.special_populations ?? []);
+          setAccessibility(p.accessibility_features ?? []);
+          const langs = p.languages ?? [];
+          const quick = langs.filter((l) => QUICK_LANG.includes(l as (typeof QUICK_LANG)[number]));
+          const extra = langs.filter((l) => !QUICK_LANG.includes(l as (typeof QUICK_LANG)[number]));
+          setLanguagesQuick(quick);
+          setLanguagesExtra(extra.join(", "));
+          setAcceptingClients(Boolean(p.accepting_clients));
+          setCapacityStatus(p.capacity_status || "unknown");
+          setAvgResponse(
+            p.avg_response_time_hours != null ? String(p.avg_response_time_hours) : ""
+          );
+          setProfileStatus(p.profile_status || "draft");
+          setCoverageJson(JSON.stringify(p.coverage_area ?? {}, null, 2));
+          setHoursJson(JSON.stringify(p.hours ?? {}, null, 2));
+        }
+      } catch (e) {
+        setProfileMsg(e instanceof Error ? e.message : "Profile load failed");
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    run();
+  }, [loading]);
+
+  const toggleInSet = (arr: string[], v: string, set: (x: string[]) => void) => {
+    if (arr.includes(v)) set(arr.filter((x) => x !== v));
+    else set([...arr, v]);
+  };
+
+  const handleSaveProfile = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!canEditProfile) return;
+    const token = await getToken();
+    if (!token) return;
+    let coverage: Record<string, unknown>;
+    let hours: Record<string, unknown>;
+    try {
+      coverage = JSON.parse(coverageJson || "{}");
+      if (typeof coverage !== "object" || coverage === null || Array.isArray(coverage)) {
+        throw new Error("coverage must be a JSON object");
+      }
+    } catch {
+      setProfileMsg("Coverage area: invalid JSON object");
+      return;
+    }
+    try {
+      hours = JSON.parse(hoursJson || "{}");
+      if (typeof hours !== "object" || hours === null || Array.isArray(hours)) {
+        throw new Error("hours must be a JSON object");
+      }
+    } catch {
+      setProfileMsg("Hours: invalid JSON object");
+      return;
+    }
+    const extraLangs = languagesExtra
+      .split(/[,;\s]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean);
+    const languages = [...new Set([...languagesQuick, ...extraLangs])];
+
+    setProfileSaving(true);
+    setProfileMsg(null);
+    try {
+      const res = await fetch(`/api/org/profile${profileQuerySuffix()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          service_types: serviceTypes,
+          intake_methods: intakeMethods,
+          special_populations: specialPops,
+          accessibility_features: accessibility,
+          languages,
+          coverage_area: coverage,
+          hours,
+          accepting_clients: acceptingClients,
+          capacity_status: capacityStatus,
+          avg_response_time_hours: avgResponse.trim() === "" ? null : Number(avgResponse),
+          profile_status: profileStatus,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setProfileMsg(getApiErrorMessage(json, "Save failed"));
+        return;
+      }
+      const p = json.data?.profile as OrgProfile | undefined;
+      if (p) setProfile(p);
+      setProfileMsg("Profile saved.");
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,6 +500,381 @@ export default function AdvocateOrgPage() {
             {err}
           </div>
         )}
+
+        {canViewDesignation && (
+          <section className="rounded-2xl border border-teal-900/40 bg-slate-950/70 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-teal-200/90">
+              Platform designation (internal preview)
+            </h2>
+            <p className="text-[11px] text-slate-500">
+              Readiness tier on NxtStps — not a public rating or clinical score. Numeric grades are
+              not shown here.
+            </p>
+            {methodologyLinks.length > 0 && (
+              <div className="text-[11px] space-y-1">
+                <p className="text-slate-500 uppercase tracking-wide">Methodology</p>
+                <ul className="space-y-1">
+                  {methodologyLinks.map((m) => (
+                    <li key={m.href}>
+                      <a href={m.href} className="text-teal-400 hover:text-teal-300 underline">
+                        {m.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {designation ? (
+              <>
+                <p className="text-lg font-medium text-teal-300 capitalize">
+                  {designation.designation_tier.replace(/_/g, " ")}
+                </p>
+                <p className="text-xs text-slate-400">
+                  Confidence: {designation.designation_confidence}
+                </p>
+                {designationExplain && (
+                  <div className="mt-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
+                    <p className="font-medium text-slate-300">{designationExplain.headline}</p>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {designationExplain.bullets.slice(0, 5).map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {designation.public_summary && (
+                  <p className="text-sm text-slate-300 leading-relaxed mt-2">
+                    {designation.public_summary}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-slate-400">
+                {designationMsg ??
+                  "No designation on file yet. Administrators update this after internal review."}
+              </p>
+            )}
+
+            <div className="border-t border-slate-800 pt-4 space-y-3">
+              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                Request a designation review
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Ask for clarification, report updated platform use, or request a correction. Staff
+                reply in writing; numeric scores are not shared.
+              </p>
+              {reviewMsg && (
+                <p
+                  className={
+                    reviewMsg.includes("submitted") ? "text-emerald-400 text-xs" : "text-amber-200 text-xs"
+                  }
+                >
+                  {reviewMsg}
+                </p>
+              )}
+              <form onSubmit={submitReviewRequest} className="space-y-2 text-xs">
+                <select
+                  value={reviewKind}
+                  onChange={(e) =>
+                    setReviewKind(e.target.value as "clarification" | "correction" | "data_update")
+                  }
+                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 w-full max-w-xs"
+                >
+                  <option value="clarification">Clarification</option>
+                  <option value="correction">Correction</option>
+                  <option value="data_update">Data / platform use update</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="Short subject"
+                  value={reviewSubject}
+                  onChange={(e) => setReviewSubject(e.target.value)}
+                  className="w-full max-w-lg rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+                />
+                <textarea
+                  placeholder="Describe your request (20+ characters)"
+                  value={reviewBody}
+                  onChange={(e) => setReviewBody(e.target.value)}
+                  rows={4}
+                  className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+                />
+                <button
+                  type="submit"
+                  disabled={reviewSubmitting}
+                  className="rounded bg-teal-700 px-3 py-1.5 text-white hover:bg-teal-600 disabled:opacity-50"
+                >
+                  {reviewSubmitting ? "Submitting…" : "Submit request"}
+                </button>
+              </form>
+              {reviewRequests.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-[11px] text-slate-500 uppercase">Your requests</p>
+                  <ul className="space-y-2 text-xs">
+                    {reviewRequests.map((r) => (
+                      <li
+                        key={r.id}
+                        className="border border-slate-800 rounded p-2 bg-slate-900/40"
+                      >
+                        <div className="flex justify-between gap-2">
+                          <span className="text-slate-200">{r.subject}</span>
+                          <span className="text-slate-500 shrink-0">{r.status}</span>
+                        </div>
+                        <p className="text-slate-500 mt-1 line-clamp-2">{r.body}</p>
+                        {r.admin_response_org_visible && (
+                          <p className="text-slate-400 mt-2 border-t border-slate-800 pt-2">
+                            <span className="text-slate-500">Response: </span>
+                            {r.admin_response_org_visible}
+                          </p>
+                        )}
+                        {(r.status === "pending" || r.status === "in_review") && (
+                          <button
+                            type="button"
+                            onClick={() => withdrawReview(r.id)}
+                            className="text-red-400 hover:text-red-300 mt-1"
+                          >
+                            Withdraw
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-slate-200">
+              Organization profile (matching / grading)
+            </h2>
+            {profile?.profile_last_updated_at && (
+              <span className="text-xs text-slate-500">
+                Last updated {formatDate(profile.profile_last_updated_at)}
+              </span>
+            )}
+          </div>
+          {!canEditProfile && myOrgRole && (
+            <p className="text-xs text-amber-200/90">
+              Your role ({myOrgRole}) can view this profile. Only org admin or supervisor can
+              edit.
+            </p>
+          )}
+          {profileLoading ? (
+            <p className="text-sm text-slate-400">Loading profile…</p>
+          ) : !profile ? (
+            <p className="text-sm text-slate-400">No profile data.</p>
+          ) : (
+            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
+              {profileMsg && (
+                <p
+                  className={
+                    profileMsg.includes("saved")
+                      ? "text-emerald-400"
+                      : "text-amber-200"
+                  }
+                >
+                  {profileMsg}
+                </p>
+              )}
+              <div>
+                <p className="text-slate-400 mb-2">Service types</p>
+                <div className="flex flex-wrap gap-2">
+                  {SERVICE_TYPE_OPTIONS.map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!canEditProfile}
+                        checked={serviceTypes.includes(opt)}
+                        onChange={() => toggleInSet(serviceTypes, opt, setServiceTypes)}
+                        className="rounded border-slate-600"
+                      />
+                      {opt.replace(/_/g, " ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-400 mb-2">Languages (ISO-style, e.g. en, es)</p>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {QUICK_LANG.map((code) => (
+                    <label
+                      key={code}
+                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!canEditProfile}
+                        checked={languagesQuick.includes(code)}
+                        onChange={() =>
+                          toggleInSet(languagesQuick, code, setLanguagesQuick)
+                        }
+                        className="rounded border-slate-600"
+                      />
+                      {code}
+                    </label>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  disabled={!canEditProfile}
+                  placeholder="Other codes, comma-separated (e.g. pt, ht)"
+                  value={languagesExtra}
+                  onChange={(e) => setLanguagesExtra(e.target.value)}
+                  className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                />
+              </div>
+              <div>
+                <p className="text-slate-400 mb-2">Intake methods</p>
+                <div className="flex flex-wrap gap-2">
+                  {INTAKE_METHOD_OPTIONS.map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!canEditProfile}
+                        checked={intakeMethods.includes(opt)}
+                        onChange={() => toggleInSet(intakeMethods, opt, setIntakeMethods)}
+                        className="rounded border-slate-600"
+                      />
+                      {opt.replace(/_/g, " ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-6 items-center">
+                <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    disabled={!canEditProfile}
+                    checked={acceptingClients}
+                    onChange={(e) => setAcceptingClients(e.target.checked)}
+                    className="rounded border-slate-600"
+                  />
+                  Accepting clients
+                </label>
+                <label className="flex items-center gap-2 text-slate-300">
+                  Capacity
+                  <select
+                    disabled={!canEditProfile}
+                    value={capacityStatus}
+                    onChange={(e) => setCapacityStatus(e.target.value)}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                  >
+                    {CAPACITY_STATUS_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex items-center gap-2 text-slate-300">
+                  Avg response (hours)
+                  <input
+                    type="number"
+                    min={0}
+                    max={8760}
+                    disabled={!canEditProfile}
+                    placeholder="—"
+                    value={avgResponse}
+                    onChange={(e) => setAvgResponse(e.target.value)}
+                    className="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-slate-300">
+                  Profile status
+                  <select
+                    disabled={!canEditProfile}
+                    value={profileStatus}
+                    onChange={(e) => setProfileStatus(e.target.value)}
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                  >
+                    {PROFILE_STATUS_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div>
+                <p className="text-slate-400 mb-2">Special populations</p>
+                <div className="flex flex-wrap gap-2">
+                  {SPECIAL_POPULATION_OPTIONS.map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!canEditProfile}
+                        checked={specialPops.includes(opt)}
+                        onChange={() => toggleInSet(specialPops, opt, setSpecialPops)}
+                        className="rounded border-slate-600"
+                      />
+                      {opt.replace(/_/g, " ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-400 mb-2">Accessibility</p>
+                <div className="flex flex-wrap gap-2">
+                  {ACCESSIBILITY_FEATURE_OPTIONS.map((opt) => (
+                    <label
+                      key={opt}
+                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                    >
+                      <input
+                        type="checkbox"
+                        disabled={!canEditProfile}
+                        checked={accessibility.includes(opt)}
+                        onChange={() => toggleInSet(accessibility, opt, setAccessibility)}
+                        className="rounded border-slate-600"
+                      />
+                      {opt.replace(/_/g, " ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-slate-400 mb-1">Coverage area (JSON)</p>
+                  <textarea
+                    disabled={!canEditProfile}
+                    value={coverageJson}
+                    onChange={(e) => setCoverageJson(e.target.value)}
+                    rows={6}
+                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                  />
+                </div>
+                <div>
+                  <p className="text-slate-400 mb-1">Hours (JSON)</p>
+                  <textarea
+                    disabled={!canEditProfile}
+                    value={hoursJson}
+                    onChange={(e) => setHoursJson(e.target.value)}
+                    rows={6}
+                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={!canEditProfile || profileSaving}
+                className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:opacity-40"
+              >
+                {profileSaving ? "Saving…" : "Save profile"}
+              </button>
+            </form>
+          )}
+        </section>
 
         {inviteUrl && (
           <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3 text-sm">

@@ -31,6 +31,8 @@ export type AuditAction =
   | "org.invite.accept"
   | "org.member.role_change"
   | "org.member.revoke"
+  | "org.profile_updated"
+  | "org.profile_status_changed"
   | "policy.create"
   | "policy.activate"
   | "policy.accept"
@@ -99,7 +101,20 @@ export type AuditAction =
   | "appointment.updated"
   | "appointment.cancelled"
   | "appointment.completed"
-  | "appointment.rescheduled";
+  | "appointment.rescheduled"
+  | "matching.run_started"
+  | "matching.run_completed"
+  | "matching.run_failed"
+  | "grading.run_started"
+  | "grading.run_completed"
+  | "grading.run_failed"
+  | "designation.run_started"
+  | "designation.run_completed"
+  | "designation.run_failed"
+  | "designation.review_submitted"
+  | "designation.review_resolved"
+  | "designation.review_withdrawn"
+  | "ecosystem.viewed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

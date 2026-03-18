@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { designationTierTrustLabel } from "@/lib/matchingTrustLabels";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -144,9 +145,34 @@ export default function CaseDetailPage() {
   const [completenessLoading, setCompletenessLoading] = useState(false);
   const [completenessRunAt, setCompletenessRunAt] = useState<string | null>(null);
 
+  type OrgMatchRow = {
+    organization_id: string;
+    organization_name: string;
+    match_score: number;
+    match_tier: string;
+    reasons: string[];
+    flags: string[];
+    service_overlap: string[];
+    language_match: boolean;
+    capacity_signal: string | null;
+    strong_match: boolean;
+    possible_match: boolean;
+    limited_match: boolean;
+    designation_tier: string | null;
+    designation_confidence: string | null;
+    designation_summary: string | null;
+    designation_influenced_match: boolean;
+    designation_reason: string | null;
+  };
+  const [orgMatches, setOrgMatches] = useState<OrgMatchRow[]>([]);
+  const [orgMatchGlobalFlags, setOrgMatchGlobalFlags] = useState<string[]>([]);
+  const [orgMatchRunAt, setOrgMatchRunAt] = useState<string | null>(null);
+  const [orgMatchingRunLoading, setOrgMatchingRunLoading] = useState(false);
+
   const canViewNotes = caseAccess && caseAccess.role !== "owner";
   const canAmendIntake = caseAccess?.can_edit && caseAccess.role !== "owner";
   const canRunRouting = caseAccess?.can_edit && caseAccess.role !== "owner";
+  const canRunOrgMatching = canRunRouting;
   const canRunCompleteness = caseAccess?.can_edit && caseAccess.role !== "owner";
   const canRunOcr = caseAccess?.can_edit && caseAccess.role !== "owner";
 
@@ -273,6 +299,21 @@ export default function CaseDetailPage() {
           setCompletenessResult(null);
           setCompletenessRunAt(null);
         }
+
+        const matchRes = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (matchRes.ok) {
+          const mJson = await matchRes.json();
+          const d = mJson.data ?? mJson;
+          setOrgMatches(Array.isArray(d.matches) ? d.matches : []);
+          setOrgMatchGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
+          setOrgMatchRunAt(d.created_at ?? null);
+        } else {
+          setOrgMatches([]);
+          setOrgMatchGlobalFlags([]);
+          setOrgMatchRunAt(null);
+        }
       } catch (err) {
         console.error("Failed to load case from API", err);
         setLoadedCase(null);
@@ -281,6 +322,9 @@ export default function CaseDetailPage() {
         setNotes([]);
         setRoutingResult(null);
         setCompletenessResult(null);
+        setOrgMatches([]);
+        setOrgMatchGlobalFlags([]);
+        setOrgMatchRunAt(null);
       } finally {
         setLoading(false);
       }
@@ -909,6 +953,50 @@ export default function CaseDetailPage() {
                 {completenessLoading ? "Evaluating…" : "Evaluate completeness"}
               </button>
             )}
+            {canRunOrgMatching && (
+              <button
+                type="button"
+                disabled={orgMatchingRunLoading}
+                onClick={async () => {
+                  if (!caseId) return;
+                  setOrgMatchingRunLoading(true);
+                  try {
+                    const { data: sessionData } = await supabase.auth.getSession();
+                    const token = sessionData.session?.access_token;
+                    const res = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                      },
+                      body: JSON.stringify({}),
+                    });
+                    if (res.ok) {
+                      const json = await res.json();
+                      const d = json.data ?? json;
+                      setOrgMatches(Array.isArray(d.matches) ? d.matches : []);
+                      setOrgMatchGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
+                      setOrgMatchRunAt(new Date().toISOString());
+                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                      });
+                      if (timelineRes.ok) {
+                        const tJson = await timelineRes.json();
+                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                      }
+                    } else {
+                      const err = await res.json().catch(() => ({}));
+                      alert(err?.error?.message ?? "Organization matching failed");
+                    }
+                  } finally {
+                    setOrgMatchingRunLoading(false);
+                  }
+                }}
+                className="inline-flex items-center rounded-lg border border-violet-500/60 bg-violet-500/20 px-3 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/30 disabled:opacity-50 transition"
+              >
+                {orgMatchingRunLoading ? "Matching…" : "Find matching organizations"}
+              </button>
+            )}
           </div>
         </header>
 
@@ -1152,6 +1240,126 @@ export default function CaseDetailPage() {
                           ))}
                         </ul>
                       </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {/* Phase B: Recommended organizations */}
+        {(orgMatches.length > 0 || orgMatchGlobalFlags.length > 0 || canRunOrgMatching) && (
+          <section className="bg-slate-900/70 border border-violet-900/40 rounded-2xl p-5 text-xs space-y-3">
+            <h2 className="text-sm font-semibold text-slate-50">Recommended organizations</h2>
+            <p className="text-slate-400 text-[11px]">
+              Based on this application&apos;s needs — not rankings or public ratings. Confirm fit directly
+              with each organization.{" "}
+              <a
+                href="/help/how-matching-works"
+                className="text-violet-300 hover:underline"
+                target="_blank"
+                rel="noreferrer"
+              >
+                How recommendations work
+              </a>
+            </p>
+            {orgMatchRunAt && (
+              <p className="text-[11px] text-slate-500">Last run: {formatDate(orgMatchRunAt)}</p>
+            )}
+            {orgMatchGlobalFlags.map((f, i) => (
+              <p key={i} className="text-amber-200/90 text-[11px]">
+                {f}
+              </p>
+            ))}
+            {orgMatches.length === 0 && !orgMatchGlobalFlags.length && canRunOrgMatching && (
+              <p className="text-slate-400">
+                Use &quot;Find matching organizations&quot; above to suggest organizations that may help with
+                this case.
+              </p>
+            )}
+            {orgMatches.length > 0 && (
+              <ul className="divide-y divide-slate-800 space-y-3">
+                {orgMatches.map((m) => (
+                  <li key={m.organization_id} className="pt-3 first:pt-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-slate-100">{m.organization_name}</span>
+                      {m.strong_match && (
+                        <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-[10px]">
+                          Good fit
+                        </span>
+                      )}
+                      {m.possible_match && !m.strong_match && (
+                        <span className="rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 text-[10px]">
+                          Possible fit
+                        </span>
+                      )}
+                      {m.limited_match && (
+                        <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 text-[10px]">
+                          Tentative
+                        </span>
+                      )}
+                      {m.language_match && (
+                        <span className="text-[10px] text-slate-400 border border-slate-600 rounded px-1.5 py-0.5">
+                          Language
+                        </span>
+                      )}
+                      {m.capacity_signal && (
+                        <span className="text-[10px] text-slate-400 border border-slate-600 rounded px-1.5 py-0.5">
+                          {m.capacity_signal === "accepting"
+                            ? "Accepting clients"
+                            : m.capacity_signal}
+                        </span>
+                      )}
+                      {designationTierTrustLabel(m.designation_tier) && (
+                        <span
+                          className="text-[10px] text-slate-500 border border-slate-600/80 rounded px-1.5 py-0.5"
+                          title="Platform readiness context — not a ranking"
+                        >
+                          {designationTierTrustLabel(m.designation_tier)}
+                        </span>
+                      )}
+                    </div>
+                    {m.designation_summary && (
+                      <p className="text-slate-500 text-[10px] mt-1 line-clamp-2 max-w-xl">
+                        {m.designation_summary}
+                      </p>
+                    )}
+                    {m.designation_reason && (
+                      <p className="text-slate-400 text-[11px] mt-1 max-w-xl">{m.designation_reason}</p>
+                    )}
+                    {(m.designation_influenced_match ||
+                      designationTierTrustLabel(m.designation_tier)) && (
+                      <p className="text-[10px] mt-0.5">
+                        <a
+                          href="/help/how-designations-work"
+                          className="text-violet-400/90 hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          How designation is used
+                        </a>
+                      </p>
+                    )}
+                    {m.service_overlap.length > 0 && (
+                      <p className="text-slate-400 mt-1">
+                        <span className="text-slate-500">Services aligned:</span>{" "}
+                        {m.service_overlap.map((s) => s.replace(/_/g, " ")).join(", ")}
+                      </p>
+                    )}
+                    {m.reasons.length > 0 && (
+                      <ul className="list-disc list-inside text-slate-300 mt-1.5 space-y-0.5">
+                        {m.reasons.slice(0, 6).map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {m.flags.length > 0 && (
+                      <ul className="mt-1.5 text-amber-200/80 text-[11px] list-disc list-inside">
+                        {m.flags.slice(0, 4).map((f, i) => (
+                          <li key={i}>{f}</li>
+                        ))}
+                      </ul>
                     )}
                   </li>
                 ))}

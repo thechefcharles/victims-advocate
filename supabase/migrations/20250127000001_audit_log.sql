@@ -33,14 +33,8 @@ create policy "Service role can insert audit_log"
   on public.audit_log for insert
   with check (auth.role() = 'service_role');
 
--- Select: admin-only for Phase 1. Phase 2 will add org-scoped read.
-create policy "Admin can read audit_log"
-  on public.audit_log for select
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and is_admin = true
-    )
-  );
+-- Select: no policy for authenticated/anon = they cannot read audit_log via PostgREST.
+-- Admin UI uses the server (service_role), which bypasses RLS. Avoids requiring public.profiles
+-- to exist before this migration runs.
 
 -- Auth signup is logged via API (POST /api/audit/log-auth-event) after client signup.

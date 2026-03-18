@@ -6,10 +6,15 @@ export const en: I18nDict = {
      NAV / COMMON
   ========================== */
   nav: {
+    dashboard: "Dashboard",
     dashboardVictim: "My cases",
     dashboardAdvocate: "My clients",
     login: "Log in",
     logout: "Log out",
+    myAccount: "My account",
+    accountPlaceholderTitle: "Account",
+    accountPlaceholderBody:
+      "More account settings and preferences will be available here soon.",
     language: "Language",
     brandTagline: "Victim Support · Made Simple",
   },

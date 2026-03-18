@@ -153,10 +153,10 @@ export default function ClientCasesPage() {
             </button>
 
             <Link
-              href="/dashboard"
-              className="text-[11px] text-slate-300 hover:text-slate-100"
+              href="/dashboard/clients"
+              className="text-[11px] text-teal-300/90 hover:text-teal-200"
             >
-              ← Back
+              ← My clients
             </Link>
           </div>
         </div>
