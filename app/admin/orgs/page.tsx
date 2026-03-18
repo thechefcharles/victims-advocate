@@ -105,9 +105,9 @@ export default function AdminOrgsPage() {
             </Link>
             <Link
               href="/admin/grading"
-              className="text-sm text-violet-400 hover:text-violet-200"
+              className="inline-flex items-center rounded-lg border border-violet-500/50 bg-violet-600/25 px-3 py-1.5 text-sm font-semibold text-violet-100 hover:bg-violet-600/40"
             >
-              Grading
+              CBO grading
             </Link>
             <Link
               href="/admin/designations"
@@ -123,6 +123,19 @@ export default function AdminOrgsPage() {
             </Link>
           </div>
         </header>
+
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-900/40 bg-violet-950/30 px-4 py-3">
+          <p className="text-sm text-slate-300 flex-1 min-w-[200px]">
+            Run internal <strong className="text-violet-200">CBO quality grading</strong> per org
+            (scores stay admin-only; designations use this behind the scenes).
+          </p>
+          <Link
+            href="/admin/grading"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 shadow-sm"
+          >
+            Open CBO grading
+          </Link>
+        </div>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
           <h2 className="text-sm font-semibold text-slate-200 mb-3">

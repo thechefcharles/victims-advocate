@@ -1,5 +1,16 @@
 # Troubleshooting Admin Access
 
+## Default admin test accounts (after signup)
+
+Migration `20260319100000_promote_admin_users_by_email.sql` sets **`is_admin = true`** for:
+
+- `victimadmin@gmail.com` (profile role `victim`)
+- `advocateadmin@gmail.com` (profile role `advocate`)
+
+**Both accounts must exist in Authentication first** (sign up, verify email if required). Then run `supabase db push` / apply the migration, or run the SQL from that file in the Supabase SQL Editor.
+
+---
+
 ## Quick Check: Debug Endpoint
 
 **In your browser or via curl:**

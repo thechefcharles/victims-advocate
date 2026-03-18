@@ -130,6 +130,12 @@ export default function AdminUsersPage() {
             <Link href="/admin/ecosystem" className="hover:text-teal-400">
               Ecosystem →
             </Link>
+            <Link
+              href="/admin/grading"
+              className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35"
+            >
+              CBO grading
+            </Link>
           </div>
         </header>
 

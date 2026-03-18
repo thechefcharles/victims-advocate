@@ -145,6 +145,12 @@ export default function AdminEcosystemPage() {
             <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
               Organizations
             </Link>
+            <Link
+              href="/admin/grading"
+              className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35 text-sm"
+            >
+              CBO grading
+            </Link>
           </div>
         </header>
 

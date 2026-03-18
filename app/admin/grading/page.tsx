@@ -162,7 +162,7 @@ export default function AdminGradingPage() {
               not used in matching.
             </p>
           </div>
-          <div className="flex gap-3 text-sm">
+          <div className="flex flex-wrap gap-3 text-sm items-center">
             <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
               ← Orgs
             </Link>

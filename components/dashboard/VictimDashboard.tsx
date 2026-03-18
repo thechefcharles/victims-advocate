@@ -282,19 +282,20 @@ export default function VictimDashboard({
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            My cases
+    <main className="relative min-h-screen bg-[#0c1220] text-slate-50 px-6 py-10">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_80%_0%,rgba(99,102,241,0.06),transparent)] pointer-events-none max-w-[100vw]" />
+      <div className="relative max-w-3xl mx-auto space-y-6">
+        <header className="space-y-2 rounded-2xl border border-indigo-950/60 bg-slate-950/40 px-5 py-4">
+          <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/70 font-medium">
+            Survivor dashboard
           </p>
-          <h1 className="text-2xl font-semibold">Welcome</h1>
-          <p className="text-sm text-slate-300">
-            Signed in as <span className="font-medium">{email}</span>
+          <h1 className="text-2xl font-semibold text-slate-50">Your cases</h1>
+          <p className="text-sm text-slate-400">
+            Signed in as <span className="text-slate-200 font-medium">{email}</span>
           </p>
         </header>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
+        <section className="rounded-2xl border border-slate-700/80 bg-slate-950/70 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-slate-100">Quick actions</h2>
 
           <p className="text-[11px] text-slate-400">
