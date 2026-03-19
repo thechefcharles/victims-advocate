@@ -9,6 +9,19 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getCatalogProgramById } from "@/lib/catalog/loadCatalog";
 import { logger } from "@/lib/server/logging";
 
+function profileAffiliationFail(err: { message: string; code?: string }) {
+  const msg = err.message ?? "";
+  if (msg.includes("affiliated_catalog_entry_id")) {
+    return apiFail(
+      "INTERNAL",
+      "Database is missing the affiliation column. In Supabase, run migration 20260323000000_profiles_program_catalog.sql (adds profiles.affiliated_catalog_entry_id).",
+      { code: err.code, hint: msg },
+      500
+    );
+  }
+  return apiFail("INTERNAL", `Could not update profile: ${msg}`, { code: err.code }, 500);
+}
+
 export async function PATCH(req: Request) {
   try {
     const ctx = await getAuthContext(req);
@@ -37,17 +50,38 @@ export async function PATCH(req: Request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        affiliated_catalog_entry_id: catalogEntryId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", ctx.userId);
+    const payload = {
+      affiliated_catalog_entry_id: catalogEntryId,
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) {
-      logger.error("me.program_affiliation.update", { message: error.message });
-      return apiFail("INTERNAL", "Could not update profile", undefined, 500);
+    const { data: updatedRows, error: updateErr } = await supabase
+      .from("profiles")
+      .update(payload)
+      .eq("id", ctx.userId)
+      .select("id");
+
+    if (updateErr) {
+      logger.error("me.program_affiliation.update", { message: updateErr.message, code: updateErr.code });
+      return profileAffiliationFail(updateErr);
+    }
+
+    const touched = updatedRows && updatedRows.length > 0;
+    if (!touched) {
+      const role = ctx.realRole ?? ctx.role;
+      const { error: upsertErr } = await supabase.from("profiles").upsert(
+        {
+          id: ctx.userId,
+          role,
+          ...payload,
+        },
+        { onConflict: "id" }
+      );
+
+      if (upsertErr) {
+        logger.error("me.program_affiliation.upsert", { message: upsertErr.message, code: upsertErr.code });
+        return profileAffiliationFail(upsertErr);
+      }
     }
 
     return apiOk({ affiliatedCatalogEntryId: catalogEntryId });
