@@ -79,13 +79,11 @@ export default function LoginForm() {
           router.push("/verify-email");
           return;
         }
-        if (data.isAdmin) {
-          router.push("/dashboard");
-          return;
-        }
+        router.push("/dashboard");
+        return;
       }
 
-      router.push("/coming-soon");
+      router.push("/dashboard");
     } finally {
       setLoading(false);
     }
