@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 
 export default function HomePage() {
-  const { loading, user, isAdmin } = useAuth();
+  const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -68,21 +69,12 @@ export default function HomePage() {
             {loading ? (
               <span className="text-sm text-slate-400">Loading…</span>
             ) : user ? (
-              isAdmin ? (
-                <Link
-                  href="/compensation"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
-                >
-                  Go to MVP →
-                </Link>
-              ) : (
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
-                >
-                  My account
-                </Link>
-              )
+              <Link
+                href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
+              >
+                My account
+              </Link>
             ) : (
               <Link
                 href="/login"

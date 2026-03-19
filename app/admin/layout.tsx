@@ -1,9 +1,9 @@
-import { RequireAuth } from "@/components/auth/RequireAuth";
+import RequirePlatformAdmin from "@/components/auth/RequirePlatformAdmin";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <RequireAuth redirectTo="/login">{children}</RequireAuth>;
+  return <RequirePlatformAdmin>{children}</RequirePlatformAdmin>;
 }

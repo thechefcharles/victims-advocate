@@ -4,9 +4,10 @@ import Link from "next/link";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 
 export default function AccountPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, role, orgId, orgRole } = useAuth();
   const { t } = useI18n();
 
   return (
@@ -25,7 +26,7 @@ export default function AccountPage() {
           </div>
           <p className="text-sm text-slate-400 leading-relaxed">{t("nav.accountPlaceholderBody")}</p>
           <Link
-            href={isAdmin ? "/admin/cases" : "/dashboard"}
+            href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
             className="inline-block text-sm text-teal-400 hover:text-teal-300"
           >
             ← Dashboard

@@ -10,9 +10,14 @@ import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
+
 export default function TopNav() {
   const router = useRouter();
-  const { loading, user, accessToken, isAdmin } = useAuth();
+  const { loading, user, accessToken, isAdmin, role, orgId, orgRole } = useAuth();
+  const dashboardHref = user
+    ? getDashboardPath({ isAdmin, orgId, orgRole, role })
+    : "/login";
   const { lang, setLang, t } = useI18n();
   const [unreadCount, setUnreadCount] = useState<number | null>(null);
   const { strictPreviews, settings } = useSafetySettings(accessToken);
@@ -150,7 +155,7 @@ export default function TopNav() {
           ) : user ? (
             <>
               <Link
-                href={isAdmin ? "/admin/cases" : "/dashboard"}
+                href={dashboardHref}
                 className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
               >
                 {t("nav.dashboard")}
