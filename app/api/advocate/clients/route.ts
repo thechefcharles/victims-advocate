@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/auth";
 import { apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
@@ -24,6 +25,7 @@ export async function GET(req: Request) {
     // PHASE 1: call logEvent(...) here
 
     const cases = await listCasesForUser({ ctx, filters: { role: "advocate" } });
+    const supabase = getSupabaseAdmin();
 
     const byOwner = new Map<
       string,
@@ -64,6 +66,41 @@ export async function GET(req: Request) {
           existing.display_name = displayName;
         }
       }
+    }
+
+    // Include victims from accepted connection requests (even without a case)
+    const { data: connections } = await supabase
+      .from("advocate_connection_requests")
+      .select("victim_user_id, updated_at")
+      .eq("advocate_user_id", ctx.userId)
+      .eq("status", "accepted");
+
+    const victimIdsToFetch = (connections ?? [])
+      .map((r) => r.victim_user_id)
+      .filter((id) => !byOwner.has(id));
+    const victimEmails = new Map<string, string>();
+
+    if (victimIdsToFetch.length > 0) {
+      const { data: usersPage } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      for (const u of usersPage?.users ?? []) {
+        if (u.id && victimIdsToFetch.includes(u.id)) {
+          victimEmails.set(u.id, u.email ?? "Unknown");
+        }
+      }
+    }
+
+    for (const conn of connections ?? []) {
+      const victimId = conn.victim_user_id;
+      if (byOwner.has(victimId)) continue;
+      const email = victimEmails.get(victimId) ?? "Client";
+      const updatedAt = conn.updated_at ?? new Date().toISOString();
+      byOwner.set(victimId, {
+        client_user_id: victimId,
+        latest_case_id: "",
+        latest_case_created_at: updatedAt,
+        case_count: 0,
+        display_name: email,
+      });
     }
 
     const clients = Array.from(byOwner.values()).sort((a, b) =>

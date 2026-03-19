@@ -134,6 +134,13 @@ export default function TopNav() {
             </select>
           </label>
 
+          <Link
+            href="/compensation"
+            className="rounded-full border border-slate-600 px-3 py-1.5 hover:bg-slate-900/60"
+          >
+            Home
+          </Link>
+
           {loading ? (
             <span className="text-[11px] text-slate-400">{t("common.loading")}</span>
           ) : user ? (

@@ -49,12 +49,20 @@ export default function AdvocateDashboard({
         <section id="clients" className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <h2 className="text-lg font-semibold text-teal-100">My clients</h2>
-            <Link
-              href="/dashboard/clients"
-              className="text-[11px] text-teal-400/80 hover:text-teal-300"
-            >
-              Full-page view →
-            </Link>
+            <div className="flex gap-3">
+              <Link
+                href="/advocate/connection-requests"
+                className="text-[11px] text-teal-400/80 hover:text-teal-300"
+              >
+                Connection requests →
+              </Link>
+              <Link
+                href="/dashboard/clients"
+                className="text-[11px] text-teal-400/80 hover:text-teal-300"
+              >
+                Full-page view →
+              </Link>
+            </div>
           </div>
           <AdvocateClientsList email={email} token={token} hideSignedInLine />
         </section>
