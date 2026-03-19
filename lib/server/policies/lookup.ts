@@ -8,14 +8,24 @@ import type { PolicyDocumentRow, PolicyDocType } from "./types";
 
 export type GetActivePolicyParams = {
   docType: PolicyDocType;
-  role?: "victim" | "advocate" | "admin" | null;
+  /** Organization accounts use the same policy rows as advocates unless org-specific rows exist. */
+  role?: "victim" | "advocate" | "admin" | "organization" | null;
   workflowKey?: string | null;
 };
+
+function policyLookupRole(
+  role: GetActivePolicyParams["role"]
+): "victim" | "advocate" | "admin" | null {
+  if (role === "organization") return "advocate";
+  if (role === "victim" || role === "advocate" || role === "admin") return role;
+  return null;
+}
 
 export async function getActivePolicyDocument(
   params: GetActivePolicyParams
 ): Promise<PolicyDocumentRow | null> {
   const { docType, role = null, workflowKey = null } = params;
+  const lookupRole = policyLookupRole(role);
   const supabase = getSupabaseAdmin();
 
   let query = supabase
@@ -24,8 +34,8 @@ export async function getActivePolicyDocument(
     .eq("doc_type", docType)
     .eq("is_active", true);
 
-  if (role != null) {
-    query = query.or(`applies_to_role.eq.${role},applies_to_role.is.null`);
+  if (lookupRole != null) {
+    query = query.or(`applies_to_role.eq.${lookupRole},applies_to_role.is.null`);
   } else {
     query = query.is("applies_to_role", null);
   }
@@ -54,10 +64,10 @@ export type RequiredPolicySpec = {
 
 /** For signup/general: terms + privacy. For AI: ai_disclaimer. For compensation: non_legal_advice (workflow_key). */
 export function getRequiredPoliciesForUser(params: {
-  role: "victim" | "advocate";
+  role: "victim" | "advocate" | "organization";
   workflowKey?: string | null;
 }): RequiredPolicySpec[] {
-  const { role, workflowKey } = params;
+  const { workflowKey } = params;
   const base: RequiredPolicySpec[] = [
     { docType: "terms_of_use" },
     { docType: "privacy_policy" },
@@ -79,7 +89,7 @@ export async function hasAcceptedActivePolicy(params: {
   const { userId, docType, role, workflowKey } = params;
   const policy = await getActivePolicyDocument({
     docType,
-    role: role as "victim" | "advocate" | "admin" | undefined,
+    role: role as GetActivePolicyParams["role"],
     workflowKey,
   });
   if (!policy) return true;
@@ -97,7 +107,7 @@ export async function hasAcceptedActivePolicy(params: {
 
 export async function getMissingAcceptances(params: {
   userId: string;
-  role: "victim" | "advocate";
+  role: "victim" | "advocate" | "organization";
   workflowKey?: string | null;
 }): Promise<PolicyDocumentRow[]> {
   const { userId, role, workflowKey } = params;

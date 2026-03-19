@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
-import { getDashboardPath } from "@/lib/dashboardRoutes";
+import { getDashboardPath, mapApiRoleToDashboard } from "@/lib/dashboardRoutes";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -66,6 +66,13 @@ export default function LoginForm() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
+      if (token) {
+        await fetch("/api/me/sync-profile-role", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+
       const meRes = await fetch("/api/me", {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -84,7 +91,7 @@ export default function LoginForm() {
           isAdmin: data.isAdmin === true,
           orgId: data.orgId ?? null,
           orgRole: data.orgRole ?? null,
-          role: data.role === "advocate" ? "advocate" : "victim",
+          role: mapApiRoleToDashboard(data.role),
         });
         router.push(next);
         return;

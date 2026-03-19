@@ -92,7 +92,8 @@ export async function sendMessage(params: {
     caseId: conversation.case_id,
     organizationId: conversation.organization_id,
     senderId: ctx.userId,
-    senderRole: ctx.role === "advocate" ? "advocate" : "victim",
+    senderRole:
+      ctx.role === "advocate" || ctx.role === "organization" ? "advocate" : "victim",
     ctx,
   });
 
