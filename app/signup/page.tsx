@@ -269,6 +269,14 @@ export default function SignupPage() {
         </div>
 
         <p className="text-center text-sm text-slate-400">
+          Registering an agency?{" "}
+          <Link href="/signup/organization" className="underline hover:text-slate-200">
+            Create an organization
+          </Link>{" "}
+          (after you sign in).
+        </p>
+
+        <p className="text-center text-sm text-slate-400">
           Already have an account?{" "}
           <Link href="/login" className="underline hover:text-slate-200">
             Sign in

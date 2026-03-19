@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -79,7 +80,13 @@ export default function LoginForm() {
           router.push("/verify-email");
           return;
         }
-        router.push("/dashboard");
+        const next = getDashboardPath({
+          isAdmin: data.isAdmin === true,
+          orgId: data.orgId ?? null,
+          orgRole: data.orgRole ?? null,
+          role: data.role === "advocate" ? "advocate" : "victim",
+        });
+        router.push(next);
         return;
       }
 

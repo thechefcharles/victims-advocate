@@ -1,15 +1,24 @@
-// app/dashboard/page.tsx
+// app/dashboard/page.tsx — routes everyone to the correct role dashboard
 "use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
-import VictimDashboard from "@/components/dashboard/VictimDashboard";
-import AdvocateDashboard from "@/components/dashboard/AdvocateDashboard";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 
-export default function DashboardPage() {
+export default function DashboardRouterPage() {
   const router = useRouter();
-  const { loading, user, role, accessToken, emailVerified, accountStatus } = useAuth();
+  const {
+    loading,
+    user,
+    accessToken,
+    emailVerified,
+    accountStatus,
+    isAdmin,
+    role,
+    orgId,
+    orgRole,
+  } = useAuth();
   const [consentChecked, setConsentChecked] = useState(false);
 
   useEffect(() => {
@@ -46,11 +55,20 @@ export default function DashboardPage() {
       setConsentChecked(true);
       if (needsTermsOrPrivacy) {
         router.replace("/consent?redirect=/dashboard");
+        return;
       }
     };
 
     check();
   }, [loading, user, accessToken, consentChecked, router]);
+
+  useEffect(() => {
+    if (loading || !user || !consentChecked || !emailVerified || accountStatus !== "active") return;
+    const path = getDashboardPath({ isAdmin, orgId, orgRole, role });
+    if (path !== "/dashboard") {
+      router.replace(path);
+    }
+  }, [loading, user, consentChecked, emailVerified, accountStatus, isAdmin, orgId, orgRole, role, router]);
 
   if (loading || !consentChecked) {
     return (
@@ -60,23 +78,17 @@ export default function DashboardPage() {
     );
   }
 
-  // 2) boot complete but not authed → show redirect state (don’t return null)
   if (!user) {
     return (
       <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-[11px] text-slate-400">
-          Redirecting to login…
-        </div>
+        <div className="max-w-xl mx-auto text-[11px] text-slate-400">Redirecting…</div>
       </main>
     );
   }
 
-  const email = user.email ?? null;
-  const token = accessToken ?? null; // keep explicit
-
-  return role === "advocate" ? (
-    <AdvocateDashboard email={email} userId={user.id} token={token} />
-  ) : (
-    <VictimDashboard email={email} userId={user.id} token={token} />
+  return (
+    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <div className="max-w-xl mx-auto text-sm text-slate-400">Redirecting to your dashboard…</div>
+    </main>
   );
 }

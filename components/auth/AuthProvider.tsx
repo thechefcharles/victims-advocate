@@ -13,6 +13,8 @@ import { supabase } from "@/lib/supabaseClient";
 
 export type ProfileRole = "victim" | "advocate";
 
+export type OrgRole = "staff" | "supervisor" | "org_admin" | null;
+
 export type AccountStatus = "active" | "disabled" | "deleted";
 
 type AuthState = {
@@ -24,6 +26,9 @@ type AuthState = {
   /** For admins: underlying profile role when using "view as". */
   realRole: ProfileRole | null;
   isAdmin: boolean;
+  /** Active org membership (one org per user in current schema). */
+  orgId: string | null;
+  orgRole: OrgRole;
   emailVerified: boolean;
   accountStatus: AccountStatus;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
@@ -39,6 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [roleFromApi, setRoleFromApi] = useState<ProfileRole | null>(null);
   const [realRoleFromApi, setRealRoleFromApi] = useState<ProfileRole | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [orgRole, setOrgRole] = useState<OrgRole>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
 
@@ -62,6 +69,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         if (typeof data?.emailVerified === "boolean") setEmailVerified(data.emailVerified);
         if (data?.accountStatus) setAccountStatus(data.accountStatus);
+        setIsAdmin(data?.isAdmin === true);
+        setOrgId(typeof data?.orgId === "string" ? data.orgId : null);
+        const or = data?.orgRole;
+        setOrgRole(
+          or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
+        );
       }
     } catch {
       setRoleFromApi(null);
@@ -86,6 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
             if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
             if (d?.accountStatus) setAccountStatus(d.accountStatus);
+            setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
+            const or = d?.orgRole;
+            setOrgRole(
+              or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
+            );
           }
         } catch {
           // keep role from metadata
@@ -114,6 +132,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const d = json?.data ?? json;
             if (d?.role === "victim" || d?.role === "advocate") setRoleFromApi(d.role);
             if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
+            if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
+            if (d?.accountStatus) setAccountStatus(d.accountStatus);
+            setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
+            const or = d?.orgRole;
+            setOrgRole(
+              or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
+            );
           }
         } catch {
           setRoleFromApi(null);
@@ -122,6 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setRoleFromApi(null);
         setRealRoleFromApi(null);
+        setOrgId(null);
+        setOrgRole(null);
       }
       setLoading(false);
     });
@@ -139,6 +166,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const uid = sess?.user?.id;
     if (!uid) {
       setIsAdmin(false);
+      setOrgId(null);
+      setOrgRole(null);
       setAccountStatus("active");
       return;
     }
@@ -203,11 +232,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       realRole: realRoleFromApi ?? roleFromMetadata,
       isAdmin,
+      orgId,
+      orgRole,
       emailVerified,
       accountStatus,
       refetchMe,
     };
-  }, [loading, session, role, realRoleFromApi, roleFromMetadata, isAdmin, emailVerified, accountStatus, refetchMe]);
+  }, [
+    loading,
+    session,
+    role,
+    realRoleFromApi,
+    roleFromMetadata,
+    isAdmin,
+    orgId,
+    orgRole,
+    emailVerified,
+    accountStatus,
+    refetchMe,
+  ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
