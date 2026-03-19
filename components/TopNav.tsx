@@ -52,7 +52,11 @@ export default function TopNav() {
         if (!res.ok) return;
         const json = await res.json();
         if (!cancelled) {
-          const items = Array.isArray(json.notifications) ? json.notifications : [];
+          const items = Array.isArray(json.data?.notifications)
+            ? json.data.notifications
+            : Array.isArray(json.notifications)
+              ? json.notifications
+              : [];
           setUnreadCount(items.length);
         }
       } catch {
