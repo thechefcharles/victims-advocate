@@ -26,44 +26,7 @@ export async function checkLoginLockout(params: {
   email: string | null;
   ip?: string | null;
 }): Promise<LockoutResult> {
-  const supabase = getSupabaseAdmin();
-  const email = params.email?.trim().toLowerCase() || null;
-  const ip = params.ip != null ? parseInet(String(params.ip)) : null;
-
-  const now = new Date();
-
-  if (email) {
-    const { data: row } = await supabase
-      .from("auth_rate_limits")
-      .select("locked_until")
-      .eq("email", email)
-      .eq("action", ACTION_LOGIN)
-      .not("locked_until", "is", null)
-      .gt("locked_until", now.toISOString())
-      .limit(1)
-      .maybeSingle();
-
-    if (row?.locked_until) {
-      return { locked: true, lockedUntil: row.locked_until };
-    }
-  }
-
-  if (ip) {
-    const { data: row } = await supabase
-      .from("auth_rate_limits")
-      .select("locked_until")
-      .eq("ip", ip)
-      .eq("action", ACTION_LOGIN)
-      .not("locked_until", "is", null)
-      .gt("locked_until", now.toISOString())
-      .limit(1)
-      .maybeSingle();
-
-    if (row?.locked_until) {
-      return { locked: true, lockedUntil: row.locked_until };
-    }
-  }
-
+  // Lockout disabled for non-admins (prototype phase). Admins are not rate-limited.
   return { locked: false, lockedUntil: null };
 }
 
@@ -93,8 +56,9 @@ async function upsertAndIncrement(params: {
     const isNewWindow = now.getTime() - windowStart.getTime() > windowMs;
     const failureCount = isNewWindow ? 1 : (row?.failure_count ?? 0) + 1;
     const newWindowStart = isNewWindow ? now : windowStart;
-    const locked = failureCount >= MAX_FAILURES;
-    const lockedUntil = locked ? new Date(now.getTime() + lockoutMs).toISOString() : null;
+    // Lockout disabled for non-admins (prototype phase). Never set locked_until.
+    const locked = false;
+    const lockedUntil = null;
 
     const payload = {
       email: key === "email" ? params.email : null,
