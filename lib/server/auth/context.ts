@@ -8,7 +8,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { config } from "@/lib/config";
 import { AppError } from "@/lib/server/api";
 
-export type ProfileRole = "victim" | "advocate";
+export type ProfileRole = "victim" | "advocate" | "organization";
 
 export type OrgRole = "staff" | "supervisor" | "org_admin";
 
@@ -55,7 +55,13 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     // Profile may not exist for new users; treat as victim
   }
 
-  const role = (profile?.role === "advocate" ? "advocate" : "victim") as ProfileRole;
+  const rawRole = profile?.role;
+  const role: ProfileRole =
+    rawRole === "advocate"
+      ? "advocate"
+      : rawRole === "organization"
+        ? "organization"
+        : "victim";
   const isAdmin = Boolean(profile?.is_admin);
 
   const rawStatus = profile?.account_status;

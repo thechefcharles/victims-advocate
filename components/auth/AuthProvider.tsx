@@ -11,7 +11,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
-export type ProfileRole = "victim" | "advocate";
+export type ProfileRole = "victim" | "advocate" | "organization";
 
 export type OrgRole = "staff" | "supervisor" | "org_admin" | null;
 
@@ -61,10 +61,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (res.ok) {
         const json = await res.json();
         const data = json?.data ?? json;
-        if (data?.role === "victim" || data?.role === "advocate") {
+        if (
+          data?.role === "victim" ||
+          data?.role === "advocate" ||
+          data?.role === "organization"
+        ) {
           setRoleFromApi(data.role);
         }
-        if (data?.realRole === "victim" || data?.realRole === "advocate") {
+        if (
+          data?.realRole === "victim" ||
+          data?.realRole === "advocate" ||
+          data?.realRole === "organization"
+        ) {
           setRealRoleFromApi(data.realRole);
         }
         if (typeof data?.emailVerified === "boolean") setEmailVerified(data.emailVerified);
@@ -95,8 +103,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const json = await res.json();
             const d = json?.data ?? json;
-            if (d?.role === "victim" || d?.role === "advocate") setRoleFromApi(d.role);
-            if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
+            if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization")
+              setRoleFromApi(d.role);
+            if (
+              d?.realRole === "victim" ||
+              d?.realRole === "advocate" ||
+              d?.realRole === "organization"
+            )
+              setRealRoleFromApi(d.realRole);
             if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
             if (d?.accountStatus) setAccountStatus(d.accountStatus);
             setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
@@ -130,8 +144,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const json = await res.json();
             const d = json?.data ?? json;
-            if (d?.role === "victim" || d?.role === "advocate") setRoleFromApi(d.role);
-            if (d?.realRole === "victim" || d?.realRole === "advocate") setRealRoleFromApi(d.realRole);
+            if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization")
+              setRoleFromApi(d.role);
+            if (
+              d?.realRole === "victim" ||
+              d?.realRole === "advocate" ||
+              d?.realRole === "organization"
+            )
+              setRealRoleFromApi(d.realRole);
             if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
             if (d?.accountStatus) setAccountStatus(d.accountStatus);
             setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
@@ -160,7 +180,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setEmailVerified(!!sess?.user?.email_confirmed_at);
 
     const metaRole = sess?.user?.user_metadata?.role;
-    setRoleFromMetadata(metaRole === "advocate" ? "advocate" : "victim");
+    if (metaRole === "advocate") setRoleFromMetadata("advocate");
+    else if (metaRole === "organization") setRoleFromMetadata("organization");
+    else setRoleFromMetadata("victim");
     setRoleFromApi(null);
 
     const uid = sess?.user?.id;

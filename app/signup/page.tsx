@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { logAuthEvent } from "@/lib/auditClient";
 
-type AccountType = "victim" | "advocate";
+type AccountType = "victim" | "advocate" | "organization";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -55,6 +55,11 @@ export default function SignupPage() {
       }
 
       await logAuthEvent("auth.signup", data.session.access_token);
+
+      await fetch("/api/me/sync-profile-role", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
 
       try {
         const activeRes = await fetch("/api/policies/active", {
@@ -113,30 +118,47 @@ export default function SignupPage() {
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <span className="text-[11px] text-slate-400 block">Account type *</span>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setAccountType("victim")}
-                  className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "victim"
                       ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
                       : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
                   }`}
                 >
-                  I am a victim
+                  Victim
                 </button>
                 <button
                   type="button"
                   onClick={() => setAccountType("advocate")}
-                  className={`flex-1 rounded-lg border px-4 py-2.5 text-sm font-medium transition ${
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "advocate"
                       ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
                       : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
                   }`}
                 >
-                  I am a victim advocate
+                  Advocate
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAccountType("organization")}
+                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
+                    accountType === "organization"
+                      ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
+                      : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                  }`}
+                >
+                  Organization
                 </button>
               </div>
+              <p className="text-[11px] text-slate-500">
+                {accountType === "victim" && "Personal tools and compensation guidance."}
+                {accountType === "advocate" && "Case tools for victim advocates."}
+                {accountType === "organization" &&
+                  "Agency dashboard, staff, and org-level tools after you register your organization."}
+              </p>
             </div>
 
             <label className="block space-y-1">
@@ -269,11 +291,10 @@ export default function SignupPage() {
         </div>
 
         <p className="text-center text-sm text-slate-400">
-          Registering an agency?{" "}
+          Already have an account and need to add your org?{" "}
           <Link href="/signup/organization" className="underline hover:text-slate-200">
-            Create an organization
-          </Link>{" "}
-          (after you sign in).
+            Register organization
+          </Link>
         </p>
 
         <p className="text-center text-sm text-slate-400">
