@@ -4,8 +4,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function CompensationPage() {
+  const { role } = useAuth();
   const router = useRouter();
   const [showStatePrompt, setShowStatePrompt] = useState(false);
 
@@ -97,6 +99,14 @@ export default function CompensationPage() {
             >
               Start guided intake
             </button>
+            {role === "victim" && (
+              <Link
+                href="/compensation/connect-advocate"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800/60 hover:border-emerald-500/50 transition"
+              >
+                Connect with an advocate
+              </Link>
+            )}
             <span className="text-[11px] text-slate-400">
               Approximate time: 15–25 minutes. You don&apos;t need every
               document ready to begin.

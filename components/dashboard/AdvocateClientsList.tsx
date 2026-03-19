@@ -79,7 +79,7 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
         <div>
           <h2 className="text-sm font-semibold text-teal-100">My clients</h2>
           <p className="text-[11px] text-teal-200/60 mt-0.5">
-            Cases where survivors have invited you
+            Survivors who have connected or invited you to their cases
           </p>
         </div>
         <button
@@ -104,7 +104,7 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
         <p className="text-[11px] text-red-300">{err}</p>
       ) : clients.length === 0 ? (
         <p className="text-[11px] text-teal-200/50">
-          No clients yet. A survivor must invite you to their case.
+          No clients yet. Survivors can connect with you from the compensation page, or invite you to their case.
         </p>
       ) : (
         <div className="grid gap-3">
@@ -118,10 +118,9 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
                 <div className="space-y-1">
                   <div className="text-xs font-semibold text-teal-50">{c.display_name}</div>
                   <div className="text-[11px] text-teal-200/55">
-                    {c.case_count} case(s) • Latest:{" "}
-                    {c.latest_case_created_at
-                      ? new Date(c.latest_case_created_at).toLocaleString()
-                      : "—"}
+                    {c.case_count === 0
+                      ? "Connected (no case yet)"
+                      : `${c.case_count} case(s) • Latest: ${c.latest_case_created_at ? new Date(c.latest_case_created_at).toLocaleString() : "—"}`}
                   </div>
                 </div>
                 <div className="text-[11px] text-teal-300/80">Open →</div>
