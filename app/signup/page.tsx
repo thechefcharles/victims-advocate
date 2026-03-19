@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { logAuthEvent } from "@/lib/auditClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
 
 type AccountType = "victim" | "advocate" | "organization";
 
@@ -15,6 +17,10 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [organization, setOrganization] = useState("");
+  /** Illinois Crime Victim Assistance directory id (organization signup – required). */
+  const [orgCatalogId, setOrgCatalogId] = useState<number | null>(null);
+  /** Advocate: optional affiliated program in the directory. */
+  const [advocateCatalogId, setAdvocateCatalogId] = useState<number | null>(null);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreeWaiver, setAgreeWaiver] = useState(false);
   const [agreePrototype, setAgreePrototype] = useState(false);
@@ -30,6 +36,11 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
+      if (accountType === "organization" && orgCatalogId == null) {
+        setErr("Please select your organization from the Illinois victim assistance directory.");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -38,6 +49,12 @@ export default function SignupPage() {
             role: accountType,
             organization:
               accountType === "advocate" ? organization.trim() || undefined : undefined,
+            ...(accountType === "organization" && orgCatalogId != null
+              ? { pending_org_catalog_entry_id: orgCatalogId }
+              : {}),
+            ...(accountType === "advocate" && advocateCatalogId != null
+              ? { affiliated_catalog_entry_id: advocateCatalogId }
+              : {}),
           },
         },
       });
@@ -49,7 +66,9 @@ export default function SignupPage() {
 
       if (!data.session) {
         setSuccess(
-          "Account created. Please check your email to confirm, then sign in."
+          accountType === "organization"
+            ? "Account created. Please check your email to confirm, then sign in—we’ll create your organization automatically on first sign-in."
+            : "Account created. Please check your email to confirm, then sign in."
         );
         return;
       }
@@ -84,6 +103,28 @@ export default function SignupPage() {
         }
       } catch {
         // Non-blocking
+      }
+
+      if (accountType === "organization" && orgCatalogId != null) {
+        const regRes = await fetch("/api/org/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${data.session.access_token}`,
+          },
+          body: JSON.stringify({ catalog_entry_id: orgCatalogId }),
+        });
+        const regJson = await regRes.json().catch(() => ({}));
+        if (!regRes.ok) {
+          setErr(
+            getApiErrorMessage(
+              regJson,
+              "Could not save your organization yet. Use the form on the next screen to try again."
+            )
+          );
+          router.replace("/organization/setup");
+          return;
+        }
       }
 
       router.push("/dashboard");
@@ -157,7 +198,7 @@ export default function SignupPage() {
                 {accountType === "victim" && "Personal tools and compensation guidance."}
                 {accountType === "advocate" && "Case tools for victim advocates."}
                 {accountType === "organization" &&
-                  "Agency dashboard, staff, and org-level tools after you register your organization."}
+                  "Your agency appears in the platform directory for admins. You’ll manage staff from the org dashboard."}
               </p>
             </div>
 
@@ -189,16 +230,40 @@ export default function SignupPage() {
             </label>
 
             {accountType === "advocate" && (
-              <label className="block space-y-1">
-                <span className="text-[11px] text-slate-400">Organization (optional)</span>
-                <input
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
-                  placeholder="e.g. Chicago Victim Support"
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                  type="text"
+              <div className="space-y-3">
+                <ProgramCatalogSelect
+                  id="advocate-program"
+                  label="Your Illinois victim assistance program (optional)"
+                  required={false}
+                  value={advocateCatalogId}
+                  onChange={(id) => setAdvocateCatalogId(id)}
                 />
-              </label>
+                <label className="block space-y-1">
+                  <span className="text-[11px] text-slate-400">Notes (optional)</span>
+                  <input
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+                    placeholder="e.g. department or team (not in directory)"
+                    value={organization}
+                    onChange={(e) => setOrganization(e.target.value)}
+                    type="text"
+                  />
+                </label>
+              </div>
+            )}
+
+            {accountType === "organization" && (
+              <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+                <p className="text-[11px] text-slate-400 font-medium">
+                  Select the program you represent (Illinois Crime Victim Assistance Services directory)
+                </p>
+                <ProgramCatalogSelect
+                  id="org-program"
+                  label="Your program"
+                  required
+                  value={orgCatalogId}
+                  onChange={(id) => setOrgCatalogId(id)}
+                />
+              </div>
             )}
 
             <fieldset className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
@@ -270,10 +335,18 @@ export default function SignupPage() {
 
             <button
               className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed transition"
-              disabled={loading || !email.trim() || password.length < 8 || !agreeTerms || !agreeWaiver || !agreePrototype}
+              disabled={
+                loading ||
+                !email.trim() ||
+                password.length < 8 ||
+                !agreeTerms ||
+                !agreeWaiver ||
+                !agreePrototype ||
+                (accountType === "organization" && orgCatalogId == null)
+              }
               type="submit"
             >
-              {loading ? "Creating…" : "Create account"}
+              {loading ? "Creating…" : accountType === "organization" ? "Create organization account" : "Create account"}
             </button>
           </form>
 

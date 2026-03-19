@@ -71,6 +71,10 @@ export default function LoginForm() {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
+        await fetch("/api/org/complete-pending-signup", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
       }
 
       const meRes = await fetch("/api/me", {

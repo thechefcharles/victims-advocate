@@ -29,6 +29,10 @@ type AuthState = {
   /** Active org membership (one org per user in current schema). */
   orgId: string | null;
   orgRole: OrgRole;
+  /** Illinois victim assistance directory program id (profile / advocate). */
+  affiliatedCatalogEntryId: number | null;
+  /** Directory id linked to the user's org record (org admins). */
+  organizationCatalogEntryId: number | null;
   emailVerified: boolean;
   accountStatus: AccountStatus;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
@@ -46,8 +50,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
   const [orgRole, setOrgRole] = useState<OrgRole>(null);
+  const [affiliatedCatalogEntryId, setAffiliatedCatalogEntryId] = useState<number | null>(null);
+  const [organizationCatalogEntryId, setOrganizationCatalogEntryId] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
+
+  const applyMePayload = useCallback((d: Record<string, unknown>) => {
+    if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization") {
+      setRoleFromApi(d.role as ProfileRole);
+    }
+    if (
+      d?.realRole === "victim" ||
+      d?.realRole === "advocate" ||
+      d?.realRole === "organization"
+    ) {
+      setRealRoleFromApi(d.realRole as ProfileRole);
+    }
+    if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
+    if (d?.accountStatus) setAccountStatus(d.accountStatus as AccountStatus);
+    setIsAdmin(d?.isAdmin === true);
+    setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
+    const or = d?.orgRole;
+    setOrgRole(or === "staff" || or === "supervisor" || or === "org_admin" ? or : null);
+    const aff = d?.affiliatedCatalogEntryId;
+    setAffiliatedCatalogEntryId(
+      typeof aff === "number" && Number.isFinite(aff) ? aff : null
+    );
+    const orgCat = d?.organizationCatalogEntryId;
+    setOrganizationCatalogEntryId(
+      typeof orgCat === "number" && Number.isFinite(orgCat) ? orgCat : null
+    );
+  }, []);
 
   const role = roleFromApi ?? roleFromMetadata;
 
@@ -60,35 +93,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (res.ok) {
         const json = await res.json();
-        const data = json?.data ?? json;
-        if (
-          data?.role === "victim" ||
-          data?.role === "advocate" ||
-          data?.role === "organization"
-        ) {
-          setRoleFromApi(data.role);
-        }
-        if (
-          data?.realRole === "victim" ||
-          data?.realRole === "advocate" ||
-          data?.realRole === "organization"
-        ) {
-          setRealRoleFromApi(data.realRole);
-        }
-        if (typeof data?.emailVerified === "boolean") setEmailVerified(data.emailVerified);
-        if (data?.accountStatus) setAccountStatus(data.accountStatus);
-        setIsAdmin(data?.isAdmin === true);
-        setOrgId(typeof data?.orgId === "string" ? data.orgId : null);
-        const or = data?.orgRole;
-        setOrgRole(
-          or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
-        );
+        const data = (json?.data ?? json) as Record<string, unknown>;
+        applyMePayload(data);
       }
     } catch {
       setRoleFromApi(null);
       setRealRoleFromApi(null);
+      setAffiliatedCatalogEntryId(null);
+      setOrganizationCatalogEntryId(null);
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, applyMePayload]);
 
   useEffect(() => {
     // 1) Bootstrap once
@@ -102,22 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           if (res.ok) {
             const json = await res.json();
-            const d = json?.data ?? json;
-            if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization")
-              setRoleFromApi(d.role);
-            if (
-              d?.realRole === "victim" ||
-              d?.realRole === "advocate" ||
-              d?.realRole === "organization"
-            )
-              setRealRoleFromApi(d.realRole);
-            if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
-            if (d?.accountStatus) setAccountStatus(d.accountStatus);
-            setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
-            const or = d?.orgRole;
-            setOrgRole(
-              or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
-            );
+            applyMePayload((json?.data ?? json) as Record<string, unknown>);
           }
         } catch {
           // keep role from metadata
@@ -143,38 +142,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
           if (res.ok) {
             const json = await res.json();
-            const d = json?.data ?? json;
-            if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization")
-              setRoleFromApi(d.role);
-            if (
-              d?.realRole === "victim" ||
-              d?.realRole === "advocate" ||
-              d?.realRole === "organization"
-            )
-              setRealRoleFromApi(d.realRole);
-            if (typeof d?.emailVerified === "boolean") setEmailVerified(d.emailVerified);
-            if (d?.accountStatus) setAccountStatus(d.accountStatus);
-            setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
-            const or = d?.orgRole;
-            setOrgRole(
-              or === "staff" || or === "supervisor" || or === "org_admin" ? or : null
-            );
+            applyMePayload((json?.data ?? json) as Record<string, unknown>);
           }
         } catch {
           setRoleFromApi(null);
           setRealRoleFromApi(null);
+          setAffiliatedCatalogEntryId(null);
+          setOrganizationCatalogEntryId(null);
         }
       } else {
         setRoleFromApi(null);
         setRealRoleFromApi(null);
         setOrgId(null);
         setOrgRole(null);
+        setAffiliatedCatalogEntryId(null);
+        setOrganizationCatalogEntryId(null);
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [applyMePayload]);
 
   const resolveProfile = async (sess: Session | null) => {
     setEmailVerified(!!sess?.user?.email_confirmed_at);
@@ -190,6 +178,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAdmin(false);
       setOrgId(null);
       setOrgRole(null);
+      setAffiliatedCatalogEntryId(null);
+      setOrganizationCatalogEntryId(null);
       setAccountStatus("active");
       return;
     }
@@ -256,6 +246,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin,
       orgId,
       orgRole,
+      affiliatedCatalogEntryId,
+      organizationCatalogEntryId,
       emailVerified,
       accountStatus,
       refetchMe,
@@ -269,6 +261,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     orgId,
     orgRole,
+    affiliatedCatalogEntryId,
+    organizationCatalogEntryId,
     emailVerified,
     accountStatus,
     refetchMe,

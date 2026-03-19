@@ -22,6 +22,10 @@ export type AuthContext = {
   realRole?: ProfileRole;
   orgId: string | null;
   orgRole: OrgRole | null;
+  /** Illinois victim assistance directory program id (profile / advocate affiliation). */
+  affiliatedCatalogEntryId: number | null;
+  /** Directory row for the user's organization (`organizations.catalog_entry_id`). */
+  organizationCatalogEntryId: number | null;
   isAdmin: boolean;
   emailVerified: boolean;
   accountStatus: AccountStatus;
@@ -47,7 +51,7 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
 
   const { data: profile, error: profError } = await supabaseAdmin
     .from("profiles")
-    .select("role, organization, is_admin, account_status")
+    .select("role, organization, is_admin, account_status, affiliated_catalog_entry_id")
     .eq("id", userId)
     .maybeSingle();
 
@@ -86,6 +90,23 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
       ? (membership.org_role as OrgRole)
       : null;
 
+  let organizationCatalogEntryId: number | null = null;
+  if (orgId) {
+    const { data: orgRow } = await supabaseAdmin
+      .from("organizations")
+      .select("catalog_entry_id")
+      .eq("id", orgId)
+      .maybeSingle();
+    const rawOrgCat = (orgRow as { catalog_entry_id?: number | null } | null)?.catalog_entry_id;
+    organizationCatalogEntryId =
+      typeof rawOrgCat === "number" && Number.isFinite(rawOrgCat) ? rawOrgCat : null;
+  }
+
+  const rawAff = (profile as { affiliated_catalog_entry_id?: number | null } | null)
+    ?.affiliated_catalog_entry_id;
+  const affiliatedCatalogEntryId =
+    typeof rawAff === "number" && Number.isFinite(rawAff) ? rawAff : null;
+
   let effectiveRole = role;
   const viewAsActive = isAdmin && req ? parseViewAsRoleCookie(req) : null;
   if (viewAsActive === "victim" || viewAsActive === "advocate") {
@@ -100,6 +121,8 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     realRole: role,
     orgId,
     orgRole,
+    affiliatedCatalogEntryId,
+    organizationCatalogEntryId,
     isAdmin,
     emailVerified,
     accountStatus,
