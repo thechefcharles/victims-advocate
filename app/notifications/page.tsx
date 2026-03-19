@@ -35,7 +35,10 @@ export default function NotificationsPage() {
         });
         if (!res.ok) return;
         const json = await res.json().catch(() => ({}));
-        if (!cancelled) setItems((json.notifications ?? []) as Notification[]);
+        if (!cancelled) {
+          const list = json.data?.notifications ?? json.notifications ?? [];
+          setItems((Array.isArray(list) ? list : []) as Notification[]);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
