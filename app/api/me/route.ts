@@ -22,6 +22,8 @@ export async function GET(req: Request) {
       isAdmin: ctx.isAdmin,
       orgId: ctx.orgId,
       orgRole: ctx.orgRole,
+      affiliatedCatalogEntryId: ctx.affiliatedCatalogEntryId,
+      organizationCatalogEntryId: ctx.organizationCatalogEntryId,
       emailVerified: ctx.emailVerified,
       accountStatus: ctx.accountStatus,
     });

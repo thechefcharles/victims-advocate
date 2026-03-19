@@ -63,7 +63,22 @@ export async function getCaseById(
     throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
   }
 
-  if (!accessRow || !accessRow.can_view) {
+  const orgLeadershipAccess =
+    !ctx.isAdmin &&
+    ctx.orgId &&
+    caseOrgId &&
+    ctx.orgId === caseOrgId &&
+    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
+
+  let access: CaseAccess;
+  if (accessRow?.can_view) {
+    access = accessRow as CaseAccess;
+  } else if (ctx.isAdmin) {
+    access = { role: "admin", can_view: true, can_edit: true };
+  } else if (orgLeadershipAccess) {
+    // Org admin / supervisor can open org cases without a personal case_access row
+    access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else {
     return null;
   }
 
@@ -80,7 +95,7 @@ export async function getCaseById(
   return {
     case: caseRow as CaseRow,
     documents: documents as DocumentRow[],
-    access: accessRow as CaseAccess,
+    access,
   };
 }
 

@@ -117,7 +117,27 @@ export async function listCaseDocuments(params: {
     .maybeSingle();
 
   if (accessError) throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
-  if (!accessRow?.can_view) throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
+
+  const orgLeadershipDocs =
+    ctx.orgId &&
+    caseOrgId &&
+    ctx.orgId === caseOrgId &&
+    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
+
+  let access: CaseAccessInfo;
+  if (accessRow?.can_view) {
+    access = {
+      role: accessRow.role ?? "viewer",
+      can_view: true,
+      can_edit: accessRow.can_edit ?? false,
+    };
+  } else if (ctx.isAdmin) {
+    access = { role: "admin", can_view: true, can_edit: true };
+  } else if (orgLeadershipDocs) {
+    access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else {
+    throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
+  }
 
   let query = supabase
     .from("documents")
@@ -130,11 +150,6 @@ export async function listCaseDocuments(params: {
   if (error) throw new AppError("INTERNAL", "Failed to list documents", undefined, 500);
 
   const rows = (data ?? []) as DocumentRow[];
-  const access: CaseAccessInfo = {
-    role: accessRow.role ?? "viewer",
-    can_view: accessRow.can_view,
-    can_edit: accessRow.can_edit ?? false,
-  };
   return rows.filter((d) => canAccessDocument(ctx, d, access));
 }
 
@@ -154,6 +169,13 @@ export async function assertDocumentAccess(params: {
   const caseId = doc.case_id;
   if (!caseId) throw new AppError("FORBIDDEN", "Document not attached to a case", undefined, 403);
 
+  const { data: caseRow } = await getSupabaseAdmin()
+    .from("cases")
+    .select("organization_id")
+    .eq("id", caseId)
+    .maybeSingle();
+  const caseOrgId = (caseRow as { organization_id?: string } | null)?.organization_id ?? null;
+
   const { data: accessRow } = await getSupabaseAdmin()
     .from("case_access")
     .select("role, can_view, can_edit")
@@ -161,13 +183,26 @@ export async function assertDocumentAccess(params: {
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  if (!accessRow?.can_view) throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
+  const orgLeadershipAssert =
+    ctx.orgId &&
+    caseOrgId &&
+    ctx.orgId === caseOrgId &&
+    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
 
-  const access: CaseAccessInfo = {
-    role: accessRow.role ?? "viewer",
-    can_view: accessRow.can_view,
-    can_edit: accessRow.can_edit ?? false,
-  };
+  let access: CaseAccessInfo;
+  if (accessRow?.can_view) {
+    access = {
+      role: accessRow.role ?? "viewer",
+      can_view: accessRow.can_view,
+      can_edit: accessRow.can_edit ?? false,
+    };
+  } else if (ctx.isAdmin) {
+    access = { role: "admin", can_view: true, can_edit: true };
+  } else if (orgLeadershipAssert) {
+    access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else {
+    throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
+  }
   if (!canAccessDocument(ctx, doc, access)) {
     if (doc.status === "restricted") throw new AppError("DOCUMENT_RESTRICTED", "This document is restricted", undefined, 403);
     throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
