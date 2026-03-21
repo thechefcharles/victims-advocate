@@ -10,17 +10,13 @@ export default function VictimDashboardPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
       </main>
     );
   }
 
   return (
-    <VictimDashboard
-      email={user?.email ?? null}
-      userId={user?.id ?? ""}
-      token={accessToken}
-    />
+    <VictimDashboard userId={user?.id ?? ""} token={accessToken} />
   );
 }

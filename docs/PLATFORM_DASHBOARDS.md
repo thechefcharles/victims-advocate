@@ -6,7 +6,7 @@ After login, users are sent to exactly one home dashboard:
 |-----------|--------|
 | `profiles.is_admin = true` | `/admin/dashboard` — platform admin (all orgs, ecosystem, cases, users) |
 | Org member with `org_role` **org_admin** or **supervisor** | `/organization/dashboard` — org-wide tools |
-| `profiles.role = advocate` (and not platform admin; org staff use advocate home) | `/advocate/dashboard` — your clients / victims |
+| `profiles.role = advocate` (and not platform admin; org staff use advocate home) | `/advocate` — command center; `/dashboard/clients` — client list; legacy `/advocate/dashboard` redirects to `/advocate` |
 | `profiles.role = organization` and **no** org membership yet | `/organization/setup` — fallback if org creation failed or email-confirm path |
 | `profiles.role = organization` and **has** org (e.g. staff) | `/organization/dashboard` |
 | `profiles.role = victim` | `/victim/dashboard` — your cases |
@@ -45,4 +45,4 @@ Profile role `organization` is allowed by migration `20260322000000_profiles_rol
 
 ## Priority note
 
-Org **leadership** (org_admin / supervisor) is routed to **organization** dashboard before the advocate dashboard, so they see org-wide advocate lists first. **Staff** advocates use `/advocate/dashboard`.
+Org **leadership** (org_admin / supervisor) is routed to **organization** dashboard before the advocate command center, so they see org-wide advocate lists first. **Staff** advocates use `/advocate` (command center).

@@ -12,6 +12,18 @@ import {
   SERVICE_TYPE_OPTIONS,
   SPECIAL_POPULATION_OPTIONS,
 } from "@/lib/organizations/profileOptions";
+import { ROUTES } from "@/lib/routes/pageRegistry";
+import { PageHeader } from "@/components/layout/PageHeader";
+import {
+  EMPTY_COPY,
+  TRUST_LINK_HREF,
+  TRUST_LINK_LABELS,
+  TRUST_MICROCOPY,
+  confidenceChipText,
+  designationTierBadgeText,
+  designationTrustBadgeClassName,
+  formatReviewStatusLabel,
+} from "@/lib/trustDisplay";
 
 type Member = {
   id: string;
@@ -104,10 +116,6 @@ export default function AdvocateOrgPage() {
     headline: string;
     bullets: string[];
   } | null>(null);
-  const [methodologyLinks, setMethodologyLinks] = useState<
-    { label: string; href: string; description: string }[]
-  >([]);
-
   const [reviewRequests, setReviewRequests] = useState<
     Array<{
       id: string;
@@ -128,6 +136,26 @@ export default function AdvocateOrgPage() {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMsg, setReviewMsg] = useState<string | null>(null);
 
+  type OrgWorkspaceTab =
+    | "profile"
+    | "services"
+    | "capacity"
+    | "accessibility"
+    | "members"
+    | "designation"
+    | "reviews";
+  const [activeTab, setActiveTab] = useState<OrgWorkspaceTab>("profile");
+
+  const orgTabs: { id: OrgWorkspaceTab; label: string }[] = [
+    { id: "profile", label: "Organization profile" },
+    { id: "services", label: "Services & languages" },
+    { id: "capacity", label: "Capacity & availability" },
+    { id: "accessibility", label: "Accessibility & populations" },
+    { id: "members", label: "Members & invites" },
+    { id: "designation", label: "Designation" },
+    { id: "reviews", label: "Review requests" },
+  ];
+
   useEffect(() => {
     if (!canViewDesignation || loading) return;
     const run = async () => {
@@ -141,11 +169,9 @@ export default function AdvocateOrgPage() {
       if (!res.ok) return;
       const d = json.data?.designation ?? json.designation;
       const expl = json.data?.explanation;
-      const meth = json.data?.methodology;
       if (expl?.headline) {
         setDesignationExplain({ headline: expl.headline, bullets: expl.bullets ?? [] });
       }
-      if (Array.isArray(meth)) setMethodologyLinks(meth);
       if (d) {
         setDesignation({
           designation_tier: d.designation_tier,
@@ -479,21 +505,22 @@ export default function AdvocateOrgPage() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
   };
 
+  const visibleTabs = orgTabs.filter(
+    (t) =>
+      (t.id !== "designation" && t.id !== "reviews") || canViewDesignation
+  );
+
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header>
-          <Link
-            href="/advocate"
-            className="text-xs text-slate-400 hover:text-slate-200 mb-2 inline-block"
-          >
-            ← Back to advocate dashboard
-          </Link>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            Organization
-          </p>
-          <h1 className="text-2xl font-semibold">Manage organization</h1>
-        </header>
+        <PageHeader
+          contextLine="Advocate → Organization"
+          eyebrow="Organization"
+          title="Organization workspace"
+          subtitle="Manage your organization profile, capacity, members, and designation."
+          meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
+          backLink={{ href: ROUTES.advocateHome, label: "← Command Center" }}
+        />
 
         {err && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
@@ -501,162 +528,39 @@ export default function AdvocateOrgPage() {
           </div>
         )}
 
-        {canViewDesignation && (
-          <section className="rounded-2xl border border-teal-900/40 bg-slate-950/70 p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-teal-200/90">
-              Platform designation (internal preview)
-            </h2>
-            <p className="text-[11px] text-slate-500">
-              Readiness tier on NxtStps — not a public rating or clinical score. Numeric grades are
-              not shown here.
+        <nav
+          className="flex flex-wrap gap-2 border-b border-slate-800/80 pb-3"
+          aria-label="Organization sections"
+        >
+          {visibleTabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id)}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                activeTab === t.id
+                  ? "bg-teal-600/30 text-teal-100 border border-teal-500/40"
+                  : "bg-slate-900/70 text-slate-400 border border-slate-700/80 hover:border-slate-600"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* Profile form — tabs profile → accessibility */}
+        <form id="org-profile-form" onSubmit={handleSaveProfile} className="space-y-0">
+          {profileMsg && (
+            <p
+              className={`text-sm mb-4 ${
+                profileMsg.includes("saved") ? "text-emerald-400" : "text-amber-200"
+              }`}
+            >
+              {profileMsg}
             </p>
-            {methodologyLinks.length > 0 && (
-              <div className="text-[11px] space-y-1">
-                <p className="text-slate-500 uppercase tracking-wide">Methodology</p>
-                <ul className="space-y-1">
-                  {methodologyLinks.map((m) => (
-                    <li key={m.href}>
-                      <a href={m.href} className="text-teal-400 hover:text-teal-300 underline">
-                        {m.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {designation ? (
-              <>
-                <p className="text-lg font-medium text-teal-300 capitalize">
-                  {designation.designation_tier.replace(/_/g, " ")}
-                </p>
-                <p className="text-xs text-slate-400">
-                  Confidence: {designation.designation_confidence}
-                </p>
-                {designationExplain && (
-                  <div className="mt-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
-                    <p className="font-medium text-slate-300">{designationExplain.headline}</p>
-                    <ul className="list-disc list-inside mt-1 space-y-0.5">
-                      {designationExplain.bullets.slice(0, 5).map((b, i) => (
-                        <li key={i}>{b}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {designation.public_summary && (
-                  <p className="text-sm text-slate-300 leading-relaxed mt-2">
-                    {designation.public_summary}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-slate-400">
-                {designationMsg ??
-                  "No designation on file yet. Administrators update this after internal review."}
-              </p>
-            )}
-
-            <div className="border-t border-slate-800 pt-4 space-y-3">
-              <h3 className="text-xs font-semibold text-slate-300 uppercase tracking-wide">
-                Request a designation review
-              </h3>
-              <p className="text-[11px] text-slate-500">
-                Ask for clarification, report updated platform use, or request a correction. Staff
-                reply in writing; numeric scores are not shared.
-              </p>
-              {reviewMsg && (
-                <p
-                  className={
-                    reviewMsg.includes("submitted") ? "text-emerald-400 text-xs" : "text-amber-200 text-xs"
-                  }
-                >
-                  {reviewMsg}
-                </p>
-              )}
-              <form onSubmit={submitReviewRequest} className="space-y-2 text-xs">
-                <select
-                  value={reviewKind}
-                  onChange={(e) =>
-                    setReviewKind(e.target.value as "clarification" | "correction" | "data_update")
-                  }
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 w-full max-w-xs"
-                >
-                  <option value="clarification">Clarification</option>
-                  <option value="correction">Correction</option>
-                  <option value="data_update">Data / platform use update</option>
-                </select>
-                <input
-                  type="text"
-                  placeholder="Short subject"
-                  value={reviewSubject}
-                  onChange={(e) => setReviewSubject(e.target.value)}
-                  className="w-full max-w-lg rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
-                />
-                <textarea
-                  placeholder="Describe your request (20+ characters)"
-                  value={reviewBody}
-                  onChange={(e) => setReviewBody(e.target.value)}
-                  rows={4}
-                  className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
-                />
-                <button
-                  type="submit"
-                  disabled={reviewSubmitting}
-                  className="rounded bg-teal-700 px-3 py-1.5 text-white hover:bg-teal-600 disabled:opacity-50"
-                >
-                  {reviewSubmitting ? "Submitting…" : "Submit request"}
-                </button>
-              </form>
-              {reviewRequests.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-[11px] text-slate-500 uppercase">Your requests</p>
-                  <ul className="space-y-2 text-xs">
-                    {reviewRequests.map((r) => (
-                      <li
-                        key={r.id}
-                        className="border border-slate-800 rounded p-2 bg-slate-900/40"
-                      >
-                        <div className="flex justify-between gap-2">
-                          <span className="text-slate-200">{r.subject}</span>
-                          <span className="text-slate-500 shrink-0">{r.status}</span>
-                        </div>
-                        <p className="text-slate-500 mt-1 line-clamp-2">{r.body}</p>
-                        {r.admin_response_org_visible && (
-                          <p className="text-slate-400 mt-2 border-t border-slate-800 pt-2">
-                            <span className="text-slate-500">Response: </span>
-                            {r.admin_response_org_visible}
-                          </p>
-                        )}
-                        {(r.status === "pending" || r.status === "in_review") && (
-                          <button
-                            type="button"
-                            onClick={() => withdrawReview(r.id)}
-                            className="text-red-400 hover:text-red-300 mt-1"
-                          >
-                            Withdraw
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-200">
-              Organization profile (matching / grading)
-            </h2>
-            {profile?.profile_last_updated_at && (
-              <span className="text-xs text-slate-500">
-                Last updated {formatDate(profile.profile_last_updated_at)}
-              </span>
-            )}
-          </div>
+          )}
           {!canEditProfile && myOrgRole && (
-            <p className="text-xs text-amber-200/90">
+            <p className="text-xs text-amber-200/90 mb-4">
               Your role ({myOrgRole}) can view this profile. Only org admin or supervisor can
               edit.
             </p>
@@ -666,18 +570,61 @@ export default function AdvocateOrgPage() {
           ) : !profile ? (
             <p className="text-sm text-slate-400">No profile data.</p>
           ) : (
-            <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
-              {profileMsg && (
-                <p
-                  className={
-                    profileMsg.includes("saved")
-                      ? "text-emerald-400"
-                      : "text-amber-200"
-                  }
-                >
-                  {profileMsg}
-                </p>
-              )}
+            <>
+              <div className={activeTab !== "profile" ? "hidden" : "space-y-4"}>
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h2 className="text-sm font-semibold text-slate-200">Organization profile</h2>
+                    {profile.profile_last_updated_at && (
+                      <span className="text-xs text-slate-500">
+                        Last updated {formatDate(profile.profile_last_updated_at)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Basic identity and profile status. Matching fields are saved with your other
+                    profile settings.
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">Name</p>
+                      <p className="text-slate-200">{profile.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">Type</p>
+                      <p className="text-slate-200">{profile.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">
+                        Organization status
+                      </p>
+                      <p className="text-slate-200">{profile.status}</p>
+                    </div>
+                  </div>
+                  <label className="flex flex-wrap items-center gap-2 text-slate-300">
+                    Profile status (for matching)
+                    <select
+                      disabled={!canEditProfile}
+                      value={profileStatus}
+                      onChange={(e) => setProfileStatus(e.target.value)}
+                      className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                    >
+                      {PROFILE_STATUS_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+              </div>
+
+              <div className={activeTab !== "services" ? "hidden" : "space-y-4"}>
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-slate-200">Services & languages</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Service types, languages, and how survivors reach you.
+                  </p>
               <div>
                 <p className="text-slate-400 mb-2">Service types</p>
                 <div className="flex flex-wrap gap-2">
@@ -748,6 +695,15 @@ export default function AdvocateOrgPage() {
                   ))}
                 </div>
               </div>
+                </section>
+              </div>
+
+              <div className={activeTab !== "capacity" ? "hidden" : "space-y-4"}>
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-slate-200">Capacity & availability</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Whether you are accepting clients, response expectations, and coverage / hours.
+                  </p>
               <div className="flex flex-wrap gap-6 items-center">
                 <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
                   <input
@@ -787,22 +743,38 @@ export default function AdvocateOrgPage() {
                     className="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
                   />
                 </label>
-                <label className="flex items-center gap-2 text-slate-300">
-                  Profile status
-                  <select
-                    disabled={!canEditProfile}
-                    value={profileStatus}
-                    onChange={(e) => setProfileStatus(e.target.value)}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
-                  >
-                    {PROFILE_STATUS_OPTIONS.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
               </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-slate-400 mb-1">Coverage area (JSON)</p>
+                  <textarea
+                    disabled={!canEditProfile}
+                    value={coverageJson}
+                    onChange={(e) => setCoverageJson(e.target.value)}
+                    rows={6}
+                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                  />
+                </div>
+                <div>
+                  <p className="text-slate-400 mb-1">Hours (JSON)</p>
+                  <textarea
+                    disabled={!canEditProfile}
+                    value={hoursJson}
+                    onChange={(e) => setHoursJson(e.target.value)}
+                    rows={6}
+                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                  />
+                </div>
+              </div>
+                </section>
+              </div>
+
+              <div className={activeTab !== "accessibility" ? "hidden" : "space-y-4"}>
+                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-slate-200">Accessibility & populations</h2>
+                  <p className="text-[11px] text-slate-500">
+                    Populations you serve and accessibility accommodations you offer.
+                  </p>
               <div>
                 <p className="text-slate-400 mb-2">Special populations</p>
                 <div className="flex flex-wrap gap-2">
@@ -843,39 +815,26 @@ export default function AdvocateOrgPage() {
                   ))}
                 </div>
               </div>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-slate-400 mb-1">Coverage area (JSON)</p>
-                  <textarea
-                    disabled={!canEditProfile}
-                    value={coverageJson}
-                    onChange={(e) => setCoverageJson(e.target.value)}
-                    rows={6}
-                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
-                  />
-                </div>
-                <div>
-                  <p className="text-slate-400 mb-1">Hours (JSON)</p>
-                  <textarea
-                    disabled={!canEditProfile}
-                    value={hoursJson}
-                    onChange={(e) => setHoursJson(e.target.value)}
-                    rows={6}
-                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
-                  />
-                </div>
+                </section>
               </div>
-              <button
-                type="submit"
-                disabled={!canEditProfile || profileSaving}
-                className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:opacity-40"
-              >
-                {profileSaving ? "Saving…" : "Save profile"}
-              </button>
-            </form>
-          )}
-        </section>
 
+              {["profile", "services", "capacity", "accessibility"].includes(activeTab) && (
+                <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
+                  <button
+                    type="submit"
+                    disabled={!canEditProfile || profileSaving}
+                    className="rounded-lg bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-600 disabled:opacity-40"
+                  >
+                    {profileSaving ? "Saving…" : "Save profile"}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </form>
+
+        {activeTab === "members" && (
+          <>
         {inviteUrl && (
           <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3 text-sm">
             <p className="font-medium text-emerald-200">Invite created</p>
@@ -919,6 +878,16 @@ export default function AdvocateOrgPage() {
           </form>
         </section>
 
+        {invites.length === 0 && !loading && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
+            <h2 className="text-sm font-semibold text-slate-200 mb-2">Pending invites</h2>
+            <p className="text-xs text-slate-500 mb-3">
+              No pending invites. Invite staff or supervisors when you&apos;re ready to grow your
+              team.
+            </p>
+          </section>
+        )}
+
         {invites.length > 0 && (
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
             <h2 className="text-sm font-semibold text-slate-200 mb-3">Pending invites</h2>
@@ -958,40 +927,219 @@ export default function AdvocateOrgPage() {
           {loading ? (
             <p className="text-sm text-slate-400">Loading…</p>
           ) : members.length === 0 ? (
-            <p className="text-sm text-slate-400">No members yet.</p>
+            <p className="text-sm text-slate-400">
+              No members yet. When someone accepts an invite, they&apos;ll appear here.
+            </p>
           ) : (
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="text-slate-400 border-b border-slate-800">
-                  <th className="text-left py-2">Email / User</th>
-                  <th className="text-left py-2">Role</th>
-                  <th className="text-left py-2">Joined</th>
-                  <th className="text-left py-2"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((m) => (
-                  <tr key={m.id} className="border-b border-slate-900">
-                    <td className="py-2 text-slate-200">
-                      {m.email || m.user_id.slice(0, 8) + "…"}
-                    </td>
-                    <td className="py-2 text-slate-300">{m.org_role}</td>
-                    <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
-                    <td className="py-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRevokeMember(m.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        Revoke
-                      </button>
-                    </td>
+            <>
+              {members.length === 1 && (
+                <p className="text-xs text-slate-500 mb-3">
+                  You&apos;re the only member listed so far. Invite teammates to share the workload.
+                </p>
+              )}
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-800">
+                    <th className="text-left py-2">Email / User</th>
+                    <th className="text-left py-2">Role</th>
+                    <th className="text-left py-2">Joined</th>
+                    <th className="text-left py-2"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {members.map((m) => (
+                    <tr key={m.id} className="border-b border-slate-900">
+                      <td className="py-2 text-slate-200">
+                        {m.email || m.user_id.slice(0, 8) + "…"}
+                      </td>
+                      <td className="py-2 text-slate-300">{m.org_role}</td>
+                      <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
+                      <td className="py-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeMember(m.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          Revoke
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </section>
+          </>
+        )}
+
+        {canViewDesignation && activeTab === "designation" && (
+          <section className="rounded-2xl border border-teal-900/40 bg-slate-950/70 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-teal-200/90">Designation</h2>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              {TRUST_MICROCOPY.designationNotRating} {TRUST_MICROCOPY.designationSmallSignal}
+            </p>
+            <p className="text-[11px]">
+              <Link
+                href={TRUST_LINK_HREF.designations}
+                className="text-teal-400 hover:text-teal-300 underline"
+              >
+                {TRUST_LINK_LABELS.aboutDesignations}
+              </Link>
+            </p>
+            {designation ? (
+              <>
+                <div className="flex flex-wrap items-baseline gap-2">
+                  {designationTierBadgeText(designation.designation_tier) && (
+                    <span className={designationTrustBadgeClassName()}>
+                      {designationTierBadgeText(designation.designation_tier)}
+                    </span>
+                  )}
+                  {confidenceChipText(designation.designation_confidence) && (
+                    <span className="text-[10px] text-slate-500">
+                      {confidenceChipText(designation.designation_confidence)}
+                    </span>
+                  )}
+                </div>
+                {designation.designation_tier === "insufficient_data" && (
+                  <p className="text-xs text-slate-400 leading-relaxed">
+                    {EMPTY_COPY.insufficientDataDesignation}
+                  </p>
+                )}
+                {designationExplain && (
+                  <div className="mt-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
+                    <p className="font-medium text-slate-300">{designationExplain.headline}</p>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {designationExplain.bullets.slice(0, 5).map((b, i) => (
+                        <li key={i}>{b}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {designation.public_summary && (
+                  <p className="text-sm text-slate-300 leading-relaxed mt-2">
+                    {designation.public_summary}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-slate-400 leading-relaxed">
+                {designationMsg ?? EMPTY_COPY.noDesignationYet}
+              </p>
+            )}
+          </section>
+        )}
+
+        {canViewDesignation && activeTab === "reviews" && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-slate-200">Designation review requests</h2>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Use this form for formal clarification or correction requests. Staff respond in writing;
+              numeric scores are not shared.{" "}
+              <Link href={TRUST_LINK_HREF.designations} className="text-teal-400/90 hover:underline">
+                {TRUST_LINK_LABELS.aboutDesignations}
+              </Link>
+            </p>
+            {reviewMsg && (
+              <p
+                className={
+                  reviewMsg.includes("submitted") ? "text-emerald-400 text-xs" : "text-amber-200 text-xs"
+                }
+              >
+                {reviewMsg}
+              </p>
+            )}
+            <form onSubmit={submitReviewRequest} className="space-y-2 text-xs">
+              <select
+                value={reviewKind}
+                onChange={(e) =>
+                  setReviewKind(e.target.value as "clarification" | "correction" | "data_update")
+                }
+                className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 w-full max-w-xs"
+              >
+                <option value="clarification">Clarification</option>
+                <option value="correction">Correction</option>
+                <option value="data_update">Data / platform use update</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Short subject"
+                value={reviewSubject}
+                onChange={(e) => setReviewSubject(e.target.value)}
+                className="w-full max-w-lg rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+              />
+              <textarea
+                placeholder="Describe your request (20+ characters)"
+                value={reviewBody}
+                onChange={(e) => setReviewBody(e.target.value)}
+                rows={4}
+                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+              />
+              <button
+                type="submit"
+                disabled={reviewSubmitting}
+                className="rounded bg-teal-700 px-3 py-1.5 text-white hover:bg-teal-600 disabled:opacity-50"
+              >
+                {reviewSubmitting ? "Submitting…" : "Submit request"}
+              </button>
+            </form>
+            {reviewRequests.length === 0 && (
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">{EMPTY_COPY.noReviewRequests}</p>
+            )}
+
+            {reviewRequests.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">
+                  Request history
+                </p>
+                <ul className="space-y-3 text-xs">
+                  {reviewRequests.map((r) => (
+                    <li
+                      key={r.id}
+                      className="border border-slate-800 rounded-lg p-3 sm:p-4 bg-slate-900/50 space-y-2"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                        <div className="min-w-0 space-y-1">
+                          <p className="font-semibold text-slate-100 leading-snug">{r.subject}</p>
+                          <p className="text-[10px] text-slate-500">
+                            Submitted {formatDate(r.created_at)} · {r.request_kind.replace(/_/g, " ")}
+                          </p>
+                        </div>
+                        <span className="shrink-0 inline-flex rounded-full border border-slate-600 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                          {formatReviewStatusLabel(r.status)}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 whitespace-pre-wrap text-[11px] leading-relaxed border-t border-slate-800/80 pt-2">
+                        {r.body}
+                      </p>
+                      {r.admin_response_org_visible && (
+                        <div className="rounded-md border border-slate-700/80 bg-slate-950/60 px-3 py-2">
+                          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">
+                            Staff response (visible to your org)
+                          </p>
+                          <p className="text-slate-300 whitespace-pre-wrap text-[11px] leading-relaxed">
+                            {r.admin_response_org_visible}
+                          </p>
+                        </div>
+                      )}
+                      {(r.status === "pending" || r.status === "in_review") && (
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => withdrawReview(r.id)}
+                            className="text-[11px] font-medium text-red-400/90 hover:text-red-300"
+                          >
+                            Withdraw request
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </main>
   );

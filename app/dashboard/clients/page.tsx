@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { AdvocateClientsList } from "@/components/dashboard/AdvocateClientsList";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 export default function AdvocateClientsPage() {
   const router = useRouter();
@@ -43,14 +44,10 @@ export default function AdvocateClientsPage() {
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
           <Link
-            href="/dashboard"
+            href={ROUTES.advocateHome}
             className="text-teal-400/90 hover:text-teal-300 font-medium"
           >
-            ← Advocate home
-          </Link>
-          <span className="text-teal-800">|</span>
-          <Link href="/advocate" className="text-teal-200/50 hover:text-teal-200/80">
-            Command center
+            ← Command Center
           </Link>
         </div>
 

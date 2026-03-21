@@ -83,10 +83,14 @@ export default function NotificationsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-xl font-semibold text-slate-100 mb-4">Notifications</h1>
+      <h1 className="text-xl font-semibold text-slate-100 mb-2">Updates</h1>
+      <p className="text-xs text-slate-500 mb-4 max-w-xl">
+        We’ll surface important case and account activity here. You can mark items read or dismiss
+        them when you’re done.
+      </p>
       {loading && <p className="text-sm text-slate-400">Loading…</p>}
       {!loading && items.length === 0 && (
-        <p className="text-sm text-slate-400">You have no notifications right now.</p>
+        <p className="text-sm text-slate-400">You have no updates right now.</p>
       )}
       <ul className="mt-4 space-y-3">
         {items.map((n) => (

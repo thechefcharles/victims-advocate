@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type ProgramDefinition = {
   id: string;
@@ -246,27 +247,28 @@ export default function AdminProgramsPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">Admin · Routing</p>
-          <h1 className="text-2xl font-bold text-slate-100">Program definitions</h1>
-          <p className="text-sm text-slate-300">
-            Define routable programs and rule sets for intake-to-program matching. Only active programs are used when running routing on a case.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/admin/cases"
-              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
-            >
-              ← Cases
-            </Link>
-            <Link
-              href="/admin/knowledge"
-              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
-            >
-              Knowledge
-            </Link>
-          </div>
-        </header>
+        <PageHeader
+          contextLine="Admin → Programs"
+          eyebrow="Admin · Routing"
+          title="Programs"
+          subtitle="Define routing programs and rules for matching cases to services. Only active programs are used when routing runs."
+          rightActions={
+            <>
+              <Link
+                href="/admin/cases"
+                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+              >
+                Cases
+              </Link>
+              <Link
+                href="/admin/knowledge"
+                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+              >
+                Knowledge
+              </Link>
+            </>
+          }
+        />
 
         {err && (
           <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
@@ -274,36 +276,46 @@ export default function AdminProgramsPage() {
           </div>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-4 items-center text-sm">
-          <label className="flex items-center gap-2">
-            <span className="text-slate-400">Status</span>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
-            >
-              <option value="">All</option>
-              <option value="draft">Draft</option>
-              <option value="active">Active</option>
-              <option value="archived">Archived</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2">
-            <span className="text-slate-400">State</span>
-            <input
-              type="text"
-              value={filterState}
-              onChange={(e) => setFilterState(e.target.value)}
-              placeholder="e.g. IL"
-              className="w-20 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
-            />
-          </label>
+        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-4">
+          <div className="flex flex-wrap gap-4 items-center text-sm">
+            <label className="flex items-center gap-2">
+              <span className="text-slate-400">Status</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
+              >
+                <option value="">All</option>
+                <option value="draft">Draft</option>
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2">
+              <span className="text-slate-400">State</span>
+              <input
+                type="text"
+                value={filterState}
+                onChange={(e) => setFilterState(e.target.value)}
+                placeholder="e.g. IL"
+                className="w-20 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
+              />
+            </label>
+          </div>
+          <a
+            href="#admin-program-create"
+            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shrink-0"
+          >
+            Create
+          </a>
         </div>
 
         {/* Create form */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-50">Create draft program</h2>
+        <section
+          id="admin-program-create"
+          className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3 scroll-mt-24"
+        >
+          <h2 className="text-sm font-semibold text-slate-50">Create</h2>
           <form onSubmit={handleCreate} className="grid gap-2 sm:grid-cols-2">
             <input
               type="text"
@@ -384,18 +396,23 @@ export default function AdminProgramsPage() {
               disabled={creating}
               className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {creating ? "Creating…" : "Create draft"}
+              {creating ? "Creating…" : "Create"}
             </button>
           </form>
         </section>
 
         {/* List */}
         <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-50">Programs ({programs.length})</h2>
+          <h2 className="text-sm font-semibold text-slate-50">All programs ({programs.length})</h2>
           {loading ? (
             <p className="text-slate-400">Loading…</p>
           ) : programs.length === 0 ? (
-            <p className="text-slate-400">No programs. Create a draft above or run the seed migration.</p>
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
+              <p className="font-medium text-slate-300">No programs created.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                Add a program to define routing rules, or use your seed data if available.
+              </p>
+            </div>
           ) : (
             <ul className="divide-y divide-slate-800 space-y-2">
               {programs.map((p) => (
@@ -448,7 +465,7 @@ export default function AdminProgramsPage() {
                           type="submit"
                           className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500"
                         >
-                          Save
+                          Update
                         </button>
                         <button
                           type="button"

@@ -10,7 +10,9 @@ export default function RequireOrgLeadership({ children }: { children: React.Rea
   const router = useRouter();
   const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
   const allowed =
-    !!orgId && (orgRole === "org_admin" || orgRole === "supervisor");
+    role === "organization" &&
+    !!orgId &&
+    (orgRole === "org_admin" || orgRole === "supervisor");
 
   useEffect(() => {
     if (loading) return;

@@ -83,12 +83,15 @@ export default function AdminOrgsPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
             <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
               Admin · Organizations
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold">Organizations</h1>
+            <p className="text-sm text-slate-400 mt-2 max-w-xl">
+              Create org records and open each org to manage profile, designation, and workflows.
+            </p>
           </div>
           <div className="flex gap-3">
             <Link
@@ -133,13 +136,13 @@ export default function AdminOrgsPage() {
             href="/admin/grading"
             className="inline-flex shrink-0 items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 shadow-sm"
           >
-            Open CBO grading
+            Review
           </Link>
         </div>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
           <h2 className="text-sm font-semibold text-slate-200 mb-3">
-            Create organization
+            Create
           </h2>
           <form onSubmit={handleCreate} className="flex flex-wrap gap-3">
             <input
@@ -184,9 +187,12 @@ export default function AdminOrgsPage() {
           {loading ? (
             <p className="text-sm text-slate-400">Loading…</p>
           ) : orgs.length === 0 ? (
-            <p className="text-sm text-slate-400">
-              No organizations yet. Create one above.
-            </p>
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
+              <p className="font-medium text-slate-300">No organizations yet.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                Create an organization above to onboard a partner and assign advocates.
+              </p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {orgs.map((o) => (
@@ -202,9 +208,9 @@ export default function AdminOrgsPage() {
                   </div>
                   <Link
                     href={`/advocate/org?organization_id=${o.id}`}
-                    className="text-xs text-emerald-400 hover:text-emerald-300"
+                    className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
                   >
-                    Manage →
+                    Open
                   </Link>
                 </li>
               ))}

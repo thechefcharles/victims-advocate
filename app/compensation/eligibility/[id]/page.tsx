@@ -44,7 +44,7 @@ type StateCode = "IL" | "IN";
 export default function EligibilityCheckPage() {
   const params = useParams();
   const { t, tf } = useI18n();
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
 
   const caseId = typeof params.id === "string" ? params.id : null;
   const [stateCode, setStateCode] = useState<StateCode | null>(null);
@@ -59,24 +59,31 @@ export default function EligibilityCheckPage() {
   const QUESTIONS = isIN ? QUESTIONS_IN : QUESTIONS_IL;
   const prefix = isIN ? "eligibilityIN" : "eligibility";
 
-  // Fetch case and verify access
+  // Fetch case and verify access (requires a session)
   useEffect(() => {
-    if (!caseId || !accessToken) return;
+    if (!caseId) return;
+    if (authLoading) return;
+    if (!accessToken) return;
 
     const check = async () => {
+      setLoadErr(null);
       const res = await fetch(`/api/compensation/cases/${caseId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        setLoadErr("Case not found or access denied");
+        if (res.status === 401) {
+          setLoadErr("Your session expired. Please sign in again.");
+        } else {
+          setLoadErr("Case not found or access denied");
+        }
         return;
       }
       const json = await res.json();
       const sc = json.case?.state_code;
       setStateCode(sc === "IN" ? "IN" : "IL");
     };
-    check();
-  }, [caseId, accessToken]);
+    void check();
+  }, [caseId, accessToken, authLoading]);
 
   const saveResult = useCallback(async () => {
     if (!caseId || !accessToken) return;
@@ -163,7 +170,26 @@ export default function EligibilityCheckPage() {
     );
   }
 
-  if (stateCode === null && !loadErr) {
+  if (!authLoading && !accessToken) {
+    return (
+      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+        <div className="max-w-xl mx-auto space-y-4">
+          <p className="text-slate-300">Please sign in to continue the eligibility check for this case.</p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">
+              Sign in
+            </Link>
+            <span className="text-slate-600">·</span>
+            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+              ← Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (authLoading || (stateCode === null && !loadErr)) {
     return (
       <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-slate-400">Loading…</div>
@@ -179,9 +205,15 @@ export default function EligibilityCheckPage() {
       <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-red-300">{loadErr}</p>
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-200">
-            ← Back to dashboard
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm">
+              Sign in
+            </Link>
+            <span className="text-slate-600">·</span>
+            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+              ← Back to dashboard
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -309,9 +341,10 @@ export default function EligibilityCheckPage() {
         </Link>
 
         {step === 0 && (
-          <p className="text-sm text-slate-300">
-            {t(`${prefix}.purposeText`)}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-100">{t(`${prefix}.introQualify`)}</p>
+            <p className="text-sm text-slate-300">{t(`${prefix}.purposeText`)}</p>
+          </div>
         )}
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-6">

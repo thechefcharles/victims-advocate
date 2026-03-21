@@ -11,6 +11,20 @@ export type I18nDict = {
     accountPlaceholderBody: string;
     language: string;
     brandTagline: string;
+    /** Top nav link to /compensation (Crime Victims Compensation hub). */
+    compensationHub: string;
+    home: string;
+    help: string;
+    updates: string;
+    accountNav: string;
+    /** Victim home nav + dashboard label (“My Dashboard”). */
+    mySupport: string;
+    /** Victim nav: intake (short label) */
+    application: string;
+    commandCenter: string;
+    clients: string;
+    organization: string;
+    adminHome: string;
   };
 
   common: {
@@ -18,11 +32,254 @@ export type I18nDict = {
     refresh: string;
     refreshing: string;
     backToHome: string;
+    backToWorkspace: string;
+    /** Same as backToWorkspace without leading arrow (inline links). */
+    backToWorkspaceInline: string;
     yes: string;
     no: string;
   };
 
+  victimDashboard: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    signedInAs: string;
+    signedInAsUnknown: string;
+    whatToDoNext: string;
+    creating: string;
+    yourApplicationHeading: string;
+    yourApplicationDescription: string;
+    yourApplicationPrivacyLine: string;
+    statusField: string;
+    eligibilityField: string;
+    updatingDetails: string;
+    priorityHigh: string;
+    priorityMedium: string;
+    priorityLow: string;
+    caseActivityTitle: string;
+    caseActivityIntro: string;
+    caseActivityMessages: string;
+    caseActivityDocuments: string;
+    caseActivityAppointments: string;
+    caseActivitySupport: string;
+    messagesLoading: string;
+    messagesUnreadOne: string;
+    messagesUnreadMany: string;
+    messagesInThread: string;
+    messagesEmpty: string;
+    documentsStatusMissing: string;
+    documentsStatusGeneric: string;
+    documentsNoCase: string;
+    appointmentsEmpty: string;
+    supportMatchOne: string;
+    supportMatchMany: string;
+    supportNoMatches: string;
+    supportNoCase: string;
+    yourCasesTitle: string;
+    yourCasesHelp: string;
+    stateIL: string;
+    stateIN: string;
+    startApplication: string;
+    noCasesTitle: string;
+    noCasesBody: string;
+    loadError: string;
+    sessionExpired: string;
+    continue: string;
+    more: string;
+    delete: string;
+    rename: string;
+    save: string;
+    cancel: string;
+    caseNamePlaceholder: string;
+    lastUpdatedDaysAgo: string;
+    lastUpdatedToday: string;
+    lastUpdatedYesterday: string;
+    lastUpdatedUnknown: string;
+    deleteModalTitle: string;
+    deleteModalBodyLine1: string;
+    deleteModalBodyLine2: string;
+    deleteModalCancel: string;
+    deleteModalConfirm: string;
+    deleteFailed: string;
+    editNameTitle: string;
+    funnel: {
+      ariaLabel: string;
+      stepEligibility: string;
+      stepApplication: string;
+      stepSupport: string;
+      stepHint: string;
+    };
+    myCasesDropdown: string;
+    /** Label above the case selector on the dashboard */
+    myCasesSectionLabel: string;
+    resumeApplication: string;
+    /** Accessible label for the primary apply / resume card region */
+    applyResumeCardAria: string;
+    supportTeamTitle: string;
+    supportTeamOrg: string;
+    supportTeamAdvocates: string;
+    supportTeamNoOrg: string;
+    supportTeamNoAdvocates: string;
+    supportTeamLoading: string;
+    supportTeamConnectCta: string;
+    supportTeamAddOrgCta: string;
+    /** Title/tooltip on linked org name — opens find / change organization */
+    supportTeamEditOrgTitle: string;
+    /** Title/tooltip on linked advocate name(s) — opens advocate connection */
+    supportTeamEditAdvocateTitle: string;
+    /** Inline next to advocate — opens secure messages */
+    supportTeamSendMessage: string;
+    /** Inline next to org — opens secure messages */
+    supportTeamContactOrg: string;
+    caseAdvocateManage: {
+      title: string;
+      back: string;
+      intro: string;
+      sendMessage: string;
+      remove: string;
+      removeConfirmTitle: string;
+      removeConfirmBody: string;
+      connectDifferent: string;
+      removed: string;
+      removeFailed: string;
+    };
+    caseOrgManage: {
+      title: string;
+      back: string;
+      intro: string;
+      contactOrganization: string;
+      changeOrganization: string;
+      removeOrganization: string;
+      removeConfirmTitle: string;
+      removeConfirmBody: string;
+      legacyLabel: string;
+      /** After PATCH reset to legacy org */
+      organizationRemoved: string;
+      updated: string;
+      updateFailed: string;
+      noOrgBody: string;
+    };
+    stateModalTitle: string;
+    stateModalSubtitle: string;
+    /** Use with tf(..., { state: "Illinois" | "Indiana" }) */
+    eligibleReviewIntro: string;
+    continueToEligibility: string;
+    /** Primary CTA when user has no cases yet */
+    applyNow: string;
+    /** Secondary action when user already has at least one case */
+    startNewApplication: string;
+    /** Header control: create another case without leaving the dashboard */
+    newCaseButton: string;
+    /** Summary for case actions menu (rename / delete) */
+    caseEdit: string;
+    getHelp: {
+      title: string;
+      connectAdvocate: string;
+      findOrganizations: string;
+      hintAdvocate: string;
+      hintOrganizations: string;
+    };
+    findOrganizationsPage: {
+      title: string;
+      body: string;
+      back: string;
+    };
+    /** Gamified 3-step strip + apply flow */
+    progressTitle: string;
+    selectedCaseLabel: string;
+    activeCaseBadge: string;
+    caseActivityForCase: string;
+    /** Section heading for messages / documents / appointments rows */
+    caseDetailsHeading: string;
+    nextStepTitle: string;
+    /** Shown when the case has no program state (IL/IN) before opening eligibility */
+    eligibilityPickStateFirst: string;
+    applyForCompensation: string;
+    applyModal: {
+      title: string;
+      body: string;
+      checkFirst: string;
+      skipToForm: string;
+      skipNote: string;
+    };
+    nextAction: {
+      labels: {
+        noCases: string;
+        noFocusCase: string;
+        continueEligibility: string;
+        continueApplication: string;
+        viewMessages: string;
+        uploadDocuments: string;
+        completeRequiredInfo: string;
+        continueSectionsIncomplete: string;
+        reviewSkippedFields: string;
+        connectAdvocate: string;
+        viewSupportOptions: string;
+        upToDate: string;
+      };
+      reasons: {
+        noCases: string;
+        noFocusCase: string;
+        continueEligibility: string;
+        continueApplication: string;
+        /** When core intake fields are complete and ready to finalize */
+        submitApplication: string;
+        messagesUnreadOne: string;
+        messagesUnreadMany: string;
+        uploadDocuments: string;
+        completeRequiredInfo: string;
+        continueSectionsIncomplete: string;
+        reviewSkippedFields: string;
+        connectAdvocate: string;
+        viewSupportOptions: string;
+        upToDate: string;
+      };
+    };
+    /** Smaller “next step” control under the Next Step heading (hub main is Apply / Resume). */
+    contextualNextStep: {
+      checkEligibility: string;
+      finishApplication: string;
+      submitApplication: string;
+    };
+  };
+
+  /** /compensation hub (public) */
+  compensationHub: {
+    contextLine: string;
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    primaryCta: string;
+    primaryHint: string;
+    secondaryGetHelp: string;
+    secondaryConnectAdvocate: string;
+    learnLink: string;
+    howItWorksTitle: string;
+    step1Label: string;
+    step1Title: string;
+    step1Body: string;
+    step2Label: string;
+    step2Title: string;
+    step2Body: string;
+    step3Label: string;
+    step3Title: string;
+    step3Body: string;
+    mayNeedTitle: string;
+    mayNeedLi1: string;
+    mayNeedLi2: string;
+    mayNeedLi3: string;
+    mayNeedFootnote: string;
+    disclaimerShort: string;
+    modalTitle: string;
+    modalBody: string;
+    modalCancel: string;
+    guestConnectHint: string;
+    nonVictimRoleHint: string;
+    openAdvocateDashboard: string;
+  };
+
   eligibility: {
+    introQualify: string;
     purposeText: string;
     questionOf: string;
     q1: {
@@ -128,6 +385,7 @@ export type I18nDict = {
   };
 
   eligibilityIN: {
+    introQualify: string;
     purposeText: string;
     questionOf: string;
     q1: { title: string; question: string; options: Record<string, string>; helper: string };
@@ -215,6 +473,22 @@ export type I18nDict = {
       title: string;
       subtitle: string;
       disclaimer: string;
+      ctaCreateAccount: string;
+      ctaMyDashboard: string;
+      signInPrompt: string;
+      videoTitle: string;
+      demoVideoIntro: string;
+    };
+
+    newsletter: {
+      title: string;
+      description: string;
+      placeholder: string;
+      submit: string;
+      submitting: string;
+      subscribed: string;
+      thanks: string;
+      error: string;
     };
 
     guidedPath: {
@@ -318,6 +592,8 @@ export type I18nDict = {
   };
 
   intake: {
+    stepOf: string;
+    reassurance: string;
     header: {
       badge: string;
       title: string;
@@ -353,6 +629,9 @@ export type I18nDict = {
       continueToStep: string;
       goToStep: string;
       reviewComplete: string;
+      continue: string;
+      saveAndExit: string;
+      reviewSubmit: string;
     };
 
     viewOnly: string;
@@ -1089,6 +1368,39 @@ forms: {
       notProvided: string;
       relationshipNotSet: string;
       alreadyFinalReview: string;
+    };
+
+    checkpoint: {
+      progressTitle: string;
+      progressHint: string;
+      missingTitle: string;
+      missingExplainer: string;
+      missingEmpty: string;
+      deferredTitle: string;
+      deferredExplainer: string;
+      deferredEmpty: string;
+      nextStepTitle: string;
+      applicationDetailsTitle: string;
+      applicationDetailsToggle: string;
+      documentsTitle: string;
+      documentsSubtitle: string;
+      documentsEmpty: string;
+      uploadDocuments: string;
+      uploadMissingDocuments: string;
+      messagesTitle: string;
+      messagesSubtitle: string;
+      messagesEmpty: string;
+      appointmentsTitle: string;
+      appointmentsSubtitle: string;
+      appointmentsEmpty: string;
+      appointmentsCta: string;
+      recommendedTitle: string;
+      whatNextTitle: string;
+      whatNextIncomplete: string;
+      whatNextMaybeDocsAndMessages: string;
+      whatNextSupportOrgs: string;
+      whatNextAllClear: string;
+      viewMessages: string;
     };
 
     actions: {

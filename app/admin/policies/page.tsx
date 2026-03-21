@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type PolicyRow = {
   id: string;
@@ -35,24 +36,29 @@ export default function AdminPoliciesPage() {
   });
 
   const load = async () => {
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData.session?.access_token;
-    if (!token) {
-      window.location.href = "/login";
-      return;
+    setLoading(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        window.location.href = "/login";
+        return;
+      }
+      const res = await fetch("/api/admin/policies", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setErr(getApiErrorMessage(json, "Failed to load policies"));
+        setPolicies([]);
+        return;
+      }
+      const json = await res.json();
+      setPolicies(json.data?.policies ?? []);
+      setErr(null);
+    } finally {
+      setLoading(false);
     }
-    const res = await fetch("/api/admin/policies", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to load policies"));
-      setPolicies([]);
-      return;
-    }
-    const json = await res.json();
-    setPolicies(json.data?.policies ?? []);
-    setErr(null);
   };
 
   useEffect(() => {
@@ -113,25 +119,25 @@ export default function AdminPoliciesPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-              Admin · Policies
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-bold">Policy documents</h1>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
-              ← Cases
-            </Link>
-            <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
-              Orgs
-            </Link>
-            <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
-              Audit
-            </Link>
-          </div>
-        </header>
+        <PageHeader
+          contextLine="Admin → Policies"
+          eyebrow="Admin · Policies"
+          title="Policies"
+          subtitle="Publish terms, privacy, and disclaimers. New versions are inactive until you activate them."
+          rightActions={
+            <>
+              <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
+                Cases
+              </Link>
+              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+                Organizations
+              </Link>
+              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+                Audit
+              </Link>
+            </>
+          }
+        />
 
         {err && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
@@ -139,8 +145,18 @@ export default function AdminPoliciesPage() {
           </div>
         )}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Create new version</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+          <p className="text-xs text-slate-500">Create a draft, then activate when ready.</p>
+          <a
+            href="#admin-policy-create"
+            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shrink-0"
+          >
+            Create
+          </a>
+        </div>
+
+        <section id="admin-policy-create" className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 scroll-mt-24">
+          <h2 className="text-sm font-semibold text-slate-200 mb-3">Create</h2>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="flex flex-wrap gap-3">
               <select
@@ -197,17 +213,23 @@ export default function AdminPoliciesPage() {
               disabled={creating || !form.version.trim() || !form.title.trim()}
               className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {creating ? "Creating…" : "Create (inactive)"}
+              {creating ? "Creating…" : "Create"}
             </button>
           </form>
         </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">All policy versions</h2>
+          <h2 className="text-sm font-semibold text-slate-200 mb-3">All versions</h2>
           {loading ? (
             <p className="text-sm text-slate-400">Loading…</p>
           ) : policies.length === 0 ? (
-            <p className="text-sm text-slate-400">No policy documents yet.</p>
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
+              <p className="font-medium text-slate-300">No policies available.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                Create a policy version above to store terms, privacy, or disclaimers for the
+                platform.
+              </p>
+            </div>
           ) : (
             <ul className="space-y-2">
               {policies.map((p) => (

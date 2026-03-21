@@ -17,6 +17,17 @@ export const es: I18nDict = {
             "Pronto habrá más opciones de cuenta y preferencias aquí.",
         language: "Idioma",
         brandTagline: "Apoyo a víctimas · Hecho simple",
+        compensationHub: "Compensación",
+        home: "Inicio",
+        help: "Ayuda",
+        updates: "Actualizaciones",
+        accountNav: "Cuenta",
+        mySupport: "Mi panel",
+        application: "Solicitud",
+        commandCenter: "Centro de comando",
+        clients: "Clientes",
+        organization: "Organización",
+        adminHome: "Administración",
     },
 
     common: {
@@ -24,14 +35,258 @@ export const es: I18nDict = {
         refresh: "Actualizar",
         refreshing: "Actualizando…",
         backToHome: "← Volver al inicio",
+        backToWorkspace: "← Volver a tu espacio de trabajo",
+        backToWorkspaceInline: "Volver a tu espacio de trabajo",
         yes: "Sí",
         no: "No",
+    },
+
+    victimDashboard: {
+        eyebrow: "Mi panel",
+        title: "Mi panel",
+        subtitle: "",
+        signedInAs: "Sesión iniciada como",
+        signedInAsUnknown: "—",
+        whatToDoNext: "Siguiente paso",
+        creating: "Creando…",
+        yourApplicationHeading: "Tu solicitud",
+        yourApplicationDescription: "Esta es tu solicitud actual de apoyo.",
+        yourApplicationPrivacyLine:
+            "Tu estado y elegibilidad están disponibles dentro de tu solicitud.",
+        statusField: "Estado",
+        eligibilityField: "Elegibilidad",
+        updatingDetails: "Actualizando detalles…",
+        priorityHigh: "Requiere atención",
+        priorityMedium: "Siguiente",
+        priorityLow: "Todo bien",
+        caseActivityTitle: "Este caso",
+        caseActivityIntro: "Lo de abajo es solo para el caso que elegiste arriba.",
+        caseActivityMessages: "Mensajes",
+        caseActivityDocuments: "Documentos",
+        caseActivityAppointments: "Citas",
+        caseActivitySupport: "Opciones de apoyo",
+        messagesLoading: "Cargando mensajes…",
+        messagesUnreadOne: "1 mensaje sin leer",
+        messagesUnreadMany: "{count} mensajes sin leer",
+        messagesInThread: "Hilo de mensajes abierto",
+        messagesEmpty: "Aún no hay mensajes",
+        documentsStatusMissing: "Aún faltan algunos documentos obligatorios",
+        documentsStatusGeneric: "Añade documentos cuando puedas",
+        documentsNoCase: "Abre tu solicitud para gestionar documentos",
+        appointmentsEmpty: "No hay citas próximas",
+        supportMatchOne: "1 coincidencia sugerida",
+        supportMatchMany: "{count} coincidencias sugeridas",
+        supportNoMatches: "Aún no hay coincidencias",
+        supportNoCase: "Abre tu solicitud para ver opciones de apoyo",
+        yourCasesTitle: "Tus casos",
+        yourCasesHelp: "Elige un caso en el menú para actualizar el panel. Todo lo de abajo corresponde a ese caso.",
+        stateIL: "Illinois",
+        stateIN: "Indiana",
+        startApplication: "Añadir otro caso",
+        noCasesTitle: "Aún no hay caso",
+        noCasesBody:
+            "Toca el botón verde de arriba para empezar. Guardamos tu avance automáticamente.",
+        loadError: "No se pudieron cargar tus casos. Inténtalo de nuevo.",
+        sessionExpired: "La sesión expiró. Vuelve a iniciar sesión.",
+        continue: "Continuar",
+        more: "Más",
+        delete: "Eliminar",
+        rename: "Renombrar",
+        save: "Guardar",
+        cancel: "Cancelar",
+        caseNamePlaceholder: "Nombre del caso",
+        lastUpdatedDaysAgo: "Última actualización hace {days} días",
+        lastUpdatedToday: "Última actualización hoy",
+        lastUpdatedYesterday: "Última actualización ayer",
+        lastUpdatedUnknown: "Fecha de última actualización no disponible",
+        deleteModalTitle: "¿Eliminar esta solicitud?",
+        deleteModalBodyLine1: "Esto quitará tu información de esta solicitud.",
+        deleteModalBodyLine2: "No podrás deshacer este paso.",
+        deleteModalCancel: "Cancelar",
+        deleteModalConfirm: "Eliminar",
+        deleteFailed: "No se pudo eliminar esta solicitud. Inténtalo de nuevo.",
+        editNameTitle: "Editar nombre",
+        progressTitle: "Tu avance",
+        selectedCaseLabel: "Estás trabajando en",
+        activeCaseBadge: "Seleccionado",
+        funnel: {
+            ariaLabel: "Tres pasos",
+            stepEligibility: "Ver elegibilidad",
+            stepApplication: "Solicitar",
+            stepSupport: "Seguimiento",
+            stepHint:
+                "Toca un paso para abrirlo. La elegibilidad forma parte de iniciar tu solicitud; si la omitiste, el primer paso aparece en rojo pero aún puedes solicitar y hacer seguimiento.",
+        },
+        myCasesDropdown: "Mis casos",
+        myCasesSectionLabel: "Mis casos",
+        resumeApplication: "Reanudar solicitud",
+        applyResumeCardAria: "Iniciar o reanudar tu solicitud",
+        supportTeamTitle: "Mi Equipo De Apoyo",
+        supportTeamOrg: "Organización",
+        supportTeamAdvocates: "Defensor/a",
+        supportTeamNoOrg: "Aún no hay organización vinculada a este caso.",
+        supportTeamNoAdvocates: "Aún no hay defensor/a conectado/a.",
+        supportTeamLoading: "Cargando…",
+        supportTeamConnectCta: "Conectar con un/a defensor/a",
+        supportTeamAddOrgCta: "Buscar una organización",
+        supportTeamEditOrgTitle: "Gestionar la organización para este caso",
+        supportTeamEditAdvocateTitle: "Gestionar defensores para este caso",
+        supportTeamSendMessage: "Enviar mensaje",
+        supportTeamContactOrg: "Contactar organización",
+        caseAdvocateManage: {
+            title: "Defensores en este caso",
+            back: "Volver al panel",
+            intro:
+                "Estas personas pueden acceder a esta solicitud. Puedes quitar a alguien o conectar con otra persona. Los mensajes seguros están en tu solicitud.",
+            sendMessage: "Enviar mensaje",
+            remove: "Quitar del caso",
+            removeConfirmTitle: "¿Quitar a esta persona?",
+            removeConfirmBody:
+                "Ya no podrá abrir este caso. Podrás enviar una nueva solicitud de conexión después si lo necesitas.",
+            connectDifferent: "Conectar u añadir defensor/a",
+            removed: "Defensor/a quitado/a de este caso.",
+            removeFailed: "No se pudo quitar. Inténtalo de nuevo.",
+        },
+        caseOrgManage: {
+            title: "Organización para este caso",
+            back: "Volver al panel",
+            intro:
+                "La organización vinculada aplica solo a esta solicitud. Cambiarla actualiza mensajes y la coincidencia de programas para este caso.",
+            contactOrganization: "Contactar organización",
+            changeOrganization: "Cambiar organización",
+            removeOrganization: "Quitar vínculo con la organización",
+            removeConfirmTitle: "¿Quitar el vínculo con la organización?",
+            removeConfirmBody:
+                "Tu caso usará la organización predeterminada de la plataforma hasta que elijas otra. Los mensajes pueden usar otro hilo.",
+            legacyLabel: "Predeterminada (sin organización de servicios a víctimas)",
+            organizationRemoved:
+                "Se quitó el vínculo con la organización. Este caso usa la organización predeterminada de la plataforma hasta que elijas otra.",
+            updated: "Organización actualizada.",
+            updateFailed: "No se pudo actualizar. Inténtalo de nuevo.",
+            noOrgBody: "Aún no hay organización de servicios a víctimas para este caso.",
+        },
+        stateModalTitle: "¿Programa de qué estado?",
+        stateModalSubtitle:
+            "Illinois e Indiana usan formularios y preguntas distintas; usaremos el que corresponda.",
+        eligibleReviewIntro:
+            "Iniciaremos tu solicitud para {state} y te llevaremos a la revisión de elegibilidad.",
+        continueToEligibility: "Continuar a elegibilidad",
+        applyNow: "Solicitar ahora",
+        startNewApplication: "Iniciar una solicitud nueva",
+        newCaseButton: "Nuevo caso",
+        caseEdit: "Editar",
+        getHelp: {
+            title: "Obtener ayuda",
+            connectAdvocate: "Conectar con un/a defensor/a",
+            findOrganizations: "Organizaciones cerca de ti",
+            hintAdvocate: "Mensajes seguros y solicitudes en pocos pasos.",
+            hintOrganizations: "Mapa, distancia y puntuaciones—pronto.",
+        },
+        findOrganizationsPage: {
+            title: "Organizaciones cerca de ti",
+            body:
+                "Estamos construyendo un mapa con tu ubicación para ver organizaciones de servicios a víctimas cercanas y comparar programas. Vuelve pronto.",
+            back: "← Volver a Mi panel",
+        },
+        caseActivityForCase: "Para este caso",
+        caseDetailsHeading: "Detalles Del Caso",
+        nextStepTitle: "Siguiente paso",
+        eligibilityPickStateFirst:
+            "Elige Illinois o Indiana para abrir el programa correcto para este caso.",
+        applyForCompensation: "Solicitar compensación para víctimas",
+        applyModal: {
+            title: "Antes de empezar",
+            body:
+                "Recomendamos una revisión rápida para ver si podrías calificar. Puedes abrir el formulario sin eso—si lo omites, tu solicitud podría no aprobarse si no calificas.",
+            checkFirst: "Primero ver si califico",
+            skipToForm: "Omitir y abrir el formulario",
+            skipNote: "Si omites la revisión, la solicitud puede denegarse si no calificas.",
+        },
+        nextAction: {
+            labels: {
+                noCases: "Solicitar compensación para víctimas",
+                noFocusCase: "Elige un caso",
+                continueEligibility: "¿Soy elegible?",
+                continueApplication: "Seguir con tu solicitud",
+                viewMessages: "Leer mensajes",
+                uploadDocuments: "Subir documentos faltantes",
+                completeRequiredInfo: "Completar datos obligatorios",
+                continueSectionsIncomplete: "Seguir con el formulario",
+                reviewSkippedFields: "Revisar preguntas omitidas",
+                connectAdvocate: "Conectar con un/a defensor/a",
+                viewSupportOptions: "Ver opciones de apoyo",
+                upToDate: "Abrir tu solicitud",
+            },
+            reasons: {
+                noCases: "Empieza aquí—solo unos minutos.",
+                noFocusCase: "Elige el caso en el que quieres trabajar o inicia uno nuevo.",
+                continueEligibility: "Responde unas preguntas para ver si podrías calificar.",
+                continueApplication:
+                    "Tu avance está guardado. Puedes continuar la solicitud cuando te sientas preparado/a.",
+                submitApplication:
+                    "La información obligatoria parece completa—envía cuando estés listo/a.",
+                messagesUnreadOne: "Tienes un mensaje sin leer.",
+                messagesUnreadMany: "Tienes {count} mensajes sin leer.",
+                uploadDocuments: "Faltan documentos que necesitamos para avanzar.",
+                completeRequiredInfo: "Quedan datos obligatorios pendientes.",
+                continueSectionsIncomplete: "Aún faltan partes del formulario.",
+                reviewSkippedFields: "Omitiste algunas cosas—revísalas cuando puedas.",
+                connectAdvocate: "Puedes pedir conectar con un/a defensor/a.",
+                viewSupportOptions: "Puede haber programas locales que te ayuden.",
+                upToDate: "Nada urgente—abre tu solicitud cuando quieras.",
+            },
+        },
+        contextualNextStep: {
+            checkEligibility: "Ver elegibilidad",
+            finishApplication: "Terminar la solicitud",
+            submitApplication: "Enviar",
+        },
+    },
+
+    compensationHub: {
+        contextLine: "Mi panel → Compensación",
+        eyebrow: "Compensación para víctimas del delito",
+        title: "Ayuda con compensación",
+        subtitle:
+            "Compensación para víctimas de Illinois o Indiana—en lenguaje claro, a tu ritmo.",
+        primaryCta: "Iniciar mi solicitud",
+        primaryHint: "Te guiaremos paso a paso.",
+        secondaryGetHelp: "Obtener ayuda ahora",
+        secondaryConnectAdvocate: "Conectar con un/a defensor/a",
+        learnLink: "Cómo funciona la compensación",
+        howItWorksTitle: "Cómo funciona",
+        step1Label: "Paso 1",
+        step1Title: "Verificar elegibilidad",
+        step1Body: "Preguntas breves para saber qué puede aplicar antes de los detalles.",
+        step2Label: "Paso 2",
+        step2Title: "Completar tu solicitud",
+        step2Body: "Ingesta guiada, documentos y un borrador que puedes revisar.",
+        step3Label: "Paso 3",
+        step3Title: "Mantenerse en contacto",
+        step3Body: "Mensajes, defensores y próximos pasos mientras avanza tu caso.",
+        mayNeedTitle: "Qué podrías necesitar (si lo tienes)",
+        mayNeedLi1: "Nombre de la víctima, fecha de nacimiento y dirección",
+        mayNeedLi2: "Fecha y lugar del delito; número de reporte policial si lo tienes",
+        mayNeedLi3: "Facturas médicas o funerarias; datos del empleador por salarios perdidos",
+        mayNeedFootnote:
+            "¿Falta algo? Aún puedes empezar—te ayudamos a planear qué reunir.",
+        disclaimerShort:
+            "NxtStps no es un sitio gubernamental; los flujos reflejan las solicitudes oficiales de CVC de Illinois e Indiana.",
+        modalTitle: "Selecciona tu estado",
+        modalBody: "¿A qué programa estatal de Compensación para Víctimas del Delito estás aplicando?",
+        modalCancel: "Cancelar",
+        guestConnectHint:
+            "Para conectar con un/a defensor/a necesitas una cuenta gratuita—te guiamos al tocar Conectar con un/a defensor/a.",
+        nonVictimRoleHint:
+            "Las conexiones con defensores son para cuentas de sobrevivientes—Obtener ayuda ahora abre Ayuda para otros roles.",
+        openAdvocateDashboard: "Abrir panel de casos",
     },
 
     /* =========================
        ELIGIBILITY CHECK
     ========================== */
     eligibility: {
+        introQualify: "Veamos si puedes calificar.",
         purposeText:
             "Esta breve verificación ayuda a confirmar si puedes solicitar la Compensación para Víctimas de Delitos de Illinois y si estás listo/a para comenzar. No envía una solicitud ni afecta tu elegibilidad.",
         questionOf: "Pregunta {current} de {total}",
@@ -120,14 +375,14 @@ export const es: I18nDict = {
             no: "No",
         },
         resultEligible: {
-            headline: "Pareces elegible para solicitar.",
+            headline: "Puedes calificar.",
             body: "Según tus respuestas, cumples con los requisitos básicos para presentar una solicitud de Compensación para Víctimas de Delitos de Illinois.",
-            cta: "Iniciar solicitud",
+            cta: "Continuar solicitud",
             secondary: "Puedes guardar tu progreso y volver cuando quieras.",
         },
         resultNeedsAttention: {
             headline:
-                "Puedes ser elegible, pero algunas cosas necesitan atención primero.",
+                "Aún puedes ser elegible.",
             body: "Puedes solicitar, pero la información faltante o problemas de contacto pueden retrasar o impedir el pago.",
             checklist: [
                 "Confirma quién firmará la solicitud",
@@ -135,7 +390,7 @@ export const es: I18nDict = {
                 "Asegúrate de que tu dirección y teléfono sean confiables",
                 "Prepárate para devolver los documentos solicitados en 45 días",
             ],
-            ctaReady: "Continuar cuando estés listo/a",
+            ctaReady: "Continuar solicitud",
             ctaHelp: "Obtener ayuda de un defensor/a",
         },
         resultNotEligible: {
@@ -166,6 +421,7 @@ export const es: I18nDict = {
     },
 
     eligibilityIN: {
+        introQualify: "Veamos si puedes calificar.",
         purposeText:
             "Esta breve verificación ayuda a confirmar si puedes solicitar la Compensación para Víctimas de Crímenes Violentos de Indiana. No envía una solicitud ni afecta tu elegibilidad.",
         questionOf: "Pregunta {current} de {total}",
@@ -230,13 +486,13 @@ export const es: I18nDict = {
             na: "N/A (tengo 18 años o más)",
         },
         resultEligible: {
-            headline: "Pareces elegible para solicitar.",
+            headline: "Puedes calificar.",
             body: "Según tus respuestas, cumples los requisitos básicos para presentar una solicitud de Compensación para Víctimas de Indiana.",
-            cta: "Iniciar solicitud",
+            cta: "Continuar solicitud",
             secondary: "Puedes guardar tu progreso y volver en cualquier momento.",
         },
         resultNeedsAttention: {
-            headline: "Puedes ser elegible, pero algunas cosas necesitan atención primero.",
+            headline: "Aún puedes ser elegible.",
             body: "Puedes solicitar, pero información faltante puede retrasar o impedir el pago.",
             checklist: [
                 "Confirma el reporte en 72 horas y disposición a cooperar con las autoridades",
@@ -244,7 +500,7 @@ export const es: I18nDict = {
                 "Asegúrate de que la solicitud se presente en 180 días del crimen",
                 "Si eres menor de 18, coordina la firma del padre o tutor legal",
             ],
-            ctaReady: "Continuar cuando estés listo/a",
+            ctaReady: "Continuar solicitud",
             ctaHelp: "Obtener ayuda de un defensor/a",
         },
         resultNotEligible: {
@@ -335,10 +591,28 @@ export const es: I18nDict = {
     ========================== */
     home: {
         hero: {
-            title: "Apoyo para Víctimas de Delitos",
-            subtitle: "Solicita compensación para víctimas hoy.",
+            title: "Compensación para víctimas — un solo centro",
+            subtitle:
+                "Procesa la Compensación para Víctimas de Delitos, revisa el estado y gestiona casos—una plataforma para personas sobrevivientes, defensoras y organizaciones.",
             disclaimer:
-                "NxtStps es una herramienta de apoyo. No reemplaza asesoría legal, servicios de emergencia ni atención médica. Puedes pausar en cualquier momento y volver cuando estés listo/a.",
+                "NxtStps es una herramienta de apoyo. No reemplaza asesoría legal, servicios de emergencia ni atención médica. Puedes pausar cuando quieras.",
+            ctaCreateAccount: "Crear una cuenta",
+            ctaMyDashboard: "Mi panel",
+            signInPrompt: "¿Ya tienes cuenta?",
+            videoTitle: "Cómo funciona",
+            demoVideoIntro: "Resumen breve—cuando estés listo/a.",
+        },
+
+        newsletter: {
+            title: "Boletín (opcional)",
+            description:
+                "Actualizaciones ocasionales sobre NxtStps y recursos para víctimas—nunca obligatorio para recibir ayuda.",
+            placeholder: "tu@correo.com",
+            submit: "Suscribirse",
+            submitting: "…",
+            subscribed: "Suscrito/a",
+            thanks: "Gracias por suscribirte.",
+            error: "Algo salió mal. Intenta de nuevo.",
         },
 
         guidedPath: {
@@ -502,6 +776,8 @@ export const es: I18nDict = {
        INTAKE (APPLICATION FLOW)
     ========================== */
     intake: {
+        stepOf: "Paso {current} de {total}",
+        reassurance: "Puedes guardar y volver cuando quieras.",
         steps: {
             victim: "Víctima",
             applicant: "Solicitante",
@@ -521,9 +797,9 @@ export const es: I18nDict = {
 
         header: {
             badge: "Compensación para Víctimas del Delito (Illinois)",
-            title: "Solicitud de compensación",
+            title: "Tu solicitud",
             subtitle:
-                "Responde lo que puedas. Puedes pausar en cualquier momento y volver cuando estés listo/a.",
+                "Tu solicitud guiada de compensación para víctimas del delito: responde lo que puedas y pausa cuando quieras.",
             needMoreContext: "¿Necesitas más información?",
             learnLink: "Cómo funciona la compensación en Illinois",
         },
@@ -538,13 +814,17 @@ export const es: I18nDict = {
             continueToStep: "Continuar a {step} →",
             goToStep: "Ir a {step} →",
             reviewComplete: "Revisión completa",
+            continue: "Continuar",
+            saveAndExit: "Guardar y salir",
+            reviewSubmit: "Revisar y enviar",
         },
 
         viewOnlyBanner:
             "Acceso de solo lectura: puedes revisar este caso, pero no puedes editarlo.",
 
         footer: {
-            draftDisclaimer: "Borrador. Nada se envía al estado sin tu consentimiento.",
+            draftDisclaimer:
+                "Borrador. Nada se envía al estado sin tu consentimiento. Puedes guardar y volver cuando quieras.",
         },
 
         summary: {
@@ -1376,7 +1656,7 @@ export const es: I18nDict = {
         summary: {
             title: "Resumen",
             description:
-                "Revisa lo que ingresaste. Puedes volver a cualquier sección para editar.",
+                "Revisa lo que ingresaste y tu próximo paso. Puedes editar cualquier sección cuando quieras.",
             descriptionDraft: "Revisa tu caso antes de generar documentos.",
 
             loadFailed: "No se pudo cargar el resumen.",
@@ -1397,6 +1677,45 @@ export const es: I18nDict = {
                 notProvided: "No proporcionado",
                 relationshipNotSet: "relación no establecida",
                 alreadyFinalReview: "Ya estás en el paso final de revisión.",
+            },
+
+            checkpoint: {
+                progressTitle: "Progreso de la solicitud",
+                progressHint:
+                    "Has llegado a {visited} de {total} secciones en esta solicitud (incluye esta revisión).",
+                missingTitle: "Información faltante",
+                missingExplainer: "Los datos faltantes pueden retrasar el avance.",
+                missingEmpty: "No hay campos obligatorios faltantes en este punto.",
+                deferredTitle: "Aplazado / omitido",
+                deferredExplainer: "Lo omitido o aplazado se puede completar más adelante.",
+                deferredEmpty: "No hay elementos marcados como omitidos o aplazados.",
+                nextStepTitle: "Tu próximo paso",
+                applicationDetailsTitle: "Detalles de la solicitud",
+                applicationDetailsToggle: "Ver detalles completos de la solicitud",
+                documentsTitle: "Documentos",
+                documentsSubtitle: "Los documentos pueden ayudar a respaldar tu caso.",
+                documentsEmpty:
+                    "Aún no hay documentos cargados. Puedes agregar archivos en el paso de documentos.",
+                uploadDocuments: "Cargar documentos",
+                uploadMissingDocuments: "Cargar documentos faltantes",
+                messagesTitle: "Mensajes",
+                messagesSubtitle: "Conversación segura con tu defensor/a",
+                messagesEmpty: "Aún no tienes mensajes seguros.",
+                appointmentsTitle: "Citas",
+                appointmentsSubtitle: "Próximas citas de apoyo",
+                appointmentsEmpty: "Aún no hay citas programadas.",
+                appointmentsCta: "Ver citas",
+                recommendedTitle: "Organizaciones de apoyo recomendadas",
+                whatNextTitle: "Qué sigue",
+                whatNextIncomplete:
+                    "Continúa tu solicitud cuando estés listo/a. Puedes guardar y volver en cualquier momento.",
+                whatNextMaybeDocsAndMessages:
+                    "Tus próximos pasos pueden incluir cargar documentos o revisar mensajes.",
+                whatNextSupportOrgs:
+                    "Puedes revisar organizaciones de apoyo que coincidan con tus necesidades cuando quieras.",
+                whatNextAllClear:
+                    "Por ahora estás al día. Vuelve más tarde por actualizaciones o mensajes.",
+                viewMessages: "Ver mensajes",
             },
 
             actions: {

@@ -157,9 +157,10 @@ export default function AdminGradingPage() {
               Admin · Internal only
             </p>
             <h1 className="text-2xl font-bold">CBO quality grading</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not public,
-              not used in matching.
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              Internal scoring supports designation mapping — scores are not shown to survivors or the
+              public. Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not
+              public, not used in matching.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm items-center">

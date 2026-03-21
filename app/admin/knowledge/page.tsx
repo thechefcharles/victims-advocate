@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 type KnowledgeEntry = {
   id: string;
@@ -200,29 +201,20 @@ export default function AdminKnowledgePage() {
     });
   };
 
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-8">
-        <div className="max-w-5xl mx-auto">Loading knowledge base…</div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">Admin · Knowledge Base</p>
-            <h1 className="text-2xl font-bold text-slate-100">Knowledge entries</h1>
-          </div>
-          <Link
-            href="/admin/cases"
-            className="text-sm text-slate-400 hover:text-slate-200"
-          >
-            ← Back to admin
-          </Link>
-        </header>
+        <PageHeader
+          contextLine="Admin → Knowledge base"
+          eyebrow="Admin · Knowledge"
+          title="Knowledge base"
+          subtitle="Help articles and eligibility text shown to advocates and survivors. Draft first, then activate."
+          rightActions={
+            <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
+              Cases
+            </Link>
+          }
+        />
 
         {err && (
           <div className="rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-sm text-amber-200">
@@ -230,48 +222,61 @@ export default function AdminKnowledgePage() {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="text"
-            placeholder="Search title/body"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 w-48"
-          />
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
-          >
-            <option value="">All categories</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
-          >
-            <option value="">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="active">Active</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            value={filterState}
-            onChange={(e) => setFilterState(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
-          >
-            <option value="">All states</option>
-            <option value="IL">IL</option>
-            <option value="IN">IN</option>
-          </select>
+        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-4">
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="text"
+              placeholder="Search title/body"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 w-48 min-w-[10rem]"
+            />
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+            >
+              <option value="">All categories</option>
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+            >
+              <option value="">All statuses</option>
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="archived">Archived</option>
+            </select>
+            <select
+              value={filterState}
+              onChange={(e) => setFilterState(e.target.value)}
+              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+            >
+              <option value="">All states</option>
+              <option value="IL">IL</option>
+              <option value="IN">IN</option>
+            </select>
+          </div>
+          {!editingId && (
+            <a
+              href="#admin-knowledge-create"
+              className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shrink-0"
+            >
+              Create
+            </a>
+          )}
         </div>
 
         {!editingId ? (
-          <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Create new entry</h2>
+          <section
+            id="admin-knowledge-create"
+            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 scroll-mt-24"
+          >
+            <h2 className="text-sm font-semibold text-slate-200 mb-3">Create</h2>
             <form onSubmit={handleCreate} className="space-y-2 text-sm">
               <div className="grid gap-2 sm:grid-cols-2">
                 <input
@@ -325,13 +330,13 @@ export default function AdminKnowledgePage() {
                 disabled={creating}
                 className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
               >
-                {creating ? "Creating…" : "Create draft"}
+                {creating ? "Creating…" : "Create"}
               </button>
             </form>
           </section>
         ) : (
           <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Edit draft</h2>
+            <h2 className="text-sm font-semibold text-slate-200 mb-3">Edit</h2>
             <form onSubmit={handleUpdate} className="space-y-2 text-sm">
               <input
                 required
@@ -353,7 +358,7 @@ export default function AdminKnowledgePage() {
                   type="submit"
                   className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
                 >
-                  Save
+                  Update
                 </button>
                 <button
                   type="button"
@@ -368,7 +373,17 @@ export default function AdminKnowledgePage() {
         )}
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-200">Entries ({entries.length})</h2>
+          <h2 className="text-sm font-semibold text-slate-200">All entries ({entries.length})</h2>
+          {loading ? (
+            <p className="text-sm text-slate-400 py-4">Loading…</p>
+          ) : entries.length === 0 ? (
+            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
+              <p className="font-medium text-slate-300">No items found.</p>
+              <p className="mt-2 text-xs text-slate-500">
+                Clear filters or create a draft entry to add help content.
+              </p>
+            </div>
+          ) : (
           <ul className="divide-y divide-slate-800">
             {entries.map((entry) => (
               <li key={entry.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
@@ -412,6 +427,7 @@ export default function AdminKnowledgePage() {
               </li>
             ))}
           </ul>
+          )}
         </section>
       </div>
     </main>

@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { CompensationApplication } from "@/lib/compensationSchema";
 import { supabase } from "@/lib/supabaseClient";
+import { PageHeader } from "@/components/layout/PageHeader";
+import {
+  APP_EMPTY_STATE,
+  APP_PAGE_MAIN,
+  APP_TABLE,
+  APP_TABLE_CELL,
+  APP_TABLE_CELL_RIGHT,
+  APP_TABLE_HEAD_CELL,
+  APP_TABLE_HEAD_CELL_RIGHT,
+  APP_TABLE_ROW,
+  APP_TABLE_WRAP,
+} from "@/lib/ui/appSurface";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -61,71 +72,65 @@ const res = await fetch("/api/compensation/cases", {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <main className={APP_PAGE_MAIN}>
         <div className="max-w-5xl mx-auto">Loading cases…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className={APP_PAGE_MAIN}>
       <div className="max-w-5xl mx-auto space-y-6">
-        <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            Admin · Cases (Supabase)
-          </p>
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            Saved compensation cases
-          </h1>
-          <div className="flex gap-3 text-sm text-slate-400">
-            <Link href="/admin/audit" className="hover:text-slate-200">
-              View audit logs →
-            </Link>
-            <Link href="/admin/orgs" className="hover:text-slate-200">
-              Organizations →
-            </Link>
-            <Link href="/admin/policies" className="hover:text-slate-200">
-              Policies →
-            </Link>
-            <Link href="/admin/users" className="hover:text-slate-200">
-              Users →
-            </Link>
-            <Link href="/admin/ecosystem" className="hover:text-teal-400">
-              Ecosystem →
-            </Link>
-            <Link
-              href="/admin/grading"
-              className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35"
-            >
-              CBO grading
-            </Link>
-          </div>
-          <p className="text-sm text-slate-300">
-            These cases are loaded from your Supabase database (not
-            localStorage). Each one includes the full application and any
-            attached documents.
-          </p>
-        </header>
+        <PageHeader
+          contextLine="Admin → Cases"
+          eyebrow="Admin · Cases"
+          title="Saved compensation cases"
+          subtitle="Cases load from your database. Each row includes the full application and attached documents."
+          rightActions={
+            <>
+              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+                Audit
+              </Link>
+              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+                Organizations
+              </Link>
+              <Link href="/admin/policies" className="text-sm text-slate-400 hover:text-slate-200">
+                Policies
+              </Link>
+              <Link href="/admin/users" className="text-sm text-slate-400 hover:text-slate-200">
+                Users
+              </Link>
+              <Link href="/admin/ecosystem" className="text-sm text-teal-400 hover:text-teal-200">
+                Ecosystem
+              </Link>
+              <Link
+                href="/admin/grading"
+                className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35 text-sm"
+              >
+                Review
+              </Link>
+            </>
+          }
+        />
 
         {cases.length === 0 ? (
-          <p className="text-xs text-slate-400">
-            No cases saved yet. Complete an intake and click &quot;Save as case&quot;
-            on the summary screen to see it appear here.
-          </p>
+          <div className={APP_EMPTY_STATE}>
+            <p className="font-medium text-slate-300">No cases yet.</p>
+            <p className="mt-2 text-xs text-slate-500">
+              Complete an intake and use Save on the summary step to create a case record.
+            </p>
+          </div>
         ) : (
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5">
-            <table className="w-full border-collapse text-xs">
+          <section className={APP_TABLE_WRAP}>
+            <table className={APP_TABLE}>
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="text-left py-2 pr-3 font-normal">Victim</th>
-                  <th className="text-left py-2 pr-3 font-normal">City</th>
-                  <th className="text-left py-2 pr-3 font-normal">
-                    Date of crime
-                  </th>
-                  <th className="text-left py-2 pr-3 font-normal">
-                    Created
-                  </th>
-                  <th className="text-left py-2 pr-3 font-normal">Status</th>
+                <tr>
+                  <th className={APP_TABLE_HEAD_CELL}>Victim</th>
+                  <th className={APP_TABLE_HEAD_CELL}>City</th>
+                  <th className={APP_TABLE_HEAD_CELL}>Date of crime</th>
+                  <th className={APP_TABLE_HEAD_CELL}>Created</th>
+                  <th className={APP_TABLE_HEAD_CELL}>Status</th>
+                  <th className={APP_TABLE_HEAD_CELL_RIGHT}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,38 +139,28 @@ const res = await fetch("/api/compensation/cases", {
                   const cr = c.application.crime || {};
 
                   return (
-                    <tr
-                      key={c.id}
-                      className="border-b border-slate-900 hover:bg-slate-900/60"
-                    >
-                      <td className="py-2 pr-3 align-top">
+                    <tr key={c.id} className={APP_TABLE_ROW}>
+                      <td className={APP_TABLE_CELL}>
                         <div className="space-y-0.5">
-                          <a
-                            href={`/admin/cases/${c.id}`}
-                            className="font-semibold text-slate-100 hover:text-emerald-300 hover:underline underline-offset-2"
-                          >
+                          <span className="font-semibold text-slate-100">
                             {(v.firstName || "") +
                               (v.firstName || v.lastName ? " " : "") +
                               (v.lastName || "") || "Unknown victim"}
-                          </a>
-                          <div className="text-[11px] text-slate-400">
+                          </span>
+                          <div className="text-[11px] text-slate-500">
                             DOB: {v.dateOfBirth || "—"}
                           </div>
                         </div>
                       </td>
-                      <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
+                      <td className={`${APP_TABLE_CELL} text-[11px]`}>
                         {v.city || cr.crimeCity || "—"}
                         {v.state || cr.crimeCounty
                           ? `, ${v.state || cr.crimeCounty}`
                           : ""}
                       </td>
-                      <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                        {cr.dateOfCrime || "—"}
-                      </td>
-                      <td className="py-2 pr-3 align-top text-[11px] text-slate-300">
-                        {formatDate(c.created_at)}
-                      </td>
-                      <td className="py-2 pr-3 align-top text-[11px]">
+                      <td className={`${APP_TABLE_CELL} text-[11px]`}>{cr.dateOfCrime || "—"}</td>
+                      <td className={`${APP_TABLE_CELL} text-[11px]`}>{formatDate(c.created_at)}</td>
+                      <td className={`${APP_TABLE_CELL} text-[11px]`}>
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-0.5 ${
                             c.status === "ready_for_review"
@@ -175,6 +170,14 @@ const res = await fetch("/api/compensation/cases", {
                         >
                           {c.status}
                         </span>
+                      </td>
+                      <td className={APP_TABLE_CELL_RIGHT}>
+                        <Link
+                          href={`/admin/cases/${c.id}`}
+                          className="text-emerald-400 hover:text-emerald-300 text-[11px] font-medium"
+                        >
+                          Open
+                        </Link>
                       </td>
                     </tr>
                   );

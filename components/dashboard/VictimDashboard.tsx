@@ -2,6 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FunnelStepId } from "@/lib/victimDashboardFunnel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
@@ -9,6 +10,21 @@ import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
 import { emptyCompensationApplication } from "@/lib/compensationSchema";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
+import {
+  ROUTES,
+  victimCasePaths,
+  compensationIntakeMessagesUrl,
+} from "@/lib/routes/pageRegistry";
+import { useStateSelection } from "@/components/state/StateProvider";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PrimaryActionArea } from "@/components/layout/PrimaryActionArea";
+import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
+import { hasBlockingDocumentGap, type CompletenessSignal } from "@/lib/product/nextAction";
+import { priorityRingClassName } from "@/lib/product/priority";
+import { getVictimFunnelSteps, getEligibilitySkippedFromApplication } from "@/lib/victimDashboardFunnel";
+import { VictimFunnelStepper } from "@/components/dashboard/VictimFunnelStepper";
+
+const LEGACY_ORG_DISPLAY_NAME = "Legacy (pre-tenant)";
 
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
@@ -19,13 +35,20 @@ type CaseRow = {
   id: string;
   name?: string | null;
   created_at?: string;
+  updated_at?: string | null;
   status?: string;
   state_code?: string;
   application?: any;
   eligibility_result?: EligibilityResult;
   eligibility_readiness?: string | null;
   eligibility_completed_at?: string | null;
+  organization_id?: string | null;
   access?: { role?: "owner" | "advocate"; can_view?: boolean; can_edit?: boolean };
+};
+
+type SupportTeamPayload = {
+  organization: { id: string; name: string } | null;
+  advocates: { id: string; label: string }[];
 };
 
 function getCaseDisplayName(c: CaseRow): string {
@@ -38,19 +61,6 @@ function getCaseDisplayName(c: CaseRow): string {
     if (full) return full;
   }
   return `Case ${c.id.slice(0, 8)}…`;
-}
-
-function getEligibilityStatusLabel(
-  c: CaseRow,
-  t: (key: string) => string
-): string {
-  if (!c.eligibility_result) return t("eligibility.status.notChecked");
-  if (c.eligibility_result === "eligible") return t("eligibility.status.eligible");
-  if (c.eligibility_result === "needs_review")
-    return t("eligibility.status.needsReview");
-  if (c.eligibility_result === "not_eligible")
-    return t("eligibility.status.notEligible");
-  return t("eligibility.status.notChecked");
 }
 
 function safeGetItem(key: string) {
@@ -71,28 +81,71 @@ function safeRemoveItem(key: string) {
   } catch {}
 }
 
+function PrimaryActionSkeleton() {
+  return (
+    <div
+      className={`${APP_CARD} animate-pulse rounded-2xl border border-emerald-500/20 bg-slate-950/60 p-6 sm:p-7 space-y-4`}
+      aria-hidden
+    >
+      <div className="h-3 w-40 rounded bg-slate-700/80" />
+      <div className="h-4 w-full max-w-md rounded bg-slate-700/60" />
+      <div className="h-10 w-44 rounded-full bg-emerald-900/40" />
+    </div>
+  );
+}
+
+function CaseActivitySkeleton() {
+  return (
+    <div className={`${APP_CARD} space-y-3 animate-pulse`} aria-hidden>
+      <div className="h-3 w-56 rounded bg-slate-700/70" />
+      <div className="h-3 w-full rounded bg-slate-800/80" />
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="flex items-center justify-between gap-3 border-b border-slate-800/80 py-3 last:border-0">
+          <div className="h-4 w-28 rounded bg-slate-700/60" />
+          <div className="h-3 w-24 rounded bg-slate-800/80" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function VictimDashboard({
-  email,
   userId,
   token,
 }: {
-  email: string | null;
   userId: string;
   token: string | null;
 }) {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, tf } = useI18n();
   const { strictPreviews } = useSafetySettings(token);
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [cases, setCases] = useState<CaseRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [editingNameId, setEditingNameId] = useState<string | null>(null);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [editNameValue, setEditNameValue] = useState("");
-  const [skipWarningCaseId, setSkipWarningCaseId] = useState<string | null>(null);
   const [creatingCase, setCreatingCase] = useState(false);
-  const [newCaseState, setNewCaseState] = useState<"IL" | "IN">("IL");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; displayName: string } | null>(
+    null
+  );
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  /** Apply now: state → options. “Eligible” marketing path: state → review. */
+  const [applyModalMode, setApplyModalMode] = useState<"apply" | "eligible" | null>(null);
+  const [applyModalStep, setApplyModalStep] = useState<"state" | "eligibleReview">("state");
+  const [pendingState, setPendingState] = useState<"IL" | "IN">("IL");
+  const { setStateCode: setGlobalStateCode } = useStateSelection();
+  const [supportTeam, setSupportTeam] = useState<SupportTeamPayload | null>(null);
+  const [supportTeamLoading, setSupportTeamLoading] = useState(false);
+
+  const [messagesUnread, setMessagesUnread] = useState(0);
+  const [messagesTotal, setMessagesTotal] = useState(0);
+  const [completenessResult, setCompletenessResult] = useState<CompletenessSignal | null>(null);
+  const [matchCount, setMatchCount] = useState(0);
+  const [secondaryLoading, setSecondaryLoading] = useState(false);
 
   const readActiveCase = useCallback(
     (uid: string) => safeGetItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`),
@@ -108,7 +161,7 @@ export default function VictimDashboard({
     if (!token) {
       setLoading(false);
       setCases([]);
-      setErr("Session expired. Please log in again.");
+      setErr(t("victimDashboard.sessionExpired"));
       router.replace("/login");
       return;
     }
@@ -127,23 +180,20 @@ export default function VictimDashboard({
       const json = await res.json();
       const rows = (json.cases ?? []) as CaseRow[];
 
-      // ✅ Victim sees ONLY owner rows
       setCases(rows.filter((c) => c.access?.role === "owner"));
     } catch (e) {
       console.error(e);
-      setErr("Couldn’t load your cases. Please try again.");
+      setErr(t("victimDashboard.loadError"));
     } finally {
       setLoading(false);
     }
-  }, [token, router]);
+  }, [token, router, t]);
 
-  // init active case + fetch
   useEffect(() => {
     setActiveCaseId(readActiveCase(userId));
-    refetch();
+    void refetch();
   }, [userId, readActiveCase, refetch]);
 
-  // keep active pointer synced across tabs
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       const key = `${ACTIVE_CASE_KEY_PREFIX}${userId}`;
@@ -154,21 +204,200 @@ export default function VictimDashboard({
     return () => window.removeEventListener("storage", onStorage);
   }, [userId, readActiveCase]);
 
-  const activeCase = useMemo(
-    () => cases.find((c) => c.id === activeCaseId),
-    [cases, activeCaseId]
-  );
-  const activeCaseDisplayName = activeCase
-    ? strictPreviews
-      ? `Case ${activeCase.id.slice(0, 8)}…`
-      : getCaseDisplayName(activeCase)
-    : null;
+  /** Focus first case when needed; clear pointer when no cases */
+  useEffect(() => {
+    if (loading) return;
+    if (cases.length === 0) {
+      if (activeCaseId) {
+        clearPointers(userId);
+        setActiveCaseId(null);
+      }
+      return;
+    }
+    const valid = activeCaseId && cases.some((c) => c.id === activeCaseId);
+    if (!valid) {
+      const first = cases[0].id;
+      safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, first);
+      setActiveCaseId(first);
+    }
+  }, [loading, cases, activeCaseId, userId, clearPointers]);
 
-  const handleStartNew = async () => {
+  const focusCaseId = useMemo(() => {
+    if (activeCaseId && cases.some((c) => c.id === activeCaseId)) return activeCaseId;
+    return cases[0]?.id ?? null;
+  }, [activeCaseId, cases]);
+
+  const focusCase = useMemo(
+    () => (focusCaseId ? cases.find((c) => c.id === focusCaseId) : undefined),
+    [cases, focusCaseId]
+  );
+
+  /** No eligibility outcome yet and user did not skip — primary CTA is “Apply now” → state → eligibility. */
+  const applicationNotStarted = useMemo(() => {
+    if (!focusCase) return false;
+    if (focusCase.eligibility_result) return false;
+    if (getEligibilitySkippedFromApplication(focusCase.application)) return false;
+    return true;
+  }, [focusCase]);
+
+  const funnelSteps = useMemo(
+    () =>
+      getVictimFunnelSteps({
+        caseCount: cases.length,
+        focusCase: focusCase ?? null,
+      }),
+    [cases.length, focusCase]
+  );
+
+  const funnelLabels = useMemo(
+    () => ({
+      eligibility: t("victimDashboard.funnel.stepEligibility"),
+      application: t("victimDashboard.funnel.stepApplication"),
+      support: t("victimDashboard.funnel.stepSupport"),
+    }),
+    [t]
+  );
+
+  const intakeHref = focusCaseId
+    ? `${ROUTES.compensationIntake}?case=${focusCaseId}`
+    : ROUTES.compensationIntake;
+
+  useEffect(() => {
+    if (!token || !focusCaseId) {
+      setMessagesUnread(0);
+      setMessagesTotal(0);
+      setCompletenessResult(null);
+      setMatchCount(0);
+      return;
+    }
+
+    let cancelled = false;
+    setSecondaryLoading(true);
+
+    (async () => {
+      try {
+        const [msgRes, compRes, matchRes] = await Promise.all([
+          fetch(`/api/cases/${focusCaseId}/messages`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`/api/compensation/cases/${focusCaseId}/completeness`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`/api/compensation/cases/${focusCaseId}/match-orgs`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        if (cancelled) return;
+
+        if (msgRes.ok) {
+          const mj = await msgRes.json().catch(() => ({}));
+          setMessagesUnread(Number(mj.unread_count ?? 0));
+          const arr = mj.messages;
+          setMessagesTotal(Array.isArray(arr) ? arr.length : 0);
+        } else {
+          setMessagesUnread(0);
+          setMessagesTotal(0);
+        }
+
+        if (compRes.ok) {
+          const cj = await compRes.json().catch(() => null);
+          const inner = cj?.data?.result ?? cj?.result ?? null;
+          setCompletenessResult(
+            inner && typeof inner === "object" ? (inner as CompletenessSignal) : null
+          );
+        } else {
+          setCompletenessResult(null);
+        }
+
+        if (matchRes.ok) {
+          const mj = await matchRes.json().catch(() => null);
+          const matches = mj?.data?.matches ?? mj?.matches ?? [];
+          setMatchCount(Array.isArray(matches) ? matches.length : 0);
+        } else {
+          setMatchCount(0);
+        }
+      } catch {
+        if (!cancelled) {
+          setMessagesUnread(0);
+          setMessagesTotal(0);
+          setCompletenessResult(null);
+          setMatchCount(0);
+        }
+      } finally {
+        if (!cancelled) setSecondaryLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, focusCaseId]);
+
+  useEffect(() => {
+    if (!token || !focusCaseId) {
+      setSupportTeam(null);
+      return;
+    }
+    let cancelled = false;
+    setSupportTeamLoading(true);
+    void (async () => {
+      try {
+        const res = await fetch(`/api/compensation/cases/${focusCaseId}/support-team`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          if (!cancelled) setSupportTeam(null);
+          return;
+        }
+        const json = await res.json();
+        const d = (json?.data ?? json) as SupportTeamPayload;
+        if (!cancelled) {
+          setSupportTeam({
+            organization: d?.organization ?? null,
+            advocates: Array.isArray(d?.advocates) ? d.advocates : [],
+          });
+        }
+      } catch {
+        if (!cancelled) setSupportTeam(null);
+      } finally {
+        if (!cancelled) setSupportTeamLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, focusCaseId]);
+
+  const handleProgressStepClick = useCallback(
+    (step: FunnelStepId) => {
+      if (!focusCaseId || !focusCase) return;
+      /** Eligibility is part of the application flow — all steps open intake for this case. */
+      if (step === "eligibility" || step === "application" || step === "support") {
+        router.push(`/compensation/intake?case=${encodeURIComponent(focusCaseId)}`);
+      }
+    },
+    [focusCaseId, focusCase, router]
+  );
+
+  const closeApplyModal = useCallback(() => {
+    setApplyModalOpen(false);
+    setApplyModalMode(null);
+    setApplyModalStep("state");
+  }, []);
+
+  const openApplyModal = useCallback(() => {
+    setApplyModalMode("apply");
+    setApplyModalStep("state");
+    setPendingState("IL");
+    setApplyModalOpen(true);
+  }, []);
+
+  /** Creates an empty draft case, selects it, and opens rename — program state is chosen only when user clicks Apply now. */
+  const handleCreateBlankCaseOnDashboard = useCallback(async () => {
     if (!token) return;
-    clearPointers(userId);
-    setActiveCaseId(null);
     setCreatingCase(true);
+    setErr(null);
     try {
       const res = await fetch("/api/compensation/cases", {
         method: "POST",
@@ -179,57 +408,159 @@ export default function VictimDashboard({
         body: JSON.stringify({
           application: emptyCompensationApplication,
           name: null,
-          state_code: newCaseState,
+        }),
+      });
+      if (!res.ok) throw new Error("Create failed");
+      const json = await res.json();
+      const newCase = json.case as { id?: string } | undefined;
+      if (newCase?.id) {
+        safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, newCase.id);
+        setActiveCaseId(newCase.id);
+        await refetch();
+        setEditNameValue("");
+        setRenameModalOpen(true);
+      }
+    } catch (e) {
+      console.error(e);
+      setErr(t("victimDashboard.loadError"));
+    } finally {
+      setCreatingCase(false);
+    }
+  }, [token, userId, refetch, t]);
+
+  /** Existing draft case: save program state and open eligibility checker (no new case). */
+  const handleExistingCaseProceedToEligibility = useCallback(
+    async (programState: "IL" | "IN") => {
+      if (!token || !focusCaseId) return;
+      setCreatingCase(true);
+      setErr(null);
+      closeApplyModal();
+      try {
+        const res = await fetch(`/api/compensation/cases/${focusCaseId}`, {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ state_code: programState }),
+        });
+        if (!res.ok) throw new Error("Update failed");
+        setGlobalStateCode(programState);
+        await refetch();
+        router.push(`/compensation/eligibility/${encodeURIComponent(focusCaseId)}`);
+      } catch (e) {
+        console.error(e);
+        setErr(t("victimDashboard.loadError"));
+      } finally {
+        setCreatingCase(false);
+      }
+    },
+    [token, focusCaseId, closeApplyModal, setGlobalStateCode, refetch, router, t]
+  );
+
+  const handleStartNew = async (skipEligibility: boolean, programState: "IL" | "IN" = pendingState) => {
+    if (!token) return;
+    setGlobalStateCode(programState);
+    clearPointers(userId);
+    setActiveCaseId(null);
+    setCreatingCase(true);
+    closeApplyModal();
+    try {
+      const res = await fetch("/api/compensation/cases", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          application: emptyCompensationApplication,
+          name: null,
+          state_code: programState,
         }),
       });
       if (!res.ok) throw new Error("Create failed");
       const json = await res.json();
       const newCase = json.case;
       if (newCase?.id) {
-        refetch();
-        router.push(`/compensation/eligibility/${newCase.id}`);
+        safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, newCase.id);
+        setActiveCaseId(newCase.id);
+        if (skipEligibility && token) {
+          try {
+            const rawApp = newCase.application;
+            const parsed =
+              typeof rawApp === "string"
+                ? JSON.parse(rawApp)
+                : (rawApp ?? {}) as Record<string, unknown>;
+            const prevDash =
+              parsed._dashboard && typeof parsed._dashboard === "object"
+                ? (parsed._dashboard as Record<string, unknown>)
+                : {};
+            await fetch(`/api/compensation/cases/${newCase.id}`, {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                application: {
+                  ...emptyCompensationApplication,
+                  ...parsed,
+                  _dashboard: { ...prevDash, skippedEligibility: true },
+                },
+              }),
+            });
+          } catch (e) {
+            console.error("Failed to mark eligibility skipped on case", e);
+          }
+        }
+        void refetch();
+        if (skipEligibility) {
+          router.push(`/compensation/intake?case=${encodeURIComponent(newCase.id)}`);
+        } else {
+          router.push(`/compensation/eligibility/${newCase.id}`);
+        }
       } else {
-        router.push("/compensation/intake");
+        router.push(skipEligibility ? ROUTES.compensationIntake : ROUTES.compensationHub);
       }
     } catch {
-      router.push("/compensation/intake");
+      router.push(ROUTES.compensationHub);
     } finally {
       setCreatingCase(false);
     }
   };
 
-  const handleRunEligibility = (caseId: string) => {
-    router.push(`/compensation/eligibility/${caseId}`);
-  };
+  const pickProgramState = useCallback(
+    (s: "IL" | "IN") => {
+      setPendingState(s);
+      setGlobalStateCode(s);
+      if (applyModalMode === "eligible") {
+        setApplyModalStep("eligibleReview");
+        return;
+      }
+      /* Apply: state → eligibility checker (no “skip to form” step on the dashboard). */
+      if (cases.length === 0) {
+        void handleStartNew(false, s);
+        return;
+      }
+      if (focusCaseId && applicationNotStarted) {
+        void handleExistingCaseProceedToEligibility(s);
+        return;
+      }
+    },
+    [
+      applyModalMode,
+      setGlobalStateCode,
+      cases.length,
+      focusCaseId,
+      applicationNotStarted,
+      handleExistingCaseProceedToEligibility,
+      handleStartNew,
+    ]
+  );
 
-  const proceedToIntake = (caseIdToOpen: string) => {
-    setSkipWarningCaseId(null);
-    safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, caseIdToOpen);
-    setActiveCaseId(caseIdToOpen);
-
-    try {
-      const progKey = `${PROGRESS_KEY_PREFIX}${userId}`;
-      const raw = safeGetItem(progKey);
-      const parsed = raw ? JSON.parse(raw) : {};
-      safeSetItem(
-        progKey,
-        JSON.stringify({
-          ...(parsed ?? {}),
-          caseId: caseIdToOpen,
-          updatedAt: Date.now(),
-        })
-      );
-    } catch {}
-
-    router.push(`/compensation/intake?case=${caseIdToOpen}`);
-  };
-
-  const handleOpenCase = (caseIdToOpen: string, c: CaseRow) => {
-    if (c.eligibility_result) {
-      proceedToIntake(caseIdToOpen);
-    } else {
-      setSkipWarningCaseId(caseIdToOpen);
-    }
+  const selectCase = (caseId: string) => {
+    safeSetItem(`${ACTIVE_CASE_KEY_PREFIX}${userId}`, caseId);
+    setActiveCaseId(caseId);
   };
 
   const handleLogout = async () => {
@@ -251,7 +582,7 @@ export default function VictimDashboard({
         body: JSON.stringify({ name: newName.trim() || null }),
       });
       if (res.ok) {
-        setEditingNameId(null);
+        setRenameModalOpen(false);
         refetch();
       }
     } catch {
@@ -259,284 +590,609 @@ export default function VictimDashboard({
     }
   };
 
-  const handleDeleteCase = async (caseId: string, displayName: string) => {
-    if (!confirm(`Delete "${displayName}"? This cannot be undone.`)) return;
-    if (!token) return;
+  const confirmDeleteCase = async () => {
+    if (!deleteTarget || !token) return;
+    setDeleteBusy(true);
+    setDeleteErr(null);
     try {
-      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+      const res = await fetch(`/api/compensation/cases/${deleteTarget.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        if (activeCaseId === caseId) {
+        if (activeCaseId === deleteTarget.id) {
           clearPointers(userId);
           setActiveCaseId(null);
         }
+        setDeleteTarget(null);
         refetch();
       } else {
-        alert("Could not delete case. Try again.");
+        setDeleteErr(t("victimDashboard.deleteFailed"));
       }
     } catch {
-      alert("Could not delete case. Try again.");
+      setDeleteErr(t("victimDashboard.deleteFailed"));
+    } finally {
+      setDeleteBusy(false);
     }
   };
 
+  const noCasesYet = cases.length === 0;
+  const hasSupportAdvocates = Boolean(supportTeam?.advocates && supportTeam.advocates.length > 0);
+
+  const hasSupportOrg = Boolean(supportTeam?.organization?.name);
+  const caseContextForSupport = Boolean(focusCaseId && focusCase && !noCasesYet);
+  /** Once this case has an org or an advocate, hide both next-step shortcuts; use the support team block to manage. */
+  const hideBothNextStepHelp =
+    caseContextForSupport && !supportTeamLoading && (hasSupportOrg || hasSupportAdvocates);
+  const showNextStepConnectAdvocate =
+    !hideBothNextStepHelp && (!caseContextForSupport || (!supportTeamLoading && !hasSupportAdvocates));
+  const showNextStepFindOrganizations =
+    !hideBothNextStepHelp && (!caseContextForSupport || (!supportTeamLoading && !hasSupportOrg));
+
+  const connectAdvocateHref = useMemo(
+    () =>
+      focusCaseId
+        ? `${ROUTES.compensationConnectAdvocate}?case=${encodeURIComponent(focusCaseId)}`
+        : ROUTES.compensationConnectAdvocate,
+    [focusCaseId]
+  );
+  const findOrgHref = useMemo(
+    () =>
+      focusCaseId
+        ? `${ROUTES.victimFindOrganizations}?case=${encodeURIComponent(focusCaseId)}`
+        : ROUTES.victimFindOrganizations,
+    [focusCaseId]
+  );
+
+  const manageOrgPath = focusCaseId ? victimCasePaths.organization(focusCaseId) : findOrgHref;
+  const manageAdvocatePath = focusCaseId ? victimCasePaths.advocate(focusCaseId) : connectAdvocateHref;
+  const secureMessagesHref = focusCaseId ? compensationIntakeMessagesUrl(focusCaseId) : intakeHref;
+
+  const messagesRowStatus = !focusCaseId
+    ? t("victimDashboard.messagesEmpty")
+    : secondaryLoading
+      ? t("victimDashboard.messagesLoading")
+      : messagesUnread > 0
+        ? messagesUnread === 1
+          ? t("victimDashboard.messagesUnreadOne")
+          : tf("victimDashboard.messagesUnreadMany", { count: messagesUnread })
+        : messagesTotal === 0
+          ? t("victimDashboard.messagesEmpty")
+          : t("victimDashboard.messagesInThread");
+
+  const documentsRowStatus = !focusCaseId
+    ? t("victimDashboard.documentsNoCase")
+    : secondaryLoading
+      ? t("victimDashboard.updatingDetails")
+      : completenessResult && hasBlockingDocumentGap(completenessResult)
+        ? t("victimDashboard.documentsStatusMissing")
+        : t("victimDashboard.documentsStatusGeneric");
+
+  const appointmentsRowStatus = !focusCaseId
+    ? t("victimDashboard.appointmentsEmpty")
+    : secondaryLoading
+      ? t("victimDashboard.updatingDetails")
+      : t("victimDashboard.appointmentsEmpty");
+
+  const supportRowStatus = !focusCaseId
+    ? t("victimDashboard.supportNoCase")
+    : secondaryLoading
+      ? t("victimDashboard.updatingDetails")
+      : matchCount === 0
+        ? t("victimDashboard.supportNoMatches")
+        : matchCount === 1
+          ? t("victimDashboard.supportMatchOne")
+          : tf("victimDashboard.supportMatchMany", { count: matchCount });
+
+  const primaryCtaClass = `inline-flex min-h-[3rem] items-center justify-center rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] px-8 py-3 text-base font-bold text-slate-950 shadow-md shadow-emerald-900/30 hover:brightness-110 disabled:opacity-50`;
+
+  const eligibilitySkipped = Boolean(
+    focusCase && getEligibilitySkippedFromApplication(focusCase.application)
+  );
+
+  const renderHubMainCta = () => {
+    const showApplyNow = noCasesYet || applicationNotStarted;
+    if (showApplyNow) {
+      return (
+        <button
+          type="button"
+          onClick={() => openApplyModal()}
+          disabled={creatingCase}
+          className={`${primaryCtaClass} ${priorityRingClassName("high")}`}
+        >
+          {t("victimDashboard.applyNow")}
+        </button>
+      );
+    }
+    const href = focusCaseId
+      ? `${ROUTES.compensationIntake}?case=${encodeURIComponent(focusCaseId)}`
+      : ROUTES.compensationIntake;
+    return (
+      <Link href={href} className={`${primaryCtaClass} ${priorityRingClassName("medium")}`}>
+        {t("victimDashboard.resumeApplication")}
+      </Link>
+    );
+  };
+
   return (
-    <main className="relative min-h-screen bg-[#0c1220] text-slate-50 px-6 py-10">
+    <main className={`relative ${APP_PAGE_MAIN}`}>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_40%_at_80%_0%,rgba(99,102,241,0.06),transparent)] pointer-events-none max-w-[100vw]" />
       <div className="relative max-w-3xl mx-auto space-y-6">
-        <header className="space-y-2 rounded-2xl border border-indigo-950/60 bg-slate-950/40 px-5 py-4">
-          <p className="text-[11px] uppercase tracking-[0.28em] text-indigo-300/70 font-medium">
-            Survivor dashboard
-          </p>
-          <h1 className="text-2xl font-semibold text-slate-50">Your cases</h1>
-          <p className="text-sm text-slate-400">
-            Signed in as <span className="text-slate-200 font-medium">{email}</span>
-          </p>
-        </header>
-
-        <section className="rounded-2xl border border-slate-700/80 bg-slate-950/70 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-100">Quick actions</h2>
-
-          <p className="text-[11px] text-slate-400">
-            {activeCaseId
-              ? "Run the eligibility check for your case, then start the intake form when ready."
-              : "Start a new case to run the eligibility check and begin an application."}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {activeCaseId && activeCase && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => handleRunEligibility(activeCaseId)}
-                  className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
-                >
-                  {t("eligibility.dashboard.runCheck")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOpenCase(activeCaseId, activeCase)}
-                  className="rounded-full border border-emerald-500/40 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/15"
-                >
-                  {t("eligibility.dashboard.startIntake")}
-                </button>
-              </>
-            )}
-            <span className="flex items-center gap-2">
-              <select
-                value={newCaseState}
-                onChange={(e) => setNewCaseState(e.target.value as "IL" | "IN")}
-                className="rounded-full border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
-              >
-                <option value="IL">Illinois</option>
-                <option value="IN">Indiana</option>
-              </select>
-              <button
-                type="button"
-                onClick={handleStartNew}
-                disabled={creatingCase}
-                className={`rounded-full px-4 py-2 text-xs font-semibold ${
-                  activeCaseId && activeCase
-                    ? "border border-slate-600 hover:bg-slate-900/60"
-                    : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
-                } disabled:opacity-50`}
-              >
-                {creatingCase ? "Creating…" : "Start new case"}
-              </button>
-            </span>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-100">Your cases</h2>
-            <button
-              type="button"
-              onClick={refetch}
-              disabled={loading}
-              className="text-[11px] rounded-full border border-slate-700 px-3 py-1.5 hover:bg-slate-900/60 disabled:opacity-60"
-            >
-              {loading ? "Refreshing…" : "Refresh"}
-            </button>
-          </div>
-
-          {loading ? (
-            <p className="text-[11px] text-slate-400">Loading…</p>
-          ) : err ? (
-            <p className="text-[11px] text-red-300">{err}</p>
-          ) : cases.length === 0 ? (
-            <p className="text-[11px] text-slate-400">
-              No cases yet. Click “Start application” to create your first case.
-            </p>
-          ) : (
-            <div className="grid gap-3">
-              {cases.map((c) => {
-                const created = c.created_at
-                  ? new Date(c.created_at).toLocaleString()
-                  : "—";
-                const status = c.status ?? "draft";
-                const isActive = activeCaseId === c.id;
-                const displayName = strictPreviews ? `Case ${c.id.slice(0, 8)}…` : getCaseDisplayName(c);
-                const isEditing = editingNameId === c.id;
-
-                return (
-                  <div
-                    key={c.id}
-                    className={`rounded-2xl border px-4 py-3 transition ${
-                      isActive
-                        ? "border-emerald-500/50 bg-emerald-500/10"
-                        : "border-slate-800 bg-slate-950/40"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0 space-y-1">
-                        {isEditing ? (
-                          <form
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              handleSaveName(c.id, editNameValue);
+        {loading && !err ? (
+          <>
+            <PageHeader
+              title={t("victimDashboard.title")}
+              titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
+              className="rounded-2xl border border-slate-800/50 bg-slate-950/30 px-4 py-4 sm:px-6"
+            />
+            <div className="rounded-lg border border-slate-800/50 bg-slate-950/40 px-3 py-3 animate-pulse">
+              <div className="h-1 w-full rounded-full bg-slate-800/80" />
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="h-8 rounded bg-slate-800/60" />
+                <div className="h-8 rounded bg-slate-800/60" />
+                <div className="h-8 rounded bg-slate-800/60" />
+              </div>
+            </div>
+            <PrimaryActionSkeleton />
+            <CaseActivitySkeleton />
+            <section className={`${APP_CARD} space-y-3`}>
+              <div className="h-4 w-40 animate-pulse rounded bg-slate-700/70" />
+              <div className="h-3 w-full max-w-md animate-pulse rounded bg-slate-800/80" />
+            </section>
+          </>
+        ) : (
+          <>
+            <div id="your-cases" className="scroll-mt-24 space-y-3">
+              <PageHeader
+                title={t("victimDashboard.title")}
+                titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
+                className="rounded-2xl border border-slate-800/40 bg-slate-950/25 px-4 py-4 sm:px-5"
+                rightActions={
+                  cases.length > 0 && focusCase ? (
+                    <div className="flex flex-wrap items-center gap-2 justify-end">
+                      <div className="flex items-center gap-2">
+                        <span
+                          id="victim-case-select-label"
+                          className="text-[10px] font-medium uppercase tracking-wide text-slate-500 whitespace-nowrap"
+                        >
+                          {t("victimDashboard.myCasesSectionLabel")}
+                        </span>
+                        <select
+                          id="victim-case-select"
+                          value={focusCaseId ?? ""}
+                          onChange={(e) => selectCase(e.target.value)}
+                          aria-labelledby="victim-case-select-label"
+                          className="max-w-[min(100%,15rem)] rounded-md border border-slate-700/40 bg-slate-950/50 py-1.5 pl-2 pr-7 text-xs text-slate-200 shadow-sm focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]/35"
+                        >
+                          {cases.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {strictPreviews ? `Case ${c.id.slice(0, 8)}…` : getCaseDisplayName(c)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <details className="relative shrink-0">
+                        <summary className="cursor-pointer list-none rounded-md border border-slate-600/60 bg-slate-900/50 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 hover:bg-slate-900 [&::-webkit-details-marker]:hidden">
+                          {t("victimDashboard.caseEdit")}
+                        </summary>
+                        <div className="absolute right-0 z-30 mt-1 min-w-[9rem] rounded-lg border border-slate-700 bg-slate-950 py-1 shadow-xl">
+                          <button
+                            type="button"
+                            className="block w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-900"
+                            onClick={() => {
+                              setEditNameValue(focusCase.name?.trim() ?? "");
+                              setRenameModalOpen(true);
                             }}
-                            className="flex gap-2"
                           >
-                            <input
-                              type="text"
-                              value={editNameValue}
-                              onChange={(e) => setEditNameValue(e.target.value)}
-                              placeholder="Case name"
-                              className="flex-1 rounded border border-slate-600 bg-slate-900 px-2 py-1 text-xs text-slate-50 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
-                              autoFocus
-                            />
-                            <button
-                              type="submit"
-                              className="text-[11px] text-emerald-400 hover:text-emerald-300"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingNameId(null);
-                                setEditNameValue("");
-                              }}
-                              className="text-[11px] text-slate-400 hover:text-slate-300"
-                            >
-                              Cancel
-                            </button>
-                          </form>
-                        ) : (
-                          <div
-                            className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => handleOpenCase(c.id, c)}
+                            {t("victimDashboard.rename")}
+                          </button>
+                          <button
+                            type="button"
+                            className="block w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-slate-900"
+                            onClick={() =>
+                              setDeleteTarget({
+                                id: focusCase.id,
+                                displayName: strictPreviews
+                                  ? `Case ${focusCase.id.slice(0, 8)}…`
+                                  : getCaseDisplayName(focusCase),
+                              })
+                            }
                           >
-                            <div className="text-xs font-semibold text-slate-100 truncate">
-                              {displayName}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingNameId(c.id);
-                                setEditNameValue(c.name?.trim() ?? "");
-                              }}
-                              className="text-[10px] text-slate-500 hover:text-slate-300 shrink-0"
-                              title="Edit name"
-                            >
-                              Rename
-                            </button>
-                          </div>
-                        )}
-                        <div className="text-[11px] text-slate-400">
-                          {strictPreviews
-                            ? `Status: ${status} • Created: ${created}`
-                            : `Status: ${status} • Eligibility: ${getEligibilityStatusLabel(c, t)} • Created: ${created}`}
+                            {t("victimDashboard.delete")}
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleRunEligibility(c.id)}
-                          className="text-[11px] text-[#1C8C8C] hover:text-[#21a3a3]"
+                      </details>
+                      <button
+                        type="button"
+                        onClick={() => void handleCreateBlankCaseOnDashboard()}
+                        disabled={creatingCase}
+                        className="shrink-0 rounded-md border border-emerald-600/45 bg-emerald-950/35 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-100/95 shadow-sm hover:bg-emerald-950/55 disabled:opacity-50"
+                      >
+                        {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.newCaseButton")}
+                      </button>
+                    </div>
+                  ) : null
+                }
+              />
+              {err ? <p className="text-[11px] text-red-300">{err}</p> : null}
+            </div>
+
+            {/* Progress — Check eligibility / Apply / Track */}
+            <div
+              className={`rounded-xl px-3 py-3 sm:px-4 ${
+                eligibilitySkipped
+                  ? "border border-red-500/35 bg-red-950/20 shadow-[0_0_24px_-6px_rgba(239,68,68,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]"
+                  : "border border-emerald-400/45 bg-gradient-to-br from-emerald-950/25 to-slate-950/70 shadow-[0_0_28px_-6px_rgba(16,185,129,0.22),inset_0_1px_0_rgba(255,255,255,0.05)]"
+              }`}
+            >
+              <VictimFunnelStepper
+                variant="minimal"
+                steps={funnelSteps}
+                labels={funnelLabels}
+                ariaLabel={t("victimDashboard.funnel.ariaLabel")}
+                title={t("victimDashboard.progressTitle")}
+                onStepClick={handleProgressStepClick}
+                stepsDisabled={!focusCaseId || !focusCase}
+                eligibilitySkipped={eligibilitySkipped}
+              />
+            </div>
+
+            {/* Apply / Resume — centered in card */}
+            <div id="victim-dashboard-next-step" className="scroll-mt-24">
+            <PrimaryActionArea
+              ariaLabel={t("victimDashboard.applyResumeCardAria")}
+              className="shadow-sm"
+              surface="neutral"
+              eyebrow={false}
+              primary={
+                <div className="flex min-h-[10rem] w-full flex-col items-center justify-center gap-4 py-2">
+                  <div className="flex w-full justify-center px-1">{renderHubMainCta()}</div>
+                  {(showNextStepConnectAdvocate || showNextStepFindOrganizations) && (
+                    <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                      {showNextStepConnectAdvocate ? (
+                        <Link
+                          href={connectAdvocateHref}
+                          className="inline-flex items-center justify-center rounded-full border border-violet-500/35 bg-violet-950/30 px-3 py-1.5 text-[11px] font-semibold text-violet-200/95 shadow-sm shadow-violet-950/20 transition hover:border-violet-400/45 hover:bg-violet-950/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
                         >
-                          {t("eligibility.dashboard.runCheck")}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenCase(c.id, c)}
-                          className="text-[11px] text-slate-300 hover:text-slate-100"
+                          {t("victimDashboard.getHelp.connectAdvocate")}
+                        </Link>
+                      ) : null}
+                      {showNextStepFindOrganizations ? (
+                        <Link
+                          href={findOrgHref}
+                          className="inline-flex items-center justify-center rounded-full border border-slate-600/80 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-slate-500 hover:bg-slate-800/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
                         >
-                          {t("eligibility.dashboard.startIntake")} →
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteCase(c.id, displayName)}
-                          className="text-[11px] text-red-400 hover:text-red-300"
-                          title="Delete case"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                          {t("victimDashboard.getHelp.findOrganizations")}
+                        </Link>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              }
+            />
+            </div>
+
+            {/* Organization + advocates for selected case */}
+            {focusCaseId && focusCase && !noCasesYet && (
+              <section
+                className="rounded-xl border border-slate-800/40 bg-slate-950/25 px-3 py-3 sm:px-4"
+                aria-labelledby="victim-support-team-heading"
+              >
+                <h2
+                  id="victim-support-team-heading"
+                  className="text-base sm:text-lg font-semibold text-slate-50 tracking-tight"
+                >
+                  {t("victimDashboard.supportTeamTitle")}
+                </h2>
+                {supportTeamLoading ? (
+                  <p className="mt-2 text-[11px] text-slate-600">{t("victimDashboard.supportTeamLoading")}</p>
+                ) : (
+                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamOrg")}</p>
+                      {supportTeam?.organization?.name ? (
+                        <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                          <Link
+                            href={manageOrgPath}
+                            title={t("victimDashboard.supportTeamEditOrgTitle")}
+                            className="inline-block text-left text-xs font-medium text-emerald-400/95 underline decoration-emerald-500/45 underline-offset-2 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-sm"
+                          >
+                            {supportTeam.organization.name === LEGACY_ORG_DISPLAY_NAME
+                              ? t("victimDashboard.caseOrgManage.legacyLabel")
+                              : supportTeam.organization.name}
+                          </Link>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Link
+                              href={secureMessagesHref}
+                              className="inline-flex items-center justify-center rounded-full border border-slate-600/90 bg-slate-900/50 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80"
+                            >
+                              {t("victimDashboard.supportTeamContactOrg")}
+                            </Link>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-1.5 space-y-1.5">
+                          <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoOrg")}</p>
+                          <Link
+                            href={findOrgHref}
+                            className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                          >
+                            {t("victimDashboard.supportTeamAddOrgCta")}
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamAdvocates")}</p>
+                      {supportTeam?.advocates && supportTeam.advocates.length > 0 ? (
+                        <ul className="mt-0.5 list-none space-y-2 text-xs">
+                          {supportTeam.advocates.map((a) => (
+                            <li key={a.id}>
+                              <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                                <Link
+                                  href={manageAdvocatePath}
+                                  title={t("victimDashboard.supportTeamEditAdvocateTitle")}
+                                  className="font-medium text-violet-300/95 underline decoration-violet-500/45 underline-offset-2 hover:text-violet-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 rounded-sm"
+                                >
+                                  {a.label}
+                                </Link>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <Link
+                                    href={secureMessagesHref}
+                                    className="inline-flex items-center justify-center rounded-full border border-slate-600/90 bg-slate-900/50 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80"
+                                  >
+                                    {t("victimDashboard.supportTeamSendMessage")}
+                                  </Link>
+                                </div>
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="mt-1.5 space-y-1.5">
+                          <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoAdvocates")}</p>
+                          <Link
+                            href={connectAdvocateHref}
+                            className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                          >
+                            {t("victimDashboard.supportTeamConnectCta")}
+                          </Link>
+                        </div>
+                      )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                )}
+              </section>
+            )}
 
-        {/* Skip eligibility warning modal */}
-        {skipWarningCaseId && (
+            {/* Case activity — tied to selected case */}
+            {!noCasesYet && focusCaseId && focusCase && (
+              <section className={`${APP_CARD} border-slate-800/60 bg-slate-950/35 space-y-1`}>
+                <h2 className="text-sm font-semibold text-slate-100 pb-2">
+                  {t("victimDashboard.caseDetailsHeading")}
+                </h2>
+                <div className="divide-y divide-slate-800/90 rounded-xl border border-slate-800/80 overflow-hidden">
+                  <Link
+                    href={intakeHref}
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                  >
+                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityMessages")}</span>
+                    <span className="text-xs text-slate-400 text-right">{messagesRowStatus}</span>
+                  </Link>
+                  <Link
+                    href={intakeHref}
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                  >
+                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityDocuments")}</span>
+                    <span className="text-xs text-slate-400 text-right">{documentsRowStatus}</span>
+                  </Link>
+                  <Link
+                    href={intakeHref}
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                  >
+                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityAppointments")}</span>
+                    <span className="text-xs text-slate-400 text-right">{appointmentsRowStatus}</span>
+                  </Link>
+                  <Link
+                    href={intakeHref}
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                  >
+                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivitySupport")}</span>
+                    <span className="text-xs text-slate-400 text-right">{supportRowStatus}</span>
+                  </Link>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Apply now (no cases yet): state first, then eligibility / intake options */}
+        {applyModalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => !creatingCase && closeApplyModal()}
+            role="presentation"
+          >
+            <div
+              className="max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="apply-modal-title"
+            >
+              {applyModalStep === "state" ? (
+                <>
+                  <h3 id="apply-modal-title" className="text-base font-semibold text-slate-100">
+                    {t("victimDashboard.stateModalTitle")}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-400">{t("victimDashboard.stateModalSubtitle")}</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      disabled={creatingCase}
+                      onClick={() => pickProgramState("IL")}
+                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-[#1C8C8C]/60 hover:bg-slate-900 disabled:opacity-50"
+                    >
+                      {t("victimDashboard.stateIL")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={creatingCase}
+                      onClick={() => pickProgramState("IN")}
+                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-[#1C8C8C]/60 hover:bg-slate-900 disabled:opacity-50"
+                    >
+                      {t("victimDashboard.stateIN")}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={creatingCase}
+                    onClick={() => closeApplyModal()}
+                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                  >
+                    {t("victimDashboard.cancel")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h3 id="apply-modal-title" className="text-base font-semibold text-slate-100">
+                    {t("victimDashboard.stateModalTitle")}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-300">
+                    {tf("victimDashboard.eligibleReviewIntro", {
+                      state: pendingState === "IN" ? t("victimDashboard.stateIN") : t("victimDashboard.stateIL"),
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={creatingCase}
+                    onClick={() => void handleStartNew(false)}
+                    className="w-full rounded-full bg-[#1C8C8C] px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+                  >
+                    {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.continueToEligibility")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={creatingCase}
+                    onClick={() => setApplyModalStep("state")}
+                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                  >
+                    ← {t("victimDashboard.stateModalTitle")}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Rename case */}
+        {renameModalOpen && focusCase && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => setRenameModalOpen(false)}
+            role="presentation"
+          >
+            <div
+              className="w-full max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rename-case-title"
+            >
+              <h3 id="rename-case-title" className="text-sm font-semibold text-slate-100">
+                {t("victimDashboard.editNameTitle")}
+              </h3>
+              <form
+                className="space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void handleSaveName(focusCase.id, editNameValue);
+                }}
+              >
+                <input
+                  type="text"
+                  value={editNameValue}
+                  onChange={(e) => setEditNameValue(e.target.value)}
+                  placeholder={t("victimDashboard.caseNamePlaceholder")}
+                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C]/40"
+                  autoFocus
+                />
+                <div className="flex flex-wrap justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setRenameModalOpen(false)}
+                    className="rounded-full border border-slate-600 px-4 py-2 text-xs text-slate-300 hover:bg-slate-900/60"
+                  >
+                    {t("victimDashboard.cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                  >
+                    {t("victimDashboard.save")}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete confirmation modal */}
+        {deleteTarget && (
           <div
             className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
-            onClick={() => setSkipWarningCaseId(null)}
+            onClick={() => !deleteBusy && setDeleteTarget(null)}
           >
             <div
               className="rounded-2xl border border-slate-700 bg-slate-950 p-6 max-w-md space-y-4"
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="delete-app-title"
             >
-              <h3 className="text-sm font-semibold text-slate-100">
-                {t("eligibility.dashboard.skipWarningTitle")}
+              <h3 id="delete-app-title" className="text-sm font-semibold text-slate-100">
+                {t("victimDashboard.deleteModalTitle")}
               </h3>
-              <p className="text-xs text-slate-300">
-                {t("eligibility.dashboard.skipWarningBody")}
-              </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="text-xs text-slate-300 space-y-2">
+                <p>{t("victimDashboard.deleteModalBodyLine1")}</p>
+                <p>{t("victimDashboard.deleteModalBodyLine2")}</p>
+              </div>
+              {deleteErr ? <p className="text-xs text-red-300">{deleteErr}</p> : null}
+              <div className="flex flex-wrap gap-2 justify-end">
                 <button
                   type="button"
+                  disabled={deleteBusy}
                   onClick={() => {
-                    const c = cases.find((x) => x.id === skipWarningCaseId);
-                    if (c) proceedToIntake(skipWarningCaseId);
-                    setSkipWarningCaseId(null);
+                    setDeleteErr(null);
+                    setDeleteTarget(null);
                   }}
-                  className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+                  className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60 disabled:opacity-50"
                 >
-                  {t("eligibility.dashboard.continueAnyway")}
+                  {t("victimDashboard.deleteModalCancel")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    router.push(`/compensation/eligibility/${skipWarningCaseId}`);
-                    setSkipWarningCaseId(null);
-                  }}
-                  className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                  disabled={deleteBusy}
+                  onClick={() => void confirmDeleteCase()}
+                  className="rounded-full bg-red-900/80 px-4 py-2 text-xs font-semibold text-red-100 hover:bg-red-800/90 disabled:opacity-50"
                 >
-                  {t("eligibility.dashboard.runCheckFirst")}
+                  {t("victimDashboard.deleteModalConfirm")}
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <Link href="/" className="hover:text-slate-200">
-            ← Back to home
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-slate-400">
+          <Link href={ROUTES.marketingLanding} className="hover:text-slate-200">
+            {t("common.backToHome")}
           </Link>
           <button
             type="button"
             onClick={handleLogout}
-            className="hover:text-slate-200"
+            className="hover:text-slate-200 text-left sm:text-right"
           >
-            Log out
+            {t("nav.logout")}
           </button>
         </div>
       </div>

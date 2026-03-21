@@ -3,12 +3,19 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getDashboardPath } from "@/lib/dashboardRoutes";
+import { getDashboardPath, type DashboardMe } from "@/lib/dashboardRoutes";
+import { ROUTES } from "@/lib/routes/pageRegistry";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
-export default function HomePage() {
+export default function MarketingLandingPage() {
+  const { t } = useI18n();
   const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
   const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [newsletterStatus, setNewsletterStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
+
+  const me: DashboardMe = { isAdmin, role, orgId, orgRole };
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,21 +43,57 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 py-12 sm:py-20 space-y-20">
-        {/* Hero */}
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20 space-y-16 sm:space-y-20">
+        {/* Hero — minimal */}
         <section className="text-center space-y-6">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-slate-50">
-            Trauma-informed support for crime victims
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-50 text-balance">
+            {t("home.hero.title")}
           </h1>
-          <p className="max-w-2xl mx-auto text-lg text-slate-300">
-            NxtStps helps victims and advocates navigate government programs—starting
-            with Illinois Crime Victims Compensation. Plain language, step-by-step,
-            available in English and Spanish.
+          <p className="max-w-xl mx-auto text-base sm:text-lg text-slate-300 leading-relaxed">
+            {t("home.hero.subtitle")}
+          </p>
+          <p className="max-w-lg mx-auto text-xs sm:text-sm text-slate-500 leading-relaxed">
+            {t("home.hero.disclaimer")}
           </p>
 
-          <div className="w-full max-w-4xl mx-auto pt-8">
+          <div className="pt-4 flex flex-col items-center gap-4">
+            {loading ? (
+              <span className="text-sm text-slate-500">{t("common.loading")}</span>
+            ) : user ? (
+              <Link
+                href={getDashboardPath(me)}
+                className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+              >
+                {t("home.hero.ctaMyDashboard")}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href={ROUTES.signup}
+                  className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+                >
+                  {t("home.hero.ctaCreateAccount")}
+                </Link>
+                <p className="text-sm text-slate-500">
+                  {t("home.hero.signInPrompt")}{" "}
+                  <Link href={ROUTES.login} className="text-teal-400/90 hover:text-teal-300 font-medium">
+                    {t("nav.login")}
+                  </Link>
+                </p>
+              </>
+            )}
+          </div>
+        </section>
+
+        {/* Video */}
+        <section id="demo" className="space-y-4 scroll-mt-24">
+          <div className="text-center space-y-2">
+            <h2 className="text-lg font-semibold text-slate-100">{t("home.hero.videoTitle")}</h2>
+            <p className="text-sm text-slate-500 max-w-md mx-auto">{t("home.hero.demoVideoIntro")}</p>
+          </div>
+          <div className="w-full max-w-2xl mx-auto">
             <video
-              className="w-full rounded-2xl border border-slate-800 shadow-2xl"
+              className="w-full rounded-2xl border border-slate-800 shadow-xl"
               controls
               preload="metadata"
             >
@@ -58,48 +101,18 @@ export default function HomePage() {
               Your browser does not support the video tag.
             </video>
           </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Link
-              href="/signup"
-              className="inline-flex items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
-            >
-              Create account
-            </Link>
-            {loading ? (
-              <span className="text-sm text-slate-400">Loading…</span>
-            ) : user ? (
-              <Link
-                href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
-              >
-                My account
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-6 py-3 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
-              >
-                Sign in
-              </Link>
-            )}
-          </div>
         </section>
 
-        {/* Newsletter signup */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 sm:p-8 max-w-xl mx-auto">
-          <h2 className="text-lg font-semibold text-slate-50 mb-2">
-            Get our weekly newsletter
-          </h2>
-          <p className="text-sm text-slate-300 mb-4">
-            Updates on NxtStps, victim resources, and gov tech.
-          </p>
-          <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
+        {/* Newsletter */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/40 p-6 sm:p-8 max-w-xl mx-auto">
+          <h2 className="text-base font-semibold text-slate-300 mb-1">{t("home.newsletter.title")}</h2>
+          <p className="text-sm text-slate-500 mb-4">{t("home.newsletter.description")}</p>
+          <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-2">
             <input
               type="email"
               value={newsletterEmail}
               onChange={(e) => setNewsletterEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t("home.newsletter.placeholder")}
               required
               className="flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
               disabled={newsletterStatus === "loading"}
@@ -107,73 +120,31 @@ export default function HomePage() {
             <button
               type="submit"
               disabled={newsletterStatus === "loading"}
-              className="rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 transition"
+              className="rounded-lg border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800/60 disabled:opacity-50 transition"
             >
               {newsletterStatus === "loading"
-                ? "…"
+                ? t("home.newsletter.submitting")
                 : newsletterStatus === "success"
-                  ? "Done"
-                  : "Subscribe"}
+                  ? t("home.newsletter.subscribed")
+                  : t("home.newsletter.submit")}
             </button>
           </form>
           {newsletterStatus === "success" && (
-            <p className="mt-2 text-sm text-emerald-400">Thanks for subscribing.</p>
+            <p className="mt-2 text-sm text-emerald-400">{t("home.newsletter.thanks")}</p>
           )}
           {newsletterStatus === "error" && (
-            <p className="mt-2 text-sm text-red-400">Something went wrong. Try again.</p>
+            <p className="mt-2 text-sm text-red-400">{t("home.newsletter.error")}</p>
           )}
-        </section>
-
-        {/* What is NxtStps */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold text-slate-50">What is NxtStps?</h2>
-          <p className="text-slate-300 max-w-2xl">
-            NxtStps is a platform that makes government programs—like Crime Victims
-            Compensation—easier to understand and apply for. We translate complex forms
-            into plain language, guide users step-by-step, and support multiple languages.
-            Our goal is to close the gap between victims and the resources they deserve.
-          </p>
-        </section>
-
-        {/* Gov tech problem */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 sm:p-8 space-y-4">
-          <h2 className="text-xl font-semibold text-slate-50">
-            Why gov tech needs this
-          </h2>
-          <p className="text-slate-300">
-            Government forms and processes are often confusing, English-only, and
-            overwhelming—especially for people in crisis. Crime victims face medical
-            bills, lost wages, and trauma, yet many never apply for compensation because
-            the process is too hard. NxtStps bridges that gap with trauma-informed design,
-            multilingual support, and clear guidance.
-          </p>
-          <ul className="space-y-2 text-sm text-slate-300 list-disc list-inside">
-            <li>Plain-language forms and step-by-step flows</li>
-            <li>Spanish and English support from day one</li>
-            <li>Trauma-informed UX (pacing, clarity, no unnecessary pressure)</li>
-            <li>Built for victims and advocates working together</li>
-          </ul>
-        </section>
-
-        {/* CTA */}
-        <section className="text-center space-y-4">
-          <p className="text-slate-300">
-            Create an account to get early access when we launch.
-          </p>
-          <Link
-            href="/signup"
-            className="inline-flex items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
-          >
-            Create account
-          </Link>
         </section>
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-[#020813] mt-16">
+      <footer className="border-t border-slate-800 bg-[#020813] mt-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} NxtStps. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
+            <Link href="/help" className="hover:text-slate-200">
+              Help
+            </Link>
             <Link href="/privacy" className="hover:text-slate-200">
               Privacy
             </Link>
@@ -183,8 +154,11 @@ export default function HomePage() {
             <Link href="/waiver" className="hover:text-slate-200">
               Liability Waiver
             </Link>
-            <a href="tel:988" className="font-semibold text-[#FF7A7A] hover:text-[#ff9c9c]">
-              Crisis line: 988
+            <a
+              href="tel:988"
+              className="font-semibold text-[#FF7A7A] hover:text-[#ff9c9c]"
+            >
+              988 Suicide &amp; Crisis Lifeline
             </a>
           </div>
         </div>

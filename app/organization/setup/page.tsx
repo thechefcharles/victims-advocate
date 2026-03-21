@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
 import type { IlVictimAssistanceProgram } from "@/lib/catalog/ilProgramTypes";
 
@@ -15,7 +17,8 @@ import type { IlVictimAssistanceProgram } from "@/lib/catalog/ilProgramTypes";
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user } = useAuth();
+  const { orgId, user, isAdmin, role, orgRole } = useAuth();
+  const { t } = useI18n();
   const [catalogId, setCatalogId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -85,8 +88,11 @@ export default function OrganizationSetupPage() {
   return (
     <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-12">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/dashboard" className="text-sm text-slate-400 hover:text-slate-200">
-          ← Dashboard
+        <Link
+          href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+          className="text-sm text-slate-400 hover:text-slate-200"
+        >
+          {t("common.backToWorkspace")}
         </Link>
         <header>
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">

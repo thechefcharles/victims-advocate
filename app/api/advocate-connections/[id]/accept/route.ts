@@ -2,13 +2,13 @@
  * Advocate accepts a connection request from a victim.
  */
 
-import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { toAppError, AppError } from "@/lib/server/api";
 import { createNotification } from "@/lib/server/notifications/create";
+import { upsertAdvocateCaseAccess } from "@/lib/server/advocate/grantAdvocateCaseAccess";
 
 export async function POST(
   req: Request,
@@ -29,7 +29,7 @@ export async function POST(
 
     const { data: row, error: fetchErr } = await supabase
       .from("advocate_connection_requests")
-      .select("id, victim_user_id, advocate_user_id, status")
+      .select("id, victim_user_id, advocate_user_id, status, case_id")
       .eq("id", requestId)
       .eq("advocate_user_id", ctx.userId)
       .maybeSingle();
@@ -51,20 +51,34 @@ export async function POST(
       throw new AppError("INTERNAL", "Failed to accept request", undefined, 500);
     }
 
+    const caseId = row.case_id as string | null;
+    if (caseId) {
+      await upsertAdvocateCaseAccess({
+        caseId,
+        advocateUserId: ctx.userId,
+      });
+    }
+
     const baseUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       req.headers.get("origin") ||
       "https://victims-advocate.vercel.app";
 
+    const victimActionPath = caseId
+      ? `/compensation/intake?case=${encodeURIComponent(caseId)}`
+      : "/compensation";
+
     await createNotification(
       {
         userId: row.victim_user_id,
         type: "advocate_connection_accepted",
         title: "Connection accepted",
-        body: "Your advocate has accepted your connection request. You can now invite them to your cases.",
-        actionUrl: `${baseUrl.replace(/\/$/, "")}/compensation`,
-        metadata: { request_id: requestId },
+        body: caseId
+          ? "Your advocate has accepted and can now work with you on this case."
+          : "Your advocate has accepted your connection request. You can now invite them to your cases.",
+        actionUrl: `${baseUrl.replace(/\/$/, "")}${victimActionPath}`,
+        metadata: { request_id: requestId, case_id: caseId ?? undefined },
       },
       ctx
     );
@@ -73,6 +87,7 @@ export async function POST(
       requestId,
       advocateId: ctx.userId,
       victimId: row.victim_user_id,
+      caseId: caseId ?? undefined,
     });
 
     return apiOk({ message: "Connection accepted. The victim has been notified." });

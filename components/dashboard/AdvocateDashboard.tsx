@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { AdvocateClientsList } from "@/components/dashboard/AdvocateClientsList";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 export default function AdvocateDashboard({
   email,
@@ -34,16 +35,16 @@ export default function AdvocateDashboard({
         </header>
 
         <Link
-          href="/advocate"
+          href={ROUTES.advocateHome}
           className="group block rounded-2xl border border-slate-700/80 bg-slate-950/50 p-6 hover:border-teal-700/50 hover:bg-slate-900/60 transition"
         >
           <h2 className="text-lg font-semibold text-slate-100 group-hover:text-teal-100">
-            Org command center
+            Command Center
           </h2>
           <p className="text-[12px] text-slate-400 mt-2 leading-relaxed max-w-xl">
             Workload, alerts, and org-scoped cases for your team.
           </p>
-          <p className="text-[11px] text-teal-500/80 mt-4 font-medium">Open workspace →</p>
+          <p className="text-[11px] text-teal-500/80 mt-4 font-medium">Continue →</p>
         </Link>
 
         <section id="clients" className="space-y-3">
@@ -51,13 +52,13 @@ export default function AdvocateDashboard({
             <h2 className="text-lg font-semibold text-teal-100">My clients</h2>
             <div className="flex gap-3">
               <Link
-                href="/advocate/connection-requests"
+                href={ROUTES.advocateConnectionRequests}
                 className="text-[11px] text-teal-400/80 hover:text-teal-300"
               >
                 Connection requests →
               </Link>
               <Link
-                href="/dashboard/clients"
+                href={ROUTES.dashboardClients}
                 className="text-[11px] text-teal-400/80 hover:text-teal-300"
               >
                 Full-page view →
@@ -68,7 +69,7 @@ export default function AdvocateDashboard({
         </section>
 
         <p className="text-[11px] text-teal-200/35 text-center pt-2">
-          <Link href="/" className="hover:text-teal-200/60">
+          <Link href={ROUTES.marketingLanding} className="hover:text-teal-200/60">
             ← Back to home
           </Link>
         </p>

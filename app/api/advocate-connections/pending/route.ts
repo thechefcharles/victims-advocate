@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const { data: rows, error } = await supabase
       .from("advocate_connection_requests")
-      .select("id, victim_user_id, status, created_at")
+      .select("id, victim_user_id, status, created_at, case_id")
       .eq("advocate_user_id", ctx.userId)
       .eq("status", "pending")
       .order("created_at", { ascending: false });
@@ -46,6 +46,7 @@ export async function GET(req: Request) {
       victim_email: victimEmails.get(r.victim_user_id) ?? null,
       status: r.status,
       created_at: r.created_at,
+      case_id: r.case_id as string | null,
     }));
 
     return apiOk({ requests });

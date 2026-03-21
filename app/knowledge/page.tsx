@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 
 type KnowledgeEntry = {
   id: string;
@@ -17,6 +20,8 @@ type KnowledgeEntry = {
 };
 
 export default function KnowledgePage() {
+  const { isAdmin, orgId, orgRole, role } = useAuth();
+  const { t } = useI18n();
   const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -135,8 +140,11 @@ export default function KnowledgePage() {
             Illinois compensation guide
           </Link>
           {" · "}
-          <Link href="/dashboard" className="text-emerald-400 hover:text-emerald-300">
-            Dashboard
+          <Link
+            href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+            className="text-emerald-400 hover:text-emerald-300"
+          >
+            {t("common.backToWorkspaceInline")}
           </Link>
         </p>
       </div>
