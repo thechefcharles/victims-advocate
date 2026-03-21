@@ -39,7 +39,7 @@ export default function DebugAdminPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 p-6">
+      <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
         <div className="max-w-2xl mx-auto">Loading...</div>
       </main>
     );
@@ -47,7 +47,7 @@ export default function DebugAdminPage() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 p-6">
+      <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
         <div className="max-w-2xl mx-auto space-y-4">
           <h1 className="text-xl font-semibold">Admin Debug</h1>
           <p className="text-red-300">Not logged in. Please log in first.</p>
@@ -57,7 +57,7 @@ export default function DebugAdminPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 p-6">
+    <main className="min-h-screen bg-slate-950 text-slate-50 p-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <h1 className="text-xl font-semibold">Admin Status Debug</h1>
 

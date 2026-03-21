@@ -1,9 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { designationTierTrustLabel } from "@/lib/matchingTrustLabels";
+import { getNextActionForCase, type CompletenessSignal, type EligibilityResult } from "@/lib/product/nextAction";
+import { priorityBadgeClassName, priorityLabel } from "@/lib/product/priority";
+import { RecommendedOrganizationCard } from "@/components/trust/RecommendedOrganizationCard";
+import { EMPTY_COPY, TRUST_LINK_HREF, TRUST_LINK_LABELS, TRUST_MICROCOPY } from "@/lib/trustDisplay";
+import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
+
+type AdminCaseTab =
+  | "overview"
+  | "intake"
+  | "documents"
+  | "messages"
+  | "timeline"
+  | "matching"
+  | "routing"
+  | "completeness"
+  | "notes"
+  | "access"
+  | "appointments";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
@@ -23,6 +41,8 @@ interface SavedCase {
   status: CaseStatus;
   application: any; // matches CompensationApplication shape
   documents?: UploadedDoc[];
+  eligibility_result?: EligibilityResult | null;
+  assigned_advocate_id?: string | null;
 }
 
 interface CaseAccess {
@@ -69,7 +89,11 @@ export default function CaseDetailPage() {
   const caseId = params.id;
 
   const [loadedCase, setLoadedCase] = useState<SavedCase | null>(null);
+  const [messagesUnreadCount, setMessagesUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<AdminCaseTab>("overview");
+  const [caseStatusDraft, setCaseStatusDraft] = useState<CaseStatus | "">("");
+  const [statusSaving, setStatusSaving] = useState(false);
 
   // 🔵 NxtGuide chat state for advocates
   const [chatOpen, setChatOpen] = useState(false);
@@ -154,7 +178,9 @@ export default function CaseDetailPage() {
     flags: string[];
     service_overlap: string[];
     language_match: boolean;
+    accessibility_match?: string[];
     capacity_signal: string | null;
+    virtual_ok?: boolean | null;
     strong_match: boolean;
     possible_match: boolean;
     limited_match: boolean;
@@ -222,6 +248,8 @@ export default function CaseDetailPage() {
           createdAt: caseRow.created_at ?? new Date().toISOString(),
           status: (caseRow.status || "ready_for_review") as CaseStatus,
           application: caseRow.application,
+          eligibility_result: (caseRow.eligibility_result as EligibilityResult | null | undefined) ?? null,
+          assigned_advocate_id: (caseRow.assigned_advocate_id as string | null | undefined) ?? null,
           documents: docs.map((d) => ({
             id: d.id,
             type: d.doc_type || "other",
@@ -237,6 +265,22 @@ export default function CaseDetailPage() {
         };
 
         setLoadedCase(mappedCase);
+
+        try {
+          const msgRes = await fetch(`/api/cases/${caseId}/messages`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (msgRes.ok) {
+            const mj = await msgRes.json();
+            setMessagesUnreadCount(
+              typeof mj.unread_count === "number" ? mj.unread_count : 0
+            );
+          } else {
+            setMessagesUnreadCount(0);
+          }
+        } catch {
+          setMessagesUnreadCount(0);
+        }
 
         const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -317,6 +361,7 @@ export default function CaseDetailPage() {
       } catch (err) {
         console.error("Failed to load case from API", err);
         setLoadedCase(null);
+        setMessagesUnreadCount(0);
         setCaseAccess(null);
         setTimelineEvents([]);
         setNotes([]);
@@ -335,6 +380,10 @@ export default function CaseDetailPage() {
     }
   }, [caseId]);
 
+  useEffect(() => {
+    if (loadedCase) setCaseStatusDraft(loadedCase.status);
+  }, [loadedCase?.status]);
+
   const reloadCase = () => {
     if (!caseId) return;
     setLoading(true);
@@ -348,10 +397,20 @@ export default function CaseDetailPage() {
           const docs = (json.documents ?? []) as any[];
           const access = json.access as CaseAccess | undefined;
           setCaseAccess(access ?? null);
+          const cr = json.case;
           setLoadedCase((prev) => {
             if (!prev) return prev;
             return {
               ...prev,
+              status: (cr.status as CaseStatus) ?? prev.status,
+              eligibility_result:
+                (cr.eligibility_result as EligibilityResult | null | undefined) ??
+                prev.eligibility_result ??
+                null,
+              assigned_advocate_id:
+                (cr.assigned_advocate_id as string | null | undefined) ??
+                prev.assigned_advocate_id ??
+                null,
               documents: docs.map((d: any) => ({
                 id: d.id,
                 type: d.doc_type || "other",
@@ -363,6 +422,17 @@ export default function CaseDetailPage() {
               })),
             };
           });
+          try {
+            const msgRes = await fetch(`/api/cases/${caseId}/messages`, { headers });
+            if (msgRes.ok) {
+              const mj = await msgRes.json();
+              setMessagesUnreadCount(
+                typeof mj.unread_count === "number" ? mj.unread_count : 0
+              );
+            }
+          } catch {
+            /* keep prior count */
+          }
           const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, { headers });
           if (timelineRes.ok) {
             const tJson = await timelineRes.json();
@@ -654,6 +724,82 @@ export default function CaseDetailPage() {
     return d.toLocaleString("en-US");
   };
 
+  const updateCaseStatus = async () => {
+    if (!caseId || !caseStatusDraft || !loadedCase) return;
+    setStatusSaving(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetch(`/api/compensation/cases/${caseId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status: caseStatusDraft }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const st = json.case?.status as CaseStatus | undefined;
+        if (st) {
+          setLoadedCase((prev) => (prev ? { ...prev, status: st } : null));
+          setCaseStatusDraft(st);
+        }
+        const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (timelineRes.ok) {
+          const tJson = await timelineRes.json();
+          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error?.message ?? "Could not update status.");
+      }
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
+  const adminTabs: { id: AdminCaseTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "intake", label: "Intake" },
+    { id: "documents", label: "Documents" },
+    { id: "messages", label: "Messages" },
+    { id: "timeline", label: "Timeline" },
+    { id: "matching", label: "Matching" },
+    { id: "routing", label: "Routing" },
+    { id: "completeness", label: "Completeness" },
+    { id: "notes", label: "Internal notes" },
+    { id: "access", label: "Access" },
+    { id: "appointments", label: "Appointments" },
+  ];
+
+  const visibleAdminTabs = adminTabs.filter(
+    (t) => t.id !== "notes" || canViewNotes
+  );
+
+  const adminNextAction = useMemo(() => {
+    if (!loadedCase) return null;
+    return getNextActionForCase({
+      mode: "admin",
+      caseId: loadedCase.id,
+      eligibilityResult: loadedCase.eligibility_result ?? null,
+      status: loadedCase.status,
+      messagesUnread: messagesUnreadCount,
+      completenessResult: completenessResult as CompletenessSignal | null,
+      matchCount: orgMatches.length,
+      intakeMissingReviewCount: 0,
+      intakeDeferredSkippedCount: 0,
+      hasAdvocateConnected: !!loadedCase.assigned_advocate_id,
+    });
+  }, [
+    loadedCase,
+    messagesUnreadCount,
+    completenessResult,
+    orgMatches.length,
+  ]);
+
   if (loading) {
     return (
       <main className=" min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
@@ -688,8 +834,8 @@ export default function CaseDetailPage() {
               {/* Advocate NxtGuide chat widget */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
-          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-[#0A2239]">
+          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-slate-950 shadow-lg shadow-black/40 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
               <div className="text-[11px]">
                 <div className="font-semibold text-slate-50">NxtGuide</div>
                 <div className="text-slate-300">
@@ -727,7 +873,7 @@ export default function CaseDetailPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
                       m.role === "user"
-                        ? "bg-[#1C8C8C] text-slate-950"
+                        ? "bg-blue-600 text-white"
                         : "bg-slate-900 text-slate-100 border border-slate-700"
                     } text-[11px] whitespace-pre-wrap`}
                   >
@@ -748,7 +894,7 @@ export default function CaseDetailPage() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask NxtGuide about this case..."
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
+                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </form>
           </div>
@@ -756,7 +902,7 @@ export default function CaseDetailPage() {
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="inline-flex items-center rounded-full bg-[#1C8C8C] px-3 py-2 text-[11px] font-semibold text-slate-950 shadow-md shadow-black/40 hover:bg-[#21a3a3] transition"
+            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-black/40 hover:bg-blue-500 transition"
           >
             Ask NxtGuide about this case
           </button>
@@ -821,13 +967,20 @@ export default function CaseDetailPage() {
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
           <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            Admin · Case Detail
+            Admin · Case workspace
           </p>
           <h1 className="text-2xl sm:px-auto text-slate-200">
             {victim.firstName || victim.lastName
               ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
               : "Unknown victim"}
           </h1>
+          <p className="text-sm text-slate-400 max-w-3xl">
+            Review and manage all activity, documents, messaging, and evaluations for this case.
+          </p>
+          <p className="text-xs text-slate-500 max-w-3xl">
+            Run evaluations to understand what this case still needs. Open messages to coordinate
+            with survivors in one place.
+          </p>
           <p className="text-sm text-slate-300">
             Case ID:{" "}
             <span className="font-mono text-[11px] text-slate-400">
@@ -848,160 +1001,280 @@ export default function CaseDetailPage() {
                 : loadedCase.status}
             </span>
           </p>
-
-          <div className="flex flex-wrap gap-2 mt-2">
-            <a
-              href="/admin/cases"
-              className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
-            >
-              ← Back to all cases
-            </a>
-            <button
-              type="button"
-              onClick={handleDownloadSummaryPdf}
-              className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
-            >
-              Download summary PDF
-            </button>
-            {canRunRouting && (
-              <button
-                type="button"
-                disabled={routingLoading}
-                onClick={async () => {
-                  if (!caseId) return;
-                  setRoutingLoading(true);
-                  try {
-                    const { data: sessionData } = await supabase.auth.getSession();
-                    const token = sessionData.session?.access_token;
-                    const res = await fetch(`/api/compensation/cases/${caseId}/routing`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                      },
-                      body: JSON.stringify({}),
-                    });
-                    if (res.ok) {
-                      const json = await res.json();
-                      const result = json.data?.result ?? json.result;
-                      if (result?.programs) {
-                        setRoutingResult(result);
-                        setRoutingRunAt(result.evaluated_at ?? new Date().toISOString());
-                      }
-                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                      });
-                      if (timelineRes.ok) {
-                        const tJson = await timelineRes.json();
-                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
-                      }
-                    } else {
-                      const err = await res.json();
-                      alert(err?.error?.message ?? "Routing failed");
-                    }
-                  } finally {
-                    setRoutingLoading(false);
-                  }
-                }}
-                className="inline-flex items-center rounded-lg border border-[#1C8C8C] bg-[#1C8C8C] px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 transition"
-              >
-                {routingLoading ? "Evaluating…" : "Evaluate programs"}
-              </button>
-            )}
-            {canRunCompleteness && (
-              <button
-                type="button"
-                disabled={completenessLoading}
-                onClick={async () => {
-                  if (!caseId) return;
-                  setCompletenessLoading(true);
-                  try {
-                    const { data: sessionData } = await supabase.auth.getSession();
-                    const token = sessionData.session?.access_token;
-                    const res = await fetch(`/api/compensation/cases/${caseId}/completeness`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                      },
-                      body: JSON.stringify({}),
-                    });
-                    if (res.ok) {
-                      const json = await res.json();
-                      const result = json.data?.result ?? json.result;
-                      if (result?.overall_status != null) {
-                        setCompletenessResult(result);
-                        setCompletenessRunAt(result.evaluated_at ?? new Date().toISOString());
-                      }
-                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                      });
-                      if (timelineRes.ok) {
-                        const tJson = await timelineRes.json();
-                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
-                      }
-                    } else {
-                      const err = await res.json();
-                      alert(err?.error?.message ?? "Completeness evaluation failed");
-                    }
-                  } finally {
-                    setCompletenessLoading(false);
-                  }
-                }}
-                className="inline-flex items-center rounded-lg border border-amber-500/60 bg-amber-500/20 px-3 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/30 disabled:opacity-50 transition"
-              >
-                {completenessLoading ? "Evaluating…" : "Evaluate completeness"}
-              </button>
-            )}
-            {canRunOrgMatching && (
-              <button
-                type="button"
-                disabled={orgMatchingRunLoading}
-                onClick={async () => {
-                  if (!caseId) return;
-                  setOrgMatchingRunLoading(true);
-                  try {
-                    const { data: sessionData } = await supabase.auth.getSession();
-                    const token = sessionData.session?.access_token;
-                    const res = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                      },
-                      body: JSON.stringify({}),
-                    });
-                    if (res.ok) {
-                      const json = await res.json();
-                      const d = json.data ?? json;
-                      setOrgMatches(Array.isArray(d.matches) ? d.matches : []);
-                      setOrgMatchGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
-                      setOrgMatchRunAt(new Date().toISOString());
-                      const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
-                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                      });
-                      if (timelineRes.ok) {
-                        const tJson = await timelineRes.json();
-                        setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
-                      }
-                    } else {
-                      const err = await res.json().catch(() => ({}));
-                      alert(err?.error?.message ?? "Organization matching failed");
-                    }
-                  } finally {
-                    setOrgMatchingRunLoading(false);
-                  }
-                }}
-                className="inline-flex items-center rounded-lg border border-violet-500/60 bg-violet-500/20 px-3 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/30 disabled:opacity-50 transition"
-              >
-                {orgMatchingRunLoading ? "Matching…" : "Find matching organizations"}
-              </button>
-            )}
-          </div>
         </header>
 
+        <nav
+          className="sticky top-0 z-20 -mx-1 flex flex-wrap gap-1.5 border-b border-slate-800/90 bg-slate-950/95 px-1 py-2 backdrop-blur-sm"
+          aria-label="Case sections"
+        >
+          {visibleAdminTabs.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id)}
+              className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
+                activeTab === t.id
+                  ? "bg-emerald-600/25 text-emerald-100 border border-emerald-500/40"
+                  : "bg-slate-900/80 text-slate-400 border border-slate-700 hover:border-slate-600"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        {activeTab === "overview" && (
+          <section className="rounded-2xl border border-slate-700 bg-slate-900/80 p-5 text-xs space-y-4">
+            <h2 className="text-sm font-semibold text-slate-100">Overview</h2>
+            <p className="text-slate-400">
+              Quick summary and common actions. Use the tabs above to jump to intake details,
+              documents, secure messages, evaluations, and more.
+            </p>
+            {adminNextAction && (
+              <div className="rounded-xl border border-slate-700/90 bg-slate-950/45 p-3 space-y-2">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                  Next action for this case
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-medium ${priorityBadgeClassName(
+                      adminNextAction.priority
+                    )}`}
+                  >
+                    {priorityLabel(adminNextAction.priority)}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-100">
+                    {adminNextAction.label}
+                  </span>
+                </div>
+                <p className="text-slate-400 leading-relaxed">{adminNextAction.reason}</p>
+                {adminNextAction.href ? (
+                  <Link
+                    href={adminNextAction.href}
+                    className="inline-flex text-[11px] font-medium text-emerald-400/95 hover:text-emerald-300 underline-offset-2 hover:underline"
+                  >
+                    Go to suggested area →
+                  </Link>
+                ) : null}
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500">Victim</p>
+                <p className="text-slate-200 font-medium">
+                  {victim.firstName || victim.lastName
+                    ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
+                    : "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
+                <p className="text-[10px] uppercase tracking-wide text-slate-500">Your access</p>
+                <p className="text-slate-200">
+                  {caseAccess
+                    ? `${caseAccess.role} · ${caseAccess.can_edit ? "Can edit" : "View only"}`
+                    : "—"}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="text-slate-300 flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-slate-500">Update case status</span>
+                <select
+                  value={caseStatusDraft}
+                  onChange={(e) => setCaseStatusDraft(e.target.value as CaseStatus)}
+                  className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                >
+                  <option value="draft">draft</option>
+                  <option value="ready_for_review">ready_for_review</option>
+                  <option value="submitted">submitted</option>
+                  <option value="closed">closed</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={statusSaving || caseStatusDraft === loadedCase.status}
+                onClick={updateCaseStatus}
+                className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700 disabled:opacity-50"
+              >
+                {statusSaving ? "Saving…" : "Update case status"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-800">
+              <a
+                href="/admin/cases"
+                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
+              >
+                ← Back to all cases
+              </a>
+              <button
+                type="button"
+                onClick={handleDownloadSummaryPdf}
+                className="inline-flex items-center rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 transition"
+              >
+                Download summary PDF
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("messages")}
+                className="inline-flex items-center rounded-lg border border-sky-500/50 bg-sky-500/15 px-3 py-1.5 text-[11px] font-semibold text-sky-200 hover:bg-sky-500/25"
+              >
+                Open Messages
+              </button>
+              {canRunRouting && (
+                <button
+                  type="button"
+                  disabled={routingLoading}
+                  onClick={async () => {
+                    if (!caseId) return;
+                    setRoutingLoading(true);
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const token = sessionData.session?.access_token;
+                      const res = await fetch(`/api/compensation/cases/${caseId}/routing`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({}),
+                      });
+                      if (res.ok) {
+                        const json = await res.json();
+                        const result = json.data?.result ?? json.result;
+                        if (result?.programs) {
+                          setRoutingResult(result);
+                          setRoutingRunAt(result.evaluated_at ?? new Date().toISOString());
+                        }
+                        const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                          headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        });
+                        if (timelineRes.ok) {
+                          const tJson = await timelineRes.json();
+                          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                        }
+                      } else {
+                        const err = await res.json();
+                        alert(err?.error?.message ?? "Routing failed");
+                      }
+                    } finally {
+                      setRoutingLoading(false);
+                    }
+                  }}
+                  className="inline-flex items-center rounded-lg border border-blue-500 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
+                >
+                  {routingLoading ? "Evaluating…" : "Run Routing"}
+                </button>
+              )}
+              {canRunCompleteness && (
+                <button
+                  type="button"
+                  disabled={completenessLoading}
+                  onClick={async () => {
+                    if (!caseId) return;
+                    setCompletenessLoading(true);
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const token = sessionData.session?.access_token;
+                      const res = await fetch(`/api/compensation/cases/${caseId}/completeness`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({}),
+                      });
+                      if (res.ok) {
+                        const json = await res.json();
+                        const result = json.data?.result ?? json.result;
+                        if (result?.overall_status != null) {
+                          setCompletenessResult(result);
+                          setCompletenessRunAt(result.evaluated_at ?? new Date().toISOString());
+                        }
+                        const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                          headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        });
+                        if (timelineRes.ok) {
+                          const tJson = await timelineRes.json();
+                          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                        }
+                      } else {
+                        const err = await res.json();
+                        alert(err?.error?.message ?? "Completeness evaluation failed");
+                      }
+                    } finally {
+                      setCompletenessLoading(false);
+                    }
+                  }}
+                  className="inline-flex items-center rounded-lg border border-amber-500/60 bg-amber-500/20 px-3 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/30 disabled:opacity-50 transition"
+                >
+                  {completenessLoading ? "Evaluating…" : "Run Completeness"}
+                </button>
+              )}
+              {canRunOrgMatching && (
+                <button
+                  type="button"
+                  disabled={orgMatchingRunLoading}
+                  onClick={async () => {
+                    if (!caseId) return;
+                    setOrgMatchingRunLoading(true);
+                    try {
+                      const { data: sessionData } = await supabase.auth.getSession();
+                      const token = sessionData.session?.access_token;
+                      const res = await fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                        body: JSON.stringify({}),
+                      });
+                      if (res.ok) {
+                        const json = await res.json();
+                        const d = json.data ?? json;
+                        setOrgMatches(Array.isArray(d.matches) ? d.matches : []);
+                        setOrgMatchGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
+                        setOrgMatchRunAt(new Date().toISOString());
+                        const timelineRes = await fetch(`/api/compensation/cases/${caseId}/timeline`, {
+                          headers: token ? { Authorization: `Bearer ${token}` } : {},
+                        });
+                        if (timelineRes.ok) {
+                          const tJson = await timelineRes.json();
+                          setTimelineEvents(tJson.data?.events ?? tJson.events ?? []);
+                        }
+                      } else {
+                        const err = await res.json().catch(() => ({}));
+                        alert(err?.error?.message ?? "Organization matching failed");
+                      }
+                    } finally {
+                      setOrgMatchingRunLoading(false);
+                    }
+                  }}
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
+                >
+                  {orgMatchingRunLoading ? "Matching…" : "Find Matching Organizations"}
+                </button>
+              )}
+              {canRunOcr && docs.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab("documents");
+                  }}
+                  className="inline-flex items-center rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                >
+                  Run OCR (in Documents)
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Victim & applicant */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+        <section
+          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+            activeTab !== "intake" ? "hidden" : ""
+          }`}
+        >
           <h2 className="text-sm font-semibold text-slate-50">
             Victim & applicant
           </h2>
@@ -1031,7 +1304,11 @@ export default function CaseDetailPage() {
         </section>
 
         {/* Crime */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+        <section
+          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+            activeTab !== "intake" ? "hidden" : ""
+          }`}
+        >
           <h2 className="text-sm font-semibold text-slate-50">Crime</h2>
           <p className="text-slate-300">
             Date of crime: {crime.dateOfCrime || "—"}
@@ -1064,7 +1341,11 @@ export default function CaseDetailPage() {
 
         {/* Phase 8: Advocate amend intake */}
         {canAmendIntake && (
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+          <section
+            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+              activeTab !== "intake" ? "hidden" : ""
+            }`}
+          >
             <h2 className="text-sm font-semibold text-slate-50">Amend intake field</h2>
             <p className="text-slate-400">
               Change a value with a required reason. Original value is preserved in the audit trail.
@@ -1159,7 +1440,7 @@ export default function CaseDetailPage() {
                           setAmendLoading(false);
                         }
                       }}
-                      className="rounded border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                      className="rounded border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                     >
                       {amendLoading ? "Amending…" : "Amend"}
                     </button>
@@ -1171,8 +1452,12 @@ export default function CaseDetailPage() {
         )}
 
         {/* Phase 11: Program routing result */}
-        {(routingResult || canRunRouting) && (
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+        {(activeTab === "routing" || routingResult || canRunRouting) && (
+          <section
+            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+              activeTab !== "routing" ? "hidden" : ""
+            }`}
+          >
             <h2 className="text-sm font-semibold text-slate-50">Program routing</h2>
             {routingRunAt && (
               <p className="text-[11px] text-slate-500">
@@ -1180,9 +1465,19 @@ export default function CaseDetailPage() {
               </p>
             )}
             {!routingResult ? (
-              <p className="text-slate-400">
-                Run &quot;Evaluate programs&quot; to see which programs may apply based on this intake.
-              </p>
+              <div className="space-y-2">
+                <p className="text-slate-400">
+                  No routing result yet. Run Routing from the Overview tab to see which programs may
+                  apply based on this intake.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("overview")}
+                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                >
+                  Run Routing
+                </button>
+              </div>
             ) : (
               <ul className="divide-y divide-slate-800 space-y-4">
                 {routingResult.programs.map((prog) => (
@@ -1249,19 +1544,25 @@ export default function CaseDetailPage() {
         )}
 
         {/* Phase B: Recommended organizations */}
-        {(orgMatches.length > 0 || orgMatchGlobalFlags.length > 0 || canRunOrgMatching) && (
-          <section className="bg-slate-900/70 border border-violet-900/40 rounded-2xl p-5 text-xs space-y-3">
+        {(activeTab === "matching" ||
+          orgMatches.length > 0 ||
+          orgMatchGlobalFlags.length > 0 ||
+          canRunOrgMatching) && (
+          <section
+            className={`bg-slate-900 border border-slate-700 rounded-2xl p-5 text-xs space-y-3 ${
+              activeTab !== "matching" ? "hidden" : ""
+            }`}
+          >
             <h2 className="text-sm font-semibold text-slate-50">Recommended organizations</h2>
-            <p className="text-slate-400 text-[11px]">
-              Based on this application&apos;s needs — not rankings or public ratings. Confirm fit directly
-              with each organization.{" "}
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              {TRUST_MICROCOPY.recommendationsLead} Confirm fit directly with each organization.{" "}
               <a
-                href="/help/how-matching-works"
-                className="text-violet-300 hover:underline"
+                href={TRUST_LINK_HREF.matching}
+                className="text-slate-300 hover:text-white underline"
                 target="_blank"
                 rel="noreferrer"
               >
-                How recommendations work
+                {TRUST_LINK_LABELS.howRecommendationsWork}
               </a>
             </p>
             {orgMatchRunAt && (
@@ -1273,94 +1574,25 @@ export default function CaseDetailPage() {
               </p>
             ))}
             {orgMatches.length === 0 && !orgMatchGlobalFlags.length && canRunOrgMatching && (
-              <p className="text-slate-400">
-                Use &quot;Find matching organizations&quot; above to suggest organizations that may help with
-                this case.
-              </p>
+              <div className="space-y-2">
+                <p className="text-slate-400">
+                  {EMPTY_COPY.noMatchingResults} Find Matching Organizations from the Overview tab to
+                  suggest organizations that may help with this case.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("overview")}
+                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                >
+                  Find Matching Organizations
+                </button>
+              </div>
             )}
             {orgMatches.length > 0 && (
               <ul className="divide-y divide-slate-800 space-y-3">
                 {orgMatches.map((m) => (
                   <li key={m.organization_id} className="pt-3 first:pt-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-slate-100">{m.organization_name}</span>
-                      {m.strong_match && (
-                        <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 text-[10px]">
-                          Good fit
-                        </span>
-                      )}
-                      {m.possible_match && !m.strong_match && (
-                        <span className="rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 text-[10px]">
-                          Possible fit
-                        </span>
-                      )}
-                      {m.limited_match && (
-                        <span className="rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 text-[10px]">
-                          Tentative
-                        </span>
-                      )}
-                      {m.language_match && (
-                        <span className="text-[10px] text-slate-400 border border-slate-600 rounded px-1.5 py-0.5">
-                          Language
-                        </span>
-                      )}
-                      {m.capacity_signal && (
-                        <span className="text-[10px] text-slate-400 border border-slate-600 rounded px-1.5 py-0.5">
-                          {m.capacity_signal === "accepting"
-                            ? "Accepting clients"
-                            : m.capacity_signal}
-                        </span>
-                      )}
-                      {designationTierTrustLabel(m.designation_tier) && (
-                        <span
-                          className="text-[10px] text-slate-500 border border-slate-600/80 rounded px-1.5 py-0.5"
-                          title="Platform readiness context — not a ranking"
-                        >
-                          {designationTierTrustLabel(m.designation_tier)}
-                        </span>
-                      )}
-                    </div>
-                    {m.designation_summary && (
-                      <p className="text-slate-500 text-[10px] mt-1 line-clamp-2 max-w-xl">
-                        {m.designation_summary}
-                      </p>
-                    )}
-                    {m.designation_reason && (
-                      <p className="text-slate-400 text-[11px] mt-1 max-w-xl">{m.designation_reason}</p>
-                    )}
-                    {(m.designation_influenced_match ||
-                      designationTierTrustLabel(m.designation_tier)) && (
-                      <p className="text-[10px] mt-0.5">
-                        <a
-                          href="/help/how-designations-work"
-                          className="text-violet-400/90 hover:underline"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          How designation is used
-                        </a>
-                      </p>
-                    )}
-                    {m.service_overlap.length > 0 && (
-                      <p className="text-slate-400 mt-1">
-                        <span className="text-slate-500">Services aligned:</span>{" "}
-                        {m.service_overlap.map((s) => s.replace(/_/g, " ")).join(", ")}
-                      </p>
-                    )}
-                    {m.reasons.length > 0 && (
-                      <ul className="list-disc list-inside text-slate-300 mt-1.5 space-y-0.5">
-                        {m.reasons.slice(0, 6).map((r, i) => (
-                          <li key={i}>{r}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {m.flags.length > 0 && (
-                      <ul className="mt-1.5 text-amber-200/80 text-[11px] list-disc list-inside">
-                        {m.flags.slice(0, 4).map((f, i) => (
-                          <li key={i}>{f}</li>
-                        ))}
-                      </ul>
-                    )}
+                    <RecommendedOrganizationCard match={m} />
                   </li>
                 ))}
               </ul>
@@ -1369,8 +1601,12 @@ export default function CaseDetailPage() {
         )}
 
         {/* Phase 12: Documentation completeness */}
-        {(completenessResult || canRunCompleteness) && (
-          <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+        {(activeTab === "completeness" || completenessResult || canRunCompleteness) && (
+          <section
+            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+              activeTab !== "completeness" ? "hidden" : ""
+            }`}
+          >
             <h2 className="text-sm font-semibold text-slate-50">Documentation completeness</h2>
             {completenessRunAt && (
               <p className="text-[11px] text-slate-500">
@@ -1378,9 +1614,19 @@ export default function CaseDetailPage() {
               </p>
             )}
             {!completenessResult ? (
-              <p className="text-slate-400">
-                Run &quot;Evaluate completeness&quot; to see what documents and information are missing. Run &quot;Evaluate programs&quot; first.
-              </p>
+              <div className="space-y-2">
+                <p className="text-slate-400">
+                  No completeness result yet. Run Routing first, then Run Completeness from the
+                  Overview tab to see what documents and information are missing.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("overview")}
+                  className="rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-800"
+                >
+                  Run Completeness
+                </button>
+              </div>
             ) : (
               <>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1488,7 +1734,11 @@ export default function CaseDetailPage() {
         )}
 
         {/* Losses */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+        <section
+          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+            activeTab !== "intake" ? "hidden" : ""
+          }`}
+        >
           <h2 className="text-sm font-semibold text-slate-50">
             Losses claimed
           </h2>
@@ -1500,7 +1750,11 @@ export default function CaseDetailPage() {
         </section>
 
         {/* Medical / Employment / Funeral */}
-        <section className="grid gap-4 md:grid-cols-3 text-xs">
+        <section
+          className={`grid gap-4 md:grid-cols-3 text-xs ${
+            activeTab !== "intake" ? "hidden" : ""
+          }`}
+        >
           <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
             <h2 className="text-sm font-semibold text-slate-50">
               Medical / counseling
@@ -1589,10 +1843,17 @@ export default function CaseDetailPage() {
       </section>
 
       {/* Documents */}
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+      <section
+        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+          activeTab !== "documents" ? "hidden" : ""
+        }`}
+      >
         <h2 className="text-sm font-semibold text-slate-50">
           Documents attached
         </h2>
+        <p className="text-[11px] text-slate-500">
+          Uploads, statuses, secure access, and per-document OCR review.
+        </p>
         {docs.length === 0 ? (
           <p className="text-slate-300">No documents attached.</p>
         ) : (
@@ -1866,8 +2127,25 @@ export default function CaseDetailPage() {
         )}
       </section>
 
+      {/* Secure messages */}
+      <section
+        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 ${
+          activeTab !== "messages" ? "hidden" : ""
+        }`}
+      >
+        <h2 className="text-sm font-semibold text-slate-50 mb-2">Secure messages</h2>
+        <p className="text-[11px] text-slate-500 mb-3">
+          When there are no messages yet, survivors and advocates can start the thread here.
+        </p>
+        <CaseMessagesPanel caseId={caseId} />
+      </section>
+
       {/* Timeline */}
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2">
+      <section
+        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+          activeTab !== "timeline" ? "hidden" : ""
+        }`}
+      >
         <h2 className="text-sm font-semibold text-slate-50">Case timeline</h2>
         {timelineEvents.length === 0 ? (
           <p className="text-slate-400">No timeline events yet.</p>
@@ -1891,7 +2169,11 @@ export default function CaseDetailPage() {
 
       {/* Internal notes (advocates/admins only) */}
       {canViewNotes && (
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3">
+        <section
+          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+            activeTab !== "notes" ? "hidden" : ""
+          }`}
+        >
           <h2 className="text-sm font-semibold text-slate-50">Internal notes</h2>
           <div>
             <textarea
@@ -1899,19 +2181,22 @@ export default function CaseDetailPage() {
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder="Add an internal note…"
               rows={2}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               type="button"
               onClick={handleAddNote}
               disabled={!noteContent.trim() || noteActioning === "add"}
-              className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="mt-2 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {noteActioning === "add" ? "Adding…" : "Add note"}
             </button>
           </div>
           {notes.length === 0 ? (
-            <p className="text-slate-400">No internal notes.</p>
+            <p className="text-slate-400">
+              No internal notes yet. Add a note above for handoffs and follow-ups your team should
+              see.
+            </p>
           ) : (
             <ul className="divide-y divide-slate-800 space-y-3">
               {notes.map((n) => (
@@ -1986,7 +2271,11 @@ export default function CaseDetailPage() {
       )}
 
       {/* Certification */}
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5">
+      <section
+        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5 ${
+          activeTab !== "intake" ? "hidden" : ""
+        }`}
+      >
         <h2 className="text-sm font-semibold text-slate-50">
           Certification snapshot
         </h2>
@@ -2006,11 +2295,49 @@ export default function CaseDetailPage() {
         </p>
       </section>
 
-      <p className="text-[11px] text-slate-500">
-        This view reads from your Supabase backend. In a production version,
-        cases, documents, and notes would be available to authorized advocates
-        across your organization with full audit logging and permissions.
-      </p>
+      {/* Case access */}
+      <section
+        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-xs space-y-2 ${
+          activeTab !== "access" ? "hidden" : ""
+        }`}
+      >
+        <h2 className="text-sm font-semibold text-slate-50">Access</h2>
+        <p className="text-slate-400">
+          Who can see and edit this case in the platform. Advocate connections and sharing are
+          managed from case access rules in your workflow.
+        </p>
+        {caseAccess ? (
+          <ul className="text-slate-300 space-y-1 list-disc list-inside">
+            <li>Role: {caseAccess.role}</li>
+            <li>Can view: {caseAccess.can_view ? "Yes" : "No"}</li>
+            <li>Can edit: {caseAccess.can_edit ? "Yes" : "No"}</li>
+          </ul>
+        ) : (
+          <p className="text-slate-500">No access details loaded.</p>
+        )}
+        <p className="text-[11px] text-slate-500 pt-2">
+          Open the guided intake with this case:{" "}
+          <a
+            href={`/compensation/intake?case=${caseId}`}
+            className="text-emerald-400 hover:underline"
+          >
+            /compensation/intake?case={caseId.slice(0, 8)}…
+          </a>
+        </p>
+      </section>
+
+      {/* Appointments — UI not wired on this page; placeholder keeps tab usable */}
+      <section
+        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-xs space-y-2 ${
+          activeTab !== "appointments" ? "hidden" : ""
+        }`}
+      >
+        <h2 className="text-sm font-semibold text-slate-50">Appointments</h2>
+        <p className="text-slate-400">
+          No appointments listed in this view yet. Appointment scheduling may appear in other tools
+          or future releases.
+        </p>
+      </section>
     </div>
   </main>
 );

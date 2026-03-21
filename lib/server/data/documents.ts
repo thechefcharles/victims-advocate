@@ -6,6 +6,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext, OrgRole } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
+import { sameUserId } from "./ids";
 
 export type DocumentRow = {
   id: string;
@@ -77,8 +78,36 @@ export async function getDocumentById(params: {
   if (!doc) return null;
 
   const row = doc as unknown as DocumentRow;
-  const caseOrgId = row.organization_id;
-  const allowed = ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+  const caseId = row.case_id;
+
+  if (!caseId) {
+    const caseOrgId = row.organization_id;
+    const allowed =
+      ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+    if (!allowed) return null;
+    return row;
+  }
+
+  const { data: caseRow } = await supabase
+    .from("cases")
+    .select("organization_id, owner_user_id")
+    .eq("id", caseId)
+    .maybeSingle();
+  if (!caseRow) return null;
+
+  const { data: accessRow } = await supabase
+    .from("case_access")
+    .select("can_view")
+    .eq("case_id", caseId)
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+
+  const caseOrgId = caseRow.organization_id as string | null;
+  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+  const isOwner = sameUserId(caseRow.owner_user_id, ctx.userId);
+  const hasExplicitCaseAccess = accessRow?.can_view === true;
+  const allowed =
+    ctx.isAdmin || isOwner || orgMatches || hasExplicitCaseAccess;
   if (!allowed) return null;
 
   return row;
@@ -97,7 +126,7 @@ export async function listCaseDocuments(params: {
 
   const { data: caseRow, error: caseErr } = await supabase
     .from("cases")
-    .select("id, organization_id")
+    .select("id, organization_id, owner_user_id")
     .eq("id", caseId)
     .maybeSingle();
 
@@ -105,9 +134,6 @@ export async function listCaseDocuments(params: {
   if (!caseRow) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
 
   const caseOrgId = caseRow.organization_id as string | null;
-  const allowed =
-    ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
-  if (!allowed) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
 
   const { data: accessRow, error: accessError } = await supabase
     .from("case_access")
@@ -118,7 +144,16 @@ export async function listCaseDocuments(params: {
 
   if (accessError) throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
 
+  const isOwner = sameUserId(caseRow.owner_user_id, ctx.userId);
+  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+  const hasExplicitCaseAccess = accessRow?.can_view === true;
+
+  const allowed =
+    ctx.isAdmin || isOwner || orgMatches || hasExplicitCaseAccess;
+  if (!allowed) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+
   const orgLeadershipDocs =
+    !ctx.isAdmin &&
     ctx.orgId &&
     caseOrgId &&
     ctx.orgId === caseOrgId &&
@@ -135,6 +170,8 @@ export async function listCaseDocuments(params: {
     access = { role: "admin", can_view: true, can_edit: true };
   } else if (orgLeadershipDocs) {
     access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else if (isOwner) {
+    access = { role: "owner", can_view: true, can_edit: true };
   } else {
     throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
   }
@@ -171,10 +208,14 @@ export async function assertDocumentAccess(params: {
 
   const { data: caseRow } = await getSupabaseAdmin()
     .from("cases")
-    .select("organization_id")
+    .select("organization_id, owner_user_id")
     .eq("id", caseId)
     .maybeSingle();
   const caseOrgId = (caseRow as { organization_id?: string } | null)?.organization_id ?? null;
+  const isOwner = sameUserId(
+    (caseRow as { owner_user_id?: unknown } | null)?.owner_user_id,
+    ctx.userId
+  );
 
   const { data: accessRow } = await getSupabaseAdmin()
     .from("case_access")
@@ -184,6 +225,7 @@ export async function assertDocumentAccess(params: {
     .maybeSingle();
 
   const orgLeadershipAssert =
+    !ctx.isAdmin &&
     ctx.orgId &&
     caseOrgId &&
     ctx.orgId === caseOrgId &&
@@ -200,6 +242,8 @@ export async function assertDocumentAccess(params: {
     access = { role: "admin", can_view: true, can_edit: true };
   } else if (orgLeadershipAssert) {
     access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else if (isOwner) {
+    access = { role: "owner", can_view: true, can_edit: true };
   } else {
     throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
   }

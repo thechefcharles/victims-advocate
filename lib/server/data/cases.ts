@@ -8,6 +8,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { listCaseDocuments } from "./documents";
+import { sameUserId } from "./ids";
 
 export type CaseAccess = {
   role: string;
@@ -45,12 +46,6 @@ export async function getCaseById(
   }
 
   const caseOrgId = caseRow.organization_id as string | null;
-  const allowed =
-    ctx.isAdmin || (ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
-
-  if (!allowed) {
-    return null;
-  }
 
   const { data: accessRow, error: accessError } = await supabaseAdmin
     .from("case_access")
@@ -61,6 +56,22 @@ export async function getCaseById(
 
   if (accessError) {
     throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
+  }
+
+  const isOwner = sameUserId(caseRow.owner_user_id, ctx.userId);
+  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+  const hasExplicitCaseAccess = accessRow?.can_view === true;
+
+  // Allow: platform admin; case owner; same org (staff); or any user with a case_access grant
+  // (invited collaborators may have no org membership — do not gate on org before case_access).
+  const allowed =
+    ctx.isAdmin ||
+    isOwner ||
+    orgMatches ||
+    hasExplicitCaseAccess;
+
+  if (!allowed) {
+    return null;
   }
 
   const orgLeadershipAccess =
@@ -78,6 +89,9 @@ export async function getCaseById(
   } else if (orgLeadershipAccess) {
     // Org admin / supervisor can open org cases without a personal case_access row
     access = { role: "org_leadership", can_view: true, can_edit: true };
+  } else if (isOwner) {
+    // Owner row may exist without case_access if insert failed during case create
+    access = { role: "owner", can_view: true, can_edit: true };
   } else {
     return null;
   }
@@ -109,10 +123,6 @@ export async function listCasesForUser(params: {
 }): Promise<CaseListItem[]> {
   const { ctx, filters } = params;
   const supabaseAdmin = getSupabaseAdmin();
-
-  if (!ctx.isAdmin && !ctx.orgId) {
-    return [];
-  }
 
   let query = supabaseAdmin
     .from("case_access")

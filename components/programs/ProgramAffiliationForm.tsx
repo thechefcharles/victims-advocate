@@ -70,7 +70,7 @@ export function ProgramAffiliationForm({
         type="button"
         disabled={saving || !accessToken}
         onClick={save}
-        className="rounded-lg bg-[#1C8C8C] px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save affiliation"}
       </button>

@@ -114,25 +114,28 @@ export default function AdminUsersPage() {
             Admin · User security
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">Users</h1>
-          <div className="flex flex-wrap gap-3 text-sm text-slate-400">
+          <p className="text-sm text-slate-400 max-w-xl">
+            Enable or disable accounts. New accounts are created through your normal signup flow.
+          </p>
+          <div className="flex flex-wrap gap-3 text-sm text-slate-400 pt-1">
             <Link href="/admin/cases" className="hover:text-slate-200">
-              Cases →
+              Cases
             </Link>
             <Link href="/admin/audit" className="hover:text-slate-200">
-              Audit logs →
+              Audit
             </Link>
             <Link href="/admin/orgs" className="hover:text-slate-200">
-              Organizations →
+              Organizations
             </Link>
             <Link href="/admin/policies" className="hover:text-slate-200">
-              Policies →
+              Policies
             </Link>
             <Link href="/admin/ecosystem" className="hover:text-teal-400">
-              Ecosystem →
+              Ecosystem
             </Link>
             <Link
               href="/admin/grading"
-              className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35"
+              className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
             >
               CBO grading
             </Link>
@@ -214,7 +217,12 @@ export default function AdminUsersPage() {
           </table>
         </section>
         {filtered.length === 0 && (
-          <p className="text-slate-400 text-sm">No users match the filters.</p>
+          <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
+            <p className="font-medium text-slate-300">No users match.</p>
+            <p className="mt-2 text-xs text-slate-500">
+              Clear filters to see all accounts, or adjust email and status filters.
+            </p>
+          </div>
         )}
       </div>
     </main>

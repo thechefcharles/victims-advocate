@@ -41,7 +41,7 @@ export default function AccountPage() {
             href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
             className="inline-block text-sm text-teal-400 hover:text-teal-300"
           >
-            ← Dashboard
+            {t("common.backToWorkspace")}
           </Link>
         </div>
 

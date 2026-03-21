@@ -197,7 +197,7 @@ const handleFiles = async (files: FileList | null) => {
                 type="file"
                 multiple
                 onChange={(e) => handleFiles(e.target.files)}
-                className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-950 hover:file:bg-emerald-400"
+                className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-blue-500"
               />
             </label>
             <p className="text-[11px] text-slate-500">

@@ -30,6 +30,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "leaflet-css.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/dev/types/**/*.ts",

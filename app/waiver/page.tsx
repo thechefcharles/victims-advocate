@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function WaiverPage() {
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="flex flex-wrap gap-4 text-sm text-slate-400">
           <Link href="/" className="hover:text-slate-200">← Home</Link>

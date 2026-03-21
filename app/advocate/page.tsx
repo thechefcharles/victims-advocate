@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { ROUTES } from "@/lib/routes/pageRegistry";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PrimaryActionArea } from "@/components/layout/PrimaryActionArea";
+import { sortAdvocateCasesForQueue } from "@/lib/product/nextAction";
 
 type CasePriority = "critical" | "high" | "medium" | "low";
 type CompletenessStatus =
@@ -74,7 +81,7 @@ const PRIORITY_LABEL: Record<CasePriority, string> = {
 const PRIORITY_CLASS: Record<CasePriority, string> = {
   critical: "bg-red-500/20 text-red-300 border-red-500/40",
   high: "bg-amber-500/20 text-amber-300 border-amber-500/40",
-  medium: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+  medium: "bg-blue-500/20 text-blue-300 border-blue-500/40",
   low: "bg-slate-500/20 text-slate-400 border-slate-500/40",
 };
 
@@ -86,7 +93,28 @@ const COMPLETENESS_LABEL: Record<string, string> = {
   not_evaluated: "Not evaluated",
 };
 
-export default function AdvocateDashboardPage() {
+/** Alerts first; then shared urgency sort (aligned with product next-action signals). */
+function pickHighestPriorityCaseId(
+  caseRows: CaseSummaryEnriched[],
+  alertRows: CaseAlert[]
+): string | null {
+  if (alertRows.length > 0) return alertRows[0].case_id;
+  const sorted = sortAdvocateCasesForQueue(caseRows);
+  return sorted[0]?.id ?? null;
+}
+
+function alertReasonLine(a: CaseAlert): string {
+  const hint = (a.action_hint ?? "").trim();
+  if (hint) return hint;
+  const desc = (a.description ?? "").trim();
+  if (desc.length > 120) return `${desc.slice(0, 117)}…`;
+  return desc || "Needs follow-up in this case.";
+}
+
+export default function AdvocateCommandCenterPage() {
+  const { accessToken } = useAuth();
+  const consentReady = useConsentRedirect(accessToken, "/advocate");
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<CommandCenterResponse | null>(null);
   const [searchInput, setSearchInput] = useState("");
@@ -98,9 +126,10 @@ export default function AdvocateDashboardPage() {
   const [sort, setSort] = useState<
     "priority" | "last_activity" | "status" | "created_at"
   >("priority");
+  const [messageAttentionCount, setMessageAttentionCount] = useState(0);
 
   const load = useCallback(
-    async (searchOverride?: string) => {
+    async (searchOverride?: string, resetFilters?: boolean) => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
@@ -109,24 +138,28 @@ export default function AdvocateDashboardPage() {
           return;
         }
         const appliedSearch = searchOverride !== undefined ? searchOverride : search;
+        const useStatus = resetFilters ? "" : statusFilter;
+        const usePriority = resetFilters ? "" : priorityFilter;
+        const useUnassigned = resetFilters ? false : onlyUnassigned;
+        const useAlerts = resetFilters ? false : onlyWithAlerts;
         const params = new URLSearchParams();
         if (appliedSearch.trim()) params.set("search", appliedSearch.trim());
-        if (statusFilter) params.set("status", statusFilter);
-        if (priorityFilter) params.set("priority", priorityFilter);
-        if (onlyUnassigned) params.set("only_unassigned", "true");
-        if (onlyWithAlerts) params.set("only_with_alerts", "true");
+        if (useStatus) params.set("status", useStatus);
+        if (usePriority) params.set("priority", usePriority);
+        if (useUnassigned) params.set("only_unassigned", "true");
+        if (useAlerts) params.set("only_with_alerts", "true");
         params.set("sort", sort);
         const res = await fetch(
           `/api/advocate/command-center?${params.toString()}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-      if (!res.ok) {
-        console.error("Command center load failed:", await res.text());
-        setData(null);
-        return;
-      }
-      const json = await res.json();
-      setData(json);
+        if (!res.ok) {
+          console.error("Command center load failed:", await res.text());
+          setData(null);
+          return;
+        }
+        const json = await res.json();
+        setData(json);
     } catch (e) {
       console.error("Command center load error", e);
       setData(null);
@@ -138,8 +171,50 @@ export default function AdvocateDashboardPage() {
   );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (consentReady) load();
+  }, [load, consentReady]);
+
+  /** Lightweight triage signal: cases with unread secure messages (existing APIs only). */
+  useEffect(() => {
+    if (!consentReady || !accessToken) return;
+    let cancelled = false;
+    const BATCH = 8;
+    (async () => {
+      try {
+        const res = await fetch("/api/advocate/cases", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        const caseIds = ((json.cases ?? []) as { id: string }[])
+          .map((c) => c.id)
+          .slice(0, 30);
+        let withUnread = 0;
+        for (let i = 0; i < caseIds.length; i += BATCH) {
+          const slice = caseIds.slice(i, i + BATCH);
+          const results = await Promise.all(
+            slice.map((id) =>
+              fetch(`/api/cases/${id}/messages`, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              }).then((r) => (r.ok ? r.json() : null))
+            )
+          );
+          for (const j of results) {
+            if (j && Number((j as { unread_count?: number }).unread_count ?? 0) > 0) {
+              withUnread++;
+            }
+          }
+          if (cancelled) return;
+        }
+        if (!cancelled) setMessageAttentionCount(withUnread);
+      } catch {
+        if (!cancelled) setMessageAttentionCount(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [consentReady, accessToken]);
 
   const formatDate = (iso: string | null) => {
     if (!iso) return "—";
@@ -154,9 +229,17 @@ export default function AdvocateDashboardPage() {
     });
   };
 
+  if (!consentReady) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      </main>
+    );
+  }
+
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-6xl mx-auto">Loading command center…</div>
       </main>
     );
@@ -174,28 +257,43 @@ export default function AdvocateDashboardPage() {
   const cases = data?.cases ?? [];
   const workload = data?.workload ?? [];
 
+  const sortedCases = useMemo(() => sortAdvocateCasesForQueue(cases), [cases]);
+  const priorityCaseId = pickHighestPriorityCaseId(sortedCases, alerts);
+
+  const scrollToQueue = () => {
+    document.getElementById("case-work-queue")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-6xl mx-auto space-y-6">
-        <header className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            Advocate
-          </p>
-          <div className="flex items-center justify-between gap-4">
-            <h1 className="text-2xl font-semibold">Command center</h1>
+        <PageHeader
+          contextLine="Advocate → Command Center"
+          eyebrow="Advocate"
+          title="Command Center"
+          subtitle="Review urgent cases, survivor updates, and organization workload. Recommendations update as you add detail—use the queue to see what each case needs."
+          rightActions={
             <Link
-              href="/advocate/org"
-              className="text-xs text-slate-400 hover:text-slate-200"
+              href={ROUTES.advocateOrg}
+              className="text-sm font-medium text-slate-300 hover:text-white border border-slate-600 rounded-lg px-3 py-2"
             >
-              Manage organization →
+              {t("nav.organization")}
             </Link>
-          </div>
-          <p className="text-sm text-slate-300">
-            Prioritized work queue and org summary. Use filters and search to focus.
-          </p>
-        </header>
+          }
+        />
 
         {/* Summary cards */}
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold text-slate-200">What needs attention</h2>
+          <p className="text-xs text-slate-500">
+            Skim the counts below, then open your highest-priority case or work the queue.
+          </p>
+          {summary.active_case_count === 0 && (
+            <p className="text-xs text-slate-500 rounded-lg border border-slate-800 bg-slate-950/50 px-3 py-2">
+              No active cases in your queue yet. When cases are assigned to your organization,
+              they&apos;ll appear here.
+            </p>
+          )}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
             <div className="text-[11px] uppercase tracking-wider text-slate-400">
@@ -220,6 +318,11 @@ export default function AdvocateDashboardPage() {
             <div className="text-xl font-semibold text-red-300 mt-0.5">
               {summary.high_priority_count}
             </div>
+            {summary.high_priority_count === 0 && (
+              <p className="text-[10px] text-slate-500 mt-1 leading-snug">
+                No urgent cases right now.
+              </p>
+            )}
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/70 p-3">
             <div className="text-[11px] uppercase tracking-wider text-slate-400">
@@ -246,45 +349,103 @@ export default function AdvocateDashboardPage() {
             </div>
           </div>
         </div>
+        </section>
+
+        <PrimaryActionArea
+          description={
+            priorityCaseId
+              ? "Jump into the case that needs you most, or scan messages and the full queue below."
+              : "No urgent cases surfaced right now. Review messages or work the case queue."
+          }
+          primary={
+            <>
+              {priorityCaseId ? (
+                <Link
+                  href={`${ROUTES.compensationIntake}?case=${priorityCaseId}`}
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+                >
+                  Open Highest Priority Case
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={scrollToQueue}
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+                >
+                  View Case Queue
+                </button>
+              )}
+            </>
+          }
+          secondary={
+            <>
+              <Link
+                href={ROUTES.advocateMessages}
+                className={`inline-flex items-center justify-center rounded-full px-4 py-2 text-xs font-semibold transition ${
+                  messageAttentionCount > 0
+                    ? "bg-blue-600 text-white hover:bg-blue-500"
+                    : "bg-slate-700 text-white hover:bg-slate-600"
+                }`}
+              >
+                View Messages
+                {messageAttentionCount > 0 ? ` (${messageAttentionCount})` : ""}
+              </Link>
+              {summary.unassigned_case_count > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOnlyUnassigned(true);
+                    setTimeout(scrollToQueue, 150);
+                  }}
+                  className="inline-flex items-center justify-center rounded-full border border-amber-500/40 px-4 py-2 text-xs font-semibold text-amber-100 hover:bg-amber-500/10"
+                >
+                  Unassigned
+                </button>
+              ) : null}
+            </>
+          }
+        />
 
         {/* Priority alerts */}
-        {alerts.length > 0 && (
-          <section>
-            <h2 className="text-sm font-medium text-slate-300 mb-2">
-              Priority alerts
-            </h2>
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-2 max-h-48 overflow-y-auto">
+        <section>
+          <h2 className="text-sm font-semibold text-slate-200 mb-2">
+            Priority alerts
+          </h2>
+          {alerts.length === 0 ? (
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">
+              No urgent cases right now. Check secure messages or the case queue for follow-up.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 max-h-64 overflow-y-auto">
               {alerts.slice(0, 15).map((a, i) => (
                 <div
                   key={`${a.case_id}-${a.alert_type}-${i}`}
-                  className="flex items-start justify-between gap-3 text-xs"
+                  className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 text-xs border-b border-slate-900/80 pb-3 last:border-0 last:pb-0"
                 >
-                  <div className="min-w-0">
-                    <span className="text-slate-400 font-medium">{a.title}</span>
-                    <span className="text-slate-500 ml-1">— {a.description}</span>
-                    {a.reason_codes?.length > 0 && (
-                      <div className="text-[11px] text-slate-500 mt-0.5">
-                        {a.reason_codes.join(", ")}
-                      </div>
-                    )}
+                  <div className="min-w-0 space-y-1">
+                    <div className="font-semibold text-slate-100">{a.title}</div>
+                    <p className="text-slate-400 leading-snug">{alertReasonLine(a)}</p>
                   </div>
                   <Link
                     href={`/compensation/intake?case=${a.case_id}`}
-                    className="shrink-0 text-emerald-400 hover:underline"
+                    className="shrink-0 inline-flex items-center justify-center rounded-full bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500"
                   >
-                    Open case →
+                    Open Case
                   </Link>
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         {/* Search and filters */}
-        <section>
-          <h2 className="text-sm font-medium text-slate-300 mb-2">
-            Case work queue
+        <section id="case-work-queue">
+          <h2 className="text-sm font-semibold text-slate-200">
+            Case Work Queue
           </h2>
+          <p className="text-xs text-slate-500 mt-1 mb-3">
+            Cases that need review, follow-up, or assignment.
+          </p>
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <input
               type="search"
@@ -372,8 +533,27 @@ export default function AdvocateDashboardPage() {
           </div>
 
           {cases.length === 0 ? (
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-300">
-              No cases match the current filters. Broaden search or clear filters.
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-300 space-y-3">
+              <p>Your filtered queue is empty.</p>
+              <p className="text-xs text-slate-500">
+                Try clearing filters, widening search, or review all active cases from the summary
+                counts above.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchInput("");
+                  setSearch("");
+                  setStatusFilter("");
+                  setPriorityFilter("");
+                  setOnlyUnassigned(false);
+                  setOnlyWithAlerts(false);
+                  void load("", true);
+                }}
+                className="inline-flex rounded-full border border-slate-600 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-900/60"
+              >
+                Clear filters
+              </button>
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden">
@@ -393,7 +573,7 @@ export default function AdvocateDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {cases.map((c) => (
+                    {sortedCases.map((c) => (
                       <tr
                         key={c.id}
                         className="border-b border-slate-900 hover:bg-slate-900/30"
@@ -471,9 +651,9 @@ export default function AdvocateDashboardPage() {
                         <td className="py-2 px-3">
                           <Link
                             href={`/compensation/intake?case=${c.id}`}
-                            className="text-emerald-400 hover:underline"
+                            className="text-emerald-400 hover:underline font-medium"
                           >
-                            Open →
+                            Open Case
                           </Link>
                         </td>
                       </tr>
@@ -486,11 +666,21 @@ export default function AdvocateDashboardPage() {
         </section>
 
         {/* Workload by advocate */}
-        {workload.length > 0 && (
-          <section>
-            <h2 className="text-sm font-medium text-slate-300 mb-2">
+        <section className="space-y-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-200">
               Workload by advocate
             </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Supervisor or organization admin view—see how cases are distributed across your team.
+            </p>
+          </div>
+          {workload.length === 0 ? (
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">
+              No workload breakdown available yet. When your team has active assignments, counts will
+              appear here.
+            </div>
+          ) : (
             <div className="rounded-2xl border border-slate-800 bg-slate-950/70 overflow-hidden">
               <table className="w-full text-xs">
                 <thead>
@@ -530,13 +720,8 @@ export default function AdvocateDashboardPage() {
                 </tbody>
               </table>
             </div>
-          </section>
-        )}
-
-        <p className="text-[11px] text-slate-500">
-          Priority and alerts are derived from routing, completeness, OCR, and
-          documents. Open a case to edit or run evaluations.
-        </p>
+          )}
+        </section>
       </div>
     </main>
   );

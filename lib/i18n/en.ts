@@ -9,29 +9,308 @@ export const en: I18nDict = {
     dashboard: "Dashboard",
     dashboardVictim: "My cases",
     dashboardAdvocate: "My clients",
-    login: "Log in",
-    logout: "Log out",
+    login: "Log In",
+    logout: "Log Out",
     myAccount: "My account",
     accountPlaceholderTitle: "Account",
     accountPlaceholderBody:
       "More account settings and preferences will be available here soon.",
     language: "Language",
     brandTagline: "Victim Support · Made Simple",
+    compensationHub: "Compensation",
+    home: "Home",
+    help: "Help",
+    updates: "Updates",
+    accountNav: "Account",
+    mySupport: "My Dashboard",
+    application: "Application",
+    commandCenter: "Command Center",
+    clients: "Clients",
+    organization: "Organization",
+    adminHome: "Admin Home",
   },
 
   common: {
     loading: "Loading…",
     refresh: "Refresh",
     refreshing: "Refreshing…",
-    backToHome: "← Back to home",
+    backToHome: "← Back To Home",
+    backToWorkspace: "← Back to your workspace",
+    backToWorkspaceInline: "Back to your workspace",
     yes: "Yes",
     no: "No",
+  },
+
+  victimDashboard: {
+    eyebrow: "My Dashboard",
+    title: "My Dashboard",
+    subtitle: "",
+    signedInAs: "Signed in as",
+    signedInAsUnknown: "—",
+    whatToDoNext: "Next Step",
+    creating: "Creating…",
+    yourApplicationHeading: "Your Application",
+    yourApplicationDescription: "This is your current application for support.",
+    yourApplicationPrivacyLine:
+      "Your status and eligibility are available inside your application.",
+    statusField: "Status",
+    eligibilityField: "Eligibility",
+    updatingDetails: "Updating details…",
+    priorityHigh: "Needs attention",
+    priorityMedium: "Next up",
+    priorityLow: "On track",
+    caseActivityTitle: "This case",
+    caseActivityIntro: "Everything here is for the case you selected above.",
+    caseActivityMessages: "Messages",
+    caseActivityDocuments: "Documents",
+    caseActivityAppointments: "Appointments",
+    caseActivitySupport: "Support options",
+    messagesLoading: "Loading messages…",
+    messagesUnreadOne: "1 unread message",
+    messagesUnreadMany: "{count} unread messages",
+    messagesInThread: "Message thread open",
+    messagesEmpty: "No messages yet",
+    documentsStatusMissing: "Some required documents are still needed",
+    documentsStatusGeneric: "Add documents when you’re ready",
+    documentsNoCase: "Open your application to manage documents",
+    appointmentsEmpty: "No upcoming appointments",
+    supportMatchOne: "1 suggested match",
+    supportMatchMany: "{count} suggested matches",
+    supportNoMatches: "No matches yet",
+    supportNoCase: "Open your application to see support options",
+    yourCasesTitle: "Your Cases",
+    yourCasesHelp: "Choose a case from the menu—everything below updates for that case.",
+    stateIL: "Illinois",
+    stateIN: "Indiana",
+    startApplication: "Add Another Case",
+    noCasesTitle: "No case yet",
+    noCasesBody:
+      "Tap the big green button above to start. We save your work as you go.",
+    loadError: "Couldn’t load your cases. Please try again.",
+    sessionExpired: "Session expired. Please log in again.",
+    continue: "Continue",
+    more: "More",
+    delete: "Delete",
+    rename: "Rename",
+    save: "Save",
+    cancel: "Cancel",
+    caseNamePlaceholder: "Case name",
+    lastUpdatedDaysAgo: "Last updated {days} days ago",
+    lastUpdatedToday: "Last updated today",
+    lastUpdatedYesterday: "Last updated yesterday",
+    lastUpdatedUnknown: "Last updated date unavailable",
+    deleteModalTitle: "Delete this application?",
+    deleteModalBodyLine1: "This will remove your information from this application.",
+    deleteModalBodyLine2: "You won’t be able to undo this.",
+    deleteModalCancel: "Cancel",
+    deleteModalConfirm: "Delete",
+    deleteFailed: "Could not delete this application. Try again.",
+    editNameTitle: "Edit Name",
+    progressTitle: "Your progress",
+    selectedCaseLabel: "You’re working on",
+    activeCaseBadge: "Selected",
+    funnel: {
+      ariaLabel: "Your three steps",
+      stepEligibility: "Check Eligibility",
+      stepApplication: "Apply",
+      stepSupport: "Track",
+      stepHint:
+        "Tap a step to open it. Eligibility is part of starting your application; if you skipped it, the first step shows in red but you can still apply and track.",
+    },
+    myCasesDropdown: "My Cases",
+    myCasesSectionLabel: "My cases",
+    resumeApplication: "Resume Application",
+    applyResumeCardAria: "Start or resume your application",
+    supportTeamTitle: "My Support Team",
+    supportTeamOrg: "Organization",
+    supportTeamAdvocates: "Advocate",
+    supportTeamNoOrg: "No organization linked to this case yet.",
+    supportTeamNoAdvocates: "No advocate connected yet.",
+    supportTeamLoading: "Loading…",
+    supportTeamConnectCta: "Connect With An Advocate",
+    supportTeamAddOrgCta: "Find An Organization",
+    supportTeamEditOrgTitle: "Manage organization for this case",
+    supportTeamEditAdvocateTitle: "Manage advocates for this case",
+    supportTeamSendMessage: "Send Message",
+    supportTeamContactOrg: "Contact Organization",
+    caseAdvocateManage: {
+      title: "Advocates For This Case",
+      back: "Back To Dashboard",
+      intro:
+        "These advocates can access this application. You can remove someone or connect a different advocate. Secure messages are available from your application.",
+      sendMessage: "Send Message",
+      remove: "Remove From Case",
+      removeConfirmTitle: "Remove This Advocate?",
+      removeConfirmBody:
+        "They will no longer be able to open this case. You can send a new connection request later if needed.",
+      connectDifferent: "Connect Or Add Advocate",
+      removed: "Advocate removed from this case.",
+      removeFailed: "Could not remove advocate. Try again.",
+    },
+    caseOrgManage: {
+      title: "Organization For This Case",
+      back: "Back To Dashboard",
+      intro:
+        "The organization shown here is linked to this application only. Changing it updates who receives certain messages and program matching for this case.",
+      contactOrganization: "Contact Organization",
+      changeOrganization: "Change Organization",
+      removeOrganization: "Remove Organization Link",
+      removeConfirmTitle: "Remove Organization Link?",
+      removeConfirmBody:
+        "Your case will use the default platform organization until you choose a victim-service organization again. Messaging may use a different thread.",
+      legacyLabel: "Default (no victim-service organization selected)",
+      organizationRemoved:
+        "Organization link removed. This case now uses the default platform organization until you choose another.",
+      updated: "Organization updated.",
+      updateFailed: "Could not update organization. Try again.",
+      noOrgBody: "No victim-service organization is selected for this case yet.",
+    },
+    stateModalTitle: "Which State Program?",
+    stateModalSubtitle: "Illinois and Indiana use different forms and eligibility questions—we’ll match the right one.",
+    eligibleReviewIntro:
+      "We’ll start your application for {state} and take you to the eligibility check.",
+    continueToEligibility: "Continue To Eligibility",
+    applyNow: "Apply Now",
+    startNewApplication: "Start A New Application",
+    newCaseButton: "New Case",
+    caseEdit: "Edit",
+    getHelp: {
+      title: "Get Help",
+      connectAdvocate: "Connect With An Advocate",
+      findOrganizations: "Find Organizations Near You",
+      hintAdvocate: "Secure messaging and requests in a few steps.",
+      hintOrganizations: "Map and distance sorting when you share location.",
+    },
+    findOrganizationsPage: {
+      title: "Organizations Near You",
+      subtitle:
+        "Explore victim-service organizations in your area. Your exact location stays on this device—we sort distances here, not on our servers.",
+      back: "← Back To My Dashboard",
+      mapIntro:
+        "Use the map to see organizations near you. Tap the button below only when you are ready to share your location with this browser session.",
+      shareLocation: "Share my location",
+      sharing: "Getting location…",
+      tryAgain: "Try again",
+      locationDenied:
+        "Location access was blocked. You can enable it in your browser settings and try again.",
+      locationUnavailable:
+        "We couldn’t read your location. You can try again, or check Wi‑Fi/location settings on your device.",
+      locationTimeout:
+        "Location timed out. Try again—moving near a window or turning on Wi‑Fi often helps.",
+      positionUnavailable:
+        "Your device couldn’t determine a position right now. Try again in a moment or enable location for this site in settings.",
+      locationNotSupported:
+        "This browser doesn’t support location, or it’s turned off. Try another browser or device.",
+      locationNeedsHttps:
+        "Location only works on a secure page (HTTPS). Open this site with https:// or contact support.",
+      yourLocation: "Your approximate location",
+      approximateNote: "Approximate pin",
+      milesAway: "mi away",
+      accepting: "Accepting new clients",
+      notAccepting: "Not accepting new clients",
+      capacity: "Capacity",
+      noOrgs:
+        "There aren’t any organizations in the directory yet. New partners are added over time—please check back later.",
+      loadError: "We couldn’t load organizations. Please try again.",
+      privacyNote:
+        "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
+    },
+    caseActivityForCase: "For this case",
+    caseDetailsHeading: "Case Details",
+    nextStepTitle: "Next Step",
+    eligibilityPickStateFirst:
+      "Choose Illinois or Indiana so we can open the right program for this case.",
+    applyForCompensation: "Apply For Victim Compensation",
+    applyModal: {
+      title: "Before You Start",
+      body:
+        "We recommend a quick check to see if you qualify. You can still open the form without it—if you skip, your claim may not go through if you aren’t eligible.",
+      checkFirst: "Check Eligibility First",
+      skipToForm: "Skip And Open Form",
+      skipNote: "Skipping may mean your application is denied if you don’t qualify.",
+    },
+    nextAction: {
+      labels: {
+        noCases: "Apply For Victim Compensation",
+        noFocusCase: "Choose A Case",
+        continueEligibility: "Am I Eligible?",
+        continueApplication: "Resume Application",
+        viewMessages: "Read Your Messages",
+        uploadDocuments: "Add Missing Documents",
+        completeRequiredInfo: "Finish Required Information",
+        continueSectionsIncomplete: "Continue Your Application",
+        reviewSkippedFields: "Review Skipped Questions",
+        connectAdvocate: "Connect With An Advocate",
+        viewSupportOptions: "See Support Options",
+        upToDate: "Open Your Application",
+      },
+      reasons: {
+        noCases: "You can begin here. The process takes a few minutes.",
+        noFocusCase: "Select the case you wish to work on, or start a new application.",
+        continueEligibility: "Answer a few questions to see if you may qualify.",
+        continueApplication:
+          "Your progress is saved. You may continue your application when you are ready.",
+        submitApplication: "Required information looks complete—submit when you’re ready.",
+        messagesUnreadOne: "Someone on your team sent you a message.",
+        messagesUnreadMany: "You have {count} unread messages.",
+        uploadDocuments: "We’re missing documents we need to move forward.",
+        completeRequiredInfo: "A few required items still need your attention.",
+        continueSectionsIncomplete: "Some parts of the form aren’t finished yet.",
+        reviewSkippedFields: "You skipped some items—review when you can.",
+        connectAdvocate: "You can ask to connect with an advocate.",
+        viewSupportOptions: "There may be local programs that can help.",
+        upToDate: "You have no urgent tasks. You may open your application at any time.",
+      },
+    },
+    contextualNextStep: {
+      checkEligibility: "Check Eligibility",
+      finishApplication: "Finish Application",
+      submitApplication: "Submit",
+    },
+  },
+
+  compensationHub: {
+    contextLine: "My Dashboard → Compensation",
+    eyebrow: "Crime Victims Compensation",
+    title: "Compensation help",
+    subtitle: "Illinois or Indiana Crime Victims Compensation—in plain language, at your pace.",
+    primaryCta: "Start My Application",
+    primaryHint: "This will guide you step by step.",
+    secondaryGetHelp: "Get Help Now",
+    secondaryConnectAdvocate: "Connect With An Advocate",
+    learnLink: "Learn how compensation works",
+    howItWorksTitle: "How it works",
+    step1Label: "Step 1",
+    step1Title: "Check Eligibility",
+    step1Body: "Short questions so we know what may apply before details.",
+    step2Label: "Step 2",
+    step2Title: "Complete Your Application",
+    step2Body: "Guided intake, documents, and a draft you can review.",
+    step3Label: "Step 3",
+    step3Title: "Stay Connected",
+    step3Body: "Messages, advocates, and next steps as your case moves forward.",
+    mayNeedTitle: "What you may need (if you have it)",
+    mayNeedLi1: "Victim name, date of birth, and address",
+    mayNeedLi2: "Crime date and location; police report number if available",
+    mayNeedLi3: "Medical or funeral bills; employer info for lost wages",
+    mayNeedFootnote: "Missing something? You can still start—we’ll help you plan what to gather.",
+    disclaimerShort:
+      "NxtStps is not a government site; flows mirror official Illinois and Indiana CVC applications.",
+    modalTitle: "Select your state",
+    modalBody: "Which state’s Crime Victims Compensation program are you applying to?",
+    modalCancel: "Cancel",
+    guestConnectHint:
+      "To connect with an advocate you’ll need a free account—we’ll guide you when you tap Connect with an advocate.",
+    nonVictimRoleHint:
+      "Advocate connections are for survivor accounts—Get help now opens Help for other roles.",
+    openAdvocateDashboard: "Open Case Dashboard",
   },
 
   /* =========================
      ELIGIBILITY CHECK
   ========================== */
   eligibility: {
+    introQualify: "Let’s see if you may qualify.",
     purposeText:
       "This short check helps confirm whether you can apply for Illinois Crime Victims Compensation and whether you're ready to start. It does not submit an application and does not affect your eligibility.",
     questionOf: "Question {current} of {total}",
@@ -115,13 +394,13 @@ export const en: I18nDict = {
       no: "No",
     },
     resultEligible: {
-      headline: "You appear eligible to apply.",
+      headline: "You may qualify.",
       body: "Based on your answers, you meet the basic requirements to submit an Illinois Crime Victims Compensation application.",
-      cta: "Start Application",
+      cta: "Continue Application",
       secondary: "You can save your progress and return at any time.",
     },
     resultNeedsAttention: {
-      headline: "You may be eligible, but a few things need attention first.",
+      headline: "You may still be eligible.",
       body: "You can apply, but missing information or contact issues may delay or prevent payment.",
       checklist: [
         "Confirm who will sign the application",
@@ -129,7 +408,7 @@ export const en: I18nDict = {
         "Make sure your address and phone number are reliable",
         "Be prepared to return requested documents within 45 days",
       ],
-      ctaReady: "Continue When Ready",
+      ctaReady: "Continue Application",
       ctaHelp: "Get Help From an Advocate",
     },
     resultNotEligible: {
@@ -149,17 +428,18 @@ export const en: I18nDict = {
       notChecked: "Not checked",
     },
     dashboard: {
-      runCheck: "Run eligibility check",
-      startIntake: "Start intake",
+      runCheck: "Run Eligibility Check",
+      startIntake: "Start Intake",
       skipWarningTitle: "Run eligibility check first?",
       skipWarningBody:
         "The eligibility check helps confirm you can apply and what to expect. We recommend running it before starting the intake form.",
-      continueAnyway: "Continue to intake anyway",
-      runCheckFirst: "Run eligibility check first",
+      continueAnyway: "Continue To Intake Anyway",
+      runCheckFirst: "Run Eligibility Check First",
     },
   },
 
   eligibilityIN: {
+    introQualify: "Let’s see if you may qualify.",
     purposeText:
       "This short check helps confirm whether you can apply for Indiana Violent Crime Victim Compensation and whether you're ready to start. It does not submit an application and does not affect your eligibility.",
     questionOf: "Question {current} of {total}",
@@ -224,13 +504,13 @@ export const en: I18nDict = {
       na: "N/A (I am 18 or older)",
     },
     resultEligible: {
-      headline: "You appear eligible to apply.",
+      headline: "You may qualify.",
       body: "Based on your answers, you meet the basic requirements to submit an Indiana Violent Crime Victim Compensation application.",
-      cta: "Start Application",
+      cta: "Continue Application",
       secondary: "You can save your progress and return at any time.",
     },
     resultNeedsAttention: {
-      headline: "You may be eligible, but a few things need attention first.",
+      headline: "You may still be eligible.",
       body: "You can apply, but missing information may delay or prevent payment.",
       checklist: [
         "Confirm reporting within 72 hours and willingness to cooperate with law enforcement",
@@ -238,7 +518,7 @@ export const en: I18nDict = {
         "Ensure application will be filed within 180 days of the crime",
         "If under 18, arrange for parent or legal guardian to sign",
       ],
-      ctaReady: "Continue When Ready",
+      ctaReady: "Continue Application",
       ctaHelp: "Get Help From an Advocate",
     },
     resultNotEligible: {
@@ -267,8 +547,8 @@ export const en: I18nDict = {
     progressTitle: "Your application progress",
     stepOf: "Step {current} of {total}",
     currentSection: "Current section:",
-    resumeApplication: "Resume application",
-    startApplication: "Start application",
+    resumeApplication: "Resume Application",
+    startApplication: "Start Application",
     myCases: "My cases",
 
     inlineLoginTitle: "Let's get you signed in",
@@ -276,7 +556,7 @@ export const en: I18nDict = {
     passwordLabel: "Password",
     rememberMe: "Remember me",
     signingIn: "Signing in…",
-    signIn: "Sign in",
+    signIn: "Sign In",
 
     newHere: "New here?",
     createVictimAccount: "Create victim account",
@@ -286,8 +566,8 @@ export const en: I18nDict = {
   },
 
   loginForm: {
-    title: "Log in",
-    submit: "Log in",
+    title: "Log In",
+    submit: "Log In",
     emailPlaceholder: "Email",
     passwordPlaceholder: "Password",
     loggingIn: "Logging in…",
@@ -301,10 +581,10 @@ export const en: I18nDict = {
     title: "Reset password",
     subtitle: "Enter your email and we'll send you a link to reset your password.",
     emailPlaceholder: "Email",
-    submit: "Send reset link",
+    submit: "Send Reset Link",
     sending: "Sending…",
     sentHint: "Check your email for a reset link. It may take a few minutes.",
-    backToLogin: "← Back to login",
+    backToLogin: "← Back To Login",
   },
 
   resetPassword: {
@@ -314,9 +594,9 @@ export const en: I18nDict = {
     confirmPasswordPlaceholder: "Confirm password",
     passwordsMismatch: "Passwords do not match",
     passwordTooShort: "Password must be at least 6 characters",
-    submit: "Update password",
+    submit: "Update Password",
     updating: "Updating…",
-    backToLogin: "← Back to login",
+    backToLogin: "← Back To Login",
     invalidOrExpired: "Invalid or expired link",
     invalidOrExpiredHint: "Password reset links expire after 1 hour. Request a new one below.",
     requestNewLink: "Request new reset link",
@@ -329,10 +609,28 @@ export const en: I18nDict = {
   ========================== */
   home: {
     hero: {
-      title: "Crime Victim Support",
-      subtitle: "Apply for victim compensation today.",
+      title: "Victim Compensation — one hub",
+      subtitle:
+        "Process Crime Victim Compensation, check status, and manage cases—one platform for survivors, advocates, and organizations.",
       disclaimer:
-        "NxtStps is a supportive tool. It does not replace legal advice, emergency services, or medical care. You can pause at any time and return when you're ready.",
+        "NxtStps is a supportive tool. It does not replace legal advice, emergency services, or medical care. You can pause anytime.",
+      ctaCreateAccount: "Create An Account",
+      ctaMyDashboard: "My Dashboard",
+      signInPrompt: "Already have an account?",
+      videoTitle: "See how it works",
+      demoVideoIntro: "Short overview—when you’re ready.",
+    },
+
+    newsletter: {
+      title: "Newsletter (optional)",
+      description:
+        "Occasional updates on NxtStps and victim-resource news—never required to get help.",
+      placeholder: "you@example.com",
+      submit: "Subscribe",
+      submitting: "…",
+      subscribed: "Subscribed",
+      thanks: "Thanks for subscribing.",
+      error: "Something went wrong. Try again.",
     },
 
     guidedPath: {
@@ -496,11 +794,13 @@ export const en: I18nDict = {
      INTAKE (APPLICATION FLOW)
   ========================== */
 intake: {
+  stepOf: "Step {current} of {total}",
+  reassurance: "You can save and come back anytime.",
   header: {
     badge: "Illinois Crime Victims Compensation",
-    title: "Compensation application",
+    title: "Your Application",
     subtitle:
-      "Answer what you can. You can pause anytime and come back when you're ready.",
+      "Your guided Crime Victims Compensation application—answer what you can and pause anytime.",
     needMoreContext: "Need more context?",
     learnLink: "How Illinois compensation works",
   },
@@ -532,6 +832,9 @@ intake: {
     continueToStep: "Continue to {step} →",
     goToStep: "Go to {step} →",
     reviewComplete: "Review complete",
+    continue: "Continue",
+    saveAndExit: "Save And Exit",
+    reviewSubmit: "Review And Submit",
   },
 
   viewOnly: "View-only access (you can’t edit this case).",
@@ -539,7 +842,8 @@ intake: {
     "View-only access: you can review this case, but you can’t edit it.",
 
   footer: {
-    draftDisclaimer: "Draft. Nothing is submitted to the state without your consent.",
+    draftDisclaimer:
+      "Draft. Nothing is submitted to the state without your consent. You can save and come back anytime.",
   },
 
   summary: {
@@ -1358,7 +1662,7 @@ crime: {
 summary: {
   title: "Summary",
   description:
-    "Review what you’ve entered. You can go back to any section to edit.",
+    "Review what you’ve entered and your next step. You can edit any section when you’re ready.",
   descriptionDraft: "Review your case before generating documents.",
 
   loadFailed: "Failed to load summary.",
@@ -1378,6 +1682,44 @@ summary: {
     notProvided: "Not provided",
     relationshipNotSet: "relationship not set",
     alreadyFinalReview: "You’re already on the final review step.",
+  },
+
+  checkpoint: {
+    progressTitle: "Application progress",
+    progressHint:
+      "You’ve reached {visited} of {total} sections in this intake (including this review).",
+    missingTitle: "Missing information",
+    missingExplainer: "Missing items may delay progress.",
+    missingEmpty: "No missing required fields at this checkpoint.",
+    deferredTitle: "Deferred / skipped items",
+    deferredExplainer: "Skipped or deferred items can be completed later.",
+    deferredEmpty: "No items marked as skipped or deferred.",
+    nextStepTitle: "Your next step",
+    applicationDetailsTitle: "Application details",
+    applicationDetailsToggle: "Show full application details",
+    documentsTitle: "Documents",
+    documentsSubtitle: "Documents can help support your case.",
+    documentsEmpty: "No documents uploaded yet. You can add files from the documents step.",
+    uploadDocuments: "Upload Documents",
+    uploadMissingDocuments: "Upload Missing Documents",
+    messagesTitle: "Messages",
+    messagesSubtitle: "Secure conversation with your advocate",
+    messagesEmpty: "You do not have any secure messages yet.",
+    appointmentsTitle: "Appointments",
+    appointmentsSubtitle: "Upcoming support appointments",
+    appointmentsEmpty: "No appointments scheduled yet.",
+    appointmentsCta: "View Appointments",
+    recommendedTitle: "Recommended support organizations",
+    whatNextTitle: "What happens next",
+    whatNextIncomplete:
+      "Continue your application when you’re ready. You can save and come back anytime.",
+    whatNextMaybeDocsAndMessages:
+      "Your next steps may include uploading documents or reviewing messages.",
+    whatNextSupportOrgs:
+      "You can review support organizations matched to your needs when you’re ready.",
+    whatNextAllClear:
+      "You’re up to date for now. Check back for updates or messages.",
+    viewMessages: "View Messages",
   },
 
   actions: {

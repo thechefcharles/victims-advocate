@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type Conversation = {
   id: string;
@@ -22,7 +23,20 @@ type Message = {
   status: "sent" | "edited" | "deleted";
 };
 
-export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
+export function CaseMessagesPanel({
+  caseId,
+  headingTitle,
+  headingSubtitle,
+  emptyStateText,
+}: {
+  caseId: string | null;
+  /** Overrides the main heading (e.g. “Messages”) */
+  headingTitle?: string;
+  /** Overrides the default subtitle under the heading */
+  headingSubtitle?: string;
+  /** Overrides the empty thread message */
+  emptyStateText?: string;
+}) {
   const { accessToken } = useAuth();
   const { strictPreviews } = useSafetySettings(accessToken);
   const [loading, setLoading] = useState(false);
@@ -46,7 +60,7 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setErr(json?.error ?? "Couldn’t load messages.");
+        setErr(getApiErrorMessage(json, "Couldn’t load messages."));
         return;
       }
       setConversation(json.conversation ?? null);
@@ -114,7 +128,7 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setErr(json?.error ?? "Couldn’t send message.");
+        setErr(getApiErrorMessage(json, "Couldn’t send message."));
         return;
       }
       setDraft("");
@@ -145,19 +159,20 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-0.5">
           <h2 className="text-sm font-semibold text-slate-100">
-            {strictPreviews ? "Messages" : "Secure messages"}
+            {headingTitle ?? (strictPreviews ? "Messages" : "Secure messages")}
           </h2>
           <p className="text-[11px] text-slate-400">
-            {strictPreviews
-              ? "In-app messages."
-              : `Case-based, in-app messaging. No email or SMS.${unreadCount > 0 ? ` · ${unreadCount} unread` : ""}`}
+            {headingSubtitle ??
+              (strictPreviews
+                ? "In-app messages."
+                : `Case-based, in-app messaging. No email or SMS.${unreadCount > 0 ? ` · ${unreadCount} unread` : ""}`)}
           </p>
         </div>
         <button
           type="button"
           onClick={loadThread}
           disabled={loading}
-          className="text-[11px] rounded-full border border-slate-700 px-3 py-1.5 hover:bg-slate-900/60 disabled:opacity-60"
+          className="text-[11px] rounded-full bg-slate-700 px-3 py-1.5 font-medium text-white hover:bg-slate-600 disabled:opacity-60"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
@@ -165,10 +180,11 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
 
       {err && <div className="text-[11px] text-red-300">{err}</div>}
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 max-h-64 overflow-y-auto space-y-3">
+      <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 max-h-64 overflow-y-auto space-y-3">
         {messages.length === 0 ? (
           <div className="text-[11px] text-slate-500">
-            No messages yet. Start the conversation here.
+            {emptyStateText ??
+              "No messages yet. Start the conversation here."}
           </div>
         ) : (
           messages.map((m) => (
@@ -197,13 +213,13 @@ export function CaseMessagesPanel({ caseId }: { caseId: string | null }) {
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Write a message…"
           rows={2}
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+          className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/60 focus:border-blue-500/60"
         />
         <button
           type="button"
           onClick={send}
           disabled={loading || !draft.trim()}
-          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
         >
           Send
         </button>

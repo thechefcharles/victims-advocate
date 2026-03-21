@@ -81,7 +81,7 @@ export function ProgramCatalogSelect({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C]"
+          className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </label>
 

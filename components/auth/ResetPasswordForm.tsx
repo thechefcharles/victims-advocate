@@ -67,7 +67,7 @@ export default function ResetPasswordForm() {
 
   if (hasRecoverySession === null) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <div className="max-w-md w-full px-6">
           <p className="text-sm text-slate-400">{t("common.loading")}</p>
         </div>
@@ -77,7 +77,7 @@ export default function ResetPasswordForm() {
 
   if (hasRecoverySession === false) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <div className="max-w-md w-full px-6 space-y-4 text-center">
           <h1 className="text-xl font-semibold text-slate-100">
             {t("resetPassword.invalidOrExpired")}
@@ -98,7 +98,7 @@ export default function ResetPasswordForm() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <div className="max-w-md w-full px-6 space-y-4 text-center">
           <h1 className="text-xl font-semibold text-emerald-400">
             {t("resetPassword.successTitle")}
@@ -112,7 +112,7 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
       <form
         onSubmit={onSubmit}
         className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
@@ -123,7 +123,7 @@ export default function ResetPasswordForm() {
         <p className="text-sm text-slate-400">{t("resetPassword.subtitle")}</p>
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
+          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder={t("resetPassword.newPasswordPlaceholder")}
           type="password"
           value={password}
@@ -133,7 +133,7 @@ export default function ResetPasswordForm() {
         />
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
+          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder={t("resetPassword.confirmPasswordPlaceholder")}
           type="password"
           value={confirmPassword}
@@ -145,7 +145,7 @@ export default function ResetPasswordForm() {
         {err && <div className="text-sm text-red-400">{err}</div>}
 
         <button
-          className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           type="submit"
           disabled={loading || !password || !confirmPassword || !validatePassword(password).valid}
         >

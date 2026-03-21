@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Victim dashboard funnel progress — shimmer sweep across the fill */
+@keyframes funnel-progress-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(280%) skewX(-12deg);
+  }
+}
+
+.funnel-progress-fill-shimmer {
+  animation: funnel-progress-shimmer 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .funnel-progress-fill-shimmer {
+    animation: none;
+  }
+}

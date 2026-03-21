@@ -30,7 +30,7 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
       <form
         onSubmit={onSubmit}
         className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
@@ -41,7 +41,7 @@ export default function ForgotPasswordForm() {
         <p className="text-sm text-slate-400">{t("forgotPassword.subtitle")}</p>
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]"
+          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder={t("forgotPassword.emailPlaceholder")}
           type="email"
           value={email}
@@ -58,7 +58,7 @@ export default function ForgotPasswordForm() {
         )}
 
         <button
-          className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           type="submit"
           disabled={loading || !email.trim()}
         >

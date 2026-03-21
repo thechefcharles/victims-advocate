@@ -20,7 +20,7 @@ export default function AccountDisabledPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4">
         <h1 className="text-xl font-semibold text-slate-100">Account disabled</h1>
         <p className="text-sm text-slate-400">

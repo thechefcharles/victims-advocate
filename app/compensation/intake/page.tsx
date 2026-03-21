@@ -1,13 +1,22 @@
 // app/compensation/intake/page.tsx
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import { designationTierTrustLabel } from "@/lib/matchingTrustLabels";
+import { RecommendedOrganizationCard } from "@/components/trust/RecommendedOrganizationCard";
+import { EMPTY_COPY, TRUST_LINK_HREF, TRUST_LINK_LABELS, TRUST_MICROCOPY } from "@/lib/trustDisplay";
 import { useSearchParams } from "next/navigation";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { useStateSelection } from "@/components/state/StateProvider";
+import { PageHeader } from "@/components/layout/PageHeader";
+import Link from "next/link";
+import {
+  getNextActionForCase,
+  type CompletenessSignal,
+  type EligibilityResult,
+} from "@/lib/product/nextAction";
+import { priorityBadgeClassName, priorityLabel } from "@/lib/product/priority";
 
 import type {
   VictimInfo,
@@ -33,6 +42,7 @@ import {
 } from "../../../lib/intake/fieldState";
 import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
 import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
 
@@ -46,6 +56,18 @@ type IntakeStep =
   | "funeral"
   | "documents"
   | "summary";
+
+const INTAKE_STEP_ORDER: IntakeStep[] = [
+  "victim",
+  "applicant",
+  "crime",
+  "losses",
+  "medical",
+  "employment",
+  "funeral",
+  "documents",
+  "summary",
+];
 
 const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
@@ -223,6 +245,11 @@ const [saveToast, setSaveToast] = useState<string | null>(null);
 const [saveNowLoading, setSaveNowLoading] = useState(false);
 const creatingCaseRef = useRef(false);
 
+  /** Loaded from GET /api/compensation/cases/:id — used for next-action on summary */
+  const [loadedCaseEligibility, setLoadedCaseEligibility] = useState<EligibilityResult | null>(null);
+  const [loadedCaseStatus, setLoadedCaseStatus] = useState<string>("draft");
+  const [loadedAssignedAdvocateId, setLoadedAssignedAdvocateId] = useState<string | null>(null);
+
 
 // per-user storage key (null until user is known)
 const storageKey = userId ? `${STORAGE_KEY_PREFIX}_${userId}` : null;
@@ -262,9 +289,33 @@ useEffect(() => {
       });
 
       if (!res.ok) {
-        console.error("Failed to load case:", await res.text());
+        const text = await res.text();
+        let errCode: string | undefined;
+        try {
+          const parsed = JSON.parse(text) as { error?: { code?: string } };
+          errCode = parsed?.error?.code;
+        } catch {
+          /* non-JSON body */
+        }
+        // 403/404 are common (stale bookmark, wrong org, revoked access) — not a client bug
+        const accessOrMissing =
+          res.status === 403 ||
+          res.status === 404 ||
+          errCode === "FORBIDDEN" ||
+          errCode === "NOT_FOUND";
+        if (accessOrMissing) {
+          if (process.env.NODE_ENV === "development") {
+            console.warn(
+              "[compensation/intake] Case not loaded (expected for invalid/forbidden id):",
+              caseId,
+              errCode ?? res.status
+            );
+          }
+        } else {
+          console.error("Failed to load case:", text);
+        }
         alert(t("intake.loadCase.failed"));
-        router.push("/");
+        router.replace("/dashboard");
         return;
       }
 
@@ -272,6 +323,15 @@ useEffect(() => {
       setCanEdit(!!json.access?.can_edit);
       const sc = json.case?.state_code;
       setStateCode(sc === "IN" ? "IN" : "IL");
+
+      const cr = json.case?.eligibility_result as EligibilityResult | undefined | null;
+      setLoadedCaseEligibility(cr ?? null);
+      setLoadedCaseStatus(
+        typeof json.case?.status === "string" ? json.case.status : "draft"
+      );
+      setLoadedAssignedAdvocateId(
+        (json.case?.assigned_advocate_id as string | null | undefined) ?? null
+      );
 
       const rawApp = json.case.application;
       const loaded = typeof rawApp === "string" ? JSON.parse(rawApp) : rawApp;
@@ -291,7 +351,7 @@ useEffect(() => {
     } catch (err) {
       console.error("Unexpected error loading case from API:", err);
       alert(t("intake.loadCase.unexpected"));
-      router.push("/");
+      router.replace("/dashboard");
     }
   })();
 }, [caseId, router, t]); // ✅ add t
@@ -507,6 +567,18 @@ const losses = app.losses;
 const medical = app.medical;
 const employment = app.employment;
 const funeral = app.funeral;
+
+const intakeReview = useMemo(() => {
+  const storedApp =
+    app && Object.keys(fieldState).length > 0
+      ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
+      : ((app ?? {}) as unknown as Record<string, unknown>);
+  return getReviewStatus(storedApp as Parameters<typeof getReviewStatus>[0]);
+}, [app, fieldState]);
+
+const intakeStepIndex = INTAKE_STEP_ORDER.indexOf(step);
+const intakeStepCurrent = intakeStepIndex >= 0 ? intakeStepIndex + 1 : 1;
+const intakeStepTotal = INTAKE_STEP_ORDER.length;
 
 const guardPatch =
   <T,>(fn: (patch: Partial<T>) => void) =>
@@ -818,8 +890,16 @@ alert(t("intake.saveCase.unexpected"));
         return;
       }
 
-      const json = await res.json();
-      const reply = (json.reply as string) || "";
+      const json = (await res.json()) as { reply?: unknown };
+      const raw = json?.reply;
+      const reply =
+        typeof raw === "string"
+          ? raw
+          : raw != null && typeof raw === "object" && "message" in (raw as object)
+            ? String((raw as { message?: unknown }).message ?? "")
+            : raw != null
+              ? String(raw)
+              : "";
 
       setChatMessages((prev) => [
         ...prev,
@@ -938,37 +1018,38 @@ const handleBack = () => {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
-      <div className="max-w-3xl mx-auto space-y-6">
-        {/* Header */}
-        <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-            {t("intake.header.badge")}
-          </p>
+      <div className="max-w-3xl mx-auto space-y-8">
+        <PageHeader
+          eyebrow={t("intake.header.badge")}
+          contextLine={`${t("intake.header.title")} → ${t(`intake.steps.${step}`)}`}
+          title={t("intake.header.title")}
+          subtitle={t("intake.header.subtitle")}
+          meta={
+            <>
+              {t("intake.header.needMoreContext")}{" "}
+              <a
+                href="/knowledge/compensation"
+                className="text-slate-300 hover:text-white underline underline-offset-2"
+              >
+                {t("intake.header.learnLink")}
+              </a>
+            </>
+          }
+        />
 
-          {isReadOnly && (
-  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-      {t("intake.viewOnlyBanner")}
-  </div>
-)}
-          <h1 className="text-2xl sm:text-3xl font-bold">
-            {t("intake.header.title")}
-          </h1>
-          <p className="text-sm text-slate-300">
-          {t("intake.header.subtitle")}
-          </p>
+        <p className="text-xs text-slate-500 -mt-4">{t("intake.reassurance")}</p>
 
-        <p className="text-[11px] text-slate-500">
-{t("intake.header.needMoreContext")}{" "}
-  <a
-    href="/knowledge/compensation"
-    className="text-emerald-300 hover:text-emerald-200 underline underline-offset-2"
-  >
-{t("intake.header.learnLink")}
-  </a>
-</p>
-        </header>
+        {isReadOnly && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
+            {t("intake.viewOnlyBanner")}
+          </div>
+        )}
 
         {/* Step indicator */}
+<div className="space-y-3">
+<p className="text-xs text-slate-400">
+  {tf("intake.stepOf", { current: String(intakeStepCurrent), total: String(intakeStepTotal) })}
+</p>
 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
 <StepBadge label={t("intake.steps.victim")} active={step === "victim"} onClick={() => setStep("victim")} />
 <StepBadge label={t("intake.steps.applicant")} active={step === "applicant"} onClick={() => setStep("applicant")} />
@@ -980,8 +1061,10 @@ const handleBack = () => {
 <StepBadge label={t("intake.steps.documents")} active={step === "documents"} onClick={() => setStep("documents")} />
 <StepBadge label={t("intake.steps.summary")} active={step === "summary"} onClick={() => setStep("summary")} />
 </div>
+</div>
 
         {/* Step content */}
+<div className="space-y-10">
 {step === "victim" && (
 <VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
 )}
@@ -1069,10 +1152,6 @@ const handleBack = () => {
 
 {step === "documents" && <DocumentsStep isReadOnly={isReadOnly} />}
 
-{step === "summary" && caseId && (
-  <RecommendedSupportOrgsBlock caseId={caseId} canRunMatch={canEdit && !isReadOnly} />
-)}
-
 {step === "summary" && (
   <SummaryView
     caseId={caseId}
@@ -1094,11 +1173,17 @@ const handleBack = () => {
     fieldState={fieldState}
     app={app}
     onGoToStep={setStep}
+    maxStepIndex={maxStepIndex}
+    canRunMatch={canEdit && !isReadOnly}
+    caseEligibilityResult={loadedCaseEligibility}
+    caseStatus={loadedCaseStatus}
+    assignedAdvocateId={loadedAssignedAdvocateId}
   />
 )}
+</div>
 
 {/* Nav buttons + primary actions */}
-<div className="flex flex-col gap-3 pt-4 border-t border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+<div className="flex flex-col gap-3 pt-6 border-t border-slate-800 sm:flex-row sm:items-center sm:justify-between">
 {/* Left side: Back + Save */}
 <div className="flex items-center gap-2">
   <button
@@ -1126,6 +1211,20 @@ title={
 {saveNowLoading ? t("intake.actions.saving") : t("intake.actions.save")}
   </button>
 
+  {caseId && canEdit && (
+    <button
+      type="button"
+      onClick={async () => {
+        await handleSaveNow();
+        router.push(ROUTES.victimDashboard);
+      }}
+      disabled={saveNowLoading}
+      className="text-xs rounded-lg border border-slate-600 px-3 py-1.5 text-slate-200 hover:bg-slate-900 transition disabled:opacity-40"
+    >
+      {t("intake.actions.saveAndExit")}
+    </button>
+  )}
+
   {caseId && canEdit && savingCase && (
     <span className="text-[11px] text-slate-400">{t("intake.actions.autoSaving")}</span>
   )}
@@ -1137,9 +1236,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromVictim}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.applicant") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1147,9 +1246,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromApplicant}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.crime") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1157,9 +1256,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromCrime}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.losses") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1167,9 +1266,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromLosses}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.medical") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1177,9 +1276,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromMedical}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.employment") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1187,9 +1286,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromEmployment}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.continueToStep", { step: t("intake.steps.funeral") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1197,9 +1296,9 @@ title={
       <button
         type="button"
         onClick={handleNextFromFuneral}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.goToStep", { step: t("intake.steps.documents") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
@@ -1207,23 +1306,30 @@ title={
       <button
         type="button"
         onClick={() => setStep("summary")}
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
+        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
       >
-{tf("intake.actions.goToStep", { step: t("intake.steps.summary") })}
+{t("intake.actions.continue")}
       </button>
     )}
 
-    {step === "summary" && (
-      <button
-        type="button"
-        onClick={() => setSaveToast(t("forms.summary.placeholders.alreadyFinalReview"))
-
-        }
-        className="text-xs rounded-lg bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400 transition"
-      >
-{t("intake.actions.reviewComplete")}
-      </button>
-    )}
+    {step === "summary" &&
+      (intakeReview.missing.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => setStep(intakeReview.missing[0].stepHint as IntakeStep)}
+          className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        >
+          {t("intake.actions.continue")}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setSaveToast(t("forms.summary.placeholders.alreadyFinalReview"))}
+          className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        >
+          {t("intake.actions.reviewSubmit")}
+        </button>
+      ))}
   </div>
 </div>
 
@@ -1231,14 +1337,14 @@ title={
 {t("intake.footer.draftDisclaimer")}
         </p>
 
-        <CaseMessagesPanel caseId={caseId} />
+        {step !== "summary" && <CaseMessagesPanel caseId={caseId} />}
       </div>
 
             {/* NxtGuide chat widget (intake) */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
-          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-[#0A2239]">
+          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-slate-950 shadow-lg shadow-black/40 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
               <div className="text-[11px]">
                 <div className="font-semibold text-slate-50">NxtGuide</div>
                 <div className="text-slate-300">
@@ -1273,7 +1379,7 @@ title={
                   <div
                     className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
                       m.role === "user"
-                        ? "bg-[#1C8C8C] text-slate-950"
+                        ? "bg-blue-600 text-white"
                         : "bg-slate-900 text-slate-100 border border-slate-700"
                     } text-[11px] whitespace-pre-wrap`}
                   >
@@ -1294,7 +1400,7 @@ title={
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
 placeholder={t("nxtGuide.placeholders.ask")}
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
+                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </form>
           </div>
@@ -1302,7 +1408,7 @@ placeholder={t("nxtGuide.placeholders.ask")}
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="inline-flex items-center rounded-full bg-[#1C8C8C] px-3 py-2 text-[11px] font-semibold text-slate-950 shadow-md shadow-black/40 hover:bg-[#21a3a3] transition"
+            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-black/40 hover:bg-blue-500 transition"
           >
 {t("nxtGuide.floating.needHelpOnThisStep")}
           </button>
@@ -1334,8 +1440,8 @@ function StepBadge({
   const stateClasses = disabled
     ? "border-slate-800 bg-slate-900 text-slate-500 cursor-not-allowed opacity-60"
     : active
-    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200 cursor-pointer"
-    : "border-slate-700 bg-slate-900 text-slate-400 hover:border-emerald-400 hover:text-emerald-200 cursor-pointer";
+    ? "border-blue-500 bg-blue-900/30 text-slate-200 cursor-pointer"
+    : "border-slate-700 bg-slate-900 text-slate-400 hover:border-blue-500 hover:text-slate-200 cursor-pointer";
 
   return (
     <button
@@ -1394,7 +1500,7 @@ const isIN = stateCode === "IN";
                 onClick={() => !isReadOnly && onContactChange({ whoIsSubmitting: v })}
                 className={`px-3 py-1.5 rounded-full border text-[11px] ${disBtn} ${
                   contact?.whoIsSubmitting === v
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
@@ -1537,7 +1643,7 @@ const isIN = stateCode === "IN";
               onClick={() => !isReadOnly && onChange({ hasDisability: true })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -1552,7 +1658,7 @@ const isIN = stateCode === "IN";
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability === false
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -1570,7 +1676,7 @@ const isIN = stateCode === "IN";
                   onClick={() => !isReadOnly && onChange({ disabilityType: type })}
                   className={`px-2 py-1 rounded-full border text-[11px] ${disBtn} ${
                     victim.disabilityType === type
-                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
@@ -1752,7 +1858,7 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.seekingOwnExpenses === true
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
@@ -1766,7 +1872,7 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.seekingOwnExpenses === false
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
@@ -1798,7 +1904,7 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
@@ -1813,7 +1919,7 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship === false
-                    ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
                     : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
@@ -1861,7 +1967,7 @@ function ContactForm({
             onClick={() => !isReadOnly && onChange({ prefersEnglish: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.prefersEnglish === true
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -1873,7 +1979,7 @@ function ContactForm({
             onClick={() => !isReadOnly && onChange({ prefersEnglish: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.prefersEnglish === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -1905,7 +2011,7 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.workingWithAdvocate === true
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -1919,7 +2025,7 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.workingWithAdvocate === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -1974,7 +2080,7 @@ function ContactForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     contact.consentToTalkToAdvocate === true
-                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
@@ -1988,7 +2094,7 @@ function ContactForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     contact.consentToTalkToAdvocate === false
-                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
@@ -2017,7 +2123,7 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.alternateContactName
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2036,7 +2142,7 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               !contact.alternateContactName
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2116,7 +2222,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ isAutomobileAccident: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.isAutomobileAccident === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.isAutomobileAccident === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.yes")}
@@ -2126,7 +2232,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ isAutomobileAccident: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.isAutomobileAccident === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.isAutomobileAccident === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.no")}
@@ -2149,7 +2255,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.victimHasPhysicalInjuries === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.victimHasPhysicalInjuries === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.yes")}
@@ -2159,7 +2265,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.victimHasPhysicalInjuries === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.victimHasPhysicalInjuries === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.no")}
@@ -2194,7 +2300,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "AM" })}
                 className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
-                  crime.timeOfCrimeAmPm === "AM" ? "border-emerald-400 bg-emerald-500/10" : "border-slate-700"
+                  crime.timeOfCrimeAmPm === "AM" ? "border-blue-500 bg-blue-900/30" : "border-slate-700"
                 }`}
               >
                 AM
@@ -2204,7 +2310,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "PM" })}
                 className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
-                  crime.timeOfCrimeAmPm === "PM" ? "border-emerald-400 bg-emerald-500/10" : "border-slate-700"
+                  crime.timeOfCrimeAmPm === "PM" ? "border-blue-500 bg-blue-900/30" : "border-slate-700"
                 }`}
               >
                 PM
@@ -2375,7 +2481,7 @@ function CrimeForm({
             onClick={() => !isReadOnly && onChange({ offenderKnown: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.offenderKnown
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2388,7 +2494,7 @@ function CrimeForm({
             onClick={() => !isReadOnly && onChange({ offenderKnown: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.offenderKnown === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2429,7 +2535,7 @@ function CrimeForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2444,7 +2550,7 @@ function CrimeForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2497,7 +2603,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderArrested: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2510,7 +2616,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderArrested: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2529,7 +2635,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderCharged: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2542,7 +2648,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderCharged: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2561,7 +2667,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ applicantTestified: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2574,7 +2680,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ applicantTestified: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2593,7 +2699,7 @@ function CourtForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  court.willingToAssistProsecution === true ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  court.willingToAssistProsecution === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.yes")}
@@ -2603,7 +2709,7 @@ function CourtForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  court.willingToAssistProsecution === false ? "border-emerald-400 bg-emerald-500/10 text-emerald-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  court.willingToAssistProsecution === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
                 }`}
               >
                 {t("common.no")}
@@ -2653,7 +2759,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ restitutionOrdered: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2666,7 +2772,7 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ restitutionOrdered: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2704,7 +2810,7 @@ function CourtForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2719,7 +2825,7 @@ function CourtForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -2743,7 +2849,7 @@ function CourtForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     court.humanTraffickingTestified === true
-                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
@@ -2757,7 +2863,7 @@ function CourtForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     court.humanTraffickingTestified === false
-                      ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
                       : "border-slate-700 bg-slate-900 text-slate-300"
                   }`}
                 >
@@ -3187,7 +3293,7 @@ function MedicalForm({
             onClick={() => !isReadOnly && onChange({ hasOtherSources: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3200,7 +3306,7 @@ function MedicalForm({
             onClick={() => !isReadOnly && onChange({ hasOtherSources: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3341,7 +3447,7 @@ function EmploymentForm({
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -3356,7 +3462,7 @@ function EmploymentForm({
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability === false
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -3628,7 +3734,7 @@ function FuneralForm({
             onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3641,7 +3747,7 @@ function FuneralForm({
             onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3679,7 +3785,7 @@ function FuneralForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3694,7 +3800,7 @@ function FuneralForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists === false
-                ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                ? "border-blue-500 bg-blue-900/30 text-slate-200"
                 : "border-slate-700 bg-slate-900 text-slate-300"
             }`}
           >
@@ -3871,9 +3977,11 @@ function FuneralForm({
 function RecommendedSupportOrgsBlock({
   caseId,
   canRunMatch,
+  onMatchesLoaded,
 }: {
   caseId: string;
   canRunMatch: boolean;
+  onMatchesLoaded?: (count: number) => void;
 }) {
   const [matches, setMatches] = useState<
     Array<{
@@ -3883,7 +3991,9 @@ function RecommendedSupportOrgsBlock({
       flags: string[];
       service_overlap: string[];
       language_match: boolean;
+      accessibility_match?: string[];
       capacity_signal: string | null;
+      virtual_ok?: boolean | null;
       strong_match: boolean;
       possible_match: boolean;
       limited_match: boolean;
@@ -3922,7 +4032,9 @@ function RecommendedSupportOrgsBlock({
       }
       const json = await res.json();
       const d = json.data ?? json;
-      setMatches(Array.isArray(d.matches) ? d.matches : []);
+      const next = Array.isArray(d.matches) ? d.matches : [];
+      setMatches(next);
+      onMatchesLoaded?.(next.length);
       setGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
       setRunAt(d.created_at ?? null);
     } finally {
@@ -3951,7 +4063,9 @@ function RecommendedSupportOrgsBlock({
       if (res.ok) {
         const json = await res.json();
         const d = json.data ?? json;
-        setMatches(Array.isArray(d.matches) ? d.matches : []);
+        const next = Array.isArray(d.matches) ? d.matches : [];
+        setMatches(next);
+        onMatchesLoaded?.(next.length);
         setGlobalFlags(Array.isArray(d.global_flags) ? d.global_flags : []);
         setRunAt(new Date().toISOString());
       }
@@ -3972,7 +4086,7 @@ function RecommendedSupportOrgsBlock({
   }
 
   return (
-    <section className="rounded-xl border border-violet-900/40 bg-slate-900/50 p-4 mb-4 text-xs">
+    <section className="rounded-xl border border-slate-700 bg-slate-900 p-4 mb-4 text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-medium text-slate-100">Recommended support organizations</p>
         {canRunMatch && (
@@ -3980,22 +4094,21 @@ function RecommendedSupportOrgsBlock({
             type="button"
             disabled={running}
             onClick={handleRun}
-            className="rounded-lg border border-violet-500/60 bg-violet-500/20 px-3 py-1 text-[11px] text-violet-200 hover:bg-violet-500/30 disabled:opacity-50"
+            className="rounded-lg bg-slate-700 px-3 py-1 text-[11px] font-medium text-white hover:bg-slate-600 disabled:opacity-50"
           >
-            {running ? "Updating…" : "Refresh suggestions"}
+            {running ? "Updating…" : "Refresh Suggestions"}
           </button>
         )}
       </div>
-      <p className="text-slate-400 mt-1 text-[11px]">
-        Suggestions are based on your application — not rankings. Always confirm directly with the
-        organization.{" "}
+      <p className="text-slate-400 mt-1 text-[11px] leading-relaxed">
+        {TRUST_MICROCOPY.recommendationsLead} Always confirm directly with the organization.{" "}
         <a
-          href="/help/how-matching-works"
-          className="text-violet-300 hover:underline"
+          href={TRUST_LINK_HREF.matching}
+          className="text-slate-300 hover:text-white underline underline-offset-2"
           target="_blank"
           rel="noreferrer"
         >
-          How recommendations work
+          {TRUST_LINK_LABELS.howRecommendationsWork}
         </a>
       </p>
       {loading && <p className="text-slate-500 mt-2">Loading…</p>}
@@ -4005,9 +4118,9 @@ function RecommendedSupportOrgsBlock({
         </p>
       ))}
       {!loading && matches.length === 0 && !globalFlags.length && (
-        <p className="text-slate-400 mt-2">
+        <p className="text-slate-400 mt-2 text-[11px] leading-relaxed">
           {canRunMatch
-            ? "No suggestions yet. Save your application, then tap “Refresh suggestions” to find organizations that may help."
+            ? `${EMPTY_COPY.noMatchingResults} Save your application, then tap “Refresh suggestions” to find organizations that may help.`
             : "Suggestions will appear here after your advocate runs organization matching for this case."}
         </p>
       )}
@@ -4015,77 +4128,7 @@ function RecommendedSupportOrgsBlock({
         <ul className="mt-3 space-y-3 divide-y divide-slate-800">
           {matches.map((m) => (
             <li key={m.organization_id} className="pt-3 first:pt-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium text-slate-100">{m.organization_name}</span>
-                {m.strong_match && (
-                  <span className="text-[10px] text-emerald-300 border border-emerald-500/40 rounded px-1.5">
-                    Good fit
-                  </span>
-                )}
-                {m.possible_match && !m.strong_match && (
-                  <span className="text-[10px] text-sky-300 border border-sky-500/40 rounded px-1.5">
-                    Possible fit
-                  </span>
-                )}
-                {m.limited_match && (
-                  <span className="text-[10px] text-amber-300 border border-amber-500/40 rounded px-1.5">
-                    Tentative
-                  </span>
-                )}
-                {m.language_match && (
-                  <span className="text-[10px] text-slate-400">Language</span>
-                )}
-                {m.capacity_signal === "accepting" && (
-                  <span className="text-[10px] text-slate-400">Accepting clients</span>
-                )}
-                {designationTierTrustLabel(m.designation_tier ?? null) && (
-                  <span
-                    className="text-[10px] text-slate-500 border border-slate-600 rounded px-1"
-                    title="Platform readiness — not a ranking"
-                  >
-                    {designationTierTrustLabel(m.designation_tier ?? null)}
-                  </span>
-                )}
-              </div>
-              {m.designation_summary && (
-                <p className="text-slate-500 text-[10px] mt-1 line-clamp-2">{m.designation_summary}</p>
-              )}
-              {m.designation_reason && (
-                <p className="text-slate-400 text-[11px] mt-1">{m.designation_reason}</p>
-              )}
-              {(m.designation_influenced_match ||
-                designationTierTrustLabel(m.designation_tier ?? null)) && (
-                <p className="text-[10px] mt-0.5">
-                  <a
-                    href="/help/how-designations-work"
-                    className="text-violet-400/90 hover:underline"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    How designation is used
-                  </a>
-                </p>
-              )}
-              {m.service_overlap.length > 0 && (
-                <p className="text-slate-400 mt-1">
-                  Likely able to help with:{" "}
-                  {m.service_overlap.map((s) => s.replace(/_/g, " ")).join(", ")}
-                </p>
-              )}
-              {m.reasons.length > 0 && (
-                <ul className="list-disc list-inside text-slate-300 mt-1 space-y-0.5">
-                  {m.reasons.slice(0, 5).map((r, i) => (
-                    <li key={i}>{r}</li>
-                  ))}
-                </ul>
-              )}
-              {m.flags.length > 0 && (
-                <ul className="text-amber-200/80 text-[11px] list-disc list-inside mt-1">
-                  {m.flags.slice(0, 3).map((f, i) => (
-                    <li key={i}>{f}</li>
-                  ))}
-                </ul>
-              )}
+              <RecommendedOrganizationCard match={m} />
             </li>
           ))}
         </ul>
@@ -4114,6 +4157,11 @@ function SummaryView({
   fieldState = {},
   app,
   onGoToStep,
+  maxStepIndex,
+  canRunMatch,
+  caseEligibilityResult = null,
+  caseStatus = "draft",
+  assignedAdvocateId = null,
 }: {
   caseId: string | null;
   stateCode: "IL" | "IN";
@@ -4134,7 +4182,13 @@ function SummaryView({
   fieldState?: FieldStateMap;
   app?: CompensationApplication;
   onGoToStep?: (step: IntakeStep) => void;
+  maxStepIndex: number;
+  canRunMatch: boolean;
+  caseEligibilityResult?: EligibilityResult | null;
+  caseStatus?: string;
+  assignedAdvocateId?: string | null;
 }) {
+  const router = useRouter();
   const { t, tf } = useI18n();
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
@@ -4143,6 +4197,64 @@ function SummaryView({
       ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
       : (app ?? {}) as Record<string, unknown> & { _fieldState?: FieldStateMap };
   const review = getReviewStatus(storedApp as Parameters<typeof getReviewStatus>[0]);
+
+  const [summaryMessagesUnread, setSummaryMessagesUnread] = useState(0);
+  const [summaryCompleteness, setSummaryCompleteness] = useState<CompletenessSignal | null>(null);
+  const [summaryMatchCount, setSummaryMatchCount] = useState(0);
+
+  const [recommendedMatchCount, setRecommendedMatchCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!caseId) {
+      setSummaryMessagesUnread(0);
+      setSummaryCompleteness(null);
+      setSummaryMatchCount(0);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+        const [msgRes, compRes, matchRes] = await Promise.all([
+          fetch(`/api/cases/${caseId}/messages`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`/api/compensation/cases/${caseId}/completeness`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch(`/api/compensation/cases/${caseId}/match-orgs`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+        if (cancelled) return;
+        if (msgRes.ok) {
+          const mj = await msgRes.json().catch(() => ({}));
+          setSummaryMessagesUnread(Number(mj.unread_count ?? 0));
+        } else setSummaryMessagesUnread(0);
+        if (compRes.ok) {
+          const cj = await compRes.json().catch(() => null);
+          const inner = cj?.data?.result ?? cj?.result ?? null;
+          setSummaryCompleteness(inner && typeof inner === "object" ? inner : null);
+        } else setSummaryCompleteness(null);
+        if (matchRes.ok) {
+          const mj = await matchRes.json().catch(() => null);
+          const matches = mj?.data?.matches ?? mj?.matches ?? [];
+          setSummaryMatchCount(Array.isArray(matches) ? matches.length : 0);
+        } else setSummaryMatchCount(0);
+      } catch {
+        if (!cancelled) {
+          setSummaryMessagesUnread(0);
+          setSummaryCompleteness(null);
+          setSummaryMatchCount(0);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [caseId]);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -4212,8 +4324,36 @@ setInviteResult(
   const primaryJob = employment.employmentHistory[0];
   const primaryFuneralPayer = funeral.payments?.[0];
 
+  const summaryNext = useMemo(() => {
+    if (!caseId) return null;
+    return getNextActionForCase({
+      mode: "victim",
+      caseId,
+      eligibilityResult: caseEligibilityResult,
+      status: caseStatus,
+      messagesUnread: summaryMessagesUnread,
+      completenessResult: summaryCompleteness,
+      matchCount: Math.max(summaryMatchCount, recommendedMatchCount ?? 0),
+      intakeMissingReviewCount: review.missing.length,
+      intakeDeferredSkippedCount: review.skipped.length + review.deferred.length,
+      hasAdvocateConnected: !!assignedAdvocateId,
+    });
+  }, [
+    caseId,
+    caseEligibilityResult,
+    caseStatus,
+    summaryMessagesUnread,
+    summaryCompleteness,
+    summaryMatchCount,
+    recommendedMatchCount,
+    review.missing.length,
+    review.skipped.length,
+    review.deferred.length,
+    assignedAdvocateId,
+  ]);
+
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-sm">
+    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-5 text-sm">
       <h2 className="text-lg font-semibold text-slate-50">
         {t("forms.summary.title")}
       </h2>
@@ -4226,73 +4366,182 @@ setInviteResult(
 
       <p className="text-xs text-slate-300">{t("forms.summary.description")}</p>
 
-      {/* Phase 8: review completeness – missing / skipped / deferred */}
-      {(review.missing.length > 0 || review.skipped.length > 0 || review.deferred.length > 0) && (
-        <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-3 text-xs space-y-2">
-          <p className="text-slate-300">{t("intake.review.completenessNote")}</p>
-          {review.missing.length > 0 && (
-            <div>
-              <span className="font-semibold text-amber-200">{t("intake.review.missing")}:</span>{" "}
-              {review.missing.map((item) => (
-                <span key={item.fieldKey} className="mr-2">
-                  {onGoToStep ? (
-                    <button
-                      type="button"
-                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
-                      className="text-emerald-300 hover:text-emerald-200 underline"
-                    >
-                      {t("intake.steps." + item.stepHint)}
-                    </button>
-                  ) : (
-                    t("intake.steps." + item.stepHint)
-                  )}
-                </span>
-              ))}
-            </div>
+      <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-sm font-semibold text-white">
+            {t("forms.summary.checkpoint.nextStepTitle")}
+          </h3>
+          {summaryNext && (
+            <span
+              className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${priorityBadgeClassName(summaryNext.priority)}`}
+            >
+              {priorityLabel(summaryNext.priority)}
+            </span>
           )}
-          {review.skipped.length > 0 && (
-            <div>
-              <span className="text-slate-400">{t("intake.review.skipped")}:</span>{" "}
-              {review.skipped.map((item) => (
-                <span key={item.fieldKey} className="mr-2">
-                  {onGoToStep ? (
-                    <button
-                      type="button"
-                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
-                      className="text-slate-300 hover:text-slate-200 underline"
-                    >
-                      {t("intake.steps." + item.stepHint)}
-                    </button>
-                  ) : (
-                    t("intake.steps." + item.stepHint)
-                  )}
-                </span>
-              ))}
-            </div>
-          )}
-          {review.deferred.length > 0 && (
-            <div>
-              <span className="text-slate-400">{t("intake.review.deferred")}:</span>{" "}
-              {review.deferred.map((item) => (
-                <span key={item.fieldKey} className="mr-2">
-                  {onGoToStep ? (
-                    <button
-                      type="button"
-                      onClick={() => onGoToStep(item.stepHint as IntakeStep)}
-                      className="text-slate-300 hover:text-slate-200 underline"
-                    >
-                      {t("intake.steps." + item.stepHint)}
-                    </button>
-                  ) : (
-                    t("intake.steps." + item.stepHint)
-                  )}
-                </span>
-              ))}
-            </div>
-          )}
+        </div>
+        {summaryNext ? (
+          <>
+            <p className="text-xs text-slate-300 leading-relaxed">{summaryNext.reason}</p>
+            {!isReadOnly && (
+              <Link
+                href={summaryNext.href}
+                className="inline-flex text-xs font-semibold text-blue-400 hover:text-blue-300"
+              >
+                {summaryNext.label} →
+              </Link>
+            )}
+          </>
+        ) : (
+          <p className="text-xs text-slate-300 leading-relaxed">
+            {t("forms.summary.checkpoint.whatNextAllClear")}
+          </p>
+        )}
+      </div>
+
+      {/* 1. Application progress */}
+      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-slate-100">
+          {t("forms.summary.checkpoint.progressTitle")}
+        </h3>
+        <p className="text-[11px] text-slate-400 leading-relaxed">
+          {tf("forms.summary.checkpoint.progressHint", {
+            visited: String(Math.min(maxStepIndex + 1, 9)),
+            total: "9",
+          })}
+        </p>
+      </div>
+
+      {/* 2. Missing information */}
+      <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-amber-100">
+          {t("forms.summary.checkpoint.missingTitle")}
+        </h3>
+        <p className="text-[11px] text-amber-200/80">{t("forms.summary.checkpoint.missingExplainer")}</p>
+        {review.missing.length > 0 ? (
+          <ul className="text-xs text-slate-200 space-y-1.5 list-disc list-inside">
+            {review.missing.map((item) => (
+              <li key={item.fieldKey}>
+                {onGoToStep ? (
+                  <button
+                    type="button"
+                    onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                    className="text-amber-300 hover:text-amber-200 underline"
+                  >
+                    {t("intake.steps." + item.stepHint)}
+                  </button>
+                ) : (
+                  t("intake.steps." + item.stepHint)
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-slate-400">{t("forms.summary.checkpoint.missingEmpty")}</p>
+        )}
+        {review.skipped.length > 0 || review.deferred.length > 0 ? (
+          <div className="space-y-2 text-xs pt-3 mt-2 border-t border-amber-500/20">
+            <p className="text-[11px] text-amber-200/80">{t("forms.summary.checkpoint.deferredExplainer")}</p>
+            {review.skipped.length > 0 && (
+              <div>
+                <span className="font-medium text-slate-300">{t("intake.review.skipped")}:</span>{" "}
+                {review.skipped.map((item) => (
+                  <span key={item.fieldKey} className="mr-2 inline-block">
+                    {onGoToStep ? (
+                      <button
+                        type="button"
+                        onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                        className="text-slate-300 hover:text-slate-200 underline"
+                      >
+                        {t("intake.steps." + item.stepHint)}
+                      </button>
+                    ) : (
+                      t("intake.steps." + item.stepHint)
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
+            {review.deferred.length > 0 && (
+              <div>
+                <span className="font-medium text-slate-300">{t("intake.review.deferred")}:</span>{" "}
+                {review.deferred.map((item) => (
+                  <span key={item.fieldKey} className="mr-2 inline-block">
+                    {onGoToStep ? (
+                      <button
+                        type="button"
+                        onClick={() => onGoToStep(item.stepHint as IntakeStep)}
+                        className="text-slate-300 hover:text-slate-200 underline"
+                      >
+                        {t("intake.steps." + item.stepHint)}
+                      </button>
+                    ) : (
+                      t("intake.steps." + item.stepHint)
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : null}
+      </div>
+
+      {/* 4. Documents */}
+      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-slate-100">
+          {t("forms.summary.checkpoint.documentsTitle")}
+        </h3>
+        <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.documentsSubtitle")}</p>
+        <p className="text-xs text-slate-500">{t("forms.summary.checkpoint.documentsEmpty")}</p>
+        {onGoToStep && (
+          <button
+            type="button"
+            onClick={() => onGoToStep("documents")}
+            className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-950/60 px-3 py-1.5 text-[11px] font-medium text-slate-100 hover:bg-slate-900 transition"
+          >
+            {t("forms.summary.checkpoint.uploadDocuments")}
+          </button>
+        )}
+      </div>
+
+      {/* 5. Secure messages */}
+      {caseId ? (
+        <div id="summary-secure-messages">
+          <CaseMessagesPanel
+            caseId={caseId}
+            headingTitle={t("forms.summary.checkpoint.messagesTitle")}
+            headingSubtitle={t("forms.summary.checkpoint.messagesSubtitle")}
+            emptyStateText={t("forms.summary.checkpoint.messagesEmpty")}
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-1">
+          <h3 className="text-sm font-semibold text-slate-100">
+            {t("forms.summary.checkpoint.messagesTitle")}
+          </h3>
+          <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.messagesSubtitle")}</p>
+          <p className="text-xs text-slate-500">{t("forms.summary.checkpoint.messagesEmpty")}</p>
         </div>
       )}
 
+      {/* 6. Recommended support organizations */}
+      {caseId ? (
+        <RecommendedSupportOrgsBlock
+          caseId={caseId}
+          canRunMatch={canRunMatch}
+          onMatchesLoaded={(n) => setRecommendedMatchCount(n)}
+        />
+      ) : (
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-xs text-slate-400">
+          <p className="font-medium text-slate-200">{t("forms.summary.checkpoint.recommendedTitle")}</p>
+          <p className="mt-1">{EMPTY_COPY.noMatchingResults}</p>
+        </div>
+      )}
+
+      <details className="rounded-xl border border-slate-700/80 bg-slate-950/40 p-4 space-y-4">
+        <summary className="text-sm font-semibold text-slate-100 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          {t("forms.summary.checkpoint.applicationDetailsToggle")}
+        </summary>
+      <div className="pt-4 space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 text-xs">
         <div className="space-y-1.5">
           <h3 className="font-semibold text-slate-100">
@@ -4478,119 +4727,8 @@ setInviteResult(
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2 justify-end">
-        <button
-          type="button"
-          onClick={onDownloadSummaryPdf}
-          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
-        >
-          {t("forms.summary.actions.downloadSummaryPdf")}
-        </button>
-
-        <button
-          type="button"
-          onClick={stateCode === "IN" ? onDownloadOfficialInPdf : onDownloadOfficialIlPdf}
-          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
-        >
-          {stateCode === "IN"
-            ? t("forms.summary.actions.downloadOfficialIn")
-            : t("forms.summary.actions.downloadOfficialIl")}
-        </button>
-
-        {!caseId && !isReadOnly && (
-          <button
-            type="button"
-            onClick={onSaveCase}
-            className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
-          >
-            {t("forms.summary.actions.saveCaseForAdvocate")}
-          </button>
-        )}
-
-        <button
-          type="button"
-          disabled={isReadOnly}
-          onClick={() => {
-            if (isReadOnly) return;
-            setInviteResult(null);
-            setInviteOpen(true);
-          }}
-          className={`inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition ${disBtn}`}
-        >
-          {t("forms.summary.actions.inviteAdvocate")}
-        </button>
       </div>
-
-      {inviteOpen && (
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
-          <div className="flex items-center justify-between">
-            <div className="font-semibold text-slate-100">
-              {t("forms.summary.invite.title")}
-            </div>
-            <button
-              type="button"
-              onClick={() => setInviteOpen(false)}
-              className="text-slate-400 hover:text-slate-200"
-            >
-              ✕
-            </button>
-          </div>
-
-          <p className="text-[11px] text-slate-400">
-            {t("forms.summary.invite.note")}
-          </p>
-
-          <label className="block space-y-1">
-            <span className="text-slate-300">
-              {t("forms.summary.invite.emailLabel")}
-            </span>
-            <input
-              disabled={isReadOnly}
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder={t("forms.summary.invite.emailPlaceholder")}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 disabled:opacity-60"
-            />
-          </label>
-
-          <label className="flex items-center gap-2 text-slate-300">
-            <input
-              disabled={isReadOnly}
-              type="checkbox"
-              checked={inviteCanEdit}
-              onChange={(e) => setInviteCanEdit(e.target.checked)}
-            />
-            {t("forms.summary.invite.canEditLabel")}
-          </label>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleInvite}
-              disabled={isReadOnly || inviteLoading || !inviteEmail.trim()}
-              className="rounded-lg bg-[#1C8C8C] px-3 py-2 text-xs font-semibold text-slate-950 disabled:opacity-50 hover:bg-[#21a3a3] transition"
-            >
-              {inviteLoading
-                ? t("forms.summary.invite.sending")
-                : t("forms.summary.invite.send")}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setInviteOpen(false)}
-              className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
-            >
-              {t("ui.buttons.close")}
-            </button>
-          </div>
-
-          {inviteResult && (
-            <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
-{inviteResult}
-            </pre>
-          )}
-        </div>
-      )}
+      </details>
 
       <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
         <h3 className="font-semibold text-slate-100">
@@ -4606,7 +4744,7 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesSubrogation: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
             />
             <span className="flex flex-wrap items-center gap-1">
               {t("forms.summary.certification.checks.subrogation")}{" "}
@@ -4630,7 +4768,7 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesRelease: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
             />
             <span>{t("forms.summary.certification.checks.release")}</span>
           </label>
@@ -4643,7 +4781,7 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesPerjury: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
             />
             <span>{t("forms.summary.certification.checks.perjury")}</span>
           </label>
@@ -4677,7 +4815,7 @@ setInviteResult(
               onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: true })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -4690,7 +4828,7 @@ setInviteResult(
               onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: false })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney === false
-                  ? "border-emerald-400 bg-emerald-500/10 text-emerald-200"
+                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
                   : "border-slate-700 bg-slate-900 text-slate-300"
               }`}
             >
@@ -4752,6 +4890,121 @@ setInviteResult(
           )}
         </div>
       </div>
+
+      <div className="flex flex-wrap gap-2 justify-end pt-2">
+        <button
+          type="button"
+          onClick={onDownloadSummaryPdf}
+          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+        >
+          {t("forms.summary.actions.downloadSummaryPdf")}
+        </button>
+
+        <button
+          type="button"
+          onClick={stateCode === "IN" ? onDownloadOfficialInPdf : onDownloadOfficialIlPdf}
+          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+        >
+          {stateCode === "IN"
+            ? t("forms.summary.actions.downloadOfficialIn")
+            : t("forms.summary.actions.downloadOfficialIl")}
+        </button>
+
+        {!caseId && !isReadOnly && (
+          <button
+            type="button"
+            onClick={onSaveCase}
+            className="inline-flex items-center rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 transition"
+          >
+            {t("forms.summary.actions.saveCaseForAdvocate")}
+          </button>
+        )}
+
+        <button
+          type="button"
+          disabled={isReadOnly}
+          onClick={() => {
+            if (isReadOnly) return;
+            setInviteResult(null);
+            setInviteOpen(true);
+          }}
+          className={`inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition ${disBtn}`}
+        >
+          {t("forms.summary.actions.inviteAdvocate")}
+        </button>
+      </div>
+
+      {inviteOpen && (
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
+          <div className="flex items-center justify-between">
+            <div className="font-semibold text-slate-100">
+              {t("forms.summary.invite.title")}
+            </div>
+            <button
+              type="button"
+              onClick={() => setInviteOpen(false)}
+              className="text-slate-400 hover:text-slate-200"
+            >
+              ✕
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-400">
+            {t("forms.summary.invite.note")}
+          </p>
+
+          <label className="block space-y-1">
+            <span className="text-slate-300">
+              {t("forms.summary.invite.advocateEmailLabel")}
+            </span>
+            <input
+              disabled={isReadOnly}
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              placeholder={t("forms.summary.invite.advocateEmailPlaceholder")}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-60"
+            />
+          </label>
+
+          <label className="flex items-center gap-2 text-slate-300">
+            <input
+              disabled={isReadOnly}
+              type="checkbox"
+              checked={inviteCanEdit}
+              onChange={(e) => setInviteCanEdit(e.target.checked)}
+            />
+            {t("forms.summary.invite.allowEdit")}
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleInvite}
+              disabled={isReadOnly || inviteLoading || !inviteEmail.trim()}
+              className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-blue-500 transition"
+            >
+              {inviteLoading
+                ? t("forms.summary.actions.inviting")
+                : t("forms.summary.actions.sendInvite")}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setInviteOpen(false)}
+              className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
+            >
+              {t("ui.buttons.close")}
+            </button>
+          </div>
+
+          {inviteResult && (
+            <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
+{inviteResult}
+            </pre>
+          )}
+        </div>
+      )}
+
     </section>
   );
 }
@@ -4781,7 +5034,7 @@ function Field({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500
-          focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400
+          focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
           disabled:opacity-60 disabled:cursor-not-allowed`}
       />
     </label>
@@ -4801,7 +5054,7 @@ function Checkbox({ label, checked, onChange, disabled = false }: {
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-emerald-400 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
       />
       <span className={disabled ? "opacity-60" : ""}>{label}</span>
     </label>
@@ -4844,7 +5097,7 @@ function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
           ${
             isReadOnly
               ? "cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-400"
-              : "border-emerald-500 bg-emerald-500 text-slate-950 hover:bg-emerald-400"
+              : "border-blue-600 bg-blue-600 text-white hover:bg-blue-500"
           }`}
         aria-disabled={isReadOnly}
       >
@@ -4928,7 +5181,7 @@ const handleFiles = async (files: FileList | null) => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t("forms.documents.uploader.shortDescriptionPlaceholder")}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
           />
         </label>
 
@@ -4939,7 +5192,7 @@ const handleFiles = async (files: FileList | null) => {
             type="file"
             multiple
             onChange={(e) => handleFiles(e.target.files)}
-            className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500 file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-slate-950 hover:file:bg-emerald-400"
+            className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-white hover:file:bg-blue-500"
           />
         </label>
       </div>

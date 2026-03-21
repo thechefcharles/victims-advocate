@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
 import type { IlVictimAssistanceProgram } from "@/lib/catalog/ilProgramTypes";
 
@@ -15,7 +17,8 @@ import type { IlVictimAssistanceProgram } from "@/lib/catalog/ilProgramTypes";
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user } = useAuth();
+  const { orgId, user, isAdmin, role, orgRole } = useAuth();
+  const { t } = useI18n();
   const [catalogId, setCatalogId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -76,17 +79,20 @@ export default function OrganizationSetupPage() {
 
   if (orgId) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
         <p className="text-sm text-slate-400">Redirecting…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
       <div className="max-w-md mx-auto space-y-6">
-        <Link href="/dashboard" className="text-sm text-slate-400 hover:text-slate-200">
-          ← Dashboard
+        <Link
+          href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+          className="text-sm text-slate-400 hover:text-slate-200"
+        >
+          {t("common.backToWorkspace")}
         </Link>
         <header>
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">
@@ -121,7 +127,7 @@ export default function OrganizationSetupPage() {
           <button
             type="submit"
             disabled={loading || catalogId == null}
-            className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           >
             {loading ? "Creating…" : "Create organization"}
           </button>

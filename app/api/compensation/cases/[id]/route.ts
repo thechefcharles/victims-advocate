@@ -80,6 +80,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     const eligibilityAnswers = b?.eligibility_answers;
     const eligibilityResult = b?.eligibility_result;
     const eligibilityReadiness = b?.eligibility_readiness;
+    const state_code = b?.state_code;
 
     const hasUpdates =
       application !== undefined ||
@@ -87,12 +88,13 @@ export async function PATCH(req: Request, context: RouteParams) {
       status !== undefined ||
       eligibilityAnswers !== undefined ||
       eligibilityResult !== undefined ||
-      eligibilityReadiness !== undefined;
+      eligibilityReadiness !== undefined ||
+      state_code !== undefined;
 
     if (!hasUpdates) {
       return apiFail(
         "VALIDATION_ERROR",
-        "Provide application, name, and/or eligibility fields to update",
+        "Provide application, name, state_code, and/or eligibility fields to update",
         undefined,
         400
       );
@@ -140,6 +142,15 @@ export async function PATCH(req: Request, context: RouteParams) {
       statusAllowed.includes(status)
     ) {
       updates.status = status;
+    }
+
+    if (state_code !== undefined) {
+      const sc = typeof state_code === "string" ? state_code.trim().toUpperCase() : "";
+      if (sc === "IL" || sc === "IN") {
+        updates.state_code = sc;
+      } else {
+        return apiFail("VALIDATION_ERROR", "state_code must be IL or IN", undefined, 400);
+      }
     }
 
     const previousCase = result.case as { status?: string; organization_id?: string };

@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Routes and page names
+
+See **[docs/routes.md](docs/routes.md)**. Paths and display names are centralized in [`lib/routes/pageRegistry.ts`](lib/routes/pageRegistry.ts) (`PAGE_REGISTRY`, `ROUTES`).
+
 ## Getting Started
 
 First, run the development server:

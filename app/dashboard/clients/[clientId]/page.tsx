@@ -131,7 +131,7 @@ export default function ClientCasesPage() {
   }, [cases, clientId]);
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { confidenceChipText, designationTierBadgeText } from "@/lib/trustDisplay";
+import { PageHeader } from "@/components/layout/PageHeader";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
@@ -124,35 +126,53 @@ export default function AdminEcosystemPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
-              Admin · Internal only
-            </p>
-            <h1 className="text-2xl sm:text-3xl font-bold">Ecosystem intelligence</h1>
-            <p className="text-sm text-slate-400 mt-2 max-w-xl">
-              Aggregated supply, demand signals from matching runs, and workflow activity. No survivor
-              PII.{" "}
+        <PageHeader
+          contextLine="Admin → Ecosystem"
+          eyebrow="Admin · Internal only"
+          title="Ecosystem"
+          subtitle={
+            <>
+              Overview of platform coverage, gaps, and organization distribution.{" "}
               <a href="/help/how-matching-works" className="text-teal-400 hover:underline">
                 How matching works
               </a>
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm">
-            <Link href="/admin/audit" className="text-slate-400 hover:text-slate-200">
-              Audit log
-            </Link>
-            <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
-              Organizations
-            </Link>
-            <Link
-              href="/admin/grading"
-              className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35 text-sm"
-            >
-              CBO grading
-            </Link>
-          </div>
-        </header>
+            </>
+          }
+          rightActions={
+            <>
+              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+                Audit
+              </Link>
+              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+                Organizations
+              </Link>
+              <Link
+                href="/admin/grading"
+                className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
+              >
+                Review
+              </Link>
+            </>
+          }
+        />
+
+        <p className="text-xs text-slate-500 border-l-2 border-slate-700 pl-3 py-1 max-w-3xl">
+          This is an internal aggregated view. No survivor-identifying data is shown.
+        </p>
+
+        {overview && s && (
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {summaryCards.map(([label, val]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+              >
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+                <p className="text-2xl font-semibold text-slate-100 mt-1">{val}</p>
+              </div>
+            ))}
+          </section>
+        )}
 
         <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-4">
           <h2 className="text-sm font-semibold text-slate-200">Filters</h2>
@@ -223,7 +243,7 @@ export default function AdminEcosystemPage() {
             type="button"
             onClick={() => load()}
             disabled={loading}
-            className="text-xs rounded-lg border border-teal-600 bg-teal-900/30 px-3 py-1.5 text-teal-200 hover:bg-teal-900/50 disabled:opacity-50"
+            className="text-xs rounded-lg bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-600 disabled:opacity-50"
           >
             Refresh
           </button>
@@ -237,18 +257,43 @@ export default function AdminEcosystemPage() {
 
         {loading && !overview && <p className="text-slate-500 text-sm">Loading…</p>}
 
+        {!loading && !err && !overview && (
+          <p className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm text-slate-400">
+            No ecosystem data for these filters. Try adjusting filters.
+          </p>
+        )}
+
         {overview && s && (
           <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {summaryCards.map(([label, val]) => (
-                <div
-                  key={label}
-                  className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
-                >
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
-                  <p className="text-2xl font-semibold text-slate-100 mt-1">{val}</p>
-                </div>
-              ))}
+            <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+              <h2 className="text-sm font-semibold text-slate-200 mb-3">Demand–supply gaps</h2>
+              {gaps.length === 0 ? (
+                <p className="text-xs text-slate-500">No gap signals for current filters.</p>
+              ) : (
+                <ul className="space-y-4">
+                  {gaps.map((g, i) => (
+                    <li
+                      key={i}
+                      className={`rounded-lg border p-3 text-sm ${
+                        g.severity === "high"
+                          ? "border-red-900/60 bg-red-950/20"
+                          : g.severity === "medium"
+                            ? "border-amber-900/50 bg-amber-950/15"
+                            : "border-slate-700 bg-slate-950/40"
+                      }`}
+                    >
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <span className="font-medium text-slate-100">{String(g.title)}</span>
+                        <span className="text-[10px] uppercase text-slate-500">
+                          {String(g.gap_type)} · {String(g.severity)}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-xs leading-relaxed">{String(g.description)}</p>
+                      <p className="text-teal-400/90 text-[11px] mt-2">{String(g.action_hint)}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </section>
 
             {(overview.region_flags?.length ?? 0) > 0 && (
@@ -330,37 +375,6 @@ export default function AdminEcosystemPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h2 className="text-sm font-semibold text-slate-200 mb-3">Demand–supply gaps</h2>
-              {gaps.length === 0 ? (
-                <p className="text-xs text-slate-500">No gap signals for current filters.</p>
-              ) : (
-                <ul className="space-y-4">
-                  {gaps.map((g, i) => (
-                    <li
-                      key={i}
-                      className={`rounded-lg border p-3 text-sm ${
-                        g.severity === "high"
-                          ? "border-red-900/60 bg-red-950/20"
-                          : g.severity === "medium"
-                            ? "border-amber-900/50 bg-amber-950/15"
-                            : "border-slate-700 bg-slate-950/40"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-medium text-slate-100">{String(g.title)}</span>
-                        <span className="text-[10px] uppercase text-slate-500">
-                          {String(g.gap_type)} · {String(g.severity)}
-                        </span>
-                      </div>
-                      <p className="text-slate-400 text-xs leading-relaxed">{String(g.description)}</p>
-                      <p className="text-teal-400/90 text-[11px] mt-2">{String(g.action_hint)}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
             <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 overflow-x-auto">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-200">
@@ -393,10 +407,22 @@ export default function AdminEcosystemPage() {
                         {String(o.capacity_status)}
                         {o.accepting_clients ? " · open intake" : ""}
                       </td>
-                      <td className="py-2 pr-2">
-                        {o.designation_tier
-                          ? `${String(o.designation_tier)} (${String(o.designation_confidence || "")})`
-                          : "—"}
+                      <td className="py-2 pr-2 text-[11px] max-w-[140px]">
+                        {o.designation_tier ? (
+                          <div className="space-y-0.5">
+                            <div className="text-slate-200 font-medium">
+                              {designationTierBadgeText(String(o.designation_tier)) ??
+                                String(o.designation_tier).replace(/_/g, " ")}
+                            </div>
+                            {o.designation_confidence ? (
+                              <div className="text-slate-500 text-[10px] leading-tight">
+                                {confidenceChipText(String(o.designation_confidence))}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </td>
                       <td className="py-2 pr-2">{String(o.profile_completeness)}</td>
                       <td className="py-2 pr-2 text-right text-slate-500 whitespace-nowrap">

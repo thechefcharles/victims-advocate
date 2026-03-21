@@ -44,7 +44,7 @@ type StateCode = "IL" | "IN";
 export default function EligibilityCheckPage() {
   const params = useParams();
   const { t, tf } = useI18n();
-  const { accessToken } = useAuth();
+  const { accessToken, loading: authLoading } = useAuth();
 
   const caseId = typeof params.id === "string" ? params.id : null;
   const [stateCode, setStateCode] = useState<StateCode | null>(null);
@@ -59,24 +59,31 @@ export default function EligibilityCheckPage() {
   const QUESTIONS = isIN ? QUESTIONS_IN : QUESTIONS_IL;
   const prefix = isIN ? "eligibilityIN" : "eligibility";
 
-  // Fetch case and verify access
+  // Fetch case and verify access (requires a session)
   useEffect(() => {
-    if (!caseId || !accessToken) return;
+    if (!caseId) return;
+    if (authLoading) return;
+    if (!accessToken) return;
 
     const check = async () => {
+      setLoadErr(null);
       const res = await fetch(`/api/compensation/cases/${caseId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        setLoadErr("Case not found or access denied");
+        if (res.status === 401) {
+          setLoadErr("Your session expired. Please sign in again.");
+        } else {
+          setLoadErr("Case not found or access denied");
+        }
         return;
       }
       const json = await res.json();
       const sc = json.case?.state_code;
       setStateCode(sc === "IN" ? "IN" : "IL");
     };
-    check();
-  }, [caseId, accessToken]);
+    void check();
+  }, [caseId, accessToken, authLoading]);
 
   const saveResult = useCallback(async () => {
     if (!caseId || !accessToken) return;
@@ -154,7 +161,7 @@ export default function EligibilityCheckPage() {
 
   if (!caseId) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-red-300">Invalid case</div>
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
           ← Back to dashboard
@@ -163,9 +170,28 @@ export default function EligibilityCheckPage() {
     );
   }
 
-  if (stateCode === null && !loadErr) {
+  if (!authLoading && !accessToken) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+        <div className="max-w-xl mx-auto space-y-4">
+          <p className="text-slate-300">Please sign in to continue the eligibility check for this case.</p>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">
+              Sign in
+            </Link>
+            <span className="text-slate-600">·</span>
+            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+              ← Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (authLoading || (stateCode === null && !loadErr)) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-slate-400">Loading…</div>
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
           ← Back to dashboard
@@ -176,12 +202,18 @@ export default function EligibilityCheckPage() {
 
   if (loadErr && !result) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-red-300">{loadErr}</p>
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-200">
-            ← Back to dashboard
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm">
+              Sign in
+            </Link>
+            <span className="text-slate-600">·</span>
+            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+              ← Back to dashboard
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -192,7 +224,7 @@ export default function EligibilityCheckPage() {
     const intakeHref = `/compensation/intake?case=${caseId}`;
 
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-6">
           <Link
             href="/dashboard"
@@ -214,7 +246,7 @@ export default function EligibilityCheckPage() {
               </p>
               <Link
                 href={intakeHref}
-                className="inline-block rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                className="inline-block rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
               >
                 {t(`${prefix}.resultEligible.cta`)}
               </Link>
@@ -240,7 +272,7 @@ export default function EligibilityCheckPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={intakeHref}
-                  className="rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                  className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
                 >
                   {t(`${prefix}.resultNeedsAttention.ctaReady`)}
                 </Link>
@@ -299,7 +331,7 @@ export default function EligibilityCheckPage() {
   const totalNum = QUESTIONS.length;
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <div className="max-w-xl mx-auto space-y-6">
         <Link
           href="/dashboard"
@@ -309,9 +341,10 @@ export default function EligibilityCheckPage() {
         </Link>
 
         {step === 0 && (
-          <p className="text-sm text-slate-300">
-            {t(`${prefix}.purposeText`)}
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-slate-100">{t(`${prefix}.introQualify`)}</p>
+            <p className="text-sm text-slate-300">{t(`${prefix}.purposeText`)}</p>
+          </div>
         )}
 
         <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-6">
@@ -773,7 +806,7 @@ export default function EligibilityCheckPage() {
               type="button"
               onClick={handleNext}
               disabled={!canProceed() || saving}
-              className="rounded-full bg-[#1C8C8C] px-6 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+              className="rounded-full bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {saving ? "Saving…" : step < QUESTIONS.length - 1 ? "Next" : "See results"}
             </button>

@@ -5,6 +5,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ORG_DESIGNATION_VERSION } from "@/lib/designations/version";
+import {
+  EMPTY_COPY,
+  TRUST_LINK_HREF,
+  TRUST_LINK_LABELS,
+  TRUST_MICROCOPY,
+  designationTierBadgeText,
+} from "@/lib/trustDisplay";
 
 type Org = { id: string; name: string };
 
@@ -115,9 +122,15 @@ export default function AdminDesignationsPage() {
           <div>
             <p className="text-xs tracking-[0.25em] uppercase text-slate-400">Admin · Internal</p>
             <h1 className="text-2xl font-bold">Organization designations</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Mapping version <code className="text-teal-300">{ORG_DESIGNATION_VERSION}</code> — tiers
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              {TRUST_MICROCOPY.designationNotRating} Mapping version{" "}
+              <code className="text-teal-300">{ORG_DESIGNATION_VERSION}</code> — plain-language tiers
               only; raw grading scores stay internal.
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              <Link href={TRUST_LINK_HREF.designations} className="text-teal-400/90 hover:underline">
+                {TRUST_LINK_LABELS.aboutDesignations}
+              </Link>
             </p>
           </div>
           <div className="flex gap-3 text-sm">
@@ -160,7 +173,7 @@ export default function AdminDesignationsPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runDesignation(false)}
-                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {running ? "…" : "Load / compute if missing"}
               </button>
@@ -168,7 +181,7 @@ export default function AdminDesignationsPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runDesignation(true)}
-                className="rounded-lg border border-teal-500/50 px-4 py-2 text-sm text-teal-200 hover:bg-teal-500/10 disabled:opacity-50"
+                className="rounded-lg bg-slate-700 px-4 py-2 text-sm text-white hover:bg-slate-600 disabled:opacity-50"
               >
                 Force recompute
               </button>
@@ -185,13 +198,14 @@ export default function AdminDesignationsPage() {
             <div className="flex flex-wrap gap-4 items-baseline">
               <div>
                 <p className="text-[11px] text-slate-500 uppercase">Tier</p>
-                <p className="text-2xl font-semibold text-teal-300 capitalize">
-                  {current.designation_tier.replace(/_/g, " ")}
+                <p className="text-2xl font-semibold text-teal-200 mt-1">
+                  {designationTierBadgeText(current.designation_tier) ??
+                    current.designation_tier.replace(/_/g, " ")}
                 </p>
               </div>
               <div>
                 <p className="text-[11px] text-slate-500 uppercase">Confidence</p>
-                <p className="text-lg text-slate-200">{current.designation_confidence}</p>
+                <p className="text-sm text-slate-400 mt-1">{current.designation_confidence}</p>
               </div>
               <div>
                 <p className="text-[11px] text-slate-500 uppercase">Grading link</p>
@@ -224,8 +238,8 @@ export default function AdminDesignationsPage() {
         )}
 
         {!current && !loading && orgId && (
-          <p className="text-sm text-slate-400">
-            No designation yet. Ensure grading exists, then run designation.
+          <p className="text-sm text-slate-400 leading-relaxed">
+            {EMPTY_COPY.noDesignationYet} Ensure grading exists, then run designation.
           </p>
         )}
 
@@ -234,11 +248,12 @@ export default function AdminDesignationsPage() {
             <h2 className="text-sm font-semibold text-slate-200 mb-3">History</h2>
             <ul className="text-xs space-y-2">
               {hist.slice(0, 10).map((h) => (
-                <li key={h.id} className="flex justify-between border-b border-slate-800 py-2">
+                <li key={h.id} className="flex flex-wrap justify-between gap-2 border-b border-slate-800 py-2">
                   <span className="text-slate-400">
-                    {new Date(h.created_at).toLocaleString()} · {h.designation_tier}
+                    {new Date(h.created_at).toLocaleString()} ·{" "}
+                    {designationTierBadgeText(h.designation_tier) ?? h.designation_tier.replace(/_/g, " ")}
                   </span>
-                  <span>{h.designation_confidence}</span>
+                  <span className="text-slate-500 text-[11px]">{h.designation_confidence}</span>
                 </li>
               ))}
             </ul>

@@ -157,9 +157,10 @@ export default function AdminGradingPage() {
               Admin · Internal only
             </p>
             <h1 className="text-2xl font-bold">CBO quality grading</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not public,
-              not used in matching.
+            <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+              Internal scoring supports designation mapping — scores are not shown to survivors or the
+              public. Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not
+              public, not used in matching.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm items-center">
@@ -202,7 +203,7 @@ export default function AdminGradingPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runGrading(false)}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {running ? "…" : "Load / compute if missing"}
               </button>
@@ -210,7 +211,7 @@ export default function AdminGradingPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runGrading(true)}
-                className="rounded-lg border border-violet-500/60 px-4 py-2 text-sm text-violet-200 hover:bg-violet-500/10 disabled:opacity-50"
+                className="rounded-lg bg-slate-700 px-4 py-2 text-sm text-white hover:bg-slate-600 disabled:opacity-50"
               >
                 Force recompute
               </button>

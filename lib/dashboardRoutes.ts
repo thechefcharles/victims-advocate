@@ -19,19 +19,31 @@ export function mapApiRoleToDashboard(
   return "victim";
 }
 
-/** Platform admin → /admin/dashboard; org leadership → /organization/dashboard; advocate → /advocate/dashboard; organization (no org yet) → /organization/setup; victim → /victim/dashboard */
+/**
+ * Role-first routing — profile `role` always wins.
+ * (Victims may still have org-related fields for matching; they must never be sent to org dashboards.)
+ *
+ * Admin → /admin/dashboard · Victim → /victim/dashboard · Advocate → /advocate · Organization → setup or org dashboard
+ */
 export function getDashboardPath(me: DashboardMe): string {
   if (me.isAdmin === true) return "/admin/dashboard";
-  if (
-    me.orgId &&
-    (me.orgRole === "org_admin" || me.orgRole === "supervisor")
-  ) {
-    return "/organization/dashboard";
-  }
-  if (me.role === "advocate") return "/advocate/dashboard";
+  if (me.role === "victim") return "/victim/dashboard";
+  if (me.role === "advocate") return "/advocate";
   if (me.role === "organization") {
     if (!me.orgId) return "/organization/setup";
     return "/organization/dashboard";
   }
   return "/victim/dashboard";
+}
+
+/** Short label for public-page “go to workspace” buttons (Phase 7). */
+export function getWorkspaceCtaLabel(me: DashboardMe): string {
+  if (me.isAdmin === true) return "Go to Admin Home";
+  if (me.role === "victim") return "My dashboard";
+  if (me.role === "advocate") return "Go to Command Center";
+  if (me.role === "organization") {
+    if (!me.orgId) return "Continue organization setup";
+    return "Go to Organization Home";
+  }
+  return "My dashboard";
 }

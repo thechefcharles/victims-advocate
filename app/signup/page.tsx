@@ -134,7 +134,7 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
       <div className="max-w-md mx-auto space-y-8">
         <div className="text-center space-y-2">
           <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm">
@@ -165,7 +165,7 @@ export default function SignupPage() {
                   onClick={() => setAccountType("victim")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "victim"
-                      ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
+                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
                       : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
                   }`}
                 >
@@ -176,7 +176,7 @@ export default function SignupPage() {
                   onClick={() => setAccountType("advocate")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "advocate"
-                      ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
+                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
                       : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
                   }`}
                 >
@@ -187,7 +187,7 @@ export default function SignupPage() {
                   onClick={() => setAccountType("organization")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "organization"
-                      ? "border-[#1C8C8C] bg-[#1C8C8C]/20 text-slate-50"
+                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
                       : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
                   }`}
                 >
@@ -205,7 +205,7 @@ export default function SignupPage() {
             <label className="block space-y-1">
               <span className="text-[11px] text-slate-400">Email *</span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -218,7 +218,7 @@ export default function SignupPage() {
             <label className="block space-y-1">
               <span className="text-[11px] text-slate-400">Password *</span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="At least 8 characters"
                 type="password"
                 value={password}
@@ -241,7 +241,7 @@ export default function SignupPage() {
                 <label className="block space-y-1">
                   <span className="text-[11px] text-slate-400">Notes (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="e.g. department or team (not in directory)"
                     value={organization}
                     onChange={(e) => setOrganization(e.target.value)}
@@ -334,7 +334,7 @@ export default function SignupPage() {
             )}
 
             <button
-              className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
               disabled={
                 loading ||
                 !email.trim() ||

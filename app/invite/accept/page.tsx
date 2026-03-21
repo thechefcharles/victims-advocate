@@ -79,7 +79,7 @@ function AcceptContent() {
             <p className="text-emerald-300 font-medium">{message}</p>
             <Link
               href="/advocate"
-              className="inline-block rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
+              className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
             >
               Go to dashboard
             </Link>
