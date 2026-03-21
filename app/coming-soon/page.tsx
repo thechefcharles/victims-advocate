@@ -32,7 +32,7 @@ export default function ComingSoonPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
       <div className="max-w-lg w-full space-y-8 text-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-slate-50">
           Coming soon
@@ -57,13 +57,13 @@ export default function ComingSoonPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={status === "loading"}
             />
             <button
               type="submit"
               disabled={status === "loading"}
-              className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 transition"
+              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
             >
               {status === "loading"
                 ? "Subscribing…"

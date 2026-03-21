@@ -834,8 +834,8 @@ export default function CaseDetailPage() {
               {/* Advocate NxtGuide chat widget */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
-          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-[#020b16] shadow-lg shadow-black/40 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-[#0A2239]">
+          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-slate-950 shadow-lg shadow-black/40 flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
               <div className="text-[11px]">
                 <div className="font-semibold text-slate-50">NxtGuide</div>
                 <div className="text-slate-300">
@@ -873,7 +873,7 @@ export default function CaseDetailPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
                       m.role === "user"
-                        ? "bg-[#1C8C8C] text-slate-950"
+                        ? "bg-blue-600 text-white"
                         : "bg-slate-900 text-slate-100 border border-slate-700"
                     } text-[11px] whitespace-pre-wrap`}
                   >
@@ -894,7 +894,7 @@ export default function CaseDetailPage() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask NxtGuide about this case..."
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-[#1C8C8C] focus:border-[#1C8C8C]"
+                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
               />
             </form>
           </div>
@@ -902,7 +902,7 @@ export default function CaseDetailPage() {
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="inline-flex items-center rounded-full bg-[#1C8C8C] px-3 py-2 text-[11px] font-semibold text-slate-950 shadow-md shadow-black/40 hover:bg-[#21a3a3] transition"
+            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-black/40 hover:bg-blue-500 transition"
           >
             Ask NxtGuide about this case
           </button>
@@ -1109,7 +1109,7 @@ export default function CaseDetailPage() {
               <button
                 type="button"
                 onClick={handleDownloadSummaryPdf}
-                className="inline-flex items-center rounded-lg border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 transition"
+                className="inline-flex items-center rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 transition"
               >
                 Download summary PDF
               </button>
@@ -1160,7 +1160,7 @@ export default function CaseDetailPage() {
                       setRoutingLoading(false);
                     }
                   }}
-                  className="inline-flex items-center rounded-lg border border-[#1C8C8C] bg-[#1C8C8C] px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 transition"
+                  className="inline-flex items-center rounded-lg border border-blue-500 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
                 >
                   {routingLoading ? "Evaluating…" : "Run Routing"}
                 </button>
@@ -1249,7 +1249,7 @@ export default function CaseDetailPage() {
                       setOrgMatchingRunLoading(false);
                     }
                   }}
-                  className="inline-flex items-center rounded-lg border border-violet-500/60 bg-violet-500/20 px-3 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/30 disabled:opacity-50 transition"
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
                 >
                   {orgMatchingRunLoading ? "Matching…" : "Find Matching Organizations"}
                 </button>
@@ -1260,7 +1260,7 @@ export default function CaseDetailPage() {
                   onClick={() => {
                     setActiveTab("documents");
                   }}
-                  className="inline-flex items-center rounded-lg border border-sky-500/50 bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-sky-200 hover:bg-slate-800"
+                  className="inline-flex items-center rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                 >
                   Run OCR (in Documents)
                 </button>
@@ -1440,7 +1440,7 @@ export default function CaseDetailPage() {
                           setAmendLoading(false);
                         }
                       }}
-                      className="rounded border border-emerald-500 bg-emerald-500 px-3 py-1.5 text-[11px] font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                      className="rounded border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                     >
                       {amendLoading ? "Amending…" : "Amend"}
                     </button>
@@ -1473,7 +1473,7 @@ export default function CaseDetailPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="rounded-lg border border-emerald-500/50 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                 >
                   Run Routing
                 </button>
@@ -1549,7 +1549,7 @@ export default function CaseDetailPage() {
           orgMatchGlobalFlags.length > 0 ||
           canRunOrgMatching) && (
           <section
-            className={`bg-slate-900/70 border border-violet-900/40 rounded-2xl p-5 text-xs space-y-3 ${
+            className={`bg-slate-900 border border-slate-700 rounded-2xl p-5 text-xs space-y-3 ${
               activeTab !== "matching" ? "hidden" : ""
             }`}
           >
@@ -1558,7 +1558,7 @@ export default function CaseDetailPage() {
               {TRUST_MICROCOPY.recommendationsLead} Confirm fit directly with each organization.{" "}
               <a
                 href={TRUST_LINK_HREF.matching}
-                className="text-violet-300 hover:underline"
+                className="text-slate-300 hover:text-white underline"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -1582,7 +1582,7 @@ export default function CaseDetailPage() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/20"
+                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
                 >
                   Find Matching Organizations
                 </button>
@@ -2181,13 +2181,13 @@ export default function CaseDetailPage() {
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder="Add an internal note…"
               rows={2}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               type="button"
               onClick={handleAddNote}
               disabled={!noteContent.trim() || noteActioning === "add"}
-              className="mt-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="mt-2 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {noteActioning === "add" ? "Adding…" : "Add note"}
             </button>

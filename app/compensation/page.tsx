@@ -44,7 +44,7 @@ export default function CompensationHubPage() {
             <button
               type="button"
               onClick={() => setShowStatePrompt(true)}
-              className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition"
             >
               {t("compensationHub.primaryCta")}
             </button>
@@ -54,7 +54,7 @@ export default function CompensationHubPage() {
         <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 text-sm">
           <Link
             href={connectHref}
-            className="text-teal-400/90 hover:text-teal-300 underline underline-offset-4"
+            className="text-slate-300 hover:text-white underline underline-offset-4"
           >
             {t("compensationHub.secondaryGetHelp")}
           </Link>
@@ -72,7 +72,7 @@ export default function CompensationHubPage() {
         <p className="text-center sm:text-left text-sm">
           <Link
             href={ROUTES.knowledgeCompensation}
-            className="text-teal-400/90 hover:text-teal-300 underline underline-offset-4"
+            className="text-slate-300 hover:text-white underline underline-offset-4"
           >
             {t("compensationHub.learnLink")}
           </Link>
@@ -88,25 +88,25 @@ export default function CompensationHubPage() {
         <section>
           <h2 className="text-sm font-semibold text-slate-200 mb-3">{t("compensationHub.howItWorksTitle")}</h2>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-sm">
-              <p className="text-xs font-semibold text-emerald-400/90 mb-1">{t("compensationHub.step1Label")}</p>
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm">
+              <p className="text-xs font-semibold text-slate-400 mb-1">{t("compensationHub.step1Label")}</p>
               <p className="text-slate-200 font-medium">{t("compensationHub.step1Title")}</p>
               <p className="text-xs text-slate-400 mt-1">{t("compensationHub.step1Body")}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-sm">
-              <p className="text-xs font-semibold text-emerald-400/90 mb-1">{t("compensationHub.step2Label")}</p>
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm">
+              <p className="text-xs font-semibold text-slate-400 mb-1">{t("compensationHub.step2Label")}</p>
               <p className="text-slate-200 font-medium">{t("compensationHub.step2Title")}</p>
               <p className="text-xs text-slate-400 mt-1">{t("compensationHub.step2Body")}</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 text-sm">
-              <p className="text-xs font-semibold text-emerald-400/90 mb-1">{t("compensationHub.step3Label")}</p>
+            <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm">
+              <p className="text-xs font-semibold text-slate-400 mb-1">{t("compensationHub.step3Label")}</p>
               <p className="text-slate-200 font-medium">{t("compensationHub.step3Title")}</p>
               <p className="text-xs text-slate-400 mt-1">{t("compensationHub.step3Body")}</p>
             </div>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-5 sm:p-6">
+        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5 sm:p-6">
           <h2 className="text-sm font-semibold text-slate-100 mb-3">{t("compensationHub.mayNeedTitle")}</h2>
           <ul className="list-disc list-inside text-sm text-slate-300 space-y-1.5 max-w-xl">
             <li>{t("compensationHub.mayNeedLi1")}</li>
@@ -120,7 +120,7 @@ export default function CompensationHubPage() {
 
         {(role === "advocate" || role === "organization") && (
           <p className="text-center text-xs text-slate-500">
-            <Link href="/admin/cases" className="text-emerald-400/90 hover:underline">
+            <Link href="/admin/cases" className="text-blue-400 hover:text-blue-300 hover:underline">
               {t("compensationHub.openAdvocateDashboard")}
             </Link>
           </p>
@@ -143,14 +143,14 @@ export default function CompensationHubPage() {
                 <button
                   type="button"
                   onClick={() => handleStartIntake("IL")}
-                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-emerald-500/50 transition text-left"
+                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-blue-500/50 transition text-left"
                 >
                   {t("victimDashboard.stateIL")}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleStartIntake("IN")}
-                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-emerald-500/50 transition text-left"
+                  className="w-full rounded-lg border border-slate-600 px-4 py-3 text-sm font-medium text-slate-100 hover:bg-slate-800/60 hover:border-blue-500/50 transition text-left"
                 >
                   {t("victimDashboard.stateIN")}
                 </button>

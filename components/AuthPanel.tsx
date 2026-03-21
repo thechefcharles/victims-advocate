@@ -159,14 +159,14 @@ export default function AuthPanel() {
             <div className="flex flex-wrap gap-2 pt-3">
               <Link
                 href="/dashboard"
-                className="rounded-full px-4 py-2 text-xs font-semibold bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500"
               >
                 {t("authPanel.goToMyClients")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
-                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
               >
                 {t("authPanel.learnHowItWorks")}
               </Link>
@@ -193,7 +193,7 @@ export default function AuthPanel() {
 
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
                   <div
-                    className="h-full bg-gradient-to-r from-[#1C8C8C] to-[#F2C94C]"
+                    className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
                     style={{ width: `${percent}%` }}
                   />
                 </div>
@@ -210,8 +210,8 @@ export default function AuthPanel() {
                 href={resumeHref}
                 className={`rounded-full px-4 py-2 text-xs font-semibold ${
                   activeCaseId
-                    ? "bg-emerald-500/15 text-emerald-200 border border-emerald-500/40 hover:bg-emerald-500/25"
-                    : "bg-[#1C8C8C] text-slate-950 hover:bg-[#21a3a3]"
+                    ? "border border-blue-500/40 bg-blue-950/40 text-blue-100 hover:bg-blue-950/60"
+                    : "bg-blue-600 text-white hover:bg-blue-500"
                 }`}
               >
                 {activeCaseId
@@ -221,14 +221,14 @@ export default function AuthPanel() {
 
               <Link
                 href="/dashboard"
-                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
               >
                 {t("authPanel.myCases")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
-                className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60"
+                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
               >
                 {t("authPanel.learnHowItWorks")}
               </Link>
@@ -322,7 +322,7 @@ function InlineLoginCard() {
         <button
           type="submit"
           disabled={loading || !identifier.trim() || !password}
-          className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? t("authPanel.signingIn") : t("authPanel.signIn")}
         </button>

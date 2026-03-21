@@ -4,7 +4,7 @@ import { PublicBottomCta } from "@/components/public/PublicBottomCta";
 
 export default function HowMatchingWorksPage() {
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 sm:px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-8 text-sm text-slate-200 leading-relaxed">
         <Link href="/help" className="text-xs text-slate-500 hover:text-slate-300 inline-block">
           ← Help

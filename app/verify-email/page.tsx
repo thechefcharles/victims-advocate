@@ -62,7 +62,7 @@ export default function VerifyEmailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <p className="text-slate-400">Loading…</p>
       </main>
     );
@@ -71,14 +71,14 @@ export default function VerifyEmailPage() {
   if (!hasSession) {
     router.replace("/login");
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <p className="text-slate-400">Redirecting to login…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4">
         <h1 className="text-xl font-semibold text-slate-100">Verify your email</h1>
         <p className="text-sm text-slate-400">
@@ -92,7 +92,7 @@ export default function VerifyEmailPage() {
           type="button"
           onClick={handleResend}
           disabled={resending}
-          className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
         >
           {resending ? "Sending…" : "Resend verification email"}
         </button>

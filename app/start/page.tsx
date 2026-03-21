@@ -21,7 +21,7 @@ export default function StartPage() {
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <Link
               href={ROUTES.compensationHub}
-              className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition text-center"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition text-center"
             >
               Get Help Now
             </Link>
@@ -117,7 +117,7 @@ export default function StartPage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={ROUTES.compensationHub}
-              className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400 transition"
+              className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition"
             >
               Get Help Now
             </Link>

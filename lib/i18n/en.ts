@@ -9,7 +9,7 @@ export const en: I18nDict = {
     dashboard: "Dashboard",
     dashboardVictim: "My cases",
     dashboardAdvocate: "My clients",
-    login: "Log in",
+    login: "Log In",
     logout: "Log Out",
     myAccount: "My account",
     accountPlaceholderTitle: "Account",
@@ -248,18 +248,18 @@ export const en: I18nDict = {
     subtitle: "Illinois or Indiana Crime Victims Compensation—in plain language, at your pace.",
     primaryCta: "Start My Application",
     primaryHint: "This will guide you step by step.",
-    secondaryGetHelp: "Get help now",
-    secondaryConnectAdvocate: "Connect with an advocate",
+    secondaryGetHelp: "Get Help Now",
+    secondaryConnectAdvocate: "Connect With An Advocate",
     learnLink: "Learn how compensation works",
     howItWorksTitle: "How it works",
     step1Label: "Step 1",
-    step1Title: "Check eligibility",
+    step1Title: "Check Eligibility",
     step1Body: "Short questions so we know what may apply before details.",
     step2Label: "Step 2",
-    step2Title: "Complete your application",
+    step2Title: "Complete Your Application",
     step2Body: "Guided intake, documents, and a draft you can review.",
     step3Label: "Step 3",
-    step3Title: "Stay connected",
+    step3Title: "Stay Connected",
     step3Body: "Messages, advocates, and next steps as your case moves forward.",
     mayNeedTitle: "What you may need (if you have it)",
     mayNeedLi1: "Victim name, date of birth, and address",
@@ -275,7 +275,7 @@ export const en: I18nDict = {
       "To connect with an advocate you’ll need a free account—we’ll guide you when you tap Connect with an advocate.",
     nonVictimRoleHint:
       "Advocate connections are for survivor accounts—Get help now opens Help for other roles.",
-    openAdvocateDashboard: "Open case dashboard",
+    openAdvocateDashboard: "Open Case Dashboard",
   },
 
   /* =========================
@@ -368,7 +368,7 @@ export const en: I18nDict = {
     resultEligible: {
       headline: "You may qualify.",
       body: "Based on your answers, you meet the basic requirements to submit an Illinois Crime Victims Compensation application.",
-      cta: "Continue application",
+      cta: "Continue Application",
       secondary: "You can save your progress and return at any time.",
     },
     resultNeedsAttention: {
@@ -380,7 +380,7 @@ export const en: I18nDict = {
         "Make sure your address and phone number are reliable",
         "Be prepared to return requested documents within 45 days",
       ],
-      ctaReady: "Continue application",
+      ctaReady: "Continue Application",
       ctaHelp: "Get Help From an Advocate",
     },
     resultNotEligible: {
@@ -400,13 +400,13 @@ export const en: I18nDict = {
       notChecked: "Not checked",
     },
     dashboard: {
-      runCheck: "Run eligibility check",
-      startIntake: "Start intake",
+      runCheck: "Run Eligibility Check",
+      startIntake: "Start Intake",
       skipWarningTitle: "Run eligibility check first?",
       skipWarningBody:
         "The eligibility check helps confirm you can apply and what to expect. We recommend running it before starting the intake form.",
-      continueAnyway: "Continue to intake anyway",
-      runCheckFirst: "Run eligibility check first",
+      continueAnyway: "Continue To Intake Anyway",
+      runCheckFirst: "Run Eligibility Check First",
     },
   },
 
@@ -478,7 +478,7 @@ export const en: I18nDict = {
     resultEligible: {
       headline: "You may qualify.",
       body: "Based on your answers, you meet the basic requirements to submit an Indiana Violent Crime Victim Compensation application.",
-      cta: "Continue application",
+      cta: "Continue Application",
       secondary: "You can save your progress and return at any time.",
     },
     resultNeedsAttention: {
@@ -490,7 +490,7 @@ export const en: I18nDict = {
         "Ensure application will be filed within 180 days of the crime",
         "If under 18, arrange for parent or legal guardian to sign",
       ],
-      ctaReady: "Continue application",
+      ctaReady: "Continue Application",
       ctaHelp: "Get Help From an Advocate",
     },
     resultNotEligible: {
@@ -519,8 +519,8 @@ export const en: I18nDict = {
     progressTitle: "Your application progress",
     stepOf: "Step {current} of {total}",
     currentSection: "Current section:",
-    resumeApplication: "Resume application",
-    startApplication: "Start application",
+    resumeApplication: "Resume Application",
+    startApplication: "Start Application",
     myCases: "My cases",
 
     inlineLoginTitle: "Let's get you signed in",
@@ -528,7 +528,7 @@ export const en: I18nDict = {
     passwordLabel: "Password",
     rememberMe: "Remember me",
     signingIn: "Signing in…",
-    signIn: "Sign in",
+    signIn: "Sign In",
 
     newHere: "New here?",
     createVictimAccount: "Create victim account",
@@ -538,8 +538,8 @@ export const en: I18nDict = {
   },
 
   loginForm: {
-    title: "Log in",
-    submit: "Log in",
+    title: "Log In",
+    submit: "Log In",
     emailPlaceholder: "Email",
     passwordPlaceholder: "Password",
     loggingIn: "Logging in…",
@@ -553,10 +553,10 @@ export const en: I18nDict = {
     title: "Reset password",
     subtitle: "Enter your email and we'll send you a link to reset your password.",
     emailPlaceholder: "Email",
-    submit: "Send reset link",
+    submit: "Send Reset Link",
     sending: "Sending…",
     sentHint: "Check your email for a reset link. It may take a few minutes.",
-    backToLogin: "← Back to login",
+    backToLogin: "← Back To Login",
   },
 
   resetPassword: {
@@ -566,9 +566,9 @@ export const en: I18nDict = {
     confirmPasswordPlaceholder: "Confirm password",
     passwordsMismatch: "Passwords do not match",
     passwordTooShort: "Password must be at least 6 characters",
-    submit: "Update password",
+    submit: "Update Password",
     updating: "Updating…",
-    backToLogin: "← Back to login",
+    backToLogin: "← Back To Login",
     invalidOrExpired: "Invalid or expired link",
     invalidOrExpiredHint: "Password reset links expire after 1 hour. Request a new one below.",
     requestNewLink: "Request new reset link",
@@ -586,8 +586,8 @@ export const en: I18nDict = {
         "Process Crime Victim Compensation, check status, and manage cases—one platform for survivors, advocates, and organizations.",
       disclaimer:
         "NxtStps is a supportive tool. It does not replace legal advice, emergency services, or medical care. You can pause anytime.",
-      ctaCreateAccount: "Create an account",
-      ctaMyDashboard: "My dashboard",
+      ctaCreateAccount: "Create An Account",
+      ctaMyDashboard: "My Dashboard",
       signInPrompt: "Already have an account?",
       videoTitle: "See how it works",
       demoVideoIntro: "Short overview—when you’re ready.",
@@ -805,8 +805,8 @@ intake: {
     goToStep: "Go to {step} →",
     reviewComplete: "Review complete",
     continue: "Continue",
-    saveAndExit: "Save and exit",
-    reviewSubmit: "Review and submit",
+    saveAndExit: "Save And Exit",
+    reviewSubmit: "Review And Submit",
   },
 
   viewOnly: "View-only access (you can’t edit this case).",

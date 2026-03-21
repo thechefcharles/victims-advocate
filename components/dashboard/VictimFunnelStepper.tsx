@@ -26,15 +26,13 @@ function segmentClass(state: FunnelStepState, minimal: boolean): string {
     case "skipped":
       return `${base} bg-gradient-to-r from-red-900/85 via-red-800/70 to-red-900/80 shadow-[0_0_14px_rgba(239,68,68,0.35),inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-red-500/45`;
     case "complete":
-      return `${base} bg-gradient-to-r from-emerald-400 via-teal-500 to-[#0f766e] shadow-[0_0_14px_rgba(45,212,191,0.45),0_0_28px_rgba(20,184,166,0.22),inset_0_1px_0_rgba(255,255,255,0.25)]`;
+      return `${base} bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-600 shadow-[0_0_18px_rgba(52,211,153,0.45),0_0_28px_rgba(16,185,129,0.2),inset_0_1px_0_rgba(255,255,255,0.35)] ring-1 ring-emerald-300/70`;
     case "current":
-      /* In progress — cool cyan/sky (distinct from emerald “done”) */
-      return `${base} bg-gradient-to-r from-sky-500/85 via-cyan-500/90 to-[#0e7490] shadow-[0_0_14px_rgba(56,189,248,0.28)] ring-1 ring-sky-400/50`;
+      return `${base} bg-gradient-to-r from-slate-800 via-slate-800 to-blue-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ring-1 ring-slate-600/70`;
     case "pending":
-      /* Not started — neutral, dashed edge reads as “incomplete” vs solid green */
-      return `${base} border border-dashed border-slate-500/55 bg-[#0c1016] shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)]`;
+      return `${base} border border-dashed border-slate-600 bg-slate-900 shadow-[inset_0_2px_10px_rgba(0,0,0,0.45)]`;
     default:
-      return `${base} border border-dashed border-slate-500/55 bg-[#0c1016] shadow-[inset_0_2px_10px_rgba(0,0,0,0.55)]`;
+      return `${base} border border-dashed border-slate-600 bg-slate-900 shadow-[inset_0_2px_10px_rgba(0,0,0,0.45)]`;
   }
 }
 
@@ -89,9 +87,9 @@ export function VictimFunnelStepper({
               skipped
                 ? "border-red-500/55 bg-red-950/45 text-red-200/95 shadow-[0_0_8px_rgba(239,68,68,0.2)]"
                 : done
-                  ? "border-emerald-500/55 bg-emerald-950/45 text-emerald-200/95 shadow-[0_0_10px_rgba(16,185,129,0.18)]"
-                  : active
-                    ? "border-sky-500/55 bg-sky-950/35 text-sky-100 ring-1 ring-sky-500/25"
+                  ? "border-emerald-200/90 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-[0_0_14px_rgba(52,211,153,0.45)] ring-1 ring-emerald-300/60"
+                    : active
+                    ? "border-0 bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-[0_4px_16px_rgba(59,130,246,0.5)] ring-2 ring-blue-400/60 hover:from-blue-400 hover:to-blue-500 hover:shadow-[0_6px_22px_rgba(59,130,246,0.55)] active:scale-[0.97] transition-[transform,box-shadow]"
                     : pending
                       ? "border-dashed border-slate-500/65 bg-slate-950/90 text-slate-500"
                       : "border-dashed border-slate-600/50 bg-slate-950/80 text-slate-500";
@@ -108,9 +106,9 @@ export function VictimFunnelStepper({
                     skipped
                       ? "text-red-300/90"
                       : done
-                        ? "text-emerald-300/85"
+                        ? "text-emerald-200 font-semibold"
                         : active
-                          ? "text-sky-200/90"
+                          ? "text-blue-100 font-semibold"
                           : "text-slate-500"
                   }`}
                 >
@@ -124,13 +122,13 @@ export function VictimFunnelStepper({
                   <button
                     type="button"
                     onClick={() => onStepClick?.(id)}
-                    className={`w-full rounded-lg px-0.5 py-1 transition hover:bg-slate-900/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C8C8C]/40 ${active ? "ring-1 ring-[#1C8C8C]/25" : ""} ${skipped ? "ring-1 ring-red-500/25" : ""}`}
+                    className={`w-full rounded-lg px-0.5 py-1 transition hover:bg-slate-900/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 ${active ? "ring-2 ring-blue-500/35" : ""} ${skipped ? "ring-1 ring-red-500/25" : ""}`}
                   >
                     {Inner}
                   </button>
                 ) : (
                   <div
-                    className={`rounded-lg px-0.5 py-1 ${active ? "ring-1 ring-[#1C8C8C]/20" : ""} ${skipped ? "ring-1 ring-red-500/20" : ""}`}
+                    className={`rounded-lg px-0.5 py-1 ${active ? "ring-1 ring-slate-600/30" : ""} ${skipped ? "ring-1 ring-red-500/20" : ""}`}
                   >
                     {Inner}
                   </div>
@@ -147,7 +145,7 @@ export function VictimFunnelStepper({
     <nav aria-label={ariaLabel} className="w-full space-y-3">
       <div className="flex items-end justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</p>
-        <p className="text-xs font-medium text-emerald-400/90 tabular-nums">
+        <p className="text-xs font-medium text-slate-400 tabular-nums">
           {doneCount}/3 {doneCount === 3 ? "✓" : ""}
         </p>
       </div>
@@ -164,17 +162,17 @@ export function VictimFunnelStepper({
           const surface = skipped
             ? "border-red-500/45 bg-red-950/25 shadow-[0_0_0_1px_rgba(239,68,68,0.15)]"
             : state === "current"
-              ? "border-sky-500/50 bg-sky-950/30 shadow-[0_0_0_1px_rgba(56,189,248,0.15)]"
+              ? "border-blue-500/50 bg-slate-900/95 shadow-[0_0_20px_-4px_rgba(59,130,246,0.35)] ring-1 ring-blue-500/30"
               : state === "complete"
-                ? "border-emerald-600/45 bg-emerald-950/28"
+                ? "border-emerald-400/50 bg-emerald-500/15 shadow-[0_0_24px_-6px_rgba(52,211,153,0.35),0_0_0_1px_rgba(52,211,153,0.2)]"
                 : "border-dashed border-slate-600/70 bg-slate-950/50 opacity-95";
 
           const badge = skipped
             ? "border-red-400/70 bg-red-600/25 text-red-100"
             : state === "complete"
-              ? "border-emerald-400/70 bg-emerald-500/20 text-emerald-200"
+              ? "border-emerald-200/80 bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-[0_0_12px_rgba(52,211,153,0.4)]"
               : state === "current"
-                ? "border-sky-400/70 bg-sky-600/20 text-sky-50"
+                ? "border-0 bg-gradient-to-b from-blue-500 to-blue-600 text-white shadow-[0_4px_14px_rgba(59,130,246,0.45)] ring-2 ring-blue-400/50"
                 : "border-dashed border-slate-500 bg-slate-900/70 text-slate-500";
 
           const clickable =
@@ -192,10 +190,10 @@ export function VictimFunnelStepper({
                 className={`text-[11px] font-medium leading-snug ${
                   skipped
                     ? "text-red-200/90"
-                    : state === "complete"
-                      ? "text-emerald-200/90"
+                      : state === "complete"
+                      ? "text-emerald-100 font-semibold"
                       : state === "current"
-                        ? "text-sky-100"
+                        ? "text-blue-100 font-semibold"
                         : "text-slate-500"
                 }`}
               >
@@ -210,7 +208,7 @@ export function VictimFunnelStepper({
                 <button
                   type="button"
                   onClick={() => onStepClick?.(id)}
-                  className="w-full text-left transition hover:bg-slate-900/30 rounded-lg -m-1 p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1C8C8C]/50"
+                  className="w-full text-left transition hover:bg-slate-900/30 rounded-lg -m-1 p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/50"
                 >
                   {Inner}
                 </button>

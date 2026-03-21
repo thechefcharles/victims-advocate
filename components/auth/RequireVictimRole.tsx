@@ -29,7 +29,7 @@ export default function RequireVictimRole({ children }: { children: React.ReactN
 
   if (loading || !user || role !== "victim" || isAdmin) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <p className="text-sm text-slate-400">Loading…</p>
       </main>
     );

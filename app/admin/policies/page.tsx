@@ -149,7 +149,7 @@ export default function AdminPoliciesPage() {
           <p className="text-xs text-slate-500">Create a draft, then activate when ready.</p>
           <a
             href="#admin-policy-create"
-            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shrink-0"
+            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shrink-0"
           >
             Create
           </a>
@@ -211,7 +211,7 @@ export default function AdminPoliciesPage() {
             <button
               type="submit"
               disabled={creating || !form.version.trim() || !form.title.trim()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {creating ? "Creating…" : "Create"}
             </button>

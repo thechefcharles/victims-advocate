@@ -94,7 +94,7 @@ function ConsentContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <p className="text-slate-400">Loading…</p>
       </main>
     );
@@ -103,14 +103,14 @@ function ConsentContent() {
   if (missing.length === 0) {
     router.replace(searchParams.get("redirect") || "/dashboard");
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
         <p className="text-slate-400">Redirecting…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-10">
       <div className="max-w-2xl mx-auto space-y-6">
         <header>
           <h1 className="text-2xl font-semibold text-slate-100">Required agreements</h1>
@@ -158,7 +158,7 @@ function ConsentContent() {
             type="button"
             onClick={handleAcceptAll}
             disabled={!allAccepted || submitting}
-            className="rounded-lg bg-[#1C8C8C] px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           >
             {submitting ? "Saving…" : "I accept and continue"}
           </button>
@@ -178,7 +178,7 @@ export default function ConsentPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center">
+        <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
           <p className="text-slate-400">Loading…</p>
         </main>
       }

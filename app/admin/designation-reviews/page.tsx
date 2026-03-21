@@ -353,7 +353,7 @@ export default function AdminDesignationReviewsPage() {
                         setResolution("recompute_designation");
                         orgResponseRef.current?.focus();
                       }}
-                      className="rounded-lg border border-teal-700/50 bg-teal-950/30 px-3 py-2 text-xs font-medium text-teal-200 hover:bg-teal-950/50 disabled:opacity-40"
+                      className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600 disabled:opacity-40"
                     >
                       Recompute Designation
                     </button>
@@ -412,7 +412,7 @@ export default function AdminDesignationReviewsPage() {
                   type="button"
                   disabled={submitting || !isOpenStatus(selected.status)}
                   onClick={() => void submitResolution()}
-                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-medium text-white hover:bg-teal-500 disabled:opacity-50"
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
                 >
                   {submitting ? "Updating…" : "Update"}
                 </button>

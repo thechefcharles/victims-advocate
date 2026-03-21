@@ -108,13 +108,13 @@ export default function AdminOrgsPage() {
             </Link>
             <Link
               href="/admin/grading"
-              className="inline-flex items-center rounded-lg border border-violet-500/50 bg-violet-600/25 px-3 py-1.5 text-sm font-semibold text-violet-100 hover:bg-violet-600/40"
+              className="inline-flex items-center rounded-lg bg-slate-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-slate-600"
             >
               CBO grading
             </Link>
             <Link
               href="/admin/designations"
-              className="text-sm text-teal-400 hover:text-teal-200"
+              className="text-sm text-slate-400 hover:text-white"
             >
               Designations
             </Link>
@@ -127,14 +127,14 @@ export default function AdminOrgsPage() {
           </div>
         </header>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-900/40 bg-violet-950/30 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
           <p className="text-sm text-slate-300 flex-1 min-w-[200px]">
-            Run internal <strong className="text-violet-200">CBO quality grading</strong> per org
+            Run internal <strong className="text-white">CBO quality grading</strong> per org
             (scores stay admin-only; designations use this behind the scenes).
           </p>
           <Link
             href="/admin/grading"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 shadow-sm"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 shadow-sm"
           >
             Review
           </Link>
@@ -167,7 +167,7 @@ export default function AdminOrgsPage() {
             <button
               type="submit"
               disabled={submitting || !createName.trim()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create"}
             </button>

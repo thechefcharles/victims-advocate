@@ -264,7 +264,7 @@ export default function AdminKnowledgePage() {
           {!editingId && (
             <a
               href="#admin-knowledge-create"
-              className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 shrink-0"
+              className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shrink-0"
             >
               Create
             </a>
@@ -328,7 +328,7 @@ export default function AdminKnowledgePage() {
               <button
                 type="submit"
                 disabled={creating}
-                className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+                className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {creating ? "Creating…" : "Create"}
               </button>
@@ -356,7 +356,7 @@ export default function AdminKnowledgePage() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
+                  className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500"
                 >
                   Update
                 </button>
@@ -408,7 +408,7 @@ export default function AdminKnowledgePage() {
                       <button
                         type="button"
                         onClick={() => handleActivate(entry.id)}
-                        className="rounded bg-emerald-600 px-2 py-1 text-xs text-white hover:bg-emerald-500"
+                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-500"
                       >
                         Activate
                       </button>

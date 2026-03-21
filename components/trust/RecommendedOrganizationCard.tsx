@@ -104,7 +104,7 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
             <p className="text-[10px] pt-0.5">
               <Link
                 href={TRUST_LINK_HREF.designations}
-                className="text-violet-400/90 hover:underline"
+                className="text-slate-300 hover:text-white underline"
                 target="_blank"
                 rel="noreferrer"
               >

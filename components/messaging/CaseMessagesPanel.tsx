@@ -172,7 +172,7 @@ export function CaseMessagesPanel({
           type="button"
           onClick={loadThread}
           disabled={loading}
-          className="text-[11px] rounded-full border border-slate-700 px-3 py-1.5 hover:bg-slate-900/60 disabled:opacity-60"
+          className="text-[11px] rounded-full bg-slate-700 px-3 py-1.5 font-medium text-white hover:bg-slate-600 disabled:opacity-60"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
@@ -180,7 +180,7 @@ export function CaseMessagesPanel({
 
       {err && <div className="text-[11px] text-red-300">{err}</div>}
 
-      <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 max-h-64 overflow-y-auto space-y-3">
+      <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 max-h-64 overflow-y-auto space-y-3">
         {messages.length === 0 ? (
           <div className="text-[11px] text-slate-500">
             {emptyStateText ??
@@ -213,13 +213,13 @@ export function CaseMessagesPanel({
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Write a message…"
           rows={2}
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/60 focus:border-emerald-500/60"
+          className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/60 focus:border-blue-500/60"
         />
         <button
           type="button"
           onClick={send}
           disabled={loading || !draft.trim()}
-          className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-60"
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
         >
           Send
         </button>

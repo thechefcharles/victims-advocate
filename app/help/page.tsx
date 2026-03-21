@@ -32,7 +32,7 @@ const HUB_LINKS = [
 
 export default function HelpPage() {
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 sm:px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-10">
         <header className="space-y-2 text-center sm:text-left">
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Support</p>

@@ -11,15 +11,15 @@ export const APP_PAGE_CONTAINER = "max-w-5xl mx-auto space-y-6";
 
 /** Primary card: sections, panels */
 export const APP_CARD =
-  "rounded-2xl border border-slate-800 bg-slate-900/50 p-5";
+  "rounded-2xl border border-slate-700 bg-slate-900 p-5";
 
 /** Dense card (stats, small panels) */
 export const APP_CARD_COMPACT =
-  "rounded-xl border border-slate-800 bg-slate-900/60 p-4";
+  "rounded-xl border border-slate-700 bg-slate-900 p-4";
 
 /** Table wrapper with horizontal scroll on small screens */
 export const APP_TABLE_WRAP =
-  "rounded-2xl border border-slate-800 bg-slate-900/50 overflow-x-auto";
+  "rounded-2xl border border-slate-700 bg-slate-900 overflow-x-auto";
 
 export const APP_TABLE = "w-full border-collapse text-xs min-w-[640px]";
 

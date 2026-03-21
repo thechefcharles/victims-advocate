@@ -120,7 +120,7 @@ function ConnectAdvocateForm() {
           <button
             type="submit"
             disabled={loading || !advocateEmail.trim()}
-            className="w-full rounded-lg bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? "Sending…" : caseId ? "Send case connection request" : "Send connection request"}
           </button>

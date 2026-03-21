@@ -12,15 +12,15 @@ import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
 import { ROUTES } from "@/lib/routes/pageRegistry";
 
-/** Primary nav — pill (victim core + anonymous entry points + advocate workspace) */
+/** Nav pills — secondary (slate); avoid competing with page primary CTAs */
 const NAV_PRIMARY =
-  "rounded-full border border-slate-600 bg-slate-900/50 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-800/60 transition";
+  "rounded-full border border-slate-700 bg-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600 transition";
 /** Secondary — plain text (browse, utilities) */
 const NAV_TEXT =
   "text-xs text-slate-300 hover:text-slate-100 px-1.5 py-1 rounded-md hover:bg-slate-900/40 transition";
-/** Quick exit — compact red X (top right, next to notifications) */
+/** Quick exit — compact rose X (top right; distinct from primary actions) */
 const NAV_QUICK_EXIT =
-  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-600/70 bg-red-950/50 text-red-200 hover:bg-red-900/55 hover:text-red-50 disabled:opacity-50 transition";
+  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-500/70 bg-rose-950/50 text-rose-100 hover:bg-rose-900/55 hover:text-white disabled:opacity-50 transition";
 
 export default function TopNav() {
   const router = useRouter();
@@ -140,11 +140,11 @@ export default function TopNav() {
   );
 
   return (
-    <header className="border-b border-slate-800 bg-gradient-to-b from-[#0A2239] to-[#020b16]/95">
+    <header className="border-b border-slate-800 bg-slate-950">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2">
           <Link href={ROUTES.marketingLanding} className="flex shrink-0 items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#1C8C8C] text-xs font-bold tracking-wide text-slate-950">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold tracking-wide text-white">
               N
             </div>
             <div className="text-sm">
@@ -241,7 +241,7 @@ export default function TopNav() {
                 </button>
                 {accountMenuOpen && (
                   <div
-                    className="absolute right-0 top-[calc(100%+6px)] z-[100] min-w-[12rem] overflow-hidden rounded-xl border border-slate-600 bg-[#0c1e32] py-1 shadow-xl shadow-black/40"
+                    className="absolute right-0 top-[calc(100%+6px)] z-[100] min-w-[12rem] overflow-hidden rounded-xl border border-slate-700 bg-slate-900 py-1 shadow-xl shadow-black/40"
                     role="menu"
                   >
                     <div className="border-b border-slate-700/80 px-3 py-2">
@@ -323,7 +323,7 @@ export default function TopNav() {
               >
                 {quickExitLoading ? (
                   <span
-                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-red-300/80 border-t-transparent"
+                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-rose-300/80 border-t-transparent"
                     aria-hidden
                   />
                 ) : (

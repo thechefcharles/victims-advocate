@@ -148,7 +148,7 @@ export default function AdminEcosystemPage() {
               </Link>
               <Link
                 href="/admin/grading"
-                className="inline-flex items-center rounded-md border border-violet-500/50 bg-violet-600/20 px-2.5 py-1 text-violet-200 hover:bg-violet-600/35 text-sm"
+                className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
               >
                 Review
               </Link>
@@ -243,7 +243,7 @@ export default function AdminEcosystemPage() {
             type="button"
             onClick={() => load()}
             disabled={loading}
-            className="text-xs rounded-lg border border-teal-600 bg-teal-900/30 px-3 py-1.5 text-teal-200 hover:bg-teal-900/50 disabled:opacity-50"
+            className="text-xs rounded-lg bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-600 disabled:opacity-50"
           >
             Refresh
           </button>

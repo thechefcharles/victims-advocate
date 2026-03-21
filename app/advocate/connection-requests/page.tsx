@@ -145,7 +145,7 @@ export default function AdvocateConnectionRequestsPage() {
                     type="button"
                     onClick={() => handleAccept(r.id)}
                     disabled={actionId !== null}
-                    className="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-medium text-slate-950 hover:bg-emerald-400 disabled:opacity-50"
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
                   >
                     {actionId === r.id ? "…" : "Accept"}
                   </button>

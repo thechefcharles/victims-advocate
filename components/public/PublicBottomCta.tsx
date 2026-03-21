@@ -36,7 +36,7 @@ export function PublicBottomCta() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center flex-wrap">
           <Link
             href={getDashboardPath(me)}
-            className="inline-flex items-center justify-center rounded-xl bg-[#1C8C8C] px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition"
           >
             {getWorkspaceCtaLabel(me)}
           </Link>
@@ -57,7 +57,7 @@ export function PublicBottomCta() {
       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center flex-wrap">
         <Link
           href={ROUTES.compensationHub}
-          className="inline-flex items-center justify-center rounded-xl bg-[#1C8C8C] px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition"
         >
           Get Help Now
         </Link>

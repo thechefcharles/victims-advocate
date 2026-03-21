@@ -79,14 +79,14 @@ export default function OrganizationSetupPage() {
 
   if (orgId) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
         <p className="text-sm text-slate-400">Redirecting…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
       <div className="max-w-md mx-auto space-y-6">
         <Link
           href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
@@ -127,7 +127,7 @@ export default function OrganizationSetupPage() {
           <button
             type="submit"
             disabled={loading || catalogId == null}
-            className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
           >
             {loading ? "Creating…" : "Create organization"}
           </button>

@@ -101,7 +101,7 @@ export default function SignupForm() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-10">
       <form
         onSubmit={onSubmit}
         className="max-w-md mx-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4"
@@ -215,7 +215,7 @@ export default function SignupForm() {
         )}
 
         <button
-          className="w-full rounded-lg bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading || !email.trim() || !passwordValidation.valid || !agreeTerms || !agreeWaiver || !agreePrototype}
           type="submit"
         >

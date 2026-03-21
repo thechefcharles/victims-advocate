@@ -539,7 +539,7 @@ export default function AdvocateOrgPage() {
               onClick={() => setActiveTab(t.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
                 activeTab === t.id
-                  ? "bg-teal-600/30 text-teal-100 border border-teal-500/40"
+                  ? "bg-blue-900/40 text-blue-100 border border-blue-500/40"
                   : "bg-slate-900/70 text-slate-400 border border-slate-700/80 hover:border-slate-600"
               }`}
             >
@@ -871,7 +871,7 @@ export default function AdvocateOrgPage() {
             <button
               type="submit"
               disabled={submitting || !inviteEmail.trim()}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create invite"}
             </button>
@@ -1078,7 +1078,7 @@ export default function AdvocateOrgPage() {
               <button
                 type="submit"
                 disabled={reviewSubmitting}
-                className="rounded bg-teal-700 px-3 py-1.5 text-white hover:bg-teal-600 disabled:opacity-50"
+                className="rounded bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-600 disabled:opacity-50"
               >
                 {reviewSubmitting ? "Submitting…" : "Submit request"}
               </button>

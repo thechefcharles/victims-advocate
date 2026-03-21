@@ -42,7 +42,7 @@ export default function MarketingLandingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50">
+    <main className="min-h-screen bg-slate-950 text-slate-50">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20 space-y-16 sm:space-y-20">
         {/* Hero — minimal */}
         <section className="text-center space-y-6">
@@ -62,7 +62,7 @@ export default function MarketingLandingPage() {
             ) : user ? (
               <Link
                 href={getDashboardPath(me)}
-                className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+                className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition"
               >
                 {t("home.hero.ctaMyDashboard")}
               </Link>
@@ -70,7 +70,7 @@ export default function MarketingLandingPage() {
               <>
                 <Link
                   href={ROUTES.signup}
-                  className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-[#1C8C8C] px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] transition"
+                  className="inline-flex w-full max-w-xs items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-500 transition"
                 >
                   {t("home.hero.ctaCreateAccount")}
                 </Link>
@@ -114,7 +114,7 @@ export default function MarketingLandingPage() {
               onChange={(e) => setNewsletterEmail(e.target.value)}
               placeholder={t("home.newsletter.placeholder")}
               required
-              className="flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C] focus:border-transparent"
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               disabled={newsletterStatus === "loading"}
             />
             <button
@@ -138,7 +138,7 @@ export default function MarketingLandingPage() {
         </section>
       </div>
 
-      <footer className="border-t border-slate-800 bg-[#020813] mt-8">
+      <footer className="border-t border-slate-800 bg-slate-950 mt-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} NxtStps. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">

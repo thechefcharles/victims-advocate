@@ -74,11 +74,11 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
   }, [refetch]);
 
   return (
-    <section className="rounded-2xl border border-teal-800/60 bg-teal-950/20 p-5 space-y-4">
+    <section className="rounded-2xl border border-slate-700 bg-slate-900 p-5 space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h2 className="text-sm font-semibold text-teal-100">My clients</h2>
-          <p className="text-[11px] text-teal-200/60 mt-0.5">
+          <h2 className="text-sm font-semibold text-white">My clients</h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">
             Survivors who have connected or invited you to their cases
           </p>
         </div>
@@ -86,24 +86,24 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
           type="button"
           onClick={refetch}
           disabled={loading}
-          className="text-[11px] rounded-full border border-teal-600/50 px-3 py-1.5 text-teal-200 hover:bg-teal-900/40 disabled:opacity-60"
+          className="text-[11px] rounded-full bg-slate-700 px-3 py-1.5 font-medium text-white hover:bg-slate-600 disabled:opacity-60"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
       </div>
 
       {email && !hideSignedInLine && (
-        <p className="text-[11px] text-teal-200/50">
-          Signed in as <span className="text-teal-100/90">{email}</span>
+        <p className="text-[11px] text-slate-500">
+          Signed in as <span className="text-slate-300">{email}</span>
         </p>
       )}
 
       {loading ? (
-        <p className="text-[11px] text-teal-200/50">Loading…</p>
+        <p className="text-[11px] text-slate-500">Loading…</p>
       ) : err ? (
         <p className="text-[11px] text-red-300">{err}</p>
       ) : clients.length === 0 ? (
-        <p className="text-[11px] text-teal-200/50">
+        <p className="text-[11px] text-slate-500">
           No clients yet. Survivors can connect with you from the compensation page, or invite you to their case.
         </p>
       ) : (
@@ -112,18 +112,18 @@ export function AdvocateClientsList({ email, token, hideSignedInLine }: Props) {
             <Link
               key={c.client_user_id}
               href={`/dashboard/clients/${c.client_user_id}`}
-              className="rounded-xl border border-teal-800/50 bg-[#061a1c]/80 px-4 py-3 hover:border-teal-500/40 hover:bg-[#082428]/90 transition"
+              className="rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 hover:bg-slate-800 transition"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-1">
-                  <div className="text-xs font-semibold text-teal-50">{c.display_name}</div>
-                  <div className="text-[11px] text-teal-200/55">
+                  <div className="text-xs font-semibold text-white">{c.display_name}</div>
+                  <div className="text-[11px] text-slate-400">
                     {c.case_count === 0
                       ? "Connected (no case yet)"
                       : `${c.case_count} case(s) • Latest: ${c.latest_case_created_at ? new Date(c.latest_case_created_at).toLocaleString() : "—"}`}
                   </div>
                 </div>
-                <div className="text-[11px] text-teal-300/80">Open →</div>
+                <div className="text-[11px] text-slate-300">Open →</div>
               </div>
             </Link>
           ))}

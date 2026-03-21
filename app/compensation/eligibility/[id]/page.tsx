@@ -161,7 +161,7 @@ export default function EligibilityCheckPage() {
 
   if (!caseId) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-red-300">Invalid case</div>
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
           ← Back to dashboard
@@ -172,7 +172,7 @@ export default function EligibilityCheckPage() {
 
   if (!authLoading && !accessToken) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-slate-300">Please sign in to continue the eligibility check for this case.</p>
           <div className="flex flex-wrap gap-3">
@@ -191,7 +191,7 @@ export default function EligibilityCheckPage() {
 
   if (authLoading || (stateCode === null && !loadErr)) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-slate-400">Loading…</div>
         <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
           ← Back to dashboard
@@ -202,7 +202,7 @@ export default function EligibilityCheckPage() {
 
   if (loadErr && !result) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-red-300">{loadErr}</p>
           <div className="flex flex-wrap gap-3">
@@ -224,7 +224,7 @@ export default function EligibilityCheckPage() {
     const intakeHref = `/compensation/intake?case=${caseId}`;
 
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto space-y-6">
           <Link
             href="/dashboard"
@@ -246,7 +246,7 @@ export default function EligibilityCheckPage() {
               </p>
               <Link
                 href={intakeHref}
-                className="inline-block rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                className="inline-block rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
               >
                 {t(`${prefix}.resultEligible.cta`)}
               </Link>
@@ -272,7 +272,7 @@ export default function EligibilityCheckPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={intakeHref}
-                  className="rounded-full bg-[#1C8C8C] px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                  className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
                 >
                   {t(`${prefix}.resultNeedsAttention.ctaReady`)}
                 </Link>
@@ -331,7 +331,7 @@ export default function EligibilityCheckPage() {
   const totalNum = QUESTIONS.length;
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <div className="max-w-xl mx-auto space-y-6">
         <Link
           href="/dashboard"
@@ -806,7 +806,7 @@ export default function EligibilityCheckPage() {
               type="button"
               onClick={handleNext}
               disabled={!canProceed() || saving}
-              className="rounded-full bg-[#1C8C8C] px-6 py-2 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+              className="rounded-full bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
             >
               {saving ? "Saving…" : step < QUESTIONS.length - 1 ? "Next" : "See results"}
             </button>

@@ -84,7 +84,7 @@ function safeRemoveItem(key: string) {
 function PrimaryActionSkeleton() {
   return (
     <div
-      className={`${APP_CARD} animate-pulse rounded-2xl border border-emerald-500/20 bg-slate-950/60 p-6 sm:p-7 space-y-4`}
+      className={`${APP_CARD} animate-pulse rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-7 space-y-4`}
       aria-hidden
     >
       <div className="h-3 w-40 rounded bg-slate-700/80" />
@@ -369,17 +369,6 @@ export default function VictimDashboard({
     };
   }, [token, focusCaseId]);
 
-  const handleProgressStepClick = useCallback(
-    (step: FunnelStepId) => {
-      if (!focusCaseId || !focusCase) return;
-      /** Eligibility is part of the application flow — all steps open intake for this case. */
-      if (step === "eligibility" || step === "application" || step === "support") {
-        router.push(`/compensation/intake?case=${encodeURIComponent(focusCaseId)}`);
-      }
-    },
-    [focusCaseId, focusCase, router]
-  );
-
   const closeApplyModal = useCallback(() => {
     setApplyModalOpen(false);
     setApplyModalMode(null);
@@ -392,6 +381,28 @@ export default function VictimDashboard({
     setPendingState("IL");
     setApplyModalOpen(true);
   }, []);
+
+  const handleProgressStepClick = useCallback(
+    (step: FunnelStepId) => {
+      if (step === "eligibility") {
+        if (cases.length === 0 || !focusCaseId || !focusCase) {
+          openApplyModal();
+          return;
+        }
+        if (applicationNotStarted) {
+          openApplyModal();
+          return;
+        }
+        router.push(`/compensation/eligibility/${encodeURIComponent(focusCaseId)}`);
+        return;
+      }
+      if (!focusCaseId) return;
+      if (step === "application" || step === "support") {
+        router.push(`/compensation/intake?case=${encodeURIComponent(focusCaseId)}`);
+      }
+    },
+    [cases.length, focusCaseId, focusCase, applicationNotStarted, router, openApplyModal]
+  );
 
   /** Creates an empty draft case, selects it, and opens rename — program state is chosen only when user clicks Apply now. */
   const handleCreateBlankCaseOnDashboard = useCallback(async () => {
@@ -684,7 +695,7 @@ export default function VictimDashboard({
           ? t("victimDashboard.supportMatchOne")
           : tf("victimDashboard.supportMatchMany", { count: matchCount });
 
-  const primaryCtaClass = `inline-flex min-h-[3rem] items-center justify-center rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] px-8 py-3 text-base font-bold text-slate-950 shadow-md shadow-emerald-900/30 hover:brightness-110 disabled:opacity-50`;
+  const primaryCtaClass = `inline-flex min-h-[3rem] items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-bold text-white shadow-md shadow-blue-950/30 hover:bg-blue-500 disabled:opacity-50`;
 
   const eligibilitySkipped = Boolean(
     focusCase && getEligibilitySkippedFromApplication(focusCase.application)
@@ -762,7 +773,7 @@ export default function VictimDashboard({
                           value={focusCaseId ?? ""}
                           onChange={(e) => selectCase(e.target.value)}
                           aria-labelledby="victim-case-select-label"
-                          className="max-w-[min(100%,15rem)] rounded-md border border-slate-700/40 bg-slate-950/50 py-1.5 pl-2 pr-7 text-xs text-slate-200 shadow-sm focus:outline-none focus:ring-1 focus:ring-[#1C8C8C]/35"
+                          className="max-w-[min(100%,15rem)] rounded-md border border-slate-700/40 bg-slate-950/50 py-1.5 pl-2 pr-7 text-xs text-slate-200 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500/35"
                         >
                           {cases.map((c) => (
                             <option key={c.id} value={c.id}>
@@ -806,7 +817,7 @@ export default function VictimDashboard({
                         type="button"
                         onClick={() => void handleCreateBlankCaseOnDashboard()}
                         disabled={creatingCase}
-                        className="shrink-0 rounded-md border border-emerald-600/45 bg-emerald-950/35 px-2.5 py-1.5 text-[11px] font-semibold text-emerald-100/95 shadow-sm hover:bg-emerald-950/55 disabled:opacity-50"
+                        className="shrink-0 rounded-md bg-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-600 disabled:opacity-50"
                       >
                         {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.newCaseButton")}
                       </button>
@@ -822,7 +833,7 @@ export default function VictimDashboard({
               className={`rounded-xl px-3 py-3 sm:px-4 ${
                 eligibilitySkipped
                   ? "border border-red-500/35 bg-red-950/20 shadow-[0_0_24px_-6px_rgba(239,68,68,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]"
-                  : "border border-emerald-400/45 bg-gradient-to-br from-emerald-950/25 to-slate-950/70 shadow-[0_0_28px_-6px_rgba(16,185,129,0.22),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                  : "border border-slate-700 bg-slate-900 shadow-sm shadow-black/20"
               }`}
             >
               <VictimFunnelStepper
@@ -852,7 +863,7 @@ export default function VictimDashboard({
                       {showNextStepConnectAdvocate ? (
                         <Link
                           href={connectAdvocateHref}
-                          className="inline-flex items-center justify-center rounded-full border border-violet-500/35 bg-violet-950/30 px-3 py-1.5 text-[11px] font-semibold text-violet-200/95 shadow-sm shadow-violet-950/20 transition hover:border-violet-400/45 hover:bg-violet-950/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+                          className="inline-flex items-center justify-center rounded-full bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
                         >
                           {t("victimDashboard.getHelp.connectAdvocate")}
                         </Link>
@@ -932,7 +943,7 @@ export default function VictimDashboard({
                                 <Link
                                   href={manageAdvocatePath}
                                   title={t("victimDashboard.supportTeamEditAdvocateTitle")}
-                                  className="font-medium text-violet-300/95 underline decoration-violet-500/45 underline-offset-2 hover:text-violet-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 rounded-sm"
+                                  className="font-medium text-blue-400 underline decoration-blue-500/45 underline-offset-2 hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 rounded-sm"
                                 >
                                   {a.label}
                                 </Link>
@@ -1031,7 +1042,7 @@ export default function VictimDashboard({
                       type="button"
                       disabled={creatingCase}
                       onClick={() => pickProgramState("IL")}
-                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-[#1C8C8C]/60 hover:bg-slate-900 disabled:opacity-50"
+                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-500/60 hover:bg-slate-900 disabled:opacity-50"
                     >
                       {t("victimDashboard.stateIL")}
                     </button>
@@ -1039,7 +1050,7 @@ export default function VictimDashboard({
                       type="button"
                       disabled={creatingCase}
                       onClick={() => pickProgramState("IN")}
-                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-[#1C8C8C]/60 hover:bg-slate-900 disabled:opacity-50"
+                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-500/60 hover:bg-slate-900 disabled:opacity-50"
                     >
                       {t("victimDashboard.stateIN")}
                     </button>
@@ -1067,7 +1078,7 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => void handleStartNew(false)}
-                    className="w-full rounded-full bg-[#1C8C8C] px-4 py-3 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3] disabled:opacity-50"
+                    className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
                   >
                     {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.continueToEligibility")}
                   </button>
@@ -1114,7 +1125,7 @@ export default function VictimDashboard({
                   value={editNameValue}
                   onChange={(e) => setEditNameValue(e.target.value)}
                   placeholder={t("victimDashboard.caseNamePlaceholder")}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1C8C8C]/40"
+                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                   autoFocus
                 />
                 <div className="flex flex-wrap justify-end gap-2 pt-1">
@@ -1127,7 +1138,7 @@ export default function VictimDashboard({
                   </button>
                   <button
                     type="submit"
-                    className="rounded-full bg-[#1C8C8C] px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                    className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
                   >
                     {t("victimDashboard.save")}
                   </button>
@@ -1174,7 +1185,7 @@ export default function VictimDashboard({
                   type="button"
                   disabled={deleteBusy}
                   onClick={() => void confirmDeleteCase()}
-                  className="rounded-full bg-red-900/80 px-4 py-2 text-xs font-semibold text-red-100 hover:bg-red-800/90 disabled:opacity-50"
+                  className="rounded-full bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
                 >
                   {t("victimDashboard.deleteModalConfirm")}
                 </button>

@@ -184,14 +184,14 @@ export default function AdvocateMessagesPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-3xl mx-auto space-y-6">
         <header className="space-y-2">
           <Link
@@ -230,7 +230,7 @@ export default function AdvocateMessagesPage() {
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link
                 href={ROUTES.advocateHome}
-                className="inline-flex items-center justify-center rounded-full bg-[#1C8C8C] px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-[#21a3a3]"
+                className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
               >
                 Back to Command Center
               </Link>

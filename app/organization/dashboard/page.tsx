@@ -96,14 +96,14 @@ export default function OrganizationDashboardPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
         <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#020b16] text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
       <div className="max-w-4xl mx-auto space-y-10">
         <header>
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Organization</p>
