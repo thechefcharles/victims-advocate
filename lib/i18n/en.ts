@@ -179,13 +179,41 @@ export const en: I18nDict = {
       connectAdvocate: "Connect With An Advocate",
       findOrganizations: "Find Organizations Near You",
       hintAdvocate: "Secure messaging and requests in a few steps.",
-      hintOrganizations: "Map, distance, and program scores—coming soon.",
+      hintOrganizations: "Map and distance sorting when you share location.",
     },
     findOrganizationsPage: {
       title: "Organizations Near You",
-      body:
-        "We’re building a map with your location so you can see nearby victim-service organizations and compare program details. Check back soon.",
+      subtitle:
+        "Explore victim-service organizations in your area. Your exact location stays on this device—we sort distances here, not on our servers.",
       back: "← Back To My Dashboard",
+      mapIntro:
+        "Use the map to see organizations near you. Tap the button below only when you are ready to share your location with this browser session.",
+      shareLocation: "Share my location",
+      sharing: "Getting location…",
+      tryAgain: "Try again",
+      locationDenied:
+        "Location access was blocked. You can enable it in your browser settings and try again.",
+      locationUnavailable:
+        "We couldn’t read your location. You can try again, or check Wi‑Fi/location settings on your device.",
+      locationTimeout:
+        "Location timed out. Try again—moving near a window or turning on Wi‑Fi often helps.",
+      positionUnavailable:
+        "Your device couldn’t determine a position right now. Try again in a moment or enable location for this site in settings.",
+      locationNotSupported:
+        "This browser doesn’t support location, or it’s turned off. Try another browser or device.",
+      locationNeedsHttps:
+        "Location only works on a secure page (HTTPS). Open this site with https:// or contact support.",
+      yourLocation: "Your approximate location",
+      approximateNote: "Approximate pin",
+      milesAway: "mi away",
+      accepting: "Accepting new clients",
+      notAccepting: "Not accepting new clients",
+      capacity: "Capacity",
+      noOrgs:
+        "There aren’t any organizations in the directory yet. New partners are added over time—please check back later.",
+      loadError: "We couldn’t load organizations. Please try again.",
+      privacyNote:
+        "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
     },
     caseActivityForCase: "For this case",
     caseDetailsHeading: "Case Details",

@@ -181,8 +181,29 @@ export type I18nDict = {
     };
     findOrganizationsPage: {
       title: string;
-      body: string;
+      /** Short intro under the page title */
+      subtitle: string;
       back: string;
+      mapIntro: string;
+      shareLocation: string;
+      sharing: string;
+      tryAgain: string;
+      locationDenied: string;
+      /** Generic fallback when the browser doesn’t give a specific code */
+      locationUnavailable: string;
+      locationTimeout: string;
+      positionUnavailable: string;
+      locationNotSupported: string;
+      locationNeedsHttps: string;
+      yourLocation: string;
+      approximateNote: string;
+      milesAway: string;
+      accepting: string;
+      notAccepting: string;
+      capacity: string;
+      noOrgs: string;
+      loadError: string;
+      privacyNote: string;
     };
     /** Gamified 3-step strip + apply flow */
     progressTitle: string;

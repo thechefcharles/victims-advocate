@@ -180,13 +180,41 @@ export const es: I18nDict = {
             connectAdvocate: "Conectar con un/a defensor/a",
             findOrganizations: "Organizaciones cerca de ti",
             hintAdvocate: "Mensajes seguros y solicitudes en pocos pasos.",
-            hintOrganizations: "Mapa, distancia y puntuaciones—pronto.",
+            hintOrganizations: "Mapa y orden por distancia si compartes ubicación.",
         },
         findOrganizationsPage: {
             title: "Organizaciones cerca de ti",
-            body:
-                "Estamos construyendo un mapa con tu ubicación para ver organizaciones de servicios a víctimas cercanas y comparar programas. Vuelve pronto.",
+            subtitle:
+                "Explora organizaciones de servicios a víctimas en tu zona. Tu ubicación exacta permanece en este dispositivo: ordenamos distancias aquí, no en nuestros servidores.",
             back: "← Volver a Mi panel",
+            mapIntro:
+                "Usa el mapa para ver organizaciones cerca de ti. Toca el botón solo cuando quieras compartir tu ubicación en esta sesión del navegador.",
+            shareLocation: "Compartir mi ubicación",
+            sharing: "Obteniendo ubicación…",
+            tryAgain: "Intentar de nuevo",
+            locationDenied:
+                "Se bloqueó el acceso a la ubicación. Puedes activarlo en la configuración del navegador e intentar otra vez.",
+            locationUnavailable:
+                "No pudimos leer tu ubicación. Puedes intentar de nuevo o revisar Wi‑Fi y la ubicación en tu dispositivo.",
+            locationTimeout:
+                "Se agotó el tiempo para la ubicación. Inténtalo de nuevo; acercarte a una ventana o activar Wi‑Fi suele ayudar.",
+            positionUnavailable:
+                "Tu dispositivo no pudo fijar la posición ahora. Inténtalo en un momento o permite la ubicación para este sitio.",
+            locationNotSupported:
+                "Este navegador no admite ubicación o está desactivada. Prueba otro navegador o dispositivo.",
+            locationNeedsHttps:
+                "La ubicación solo funciona en una página segura (HTTPS). Abre el sitio con https:// o pide ayuda.",
+            yourLocation: "Tu ubicación aproximada",
+            approximateNote: "Ubicación aproximada",
+            milesAway: "mi de distancia",
+            accepting: "Acepta nuevos clientes",
+            notAccepting: "No acepta nuevos clientes",
+            capacity: "Capacidad",
+            noOrgs:
+                "Aún no hay organizaciones en el directorio. Se añaden socios nuevos con el tiempo—vuelve a intentarlo más tarde.",
+            loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
+            privacyNote:
+                "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
         },
         caseActivityForCase: "Para este caso",
         caseDetailsHeading: "Detalles Del Caso",
