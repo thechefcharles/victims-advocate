@@ -41,6 +41,20 @@ function parseOrgJoinRequest(n: Notification): { requestId: string } | null {
   return { requestId: rid };
 }
 
+function parseOrgRepJoinRequest(n: Notification): { requestId: string } | null {
+  if (n.type !== "org_rep_join_request") return null;
+  const m = n.metadata ?? {};
+  const ridRaw = m.request_id;
+  const rid =
+    typeof ridRaw === "string"
+      ? ridRaw
+      : ridRaw != null && String(ridRaw).length > 0
+        ? String(ridRaw)
+        : null;
+  if (!rid) return null;
+  return { requestId: rid };
+}
+
 function parseConnectionRequest(n: Notification): {
   requestId: string;
   victimName: string;
@@ -148,16 +162,20 @@ export default function NotificationsPage() {
   const handleOrgJoinDecision = async (
     notificationId: string,
     requestId: string,
-    decision: "approve" | "decline"
+    decision: "approve" | "decline",
+    isOrgRepRequest: boolean
   ) => {
     if (!accessToken) return;
     setUpdatingId(notificationId);
     setActionError(null);
     try {
+      const base = isOrgRepRequest
+        ? "/api/org/rep-join-requests"
+        : "/api/org/join-requests";
       const path =
         decision === "approve"
-          ? `/api/org/join-requests/${encodeURIComponent(requestId)}/approve`
-          : `/api/org/join-requests/${encodeURIComponent(requestId)}/decline`;
+          ? `${base}/${encodeURIComponent(requestId)}/approve`
+          : `${base}/${encodeURIComponent(requestId)}/decline`;
       const res = await fetch(path, {
         method: "POST",
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -270,11 +288,12 @@ export default function NotificationsPage() {
         {items.map((n) => {
           const connAdv = parseConnectionRequest(n);
           const orgJoin = parseOrgJoinRequest(n);
+          const orgRepJoin = parseOrgRepJoinRequest(n);
           const isRead = isNotificationRead(n);
           const isUnread = !isRead && String(n.status ?? "").toLowerCase() !== "dismissed";
           const isAdvocateConnection = connAdv !== null && isUnread;
           const isOrgJoinUnread =
-            orgJoin !== null && isUnread && role === "organization";
+            (orgJoin !== null || orgRepJoin !== null) && isUnread && role === "organization";
           const isVictimPendingUnread = n.type === "victim_connection_request_pending" && isUnread;
 
           return (
@@ -342,12 +361,17 @@ export default function NotificationsPage() {
 
               {isUnread && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 sm:pl-7">
-                  {isOrgJoinUnread && orgJoin ? (
+                  {isOrgJoinUnread && (orgJoin ?? orgRepJoin) ? (
                     <>
                       <button
                         type="button"
                         onClick={() =>
-                          void handleOrgJoinDecision(n.id, orgJoin.requestId, "approve")
+                          void handleOrgJoinDecision(
+                            n.id,
+                            (orgJoin ?? orgRepJoin)!.requestId,
+                            "approve",
+                            orgRepJoin !== null
+                          )
                         }
                         disabled={updatingId === n.id}
                         className="inline-flex items-center rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
@@ -357,7 +381,12 @@ export default function NotificationsPage() {
                       <button
                         type="button"
                         onClick={() =>
-                          void handleOrgJoinDecision(n.id, orgJoin.requestId, "decline")
+                          void handleOrgJoinDecision(
+                            n.id,
+                            (orgJoin ?? orgRepJoin)!.requestId,
+                            "decline",
+                            orgRepJoin !== null
+                          )
                         }
                         disabled={updatingId === n.id}
                         className="inline-flex items-center rounded-full border border-slate-500 px-4 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-60"

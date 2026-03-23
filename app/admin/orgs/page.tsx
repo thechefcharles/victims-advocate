@@ -13,13 +13,30 @@ type Org = {
   status: string;
 };
 
+type PendingProposal = {
+  id: string;
+  created_at: string;
+  created_by: string;
+  created_by_email: string | null;
+  status: string;
+  name: string;
+  type: string;
+  address: string;
+  phone: string;
+  website: string | null;
+  program_type: string | null;
+  notes: string | null;
+};
+
 export default function AdminOrgsPage() {
   const [orgs, setOrgs] = useState<Org[]>([]);
+  const [proposals, setProposals] = useState<PendingProposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
   const [createType, setCreateType] = useState<"nonprofit" | "hospital" | "gov" | "other">("nonprofit");
   const [submitting, setSubmitting] = useState(false);
+  const [actingId, setActingId] = useState<string | null>(null);
 
   const load = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -40,6 +57,16 @@ export default function AdminOrgsPage() {
     const json = await res.json();
     setOrgs(json.data?.orgs ?? []);
     setErr(null);
+
+    const propRes = await fetch("/api/admin/pending-org-proposals", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (propRes.ok) {
+      const propJson = await propRes.json();
+      setProposals(propJson.data?.proposals ?? []);
+    } else {
+      setProposals([]);
+    }
   };
 
   useEffect(() => {
@@ -126,6 +153,121 @@ export default function AdminOrgsPage() {
             </Link>
           </div>
         </header>
+
+        {proposals.filter((p) => p.status === "pending").length > 0 && (
+          <section className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5">
+            <h2 className="text-sm font-semibold text-amber-100 mb-3">
+              Pending organization proposals ({proposals.filter((p) => p.status === "pending").length})
+            </h2>
+            <p className="text-xs text-amber-200/80 mb-4">
+              Orgs not in the directory — submitted by users for admin approval.
+            </p>
+            <ul className="space-y-4">
+              {proposals
+                .filter((p) => p.status === "pending")
+                .map((p) => (
+                  <li
+                    key={p.id}
+                    className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-slate-100">{p.name}</p>
+                        <p className="text-xs text-slate-400">
+                          {p.type}
+                          {p.program_type ? ` · ${p.program_type}` : ""}
+                        </p>
+                        {p.address && (
+                          <p className="text-xs text-slate-500 mt-1">{p.address}</p>
+                        )}
+                        {(p.phone || p.website) && (
+                          <p className="text-xs text-slate-500">
+                            {p.phone}
+                            {p.phone && p.website && " · "}
+                            {p.website && (
+                              <a
+                                href={p.website}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-400 hover:underline"
+                              >
+                                Website
+                              </a>
+                            )}
+                          </p>
+                        )}
+                        {p.created_by_email && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            Submitted by {p.created_by_email}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setActingId(p.id);
+                            try {
+                              const { data: sessionData } = await supabase.auth.getSession();
+                              const token = sessionData.session?.access_token;
+                              if (!token) return;
+                              const res = await fetch(
+                                `/api/admin/pending-org-proposals/${p.id}/approve`,
+                                {
+                                  method: "POST",
+                                  headers: { Authorization: `Bearer ${token}` },
+                                }
+                              );
+                              if (res.ok) await load();
+                              else {
+                                const json = await res.json().catch(() => ({}));
+                                setErr(getApiErrorMessage(json, "Could not approve"));
+                              }
+                            } finally {
+                              setActingId(null);
+                            }
+                          }}
+                          disabled={actingId !== null}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                        >
+                          {actingId === p.id ? "…" : "Approve"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setActingId(p.id);
+                            try {
+                              const { data: sessionData } = await supabase.auth.getSession();
+                              const token = sessionData.session?.access_token;
+                              if (!token) return;
+                              const res = await fetch(
+                                `/api/admin/pending-org-proposals/${p.id}/decline`,
+                                {
+                                  method: "POST",
+                                  headers: { Authorization: `Bearer ${token}` },
+                                }
+                              );
+                              if (res.ok) await load();
+                              else {
+                                const json = await res.json().catch(() => ({}));
+                                setErr(getApiErrorMessage(json, "Could not decline"));
+                              }
+                            } finally {
+                              setActingId(null);
+                            }
+                          }}
+                          disabled={actingId !== null}
+                          className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          {actingId === p.id ? "…" : "Decline"}
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
 
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
           <p className="text-sm text-slate-300 flex-1 min-w-[200px]">

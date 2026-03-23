@@ -40,17 +40,26 @@ export async function GET(req: Request) {
     const userIds = [...new Set((rows ?? []).map((r) => r.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("id, role")
+      .select("id, role, email")
       .in("id", userIds);
 
-    const roleByUser = new Map((profiles ?? []).map((p: { id: string; role: string }) => [p.id, p.role]));
+    const profileByUser = new Map(
+      (profiles ?? []).map((p: { id: string; role: string; email?: string }) => [
+        p.id,
+        { role: p.role, email: p.email ?? null },
+      ])
+    );
 
     const advocates = (rows ?? [])
-      .filter((m) => roleByUser.get(m.user_id) === "advocate")
-      .map((m) => ({
-        ...m,
-        profile_role: roleByUser.get(m.user_id) ?? null,
-      }));
+      .filter((m) => profileByUser.get(m.user_id)?.role === "advocate")
+      .map((m) => {
+        const p = profileByUser.get(m.user_id);
+        return {
+          ...m,
+          profile_role: p?.role ?? null,
+          email: p?.email ?? null,
+        };
+      });
 
     return apiOk({ advocates });
   } catch (err) {

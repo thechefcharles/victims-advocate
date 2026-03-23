@@ -10,6 +10,7 @@ function sortNotificationsForDisplay(rows: NotificationRow[]): NotificationRow[]
     if (type === "victim_connection_request_pending" && isUnread(status)) return 0;
     if (type === "advocate_connection_request" && isUnread(status)) return 1;
     if (type === "advocate_org_join_request" && isUnread(status)) return 2;
+    if (type === "org_rep_join_request" && isUnread(status)) return 2;
     return 3;
   };
   return [...rows].sort((a, b) => {

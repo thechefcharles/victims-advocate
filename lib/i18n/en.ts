@@ -30,9 +30,11 @@ export const en: I18nDict = {
     messages: "Messages",
     application: "Application",
     myDashboardAdvocate: "My Dashboard",
+    myDashboardOrganization: "My Dashboard",
     commandCenter: "My Dashboard",
     clients: "Clients",
     organization: "Organization",
+    orgSettings: "Org settings",
     adminHome: "Admin Home",
   },
 

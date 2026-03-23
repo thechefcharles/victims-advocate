@@ -172,14 +172,9 @@ export default function TopNav() {
             {loading ? (
               <span className="text-[11px] text-slate-400">{t("common.loading")}</span>
             ) : !user ? (
-              <>
-                <Link href={ROUTES.compensationHub} className={NAV_PRIMARY}>
-                  {t("nav.compensationHub")}
-                </Link>
-                <Link href={ROUTES.help} className={NAV_PRIMARY}>
-                  {t("nav.help")}
-                </Link>
-              </>
+              <Link href={ROUTES.help} className={NAV_PRIMARY}>
+                {t("nav.help")}
+              </Link>
             ) : isVictim ? (
               <>
                 <Link href={ROUTES.victimDashboard} className={NAV_PRIMARY}>
@@ -194,11 +189,6 @@ export default function TopNav() {
               </>
             ) : (
               <>
-                {!isAdvocate && (
-                  <Link href={ROUTES.compensationHub} className={NAV_TEXT}>
-                    {t("nav.compensationHub")}
-                  </Link>
-                )}
                 <Link href={ROUTES.help} className={NAV_TEXT}>
                   {t("nav.help")}
                 </Link>
@@ -223,8 +213,8 @@ export default function TopNav() {
                   </>
                 )}
                 {showOrgNavForOrgRole && (
-                  <Link href={ROUTES.advocateOrg} className={NAV_PRIMARY}>
-                    {t("nav.organization")}
+                  <Link href={ROUTES.organizationDashboard} className={NAV_PRIMARY}>
+                    {t("nav.myDashboardOrganization")}
                   </Link>
                 )}
               </>

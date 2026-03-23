@@ -29,10 +29,14 @@ export type I18nDict = {
     messages: string;
     /** Advocate home (/advocate) — visible label “My Dashboard”. */
     myDashboardAdvocate: string;
+    /** Organization home (/organization/dashboard) — “My Dashboard”. */
+    myDashboardOrganization: string;
     /** @deprecated Prefer myDashboardAdvocate; kept for gradual migration. */
     commandCenter: string;
     clients: string;
     organization: string;
+    /** Org settings / workspace (members, invites, profile). */
+    orgSettings: string;
     adminHome: string;
   };
 

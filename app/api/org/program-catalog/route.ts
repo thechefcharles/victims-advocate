@@ -66,6 +66,20 @@ export async function PATCH(req: Request) {
       if (!row) {
         return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id", undefined, 422);
       }
+      const { data: existingOrg } = await supabase
+        .from("organizations")
+        .select("id")
+        .eq("catalog_entry_id", catalogEntryId)
+        .neq("id", ctx.orgId)
+        .maybeSingle();
+      if (existingOrg) {
+        return apiFail(
+          "VALIDATION_ERROR",
+          "This directory program is already linked to another organization.",
+          undefined,
+          409
+        );
+      }
       patch = {
         name: row.name,
         type: row.type,

@@ -31,9 +31,14 @@ export type CreateOrgParams = {
   type?: string;
 };
 
+export type CreateOrgResult =
+  | { organization: CreatedOrg }
+  | { error: AppError }
+  | { existingOrganization: { id: string; name: string } };
+
 export async function createOrganizationForUser(
   params: CreateOrgParams
-): Promise<{ organization: CreatedOrg } | { error: AppError }> {
+): Promise<CreateOrgResult> {
   const { supabase, ctx, req, catalogEntryId } = params;
 
   const { data: existing } = await supabase
@@ -66,6 +71,20 @@ export async function createOrganizationForUser(
         error: new AppError("VALIDATION_ERROR", "Invalid catalog_entry_id (not in directory)", undefined, 422),
       };
     }
+
+    const { data: existingOrg } = await supabase
+      .from("organizations")
+      .select("id, name")
+      .eq("catalog_entry_id", fromCatalog.catalog_entry_id)
+      .eq("status", "active")
+      .maybeSingle();
+
+    if (existingOrg) {
+      return {
+        existingOrganization: { id: existingOrg.id, name: existingOrg.name ?? fromCatalog.name },
+      };
+    }
+
     name = fromCatalog.name;
     type = fromCatalog.type;
     resolvedCatalogId = fromCatalog.catalog_entry_id;
