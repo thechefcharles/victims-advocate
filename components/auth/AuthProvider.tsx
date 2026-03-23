@@ -11,7 +11,11 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import { parsePersonalInfo, type VictimPersonalInfo } from "@/lib/personalInfo";
+import {
+  parsePersonalInfo,
+  type AdvocatePersonalInfo,
+  type VictimPersonalInfo,
+} from "@/lib/personalInfo";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
@@ -39,6 +43,10 @@ type AuthState = {
   accountStatus: AccountStatus;
   /** Victim-only: account personal_info from GET /api/me. */
   personalInfo: VictimPersonalInfo | null;
+  /** Advocate-only: profiles.personal_info.advocate from GET /api/me. */
+  advocatePersonalInfo: AdvocatePersonalInfo | null;
+  /** When advocate belongs to an org — display name from organizations.name. */
+  organizationName: string | null;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
   refetchMe: () => Promise<void>;
 };
@@ -59,6 +67,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [emailVerified, setEmailVerified] = useState(false);
   const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
   const [personalInfo, setPersonalInfo] = useState<VictimPersonalInfo | null>(null);
+  const [advocatePersonalInfo, setAdvocatePersonalInfo] = useState<AdvocatePersonalInfo | null>(
+    null
+  );
+  const [organizationName, setOrganizationName] = useState<string | null>(null);
   /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
   const signupPreferredNameSyncedRef = useRef(false);
   /** Reset /api/me state only when user id changes — not on every token refresh (was clearing role and hiding victim UI). */
@@ -92,8 +104,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (d?.role === "victim") {
       setPersonalInfo(parsePersonalInfo(d.personalInfo));
+      setAdvocatePersonalInfo(null);
+      setOrganizationName(null);
+    } else if (d?.role === "advocate") {
+      setPersonalInfo(null);
+      const rawAdv = d.advocatePersonalInfo;
+      setAdvocatePersonalInfo(
+        rawAdv && typeof rawAdv === "object" ? (rawAdv as AdvocatePersonalInfo) : null
+      );
+      setOrganizationName(typeof d.organizationName === "string" ? d.organizationName : null);
     } else {
       setPersonalInfo(null);
+      setAdvocatePersonalInfo(null);
+      setOrganizationName(null);
     }
   }, []);
 
@@ -108,6 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAffiliatedCatalogEntryId(null);
     setOrganizationCatalogEntryId(null);
     setPersonalInfo(null);
+    setAdvocatePersonalInfo(null);
+    setOrganizationName(null);
   }, []);
 
   const refetchMe = useCallback(async () => {
@@ -332,6 +357,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       emailVerified,
       accountStatus,
       personalInfo,
+      advocatePersonalInfo,
+      organizationName,
       refetchMe,
     };
   }, [
@@ -350,6 +377,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     emailVerified,
     accountStatus,
     personalInfo,
+    advocatePersonalInfo,
+    organizationName,
     refetchMe,
   ]);
 

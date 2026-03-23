@@ -1,6 +1,5 @@
 /**
- * Victim-facing: active organizations with map coordinates for the Find Organizations page.
- * Coordinates may be org-supplied (metadata) or approximate from coverage area.
+ * Advocate-facing: same organization map payload as victims (for “connect your organization”).
  */
 
 import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
@@ -12,14 +11,17 @@ export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
-    requireRole(ctx, "victim");
+    requireRole(ctx, "advocate");
 
     const organizations = await loadOrganizationsMapRows();
 
     return apiOk({ organizations });
   } catch (err) {
     const appErr = toAppError(err);
-    logger.error("victim.organizations-map.error", { code: appErr.code, message: appErr.message });
+    logger.error("advocate.organizations-map.error", {
+      code: appErr.code,
+      message: appErr.message,
+    });
     return apiFailFromError(appErr);
   }
 }

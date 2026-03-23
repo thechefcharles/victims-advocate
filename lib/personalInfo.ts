@@ -162,3 +162,109 @@ export function victimWelcomeDisplayName(info: VictimPersonalInfo | null): strin
   if (l) return l;
   return null;
 }
+
+// --- Advocate profile (stored at profiles.personal_info.advocate) ---
+
+export const advocatePersonalInfoPatchSchema = z
+  .object({
+    preferred_name: strShort,
+    legal_first_name: strShort,
+    legal_last_name: strShort,
+    job_title: strShort,
+    work_phone: strShort,
+    work_phone_ext: strShort,
+    alternate_phone: strShort,
+    work_city: strShort,
+    work_state: z
+      .string()
+      .max(2)
+      .optional()
+      .nullable()
+      .transform((s) => (s == null || s === "" ? null : s.trim().toUpperCase())),
+    work_zip: strShort,
+    languages: strShort,
+    preferred_contact_method: z
+      .string()
+      .max(16)
+      .optional()
+      .nullable()
+      .transform((s) => (s == null || s === "" ? null : s)),
+    safe_to_leave_voicemail: z.union([z.boolean(), z.null()]).optional(),
+  })
+  .strict();
+
+export type AdvocatePersonalInfoPatch = z.infer<typeof advocatePersonalInfoPatchSchema>;
+
+export type AdvocatePersonalInfo = {
+  preferred_name?: string | null;
+  legal_first_name?: string | null;
+  legal_last_name?: string | null;
+  job_title?: string | null;
+  work_phone?: string | null;
+  work_phone_ext?: string | null;
+  alternate_phone?: string | null;
+  work_city?: string | null;
+  work_state?: string | null;
+  work_zip?: string | null;
+  languages?: string | null;
+  preferred_contact_method?: string | null;
+  safe_to_leave_voicemail?: boolean | null;
+};
+
+/** Advocate sub-object from full profiles.personal_info JSON. */
+export function parseAdvocatePersonalInfo(rawPersonalInfo: unknown): AdvocatePersonalInfo {
+  if (!rawPersonalInfo || typeof rawPersonalInfo !== "object") return {};
+  const adv = (rawPersonalInfo as Record<string, unknown>).advocate;
+  if (!adv || typeof adv !== "object") return {};
+  return adv as AdvocatePersonalInfo;
+}
+
+export function mergeAdvocateIntoPersonalInfo(
+  existingPersonalInfoRow: unknown,
+  patch: AdvocatePersonalInfoPatch
+): Record<string, unknown> {
+  const root =
+    existingPersonalInfoRow && typeof existingPersonalInfoRow === "object"
+      ? { ...(existingPersonalInfoRow as Record<string, unknown>) }
+      : {};
+  const prev = parseAdvocatePersonalInfo(root);
+  const next: Record<string, unknown> = { ...prev };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    next[k] = v;
+  }
+  return { ...root, advocate: next };
+}
+
+export function advocateHasDisplayName(info: AdvocatePersonalInfo | null): boolean {
+  const p = info ?? {};
+  if (p.preferred_name?.trim()) return true;
+  if (p.legal_first_name?.trim() && p.legal_last_name?.trim()) return true;
+  return false;
+}
+
+/**
+ * Name + work phone + (org membership OR work city) so survivors and staff can reach you.
+ */
+export function advocateProfileCompleteEnough(
+  info: AdvocatePersonalInfo | null,
+  orgId: string | null
+): boolean {
+  if (!advocateHasDisplayName(info)) return false;
+  const p = info ?? {};
+  const hasPhone = !!(p.work_phone?.trim() || p.alternate_phone?.trim());
+  if (!hasPhone) return false;
+  if (orgId) return true;
+  return !!p.work_city?.trim();
+}
+
+export function advocateWelcomeDisplayName(info: AdvocatePersonalInfo | null): string | null {
+  const p = info ?? {};
+  if (p.preferred_name?.trim()) return p.preferred_name.trim();
+  const f = p.legal_first_name?.trim();
+  const l = p.legal_last_name?.trim();
+  if (f && l) return `${f} ${l}`;
+  if (f) return f;
+  if (l) return l;
+  return null;
+}

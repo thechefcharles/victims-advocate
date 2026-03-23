@@ -9,6 +9,7 @@ import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliationForm";
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
 import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
+import { AdvocatePersonalInfoForm } from "@/components/account/AdvocatePersonalInfoForm";
 
 export default function AccountPage() {
   const {
@@ -21,6 +22,8 @@ export default function AccountPage() {
     affiliatedCatalogEntryId,
     organizationCatalogEntryId,
     personalInfo,
+    advocatePersonalInfo,
+    organizationName,
     refetchMe,
   } = useAuth();
   const { t } = useI18n();
@@ -30,6 +33,7 @@ export default function AccountPage() {
   }, [refetchMe]);
 
   const isVictimProfile = useMemo(() => role === "victim", [role]);
+  const isAdvocateProfile = useMemo(() => role === "advocate", [role]);
 
   const onPersonalInfoSaved = useCallback(async () => {
     await refetchMe();
@@ -55,13 +59,28 @@ export default function AccountPage() {
           />
         )}
 
+        {isAdvocateProfile && (
+          <AdvocatePersonalInfoForm
+            accessToken={accessToken}
+            initial={advocatePersonalInfo}
+            organizationName={organizationName}
+            onSaved={() => {
+              void onPersonalInfoSaved();
+            }}
+          />
+        )}
+
         <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-6 space-y-4">
           <div>
             <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Email</p>
             <p className="text-sm text-slate-200 break-all">{user?.email ?? "—"}</p>
           </div>
           <p className="text-sm text-slate-400 leading-relaxed">
-            {isVictimProfile ? t("nav.accountVictimEmailCardBody") : t("nav.accountPlaceholderBody")}
+            {isVictimProfile
+              ? t("nav.accountVictimEmailCardBody")
+              : isAdvocateProfile
+                ? t("nav.accountAdvocateEmailCardBody")
+                : t("nav.accountPlaceholderBody")}
           </p>
           <Link
             href={getDashboardPath({ isAdmin, orgId, orgRole, role })}

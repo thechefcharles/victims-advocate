@@ -28,6 +28,8 @@ export type OrgFromApi = {
   accepting_clients: boolean;
   capacity_status: string;
   region_label: string;
+  /** USPS state codes from org coverage (empty = unspecified geography). */
+  states: string[];
 };
 
 type Copy = {
