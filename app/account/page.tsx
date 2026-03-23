@@ -7,6 +7,7 @@ import { useI18n } from "@/components/i18n/i18nProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliationForm";
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
+import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
 
 export default function AccountPage() {
   const {
@@ -18,13 +19,14 @@ export default function AccountPage() {
     accessToken,
     affiliatedCatalogEntryId,
     organizationCatalogEntryId,
+    personalInfo,
     refetchMe,
   } = useAuth();
   const { t } = useI18n();
 
   return (
     <RequireAuth>
-      <main className="mx-auto max-w-lg px-4 py-12 text-slate-200 space-y-8">
+      <main className="mx-auto max-w-2xl px-4 py-12 text-slate-200 space-y-8">
         <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">
           {t("nav.myAccount")}
         </p>
@@ -44,6 +46,16 @@ export default function AccountPage() {
             {t("common.backToWorkspace")}
           </Link>
         </div>
+
+        {role === "victim" && (
+          <VictimPersonalInfoForm
+            accessToken={accessToken}
+            initial={personalInfo}
+            onSaved={() => {
+              void refetchMe();
+            }}
+          />
+        )}
 
         {role === "organization" && orgRole === "org_admin" && orgId && (
           <OrganizationCatalogForm

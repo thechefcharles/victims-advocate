@@ -23,6 +23,9 @@ import { hasBlockingDocumentGap, type CompletenessSignal } from "@/lib/product/n
 import { priorityRingClassName } from "@/lib/product/priority";
 import { getVictimFunnelSteps, getEligibilitySkippedFromApplication } from "@/lib/victimDashboardFunnel";
 import { VictimFunnelStepper } from "@/components/dashboard/VictimFunnelStepper";
+import { VictimProfileCompletionBanner } from "@/components/dashboard/VictimProfileCompletionBanner";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { victimWelcomeDisplayName } from "@/lib/personalInfo";
 
 const LEGACY_ORG_DISPLAY_NAME = "Legacy (pre-tenant)";
 
@@ -118,7 +121,14 @@ export default function VictimDashboard({
 }) {
   const router = useRouter();
   const { t, tf } = useI18n();
+  const { personalInfo } = useAuth();
   const { strictPreviews } = useSafetySettings(token);
+
+  const dashboardHeaderTitle = useMemo(() => {
+    const name = victimWelcomeDisplayName(personalInfo);
+    if (name) return tf("victimDashboard.welcomeTitle", { name });
+    return t("victimDashboard.title");
+  }, [personalInfo, t, tf]);
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [cases, setCases] = useState<CaseRow[]>([]);
@@ -732,7 +742,7 @@ export default function VictimDashboard({
         {loading && !err ? (
           <>
             <PageHeader
-              title={t("victimDashboard.title")}
+              title={dashboardHeaderTitle}
               titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
               className="rounded-2xl border border-slate-800/50 bg-slate-950/30 px-4 py-4 sm:px-6"
             />
@@ -753,9 +763,10 @@ export default function VictimDashboard({
           </>
         ) : (
           <>
+            <VictimProfileCompletionBanner />
             <div id="your-cases" className="scroll-mt-24 space-y-3">
               <PageHeader
-                title={t("victimDashboard.title")}
+                title={dashboardHeaderTitle}
                 titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
                 className="rounded-2xl border border-slate-800/40 bg-slate-950/25 px-4 py-4 sm:px-5"
                 rightActions={

@@ -6,10 +6,12 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
+import type { VictimPersonalInfo } from "@/lib/personalInfo";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
@@ -35,6 +37,8 @@ type AuthState = {
   organizationCatalogEntryId: number | null;
   emailVerified: boolean;
   accountStatus: AccountStatus;
+  /** Victim-only: account personal_info from GET /api/me. */
+  personalInfo: VictimPersonalInfo | null;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
   refetchMe: () => Promise<void>;
 };
@@ -54,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [organizationCatalogEntryId, setOrganizationCatalogEntryId] = useState<number | null>(null);
   const [emailVerified, setEmailVerified] = useState(false);
   const [accountStatus, setAccountStatus] = useState<AccountStatus>("active");
+  const [personalInfo, setPersonalInfo] = useState<VictimPersonalInfo | null>(null);
+  /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
+  const signupPreferredNameSyncedRef = useRef(false);
 
   const applyMePayload = useCallback((d: Record<string, unknown>) => {
     if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization") {
@@ -80,6 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganizationCatalogEntryId(
       typeof orgCat === "number" && Number.isFinite(orgCat) ? orgCat : null
     );
+
+    const meRole = d?.role;
+    if (meRole === "victim" && d?.personalInfo && typeof d.personalInfo === "object") {
+      setPersonalInfo(d.personalInfo as VictimPersonalInfo);
+    } else {
+      setPersonalInfo(null);
+    }
   }, []);
 
   const role = roleFromApi ?? roleFromMetadata;
@@ -101,8 +115,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setRealRoleFromApi(null);
       setAffiliatedCatalogEntryId(null);
       setOrganizationCatalogEntryId(null);
+      setPersonalInfo(null);
     }
   }, [session?.access_token, applyMePayload]);
+
+  useEffect(() => {
+    if (!session?.user) {
+      signupPreferredNameSyncedRef.current = false;
+    }
+  }, [session?.user]);
+
+  /** Email-confirm signup: no session until verify — first login has preferred_name in metadata only. */
+  useEffect(() => {
+    if (loading) return;
+    if (signupPreferredNameSyncedRef.current) return;
+    if (role !== "victim" || !session?.access_token || !session.user) return;
+
+    if (personalInfo?.preferred_name?.trim()) {
+      signupPreferredNameSyncedRef.current = true;
+      return;
+    }
+
+    const metaName = session.user.user_metadata?.preferred_name;
+    const fromMeta =
+      typeof metaName === "string" && metaName.trim() ? metaName.trim() : "";
+    if (!fromMeta) {
+      signupPreferredNameSyncedRef.current = true;
+      return;
+    }
+
+    signupPreferredNameSyncedRef.current = true;
+    void fetch("/api/me/personal-info", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ preferred_name: fromMeta }),
+    })
+      .then((res) => {
+        if (res.ok) void refetchMe();
+      })
+      .catch(() => {});
+  }, [loading, role, session, personalInfo?.preferred_name, refetchMe]);
 
   useEffect(() => {
     // 1) Bootstrap once
@@ -149,6 +204,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setRealRoleFromApi(null);
           setAffiliatedCatalogEntryId(null);
           setOrganizationCatalogEntryId(null);
+          setPersonalInfo(null);
         }
       } else {
         setRoleFromApi(null);
@@ -157,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrgRole(null);
         setAffiliatedCatalogEntryId(null);
         setOrganizationCatalogEntryId(null);
+        setPersonalInfo(null);
       }
       setLoading(false);
     });
@@ -250,6 +307,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       organizationCatalogEntryId,
       emailVerified,
       accountStatus,
+      personalInfo,
       refetchMe,
     };
   }, [
@@ -265,6 +323,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     organizationCatalogEntryId,
     emailVerified,
     accountStatus,
+    personalInfo,
     refetchMe,
   ]);
 

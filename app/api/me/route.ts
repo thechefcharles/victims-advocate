@@ -6,12 +6,22 @@ import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, apiOk, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
+import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
 
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     if (!ctx) {
       return apiFail("AUTH_REQUIRED", "Unauthorized", undefined, 401);
+    }
+
+    let personalInfo = null;
+    if (ctx.role === "victim") {
+      try {
+        personalInfo = await getPersonalInfoForUserId(ctx.userId);
+      } catch (e) {
+        logger.warn("me.get.personal_info", { message: String(e) });
+      }
     }
 
     return apiOk({
@@ -26,6 +36,7 @@ export async function GET(req: Request) {
       organizationCatalogEntryId: ctx.organizationCatalogEntryId,
       emailVerified: ctx.emailVerified,
       accountStatus: ctx.accountStatus,
+      personalInfo,
     });
   } catch (err) {
     const appErr = toAppError(err);

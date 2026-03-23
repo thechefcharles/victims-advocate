@@ -39,9 +39,18 @@ export type I18nDict = {
     no: string;
   };
 
+  signup: {
+    /** Victim signup: how we address them (saved to account profile). */
+    preferredNameLabel: string;
+    preferredNamePlaceholder: string;
+    preferredNameHelp: string;
+  };
+
   victimDashboard: {
     eyebrow: string;
     title: string;
+    /** Use tf(..., { name }) — shown when account has a preferred or legal name */
+    welcomeTitle: string;
     subtitle: string;
     signedInAs: string;
     signedInAsUnknown: string;
@@ -166,6 +175,13 @@ export type I18nDict = {
     continueToEligibility: string;
     /** Primary CTA when user has no cases yet */
     applyNow: string;
+    /** Prompt to finish account profile (name, phone, city) */
+    profileBannerTitle: string;
+    /** When user has no preferred or legal name on file */
+    profileBannerBodyNoName: string;
+    profileBannerBody: string;
+    profileBannerCta: string;
+    profileBannerDismiss: string;
     /** Secondary action when user already has at least one case */
     startNewApplication: string;
     /** Header control: create another case without leaving the dashboard */
@@ -1739,4 +1755,58 @@ forms: {
     };
   };
 };
+
+  accountPersonal: {
+    title: string;
+    intro: string;
+    privacyNote: string;
+    identitySection: string;
+    demographicsSection: string;
+    addressSection: string;
+    contactSection: string;
+    otherSection: string;
+    preferredName: string;
+    legalFirstName: string;
+    legalLastName: string;
+    pronouns: string;
+    genderIdentity: string;
+    dateOfBirth: string;
+    ethnicity: string;
+    race: string;
+    streetAddress: string;
+    apt: string;
+    city: string;
+    state: string;
+    zip: string;
+    cellPhone: string;
+    alternatePhone: string;
+    preferredContactMethod: string;
+    contactEmail: string;
+    contactPhone: string;
+    contactSms: string;
+    contactAny: string;
+    safeToLeaveVoicemail: string;
+    occupation: string;
+    educationLevel: string;
+    primaryLanguage: string;
+    interpreterNeeded: string;
+    interpreterYes: string;
+    interpreterNo: string;
+    interpreterUnspecified: string;
+    disabilityOrAccessNeeds: string;
+    eduLessThanHs: string;
+    eduHsGed: string;
+    eduSomeCollege: string;
+    eduAssociates: string;
+    eduBachelors: string;
+    eduGraduate: string;
+    eduPreferNot: string;
+    eduSelect: string;
+    save: string;
+    saving: string;
+    saved: string;
+    loadError: string;
+    saveError: string;
+    notSignedIn: string;
+  };
 };
