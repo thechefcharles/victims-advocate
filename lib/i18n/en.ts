@@ -15,6 +15,8 @@ export const en: I18nDict = {
     accountPlaceholderTitle: "Account",
     accountPlaceholderBody:
       "More account settings and preferences will be available here soon.",
+    accountVictimEmailCardBody:
+      "This is the email you use to sign in. You can update your profile details in the form above.",
     language: "Language",
     brandTagline: "Victim Support · Made Simple",
     compensationHub: "Compensation",

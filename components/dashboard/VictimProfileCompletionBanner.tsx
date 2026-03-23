@@ -12,7 +12,7 @@ import {
 const SESSION_DISMISS_KEY = "victim_profile_banner_dismiss";
 
 export function VictimProfileCompletionBanner() {
-  const { loading, role, personalInfo } = useAuth();
+  const { loading, role, realRole, personalInfo, user } = useAuth();
   const { t } = useI18n();
   const [dismissed, setDismissed] = useState(false);
 
@@ -24,7 +24,12 @@ export function VictimProfileCompletionBanner() {
     }
   }, []);
 
-  if (loading || role !== "victim") return null;
+  const metaRaw = user?.user_metadata?.role;
+  const metaVictim =
+    typeof metaRaw === "string" && metaRaw.toLowerCase() === "victim";
+  const isVictim =
+    role === "victim" || realRole === "victim" || metaVictim;
+  if (loading || !isVictim) return null;
   if (victimProfileCompleteEnough(personalInfo)) return null;
   if (dismissed) return null;
 

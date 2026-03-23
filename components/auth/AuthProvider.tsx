@@ -11,7 +11,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
-import type { VictimPersonalInfo } from "@/lib/personalInfo";
+import { parsePersonalInfo, type VictimPersonalInfo } from "@/lib/personalInfo";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [personalInfo, setPersonalInfo] = useState<VictimPersonalInfo | null>(null);
   /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
   const signupPreferredNameSyncedRef = useRef(false);
+  /** Reset /api/me state only when user id changes — not on every token refresh (was clearing role and hiding victim UI). */
+  const resolvedUserIdForMeRef = useRef<string | null>(null);
 
   const applyMePayload = useCallback((d: Record<string, unknown>) => {
     if (d?.role === "victim" || d?.role === "advocate" || d?.role === "organization") {
@@ -88,15 +90,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       typeof orgCat === "number" && Number.isFinite(orgCat) ? orgCat : null
     );
 
-    const meRole = d?.role;
-    if (meRole === "victim" && d?.personalInfo && typeof d.personalInfo === "object") {
-      setPersonalInfo(d.personalInfo as VictimPersonalInfo);
+    if (d?.role === "victim") {
+      setPersonalInfo(parsePersonalInfo(d.personalInfo));
     } else {
       setPersonalInfo(null);
     }
   }, []);
 
   const role = roleFromApi ?? roleFromMetadata;
+  const realRoleResolved =
+    realRoleFromApi ?? roleFromApi ?? roleFromMetadata;
+
+  /** When /api/me fails, drop server-derived role so roleFromMetadata (JWT) is used — avoids stale advocate/org after profile fixes or after 401. */
+  const clearMeFromApi = useCallback(() => {
+    setRoleFromApi(null);
+    setRealRoleFromApi(null);
+    setAffiliatedCatalogEntryId(null);
+    setOrganizationCatalogEntryId(null);
+    setPersonalInfo(null);
+  }, []);
 
   const refetchMe = useCallback(async () => {
     const token = session?.access_token ?? null;
@@ -109,15 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const json = await res.json();
         const data = (json?.data ?? json) as Record<string, unknown>;
         applyMePayload(data);
+      } else {
+        clearMeFromApi();
       }
     } catch {
-      setRoleFromApi(null);
-      setRealRoleFromApi(null);
-      setAffiliatedCatalogEntryId(null);
-      setOrganizationCatalogEntryId(null);
-      setPersonalInfo(null);
+      clearMeFromApi();
     }
-  }, [session?.access_token, applyMePayload]);
+  }, [session?.access_token, applyMePayload, clearMeFromApi]);
 
   useEffect(() => {
     if (!session?.user) {
@@ -129,7 +139,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
     if (signupPreferredNameSyncedRef.current) return;
-    if (role !== "victim" || !session?.access_token || !session.user) return;
+    if (
+      (role !== "victim" && realRoleResolved !== "victim") ||
+      !session?.access_token ||
+      !session.user
+    )
+      return;
 
     if (personalInfo?.preferred_name?.trim()) {
       signupPreferredNameSyncedRef.current = true;
@@ -157,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (res.ok) void refetchMe();
       })
       .catch(() => {});
-  }, [loading, role, session, personalInfo?.preferred_name, refetchMe]);
+  }, [loading, role, realRoleResolved, session, personalInfo?.preferred_name, refetchMe]);
 
   useEffect(() => {
     // 1) Bootstrap once
@@ -172,9 +187,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const json = await res.json();
             applyMePayload((json?.data ?? json) as Record<string, unknown>);
+          } else {
+            clearMeFromApi();
           }
         } catch {
-          // keep role from metadata
+          clearMeFromApi();
         }
       }
       setLoading(false);
@@ -198,13 +215,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.ok) {
             const json = await res.json();
             applyMePayload((json?.data ?? json) as Record<string, unknown>);
+          } else {
+            clearMeFromApi();
           }
         } catch {
-          setRoleFromApi(null);
-          setRealRoleFromApi(null);
-          setAffiliatedCatalogEntryId(null);
-          setOrganizationCatalogEntryId(null);
-          setPersonalInfo(null);
+          clearMeFromApi();
         }
       } else {
         setRoleFromApi(null);
@@ -219,22 +234,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => subscription.unsubscribe();
-  }, [applyMePayload]);
+  }, [applyMePayload, clearMeFromApi]);
 
   const resolveProfile = async (sess: Session | null) => {
+    const uid = sess?.user?.id ?? null;
+
+    if (uid !== resolvedUserIdForMeRef.current) {
+      resolvedUserIdForMeRef.current = uid;
+      setRoleFromApi(null);
+      setRealRoleFromApi(null);
+      setPersonalInfo(null);
+      setAffiliatedCatalogEntryId(null);
+      setOrganizationCatalogEntryId(null);
+      setOrgId(null);
+      setOrgRole(null);
+    }
+
     setEmailVerified(!!sess?.user?.email_confirmed_at);
 
     const metaRole = sess?.user?.user_metadata?.role;
     if (metaRole === "advocate") setRoleFromMetadata("advocate");
     else if (metaRole === "organization") setRoleFromMetadata("organization");
     else setRoleFromMetadata("victim");
-    setRoleFromApi(null);
 
-    const uid = sess?.user?.id;
     if (!uid) {
       setIsAdmin(false);
-      setOrgId(null);
-      setOrgRole(null);
       setAffiliatedCatalogEntryId(null);
       setOrganizationCatalogEntryId(null);
       setAccountStatus("active");
@@ -299,7 +323,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user: session?.user ?? null,
       accessToken: session?.access_token ?? null,
       role,
-      realRole: realRoleFromApi ?? roleFromMetadata,
+      realRole: realRoleResolved,
       isAdmin,
       orgId,
       orgRole,
@@ -315,7 +339,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     session,
     role,
     realRoleFromApi,
+    roleFromApi,
     roleFromMetadata,
+    realRoleResolved,
     isAdmin,
     orgId,
     orgRole,

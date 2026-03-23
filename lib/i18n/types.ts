@@ -9,6 +9,8 @@ export type I18nDict = {
     myAccount: string;
     accountPlaceholderTitle: string;
     accountPlaceholderBody: string;
+    /** Shown under the email card when the victim personal info form is present. */
+    accountVictimEmailCardBody: string;
     language: string;
     brandTagline: string;
     /** Top nav link to /compensation (Crime Victims Compensation hub). */
