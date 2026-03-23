@@ -40,7 +40,7 @@ export function getDashboardPath(me: DashboardMe): string {
 export function getWorkspaceCtaLabel(me: DashboardMe): string {
   if (me.isAdmin === true) return "Go to Admin Home";
   if (me.role === "victim") return "My dashboard";
-  if (me.role === "advocate") return "Go to Command Center";
+  if (me.role === "advocate") return "Go to My Dashboard";
   if (me.role === "organization") {
     if (!me.orgId) return "Continue organization setup";
     return "Go to Organization Home";

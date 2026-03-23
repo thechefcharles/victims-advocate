@@ -17,6 +17,8 @@ export const es: I18nDict = {
             "Pronto habrá más opciones de cuenta y preferencias aquí.",
         accountVictimEmailCardBody:
             "Este es el correo con el que inicias sesión. Puedes actualizar los datos de tu perfil en el formulario de arriba.",
+        accountAdvocateEmailCardBody:
+            "Este es el correo con el que inicias sesión. Actualiza tus datos de contacto laboral en el formulario de arriba.",
         language: "Idioma",
         brandTagline: "Apoyo a víctimas · Hecho simple",
         compensationHub: "Compensación",
@@ -25,8 +27,10 @@ export const es: I18nDict = {
         updates: "Actualizaciones",
         accountNav: "Cuenta",
         mySupport: "Mi panel",
+        messages: "Mensajes",
         application: "Solicitud",
-        commandCenter: "Centro de comando",
+        myDashboardAdvocate: "Mi panel",
+        commandCenter: "Mi panel",
         clients: "Clientes",
         organization: "Organización",
         adminHome: "Administración",
@@ -41,6 +45,21 @@ export const es: I18nDict = {
         backToWorkspaceInline: "Volver a tu espacio de trabajo",
         yes: "Sí",
         no: "No",
+    },
+
+    notificationsPage: {
+        title: "Notificaciones",
+        subtitle:
+            "Marca una notificación como leída para quitarla del contador del icono. Las leídas muestran una marca verde.",
+        empty: "No tienes notificaciones ahora.",
+        markRead: "Marcar como leída",
+        readBadgeLabel: "Leída",
+        previewHiddenTitle: "Tienes una actualización nueva",
+        connectionRequestIncomingTitle: "Solicitud de conexión",
+        connectionRequestPendingTitle: "Solicitud de conexión pendiente",
+        orgJoinRequestIncomingTitle: "Solicitud de membresía de defensor/a",
+        orgJoinApprove: "Aprobar",
+        orgJoinDecline: "Rechazar",
     },
 
     signup: {
@@ -138,6 +157,8 @@ export const es: I18nDict = {
         supportTeamNoAdvocates: "Aún no hay defensor/a conectado/a.",
         supportTeamLoading: "Cargando…",
         supportTeamConnectCta: "Conectar con un/a defensor/a",
+        supportTeamAdvocateRequestPending:
+            "Solicitud de conexión pendiente — te avisaremos cuando responda tu defensor/a.",
         supportTeamAddOrgCta: "Buscar una organización",
         supportTeamEditOrgTitle: "Gestionar la organización para este caso",
         supportTeamEditAdvocateTitle: "Gestionar defensores para este caso",
@@ -289,6 +310,84 @@ export const es: I18nDict = {
             finishApplication: "Terminar la solicitud",
             submitApplication: "Enviar",
         },
+    },
+
+    victimMessages: {
+        backDashboard: "Volver a Mi panel",
+        eyebrow: "Mensajería segura",
+        title: "Mensajes",
+        subtitle:
+            "Chatea con tu equipo de defensa en un solo lugar por caso. Esto está aparte del formulario de solicitud.",
+        loadError: "No se pudieron cargar tus casos. Inténtalo de nuevo.",
+        noCases: "Aún no tienes un caso. Inicia una solicitud para usar mensajes seguros.",
+        startApplication: "Iniciar solicitud",
+        casePickerLabel: "Casos",
+        yourCases: "Tus casos",
+        threadHeading: "Conversación",
+        threadSubtitle: "Solo quienes tienen acceso a este caso pueden ver este hilo.",
+        threadEmpty: "Aún no hay mensajes. Saluda o haz una pregunta.",
+    },
+
+    advocateDashboard: {
+        welcomeTitle: "Bienvenido/a, {name}",
+        titleFallback: "Mi panel",
+        organizationMeta: "Organización: {name}",
+        noOrganizationMeta:
+            "Aún no estás vinculado/a al espacio de una agencia. Busca tu organización en el mapa y envía una solicitud de ingreso—tu agencia recibirá una notificación para aprobarla.",
+        connectOrganizationLink: "Conectar tu organización",
+        profileBannerTitle: "Completa tu perfil de defensor/a",
+        profileBannerBody:
+            "Añade tus datos de contacto laboral para que sobrevivientes y tu equipo sepan cómo localizarte.",
+        profileBannerBodyNoName:
+            "Indica cómo debemos dirigirnos a ti y tus datos de contacto laboral—ayuda a sobrevivientes y a tu equipo a contactarte.",
+        profileBannerCta: "Actualizar en Mi cuenta",
+    },
+
+    advocateFindOrganizations: {
+        title: "Encuentra tu organización",
+        subtitle:
+            "Filtra por estado, explora el mapa y solicita unirte a tu agencia. Los administradores de la organización reciben una notificación para aprobar tu membresía.",
+        back: "← Volver a mi panel",
+        mapIntro:
+            "Usa el mapa para ver organizaciones cerca de ti. Toca el botón solo cuando quieras compartir tu ubicación en esta sesión del navegador.",
+        stateFilterLabel: "Estado",
+        shareLocation: "Compartir mi ubicación",
+        sharing: "Obteniendo ubicación…",
+        tryAgain: "Intentar de nuevo",
+        locationDenied:
+            "Se bloqueó el acceso a la ubicación. Puedes activarlo en la configuración del navegador e intentar otra vez.",
+        locationUnavailable:
+            "No pudimos leer tu ubicación. Intenta de nuevo o revisa Wi‑Fi/ubicación en tu dispositivo.",
+        locationTimeout:
+            "Se agotó el tiempo de ubicación. Intenta de nuevo—acercarte a una ventana o activar Wi‑Fi suele ayudar.",
+        positionUnavailable:
+            "Tu dispositivo no pudo determinar la posición ahora. Intenta en un momento o activa la ubicación para este sitio.",
+        locationNotSupported:
+            "Este navegador no admite ubicación o está desactivada. Prueba otro navegador o dispositivo.",
+        locationNeedsHttps:
+            "La ubicación solo funciona en una página segura (HTTPS). Abre el sitio con https:// o contacta soporte.",
+        yourLocation: "Tu ubicación aproximada",
+        approximateNote: "Pin aproximado",
+        milesAway: "mi de distancia",
+        accepting: "Acepta nuevos clientes",
+        notAccepting: "No acepta nuevos clientes",
+        capacity: "Capacidad",
+        noOrgs:
+            "Aún no hay organizaciones en el directorio. Se añaden socios con el tiempo—vuelve a intentar más tarde.",
+        noOrgsInState:
+            "Ninguna organización coincide con este estado. Prueba “Todos los estados” u otro estado.",
+        loadError: "No se pudieron cargar las organizaciones. Inténtalo de nuevo.",
+        privacyNote:
+            "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
+        requestJoin: "Solicitar unirme",
+        requestSent: "Solicitud enviada. Tu organización recibirá una notificación en Actualizaciones.",
+        requestBusy: "Enviando…",
+        requestError: "No se pudo enviar la solicitud. Inténtalo de nuevo.",
+        orgPickerLabel: "Organización",
+        orgSearchPlaceholder: "Buscar por nombre o región…",
+        orgSearchNoMatches:
+            "Sin coincidencias. Prueba otras palabras o ajusta el filtro de estado.",
+        orgSelectedTitle: "Organización seleccionada",
     },
 
     compensationHub: {
@@ -1749,6 +1848,9 @@ export const es: I18nDict = {
                 messagesTitle: "Mensajes",
                 messagesSubtitle: "Conversación segura con tu defensor/a",
                 messagesEmpty: "Aún no tienes mensajes seguros.",
+                messagesOpenTool:
+                    "La mensajería segura está en la página Mensajes—ábrela cuando quieras leer o responder sin salir del resumen de tu solicitud.",
+                messagesOpenToolCta: "Abrir mensajes",
                 appointmentsTitle: "Citas",
                 appointmentsSubtitle: "Próximas citas de apoyo",
                 appointmentsEmpty: "Aún no hay citas programadas.",
@@ -2112,6 +2214,48 @@ export const es: I18nDict = {
             },
         }, // closes summary
     }, // closes forms
+
+    accountAdvocate: {
+        title: "Perfil de defensor/a",
+        intro:
+            "Esta información ayuda a sobrevivientes y a tu organización a identificarte. La organización la gestiona tu equipo—aparece aquí cuando tu cuenta está vinculada.",
+        privacyNote: "No recopilamos SSN ni datos fiscales aquí.",
+        organizationSection: "Organización",
+        organizationHelp:
+            "Tu empleador o programa lo define el administrador de tu organización. Contacta si algo no cuadra.",
+        organizationName: "Organización",
+        organizationEmpty: "Aún sin organización vinculada",
+        identitySection: "Nombre y rol",
+        preferredName: "Nombre preferido (cómo quieres que te llamemos)",
+        legalFirstName: "Nombre legal",
+        legalLastName: "Apellido legal",
+        jobTitle: "Cargo / rol",
+        workLocationSection: "Ubicación laboral",
+        workCity: "Ciudad",
+        workState: "Estado",
+        workZip: "Código postal",
+        contactSection: "Contacto laboral",
+        workPhone: "Teléfono del trabajo",
+        workPhoneExt: "Extensión",
+        alternatePhone: "Teléfono alternativo",
+        preferredContactMethod: "Método de contacto preferido",
+        contactSelect: "Elegir…",
+        contactEmail: "Correo",
+        contactPhone: "Llamada",
+        contactSms: "SMS",
+        safeToLeaveVoicemail: "¿Es seguro dejar un mensaje de voz en el número del trabajo?",
+        interpreterYes: "Sí",
+        interpreterNo: "No",
+        interpreterUnspecified: "Prefiero no decir",
+        languagesSection: "Idiomas",
+        languages: "Idiomas en los que trabajas",
+        languagesPlaceholder: "p. ej. inglés, español",
+        save: "Guardar perfil",
+        saving: "Guardando…",
+        saved: "Guardado.",
+        saveError: "No se pudo guardar. Inténtalo de nuevo.",
+        notSignedIn: "No has iniciado sesión.",
+    },
 
     accountPersonal: {
         title: "Información personal",

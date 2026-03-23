@@ -56,6 +56,7 @@ type CaseRow = {
 type SupportTeamPayload = {
   organization: { id: string; name: string } | null;
   advocates: { id: string; label: string }[];
+  advocateConnectionPending?: boolean;
 };
 
 function getCaseDisplayName(c: CaseRow): string {
@@ -372,6 +373,7 @@ export default function VictimDashboard({
           setSupportTeam({
             organization: d?.organization ?? null,
             advocates: Array.isArray(d?.advocates) ? d.advocates : [],
+            advocateConnectionPending: Boolean(d?.advocateConnectionPending),
           });
         }
       } catch {
@@ -654,6 +656,7 @@ export default function VictimDashboard({
 
   const noCasesYet = cases.length === 0;
   const hasSupportAdvocates = Boolean(supportTeam?.advocates && supportTeam.advocates.length > 0);
+  const advocateConnectionPending = Boolean(supportTeam?.advocateConnectionPending);
 
   const hasSupportOrg = Boolean(supportTeam?.organization?.name);
   const caseContextForSupport = Boolean(focusCaseId && focusCase && !noCasesYet);
@@ -661,7 +664,10 @@ export default function VictimDashboard({
   const hideBothNextStepHelp =
     caseContextForSupport && !supportTeamLoading && (hasSupportOrg || hasSupportAdvocates);
   const showNextStepConnectAdvocate =
-    !hideBothNextStepHelp && (!caseContextForSupport || (!supportTeamLoading && !hasSupportAdvocates));
+    Boolean(focusCaseId) &&
+    !hideBothNextStepHelp &&
+    (!caseContextForSupport || (!supportTeamLoading && !hasSupportAdvocates)) &&
+    !advocateConnectionPending;
   const showNextStepFindOrganizations =
     !hideBothNextStepHelp && (!caseContextForSupport || (!supportTeamLoading && !hasSupportOrg));
 
@@ -669,7 +675,7 @@ export default function VictimDashboard({
     () =>
       focusCaseId
         ? `${ROUTES.compensationConnectAdvocate}?case=${encodeURIComponent(focusCaseId)}`
-        : ROUTES.compensationConnectAdvocate,
+        : ROUTES.victimDashboard,
     [focusCaseId]
   );
 
@@ -992,6 +998,10 @@ export default function VictimDashboard({
                             </li>
                           ))}
                         </ul>
+                      ) : advocateConnectionPending ? (
+                        <p className="mt-1.5 text-[11px] font-medium text-amber-200/90">
+                          {t("victimDashboard.supportTeamAdvocateRequestPending")}
+                        </p>
                       ) : (
                         <div className="mt-1.5 space-y-1.5">
                           <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoAdvocates")}</p>
@@ -1072,14 +1082,16 @@ export default function VictimDashboard({
                     {t("victimDashboard.applyPathAria")}
                   </h2>
                   <div className="grid grid-cols-1 gap-3">
-                    <button
-                      type="button"
-                      disabled={creatingCase}
-                      onClick={() => void goConnectAdvocateFromApply()}
-                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-teal-500/50 hover:bg-slate-900 disabled:opacity-50"
-                    >
-                      {t("victimDashboard.applyPathConnect")}
-                    </button>
+                    {!advocateConnectionPending && focusCaseId ? (
+                      <button
+                        type="button"
+                        disabled={creatingCase}
+                        onClick={() => void goConnectAdvocateFromApply()}
+                        className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-teal-500/50 hover:bg-slate-900 disabled:opacity-50"
+                      >
+                        {t("victimDashboard.applyPathConnect")}
+                      </button>
+                    ) : null}
                     <button
                       type="button"
                       disabled={creatingCase}

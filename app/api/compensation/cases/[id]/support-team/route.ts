@@ -67,7 +67,18 @@ export async function GET(req: Request, context: RouteParams) {
       }
     }
 
-    return apiOk({ organization, advocates });
+    const { data: pendingRows } = await supabaseAdmin
+      .from("advocate_connection_requests")
+      .select("case_id")
+      .eq("victim_user_id", ctx.userId)
+      .eq("status", "pending");
+
+    const advocateConnectionPending = (pendingRows ?? []).some((row) => {
+      const cid = row.case_id as string | null | undefined;
+      return cid == null || cid === id;
+    });
+
+    return apiOk({ organization, advocates, advocateConnectionPending });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("compensation.cases.support-team.get.error", {

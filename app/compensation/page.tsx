@@ -25,7 +25,7 @@ export default function CompensationHubPage() {
   const connectHref = !user
     ? "/signup"
     : role === "victim"
-      ? ROUTES.compensationConnectAdvocate
+      ? ROUTES.victimDashboard
       : "/help";
 
   return (
@@ -62,7 +62,7 @@ export default function CompensationHubPage() {
             ·
           </span>
           <Link
-            href={ROUTES.compensationConnectAdvocate}
+            href={role === "victim" ? ROUTES.victimDashboard : ROUTES.compensationConnectAdvocate}
             className="text-slate-300 hover:text-slate-100 underline underline-offset-4"
           >
             {t("compensationHub.secondaryConnectAdvocate")}

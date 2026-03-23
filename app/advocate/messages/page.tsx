@@ -1,11 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
-import { ROUTES } from "@/lib/routes/pageRegistry";
+import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
+import { ROUTES, advocateCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 
 type AdvocateCaseRow = {
   id: string;
@@ -51,13 +53,15 @@ function truncatePreview(text: string, max = 90): string {
   return `${t.slice(0, max)}…`;
 }
 
-export default function AdvocateMessagesPage() {
-  const { accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, ROUTES.advocateMessages);
+function AdvocateMessagesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const caseParam = searchParams.get("case")?.trim() ?? "";
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [items, setItems] = useState<QueueItem[]>([]);
+  const [cases, setCases] = useState<AdvocateCaseRow[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,16 +80,18 @@ export default function AdvocateMessagesPage() {
       if (!listRes.ok) {
         setErr("Couldn’t load cases.");
         setItems([]);
+        setCases([]);
         return;
       }
       const listJson = await listRes.json();
-      const cases = (listJson.cases ?? []) as AdvocateCaseRow[];
+      const caseRows = (listJson.cases ?? []) as AdvocateCaseRow[];
+      setCases(caseRows);
 
       const now = Date.now();
       const queue: QueueItem[] = [];
 
-      for (let i = 0; i < cases.length; i += BATCH) {
-        const slice = cases.slice(i, i + BATCH);
+      for (let i = 0; i < caseRows.length; i += BATCH) {
+        const slice = caseRows.slice(i, i + BATCH);
         const results = await Promise.all(
           slice.map(async (c) => {
             const res = await fetch(`/api/cases/${c.id}/messages`, {
@@ -123,7 +129,7 @@ export default function AdvocateMessagesPage() {
           if (unreadCount > 0) {
             preview = lastSurvivorMsg?.message_text
               ? truncatePreview(lastSurvivorMsg.message_text)
-              : "New secure message";
+              : "New Secure Message";
           } else {
             preview = lastSurvivorMsg?.message_text
               ? truncatePreview(lastSurvivorMsg.message_text)
@@ -141,7 +147,7 @@ export default function AdvocateMessagesPage() {
             victimLabel: displayNameForCase(c),
             unreadCount,
             lastAt,
-            preview: preview || "New secure message",
+            preview: preview || "New Secure Message",
           });
         }
       }
@@ -160,14 +166,26 @@ export default function AdvocateMessagesPage() {
       console.error(e);
       setErr("Something went wrong loading messages.");
       setItems([]);
+      setCases([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (consentReady) void load();
-  }, [consentReady, load]);
+    void load();
+  }, [load]);
+
+  const validIds = useMemo(() => new Set(cases.map((c) => c.id)), [cases]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (caseParam && !validIds.has(caseParam)) {
+      router.replace(ROUTES.advocateMessages);
+    }
+  }, [loading, caseParam, validIds, router]);
+
+  const activeCaseId = caseParam && validIds.has(caseParam) ? caseParam : null;
 
   const formatDate = (iso: string | null) => {
     if (!iso) return "—";
@@ -182,6 +200,121 @@ export default function AdvocateMessagesPage() {
     });
   };
 
+  return (
+    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <header className="space-y-2">
+          <Link
+            href={ROUTES.advocateHome}
+            className="text-xs text-slate-400 hover:text-slate-200 mb-1 inline-block"
+          >
+            ← Back to My Dashboard
+          </Link>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Advocate</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Messages</h1>
+          <p className="text-sm text-slate-400 max-w-xl">
+            Unread or recent threads appear below. Open a thread to read and reply here—no need to
+            open the intake form.
+          </p>
+          <p className="text-[11px] text-slate-500">
+            Unread first, then recent. Each case has one secure thread.
+          </p>
+        </header>
+
+        {loading ? (
+          <p className="text-sm text-slate-400">Loading cases…</p>
+        ) : err ? (
+          <div className="rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
+            {err}
+          </div>
+        ) : items.length === 0 && !activeCaseId ? (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-4">
+            <p className="text-sm text-slate-300">No unread or recent secure messages to show.</p>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              When a survivor sends a message or a thread is active, the case will appear here. You
+              can also open any case from your dashboard queue, then return here with{" "}
+              <code className="text-slate-400">?case=…</code> in the URL.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link
+                href={ROUTES.advocateHome}
+                className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+              >
+                Back to My Dashboard
+              </Link>
+              <Link
+                href={`${ROUTES.advocateHome}#advocate-clients`}
+                className="inline-flex items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-900/60"
+              >
+                View clients
+              </Link>
+            </div>
+          </div>
+        ) : items.length > 0 ? (
+          <ul className="space-y-3">
+            {items.map((row) => {
+              const open = activeCaseId === row.caseId;
+              return (
+                <li
+                  key={row.caseId}
+                  className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
+                    open
+                      ? "border-emerald-500/40 bg-emerald-950/20"
+                      : "border-slate-800 bg-slate-950/70"
+                  }`}
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-100 truncate">
+                        {row.victimLabel}
+                      </span>
+                      {row.unreadCount > 0 && (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 px-2 py-0.5">
+                          {row.unreadCount} unread
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Latest activity · {formatDate(row.lastAt)}
+                    </p>
+                    <p className="text-xs text-slate-400 line-clamp-2">{row.preview}</p>
+                  </div>
+                  <Link
+                    href={advocateCaseMessagesUrl(row.caseId)}
+                    className="inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-500/50 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/10"
+                  >
+                    {open ? "Thread open below" : "Open thread"}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        ) : activeCaseId ? (
+          <p className="text-sm text-slate-400">
+            Secure thread for the selected case
+            {items.length === 0 ? " (not in the recent/unread triage list)." : "."}
+          </p>
+        ) : null}
+
+        {activeCaseId ? (
+          <section className="pt-2 border-t border-slate-800/80">
+            <CaseMessagesPanel
+              caseId={activeCaseId}
+              headingTitle="Conversation"
+              headingSubtitle="Reply here. Your messages are tied to this case."
+              emptyStateText="No messages yet in this thread."
+            />
+          </section>
+        ) : null}
+      </div>
+    </main>
+  );
+}
+
+export default function AdvocateMessagesPage() {
+  const { accessToken } = useAuth();
+  const consentReady = useConsentRedirect(accessToken, ROUTES.advocateMessages);
+
   if (!consentReady) {
     return (
       <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
@@ -191,93 +324,14 @@ export default function AdvocateMessagesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <header className="space-y-2">
-          <Link
-            href={ROUTES.advocateHome}
-            className="text-xs text-slate-400 hover:text-slate-200 mb-1 inline-block"
-          >
-            ← Back to Command Center
-          </Link>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
-            Advocate
-          </p>
-          <h1 className="text-2xl font-semibold text-slate-50">Secure Messages</h1>
-          <p className="text-sm text-slate-400 max-w-xl">
-            Review survivor conversations that may need follow-up.
-          </p>
-          <p className="text-[11px] text-slate-500">
-            Threads with unread messages or activity in the last 14 days are listed first.
-          </p>
-        </header>
-
-        {loading ? (
-          <p className="text-sm text-slate-400">Loading conversations…</p>
-        ) : err ? (
-          <div className="rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
-            {err}
-          </div>
-        ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-4">
-            <p className="text-sm text-slate-300">
-              No recent secure message activity.
-            </p>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              When survivors message or threads are active, they&apos;ll appear here for quick
-              triage.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <Link
-                href={ROUTES.advocateHome}
-                className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
-              >
-                Back to Command Center
-              </Link>
-              <Link
-                href={`${ROUTES.advocateHome}#case-work-queue`}
-                className="inline-flex items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-900/60"
-              >
-                View Case Queue
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {items.map((row) => (
-              <li
-                key={row.caseId}
-                className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-              >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-100 truncate">
-                      {row.victimLabel}
-                    </span>
-                    {row.unreadCount > 0 && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 px-2 py-0.5">
-                        {row.unreadCount} unread
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500">
-                    Latest activity · {formatDate(row.lastAt)}
-                  </p>
-                  <p className="text-xs text-slate-400 line-clamp-2">
-                    {row.preview}
-                  </p>
-                </div>
-                <Link
-                  href={`${ROUTES.compensationIntake}?case=${row.caseId}`}
-                  className="inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-500/50 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/10"
-                >
-                  Open Case
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </main>
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+          <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+        </main>
+      }
+    >
+      <AdvocateMessagesContent />
+    </Suspense>
   );
 }

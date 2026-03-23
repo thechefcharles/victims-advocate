@@ -4,6 +4,7 @@
  */
 
 import type { ProductPriority } from "./priority";
+import { victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 
 export type NextActionKind =
   | "resume_application"
@@ -164,10 +165,12 @@ export function getNextActionForCase(input: CaseNextActionInput): NextAction {
   }
 
   if (messagesUnread > 0) {
+    const messagesHref =
+      mode === "victim" ? victimCaseMessagesUrl(caseId) : baseHref;
     return {
       label: "View Messages",
       action: "view_messages",
-      href: baseHref,
+      href: messagesHref,
       priority: "high",
       reason:
         messagesUnread === 1
@@ -226,7 +229,10 @@ export function getNextActionForCase(input: CaseNextActionInput): NextAction {
     return {
       label: "Connect with an advocate",
       action: "view_messages",
-      href: mode === "admin" ? baseHref : "/compensation/connect-advocate",
+      href:
+        mode === "admin"
+          ? baseHref
+          : `/compensation/connect-advocate?case=${encodeURIComponent(caseId)}`,
       priority: "medium",
       reason: "No advocate is connected to this case yet.",
       uiVariant: "connect_advocate",
@@ -247,7 +253,7 @@ export function getNextActionForCase(input: CaseNextActionInput): NextAction {
   return {
     label: "View Messages",
     action: "none",
-    href: baseHref,
+    href: mode === "victim" ? victimCaseMessagesUrl(caseId) : baseHref,
     priority: "low",
     reason: "You’re up to date. Review messages or your application any time.",
     uiVariant: "up_to_date",

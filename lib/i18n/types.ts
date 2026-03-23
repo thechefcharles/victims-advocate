@@ -11,6 +11,8 @@ export type I18nDict = {
     accountPlaceholderBody: string;
     /** Shown under the email card when the victim personal info form is present. */
     accountVictimEmailCardBody: string;
+    /** Shown under the email card when the advocate personal info form is present. */
+    accountAdvocateEmailCardBody: string;
     language: string;
     brandTagline: string;
     /** Top nav link to /compensation (Crime Victims Compensation hub). */
@@ -23,6 +25,11 @@ export type I18nDict = {
     mySupport: string;
     /** Victim nav: intake (short label) */
     application: string;
+    /** Secure messages (victim / advocate). */
+    messages: string;
+    /** Advocate home (/advocate) — visible label “My Dashboard”. */
+    myDashboardAdvocate: string;
+    /** @deprecated Prefer myDashboardAdvocate; kept for gradual migration. */
     commandCenter: string;
     clients: string;
     organization: string;
@@ -39,6 +46,26 @@ export type I18nDict = {
     backToWorkspaceInline: string;
     yes: string;
     no: string;
+  };
+
+  /** /notifications page */
+  notificationsPage: {
+    title: string;
+    subtitle: string;
+    empty: string;
+    markRead: string;
+    /** Accessible label for the read-state checkmark */
+    readBadgeLabel: string;
+    /** When strict previews hide notification titles */
+    previewHiddenTitle: string;
+    /** Advocate inbox: incoming connection request */
+    connectionRequestIncomingTitle: string;
+    /** Survivor: outbound request awaiting advocate response */
+    connectionRequestPendingTitle: string;
+    /** Organization inbox: advocate wants to join */
+    orgJoinRequestIncomingTitle: string;
+    orgJoinApprove: string;
+    orgJoinDecline: string;
   };
 
   signup: {
@@ -133,6 +160,8 @@ export type I18nDict = {
     supportTeamNoAdvocates: string;
     supportTeamLoading: string;
     supportTeamConnectCta: string;
+    /** Shown under Advocates when a connection request is awaiting advocate response */
+    supportTeamAdvocateRequestPending: string;
     supportTeamAddOrgCta: string;
     /** Title/tooltip on linked org name — opens find / change organization */
     supportTeamEditOrgTitle: string;
@@ -285,6 +314,77 @@ export type I18nDict = {
       finishApplication: string;
       submitApplication: string;
     };
+  };
+
+  /** /victim/messages — secure threads by case */
+  victimMessages: {
+    backDashboard: string;
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    loadError: string;
+    noCases: string;
+    startApplication: string;
+    casePickerLabel: string;
+    yourCases: string;
+    threadHeading: string;
+    threadSubtitle: string;
+    threadEmpty: string;
+  };
+
+  /** /advocate — home dashboard */
+  advocateDashboard: {
+    /** Use tf(..., { name }) when profile has a display name */
+    welcomeTitle: string;
+    /** When no name on file yet */
+    titleFallback: string;
+    /** Shown under the title when the advocate belongs to an org (tf with { name }). */
+    organizationMeta: string;
+    /** Lead-in before the connect link when the advocate has no org membership */
+    noOrganizationMeta: string;
+    /** Link label — opens find-organizations map flow */
+    connectOrganizationLink: string;
+    profileBannerTitle: string;
+    profileBannerBody: string;
+    profileBannerBodyNoName: string;
+    profileBannerCta: string;
+  };
+
+  /** /advocate/find-organizations — map + request to join org */
+  advocateFindOrganizations: {
+    title: string;
+    subtitle: string;
+    back: string;
+    mapIntro: string;
+    stateFilterLabel: string;
+    shareLocation: string;
+    sharing: string;
+    tryAgain: string;
+    locationDenied: string;
+    locationUnavailable: string;
+    locationTimeout: string;
+    positionUnavailable: string;
+    locationNotSupported: string;
+    locationNeedsHttps: string;
+    yourLocation: string;
+    approximateNote: string;
+    milesAway: string;
+    accepting: string;
+    notAccepting: string;
+    capacity: string;
+    noOrgs: string;
+    noOrgsInState: string;
+    loadError: string;
+    privacyNote: string;
+    requestJoin: string;
+    requestSent: string;
+    requestBusy: string;
+    requestError: string;
+    /** Combobox label + search */
+    orgPickerLabel: string;
+    orgSearchPlaceholder: string;
+    orgSearchNoMatches: string;
+    orgSelectedTitle: string;
   };
 
   /** /compensation hub (public) */
@@ -1434,6 +1534,9 @@ forms: {
       messagesTitle: string;
       messagesSubtitle: string;
       messagesEmpty: string;
+      /** Intake summary: secure messages moved to /victim/messages */
+      messagesOpenTool: string;
+      messagesOpenToolCta: string;
       appointmentsTitle: string;
       appointmentsSubtitle: string;
       appointmentsEmpty: string;
@@ -1762,6 +1865,46 @@ forms: {
     };
   };
 };
+
+  accountAdvocate: {
+    title: string;
+    intro: string;
+    privacyNote: string;
+    organizationSection: string;
+    organizationHelp: string;
+    organizationName: string;
+    organizationEmpty: string;
+    identitySection: string;
+    preferredName: string;
+    legalFirstName: string;
+    legalLastName: string;
+    jobTitle: string;
+    workLocationSection: string;
+    workCity: string;
+    workState: string;
+    workZip: string;
+    contactSection: string;
+    workPhone: string;
+    workPhoneExt: string;
+    alternatePhone: string;
+    preferredContactMethod: string;
+    contactSelect: string;
+    contactEmail: string;
+    contactPhone: string;
+    contactSms: string;
+    safeToLeaveVoicemail: string;
+    interpreterYes: string;
+    interpreterNo: string;
+    interpreterUnspecified: string;
+    languagesSection: string;
+    languages: string;
+    languagesPlaceholder: string;
+    save: string;
+    saving: string;
+    saved: string;
+    saveError: string;
+    notSignedIn: string;
+  };
 
   accountPersonal: {
     title: string;

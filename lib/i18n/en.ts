@@ -17,6 +17,8 @@ export const en: I18nDict = {
       "More account settings and preferences will be available here soon.",
     accountVictimEmailCardBody:
       "This is the email you use to sign in. You can update your profile details in the form above.",
+    accountAdvocateEmailCardBody:
+      "This is the email you use to sign in. Update your work contact details in the form above.",
     language: "Language",
     brandTagline: "Victim Support · Made Simple",
     compensationHub: "Compensation",
@@ -25,8 +27,10 @@ export const en: I18nDict = {
     updates: "Updates",
     accountNav: "Account",
     mySupport: "My Dashboard",
+    messages: "Messages",
     application: "Application",
-    commandCenter: "Command Center",
+    myDashboardAdvocate: "My Dashboard",
+    commandCenter: "My Dashboard",
     clients: "Clients",
     organization: "Organization",
     adminHome: "Admin Home",
@@ -41,6 +45,21 @@ export const en: I18nDict = {
     backToWorkspaceInline: "Back to your workspace",
     yes: "Yes",
     no: "No",
+  },
+
+  notificationsPage: {
+    title: "Notifications",
+    subtitle:
+      "Mark a notification as read to clear it from your bell count. Read items show a green check.",
+    empty: "You have no notifications right now.",
+    markRead: "Mark as read",
+    readBadgeLabel: "Read",
+    previewHiddenTitle: "You have a new update",
+    connectionRequestIncomingTitle: "Connection request",
+    connectionRequestPendingTitle: "Connection request pending",
+    orgJoinRequestIncomingTitle: "Advocate membership request",
+    orgJoinApprove: "Approve",
+    orgJoinDecline: "Decline",
   },
 
   signup: {
@@ -138,6 +157,7 @@ export const en: I18nDict = {
     supportTeamNoAdvocates: "No advocate connected yet.",
     supportTeamLoading: "Loading…",
     supportTeamConnectCta: "Connect With An Advocate",
+    supportTeamAdvocateRequestPending: "Connection request pending — we’ll notify you when your advocate responds.",
     supportTeamAddOrgCta: "Find An Organization",
     supportTeamEditOrgTitle: "Manage organization for this case",
     supportTeamEditAdvocateTitle: "Manage advocates for this case",
@@ -287,6 +307,83 @@ export const en: I18nDict = {
       finishApplication: "Finish Application",
       submitApplication: "Submit",
     },
+  },
+
+  victimMessages: {
+    backDashboard: "Back to My Dashboard",
+    eyebrow: "Secure messaging",
+    title: "Messages",
+    subtitle:
+      "Chat with your advocate team in one place per case. This is separate from your application form.",
+    loadError: "Couldn’t load your cases. Try again.",
+    noCases: "You don’t have a case yet. Start an application to use secure messages.",
+    startApplication: "Start application",
+    casePickerLabel: "Cases",
+    yourCases: "Your cases",
+    threadHeading: "Conversation",
+    threadSubtitle: "Only people with access to this case can see this thread.",
+    threadEmpty: "No messages yet. Say hello or ask a question.",
+  },
+
+  advocateDashboard: {
+    welcomeTitle: "Welcome, {name}",
+    titleFallback: "My Dashboard",
+    organizationMeta: "Organization: {name}",
+    noOrganizationMeta:
+      "You’re not linked to an agency workspace yet. Find your organization on the map and send a join request—your agency will be notified to approve.",
+    connectOrganizationLink: "Connect your Organization",
+    profileBannerTitle: "Complete your advocate profile",
+    profileBannerBody:
+      "Add your work contact details so survivors and your team know how to reach you.",
+    profileBannerBodyNoName:
+      "Add how we should address you and your work contact details—helps survivors and your team reach you.",
+    profileBannerCta: "Update in My account",
+  },
+
+  advocateFindOrganizations: {
+    title: "Find your organization",
+    subtitle:
+      "Filter by state, browse the map, and request to join your agency. Organization admins are notified to approve your membership.",
+    back: "← Back to My Dashboard",
+    mapIntro:
+      "Use the map to see organizations near you. Tap the button below only when you are ready to share your location with this browser session.",
+    stateFilterLabel: "State",
+    shareLocation: "Share my location",
+    sharing: "Getting location…",
+    tryAgain: "Try again",
+    locationDenied:
+      "Location access was blocked. You can enable it in your browser settings and try again.",
+    locationUnavailable:
+      "We couldn’t read your location. You can try again, or check Wi‑Fi/location settings on your device.",
+    locationTimeout:
+      "Location timed out. Try again—moving near a window or turning on Wi‑Fi often helps.",
+    positionUnavailable:
+      "Your device couldn’t determine a position right now. Try again in a moment or enable location for this site in settings.",
+    locationNotSupported:
+      "This browser doesn’t support location, or it’s turned off. Try another browser or device.",
+    locationNeedsHttps:
+      "Location only works on a secure page (HTTPS). Open this site with https:// or contact support.",
+    yourLocation: "Your approximate location",
+    approximateNote: "Approximate pin",
+    milesAway: "mi away",
+    accepting: "Accepting new clients",
+    notAccepting: "Not accepting new clients",
+    capacity: "Capacity",
+    noOrgs:
+      "There aren’t any organizations in the directory yet. New partners are added over time—please check back later.",
+    noOrgsInState:
+      "No organizations match this state filter. Try “All states” or pick another state.",
+    loadError: "We couldn’t load organizations. Please try again.",
+    privacyNote:
+      "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
+    requestJoin: "Request to join",
+    requestSent: "Request sent. Your organization will be notified in Updates.",
+    requestBusy: "Sending…",
+    requestError: "Could not send request. Try again.",
+    orgPickerLabel: "Organization",
+    orgSearchPlaceholder: "Search by name or region…",
+    orgSearchNoMatches: "No matches. Try different words or adjust the state filter.",
+    orgSelectedTitle: "Selected organization",
   },
 
   compensationHub: {
@@ -1725,6 +1822,9 @@ summary: {
     messagesTitle: "Messages",
     messagesSubtitle: "Secure conversation with your advocate",
     messagesEmpty: "You do not have any secure messages yet.",
+    messagesOpenTool:
+      "Secure messaging is on your Messages page—open it anytime to read or reply without leaving your application summary.",
+    messagesOpenToolCta: "Open Messages",
     appointmentsTitle: "Appointments",
     appointmentsSubtitle: "Upcoming support appointments",
     appointmentsEmpty: "No appointments scheduled yet.",
@@ -2085,6 +2185,48 @@ approxBillAmount: "Approx. bill amount",
  },
 },
 }, // <-- ADD THIS COMMA (summary's parent object continues safely)
+
+  accountAdvocate: {
+    title: "Advocate profile",
+    intro:
+      "This information helps survivors and your organization identify you. Your organization is managed by your team—it shows here when your account is linked.",
+    privacyNote: "We do not collect SSN or tax IDs here.",
+    organizationSection: "Organization",
+    organizationHelp:
+      "Your employer or program is set by your organization admin. Contact them if this looks wrong.",
+    organizationName: "Organization",
+    organizationEmpty: "Not linked to an organization yet",
+    identitySection: "Name & role",
+    preferredName: "Preferred name (how you’d like to be addressed)",
+    legalFirstName: "Legal first name",
+    legalLastName: "Legal last name",
+    jobTitle: "Title / role",
+    workLocationSection: "Work location",
+    workCity: "City",
+    workState: "State",
+    workZip: "ZIP",
+    contactSection: "Work contact",
+    workPhone: "Work phone",
+    workPhoneExt: "Extension",
+    alternatePhone: "Alternate phone",
+    preferredContactMethod: "Preferred contact method",
+    contactSelect: "Select…",
+    contactEmail: "Email",
+    contactPhone: "Phone call",
+    contactSms: "SMS",
+    safeToLeaveVoicemail: "Safe to leave voicemail at work number?",
+    interpreterYes: "Yes",
+    interpreterNo: "No",
+    interpreterUnspecified: "Prefer not to say",
+    languagesSection: "Languages",
+    languages: "Languages you work in",
+    languagesPlaceholder: "e.g. English, Spanish",
+    save: "Save profile",
+    saving: "Saving…",
+    saved: "Saved.",
+    saveError: "Couldn’t save. Try again.",
+    notSignedIn: "You’re not signed in.",
+  },
 
   accountPersonal: {
     title: "Personal information",

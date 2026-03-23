@@ -6,14 +6,6 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
-type Conversation = {
-  id: string;
-  case_id: string;
-  organization_id: string;
-  updated_at: string;
-  status: string;
-};
-
 type Message = {
   id: string;
   created_at: string;
@@ -40,7 +32,6 @@ export function CaseMessagesPanel({
   const { accessToken } = useAuth();
   const { strictPreviews } = useSafetySettings(accessToken);
   const [loading, setLoading] = useState(false);
-  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [draft, setDraft] = useState("");
@@ -63,7 +54,6 @@ export function CaseMessagesPanel({
         setErr(getApiErrorMessage(json, "Couldn’t load messages."));
         return;
       }
-      setConversation(json.conversation ?? null);
       setMessages((json.messages ?? []) as Message[]);
       setUnreadCount(Number(json.unread_count ?? 0));
     } catch (e) {
@@ -164,8 +154,8 @@ export function CaseMessagesPanel({
           <p className="text-[11px] text-slate-400">
             {headingSubtitle ??
               (strictPreviews
-                ? "In-app messages."
-                : `Case-based, in-app messaging. No email or SMS.${unreadCount > 0 ? ` · ${unreadCount} unread` : ""}`)}
+                ? "Secure messages for this case."
+                : `Messages for this case only—no email or SMS.${unreadCount > 0 ? ` ${unreadCount} unread.` : ""}`)}
           </p>
         </div>
         <button
@@ -184,7 +174,7 @@ export function CaseMessagesPanel({
         {messages.length === 0 ? (
           <div className="text-[11px] text-slate-500">
             {emptyStateText ??
-              "No messages yet. Start the conversation here."}
+              "No messages yet. You can send the first message from this case."}
           </div>
         ) : (
           messages.map((m) => (
@@ -225,11 +215,6 @@ export function CaseMessagesPanel({
         </button>
       </div>
 
-      {conversation && (
-        <div className="text-[10px] text-slate-600">
-          Thread: {conversation.id.slice(0, 8)}…
-        </div>
-      )}
     </section>
   );
 }

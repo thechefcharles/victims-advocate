@@ -42,9 +42,8 @@ import {
 } from "../../../lib/intake/fieldState";
 import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
-import { ROUTES } from "@/lib/routes/pageRegistry";
+import { ROUTES, victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
-import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
 
 type IntakeStep =
   | "victim"
@@ -1337,7 +1336,6 @@ title={
 {t("intake.footer.draftDisclaimer")}
         </p>
 
-        {step !== "summary" && <CaseMessagesPanel caseId={caseId} />}
       </div>
 
             {/* NxtGuide chat widget (intake) */}
@@ -4503,25 +4501,26 @@ setInviteResult(
         )}
       </div>
 
-      {/* 5. Secure messages */}
-      {caseId ? (
-        <div id="summary-secure-messages">
-          <CaseMessagesPanel
-            caseId={caseId}
-            headingTitle={t("forms.summary.checkpoint.messagesTitle")}
-            headingSubtitle={t("forms.summary.checkpoint.messagesSubtitle")}
-            emptyStateText={t("forms.summary.checkpoint.messagesEmpty")}
-          />
-        </div>
-      ) : (
-        <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-1">
-          <h3 className="text-sm font-semibold text-slate-100">
-            {t("forms.summary.checkpoint.messagesTitle")}
-          </h3>
-          <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.messagesSubtitle")}</p>
+      {/* 5. Secure messages — dedicated tool at /victim/messages */}
+      <div id="summary-secure-messages" className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-slate-100">
+          {t("forms.summary.checkpoint.messagesTitle")}
+        </h3>
+        <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.messagesSubtitle")}</p>
+        {caseId ? (
+          <>
+            <p className="text-xs text-slate-300">{t("forms.summary.checkpoint.messagesOpenTool")}</p>
+            <Link
+              href={victimCaseMessagesUrl(caseId)}
+              className="inline-flex items-center justify-center rounded-full bg-emerald-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition"
+            >
+              {t("forms.summary.checkpoint.messagesOpenToolCta")}
+            </Link>
+          </>
+        ) : (
           <p className="text-xs text-slate-500">{t("forms.summary.checkpoint.messagesEmpty")}</p>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 6. Recommended support organizations */}
       {caseId ? (

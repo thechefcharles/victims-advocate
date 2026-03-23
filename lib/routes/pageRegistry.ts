@@ -80,6 +80,13 @@ export const PAGE_REGISTRY: PageRegistryEntry[] = [
     audience: "role:victim",
   },
   {
+    id: "victim_messages",
+    path: "/victim/messages",
+    title: "Secure messages (victim)",
+    audience: "role:victim",
+    notes: "Case-scoped threads; not embedded in intake.",
+  },
+  {
     id: "victim_find_organizations",
     path: "/victim/find-organizations",
     title: "Find organizations (victim)",
@@ -89,13 +96,13 @@ export const PAGE_REGISTRY: PageRegistryEntry[] = [
   {
     id: "advocate_dashboard",
     path: "/advocate",
-    title: "Advocate command center",
+    title: "Advocate dashboard (My Dashboard)",
     audience: "role:advocate",
   },
   {
     id: "advocate_messages",
     path: "/advocate/messages",
-    title: "Advocate secure message triage",
+    title: "Advocate message triage (by case)",
     defaultExportName: "AdvocateMessagesPage",
     audience: "role:advocate",
     notes: "Lists cases with unread or recent secure message activity; uses existing case message APIs.",
@@ -153,11 +160,13 @@ export const ROUTES = {
   dashboard: "/dashboard",
   dashboardClients: "/dashboard/clients",
   victimDashboard: "/victim/dashboard",
+  victimMessages: "/victim/messages",
   victimFindOrganizations: "/victim/find-organizations",
   advocateDashboard: "/advocate",
   advocateHome: "/advocate",
   advocateMessages: "/advocate/messages",
   advocateConnectionRequests: "/advocate/connection-requests",
+  advocateFindOrganizations: "/advocate/find-organizations",
   advocateOrg: "/advocate/org",
   organizationDashboard: "/organization/dashboard",
   organizationSetup: "/organization/setup",
@@ -174,8 +183,18 @@ export const victimCasePaths = {
   organization: (caseId: string) => `/victim/case/${encodeURIComponent(caseId)}/organization`,
 } as const;
 
+/** Deep-link to the dedicated secure messages tool for a case (victim). */
+export function victimCaseMessagesUrl(caseId: string): string {
+  return `${ROUTES.victimMessages}?case=${encodeURIComponent(caseId)}`;
+}
+
+/** @deprecated Use victimCaseMessagesUrl — messages are no longer embedded in intake. */
 export function compensationIntakeMessagesUrl(caseId: string): string {
-  return `${ROUTES.compensationIntake}?case=${encodeURIComponent(caseId)}#summary-secure-messages`;
+  return victimCaseMessagesUrl(caseId);
+}
+
+export function advocateCaseMessagesUrl(caseId: string): string {
+  return `${ROUTES.advocateMessages}?case=${encodeURIComponent(caseId)}`;
 }
 
 export type AppRouteKey = keyof typeof ROUTES;

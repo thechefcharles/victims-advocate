@@ -47,7 +47,7 @@ export default function AdvocateClientsPage() {
             href={ROUTES.advocateHome}
             className="text-slate-400 hover:text-white font-medium"
           >
-            ← Command Center
+            ← My Dashboard
           </Link>
         </div>
 

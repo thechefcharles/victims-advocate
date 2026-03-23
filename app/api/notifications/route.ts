@@ -2,11 +2,18 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listNotificationsForUser } from "@/lib/server/notifications/query";
+import { syncVictimConnectionNotifications } from "@/lib/server/notifications/victimPendingSync";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
+
+    if (ctx.role === "victim") {
+      await syncVictimConnectionNotifications(ctx);
+    }
 
     const url = new URL(req.url);
     const unreadOnly = url.searchParams.get("unreadOnly") === "true";
