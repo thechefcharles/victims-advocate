@@ -175,6 +175,10 @@ export const es: I18nDict = {
             updateFailed: "No se pudo actualizar. Inténtalo de nuevo.",
             noOrgBody: "Aún no hay organización de servicios a víctimas para este caso.",
         },
+        applyPathConnect: "Conectar con un defensor",
+        applyPathSelf: "Solicitar por mi cuenta",
+        applyPathBack: "Atrás",
+        applyPathAria: "Solicitar",
         stateModalTitle: "¿Programa de qué estado?",
         stateModalSubtitle:
             "Illinois e Indiana usan formularios y preguntas distintas; usaremos el que corresponda.",
@@ -188,7 +192,6 @@ export const es: I18nDict = {
         profileBannerBody:
             "Añade tu teléfono y ciudad para que defensores y organizaciones puedan contactarte cuando trabajes en un caso.",
         profileBannerCta: "Abrir configuración de la cuenta",
-        profileBannerDismiss: "Cerrar",
         startNewApplication: "Iniciar una solicitud nueva",
         newCaseButton: "Nuevo caso",
         caseEdit: "Editar",

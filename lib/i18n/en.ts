@@ -175,6 +175,10 @@ export const en: I18nDict = {
       updateFailed: "Could not update organization. Try again.",
       noOrgBody: "No victim-service organization is selected for this case yet.",
     },
+    applyPathConnect: "Connect With An Advocate",
+    applyPathSelf: "Apply By Myself",
+    applyPathBack: "Back",
+    applyPathAria: "Apply",
     stateModalTitle: "Which State Program?",
     stateModalSubtitle: "Illinois and Indiana use different forms and eligibility questions—we’ll match the right one.",
     eligibleReviewIntro:
@@ -187,7 +191,6 @@ export const en: I18nDict = {
     profileBannerBody:
       "Add your phone number and city so advocates and organizations can reach you when you’re working on a case.",
     profileBannerCta: "Open account settings",
-    profileBannerDismiss: "Dismiss",
     startNewApplication: "Start A New Application",
     newCaseButton: "New Case",
     caseEdit: "Edit",

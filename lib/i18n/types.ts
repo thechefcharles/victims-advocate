@@ -170,6 +170,12 @@ export type I18nDict = {
       updateFailed: string;
       noOrgBody: string;
     };
+    /** Apply Now modal — first step: two choices only */
+    applyPathConnect: string;
+    applyPathSelf: string;
+    applyPathBack: string;
+    /** Screen reader label for the path dialog (no visible title) */
+    applyPathAria: string;
     stateModalTitle: string;
     stateModalSubtitle: string;
     /** Use with tf(..., { state: "Illinois" | "Indiana" }) */
@@ -183,7 +189,6 @@ export type I18nDict = {
     profileBannerBodyNoName: string;
     profileBannerBody: string;
     profileBannerCta: string;
-    profileBannerDismiss: string;
     /** Secondary action when user already has at least one case */
     startNewApplication: string;
     /** Header control: create another case without leaving the dashboard */

@@ -21,7 +21,11 @@ import { PrimaryActionArea } from "@/components/layout/PrimaryActionArea";
 import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
 import { hasBlockingDocumentGap, type CompletenessSignal } from "@/lib/product/nextAction";
 import { priorityRingClassName } from "@/lib/product/priority";
-import { getVictimFunnelSteps, getEligibilitySkippedFromApplication } from "@/lib/victimDashboardFunnel";
+import {
+  canClickVictimFunnelStep,
+  getVictimFunnelSteps,
+  getEligibilitySkippedFromApplication,
+} from "@/lib/victimDashboardFunnel";
 import { VictimFunnelStepper } from "@/components/dashboard/VictimFunnelStepper";
 import { VictimProfileCompletionBanner } from "@/components/dashboard/VictimProfileCompletionBanner";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -143,9 +147,11 @@ export default function VictimDashboard({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
-  /** Apply now: state → options. “Eligible” marketing path: state → review. */
+  /** Apply now: path (advocate vs self) → state (IL/IN) → optional eligible review. */
   const [applyModalMode, setApplyModalMode] = useState<"apply" | "eligible" | null>(null);
-  const [applyModalStep, setApplyModalStep] = useState<"state" | "eligibleReview">("state");
+  const [applyModalStep, setApplyModalStep] = useState<"path" | "state" | "eligibleReview">(
+    "path"
+  );
   const [pendingState, setPendingState] = useState<"IL" | "IN">("IL");
   const { setStateCode: setGlobalStateCode } = useStateSelection();
   const [supportTeam, setSupportTeam] = useState<SupportTeamPayload | null>(null);
@@ -382,12 +388,12 @@ export default function VictimDashboard({
   const closeApplyModal = useCallback(() => {
     setApplyModalOpen(false);
     setApplyModalMode(null);
-    setApplyModalStep("state");
+    setApplyModalStep("path");
   }, []);
 
   const openApplyModal = useCallback(() => {
     setApplyModalMode("apply");
-    setApplyModalStep("state");
+    setApplyModalStep("path");
     setPendingState("IL");
     setApplyModalOpen(true);
   }, []);
@@ -406,12 +412,21 @@ export default function VictimDashboard({
         router.push(`/compensation/eligibility/${encodeURIComponent(focusCaseId)}`);
         return;
       }
+      if (!canClickVictimFunnelStep(step, funnelSteps)) return;
       if (!focusCaseId) return;
       if (step === "application" || step === "support") {
         router.push(`/compensation/intake?case=${encodeURIComponent(focusCaseId)}`);
       }
     },
-    [cases.length, focusCaseId, focusCase, applicationNotStarted, router, openApplyModal]
+    [
+      cases.length,
+      focusCaseId,
+      focusCase,
+      applicationNotStarted,
+      funnelSteps,
+      router,
+      openApplyModal,
+    ]
   );
 
   /** Creates an empty draft case, selects it, and opens rename — program state is chosen only when user clicks Apply now. */
@@ -657,6 +672,12 @@ export default function VictimDashboard({
         : ROUTES.compensationConnectAdvocate,
     [focusCaseId]
   );
+
+  const goConnectAdvocateFromApply = useCallback(() => {
+    closeApplyModal();
+    router.push(connectAdvocateHref);
+  }, [closeApplyModal, router, connectAdvocateHref]);
+
   const findOrgHref = useMemo(
     () =>
       focusCaseId
@@ -854,6 +875,7 @@ export default function VictimDashboard({
                 ariaLabel={t("victimDashboard.funnel.ariaLabel")}
                 title={t("victimDashboard.progressTitle")}
                 onStepClick={handleProgressStepClick}
+                canClickStep={(id) => canClickVictimFunnelStep(id, funnelSteps)}
                 stepsDisabled={!focusCaseId || !focusCase}
                 eligibilitySkipped={eligibilitySkipped}
               />
@@ -1028,7 +1050,7 @@ export default function VictimDashboard({
           </>
         )}
 
-        {/* Apply now (no cases yet): state first, then eligibility / intake options */}
+        {/* Apply now: path → state (IL/IN) → optional eligible review */}
         {applyModalOpen && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
@@ -1036,13 +1058,47 @@ export default function VictimDashboard({
             role="presentation"
           >
             <div
-              className="max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl"
+              className={`rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl ${
+                applyModalStep === "path" ? "max-w-sm w-full space-y-4" : "max-w-md space-y-4"
+              }`}
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="apply-modal-title"
             >
-              {applyModalStep === "state" ? (
+              {applyModalStep === "path" ? (
+                <>
+                  <h2 id="apply-modal-title" className="sr-only">
+                    {t("victimDashboard.applyPathAria")}
+                  </h2>
+                  <div className="grid grid-cols-1 gap-3">
+                    <button
+                      type="button"
+                      disabled={creatingCase}
+                      onClick={() => void goConnectAdvocateFromApply()}
+                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-teal-500/50 hover:bg-slate-900 disabled:opacity-50"
+                    >
+                      {t("victimDashboard.applyPathConnect")}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={creatingCase}
+                      onClick={() => setApplyModalStep("state")}
+                      className="rounded-xl border border-blue-500/35 bg-blue-950/40 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-400/60 hover:bg-blue-950/55 disabled:opacity-50"
+                    >
+                      {t("victimDashboard.applyPathSelf")}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={creatingCase}
+                    onClick={() => closeApplyModal()}
+                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                  >
+                    {t("victimDashboard.cancel")}
+                  </button>
+                </>
+              ) : applyModalStep === "state" ? (
                 <>
                   <h3 id="apply-modal-title" className="text-base font-semibold text-slate-100">
                     {t("victimDashboard.stateModalTitle")}
@@ -1069,8 +1125,16 @@ export default function VictimDashboard({
                   <button
                     type="button"
                     disabled={creatingCase}
-                    onClick={() => closeApplyModal()}
+                    onClick={() => setApplyModalStep("path")}
                     className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                  >
+                    ← {t("victimDashboard.applyPathBack")}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={creatingCase}
+                    onClick={() => closeApplyModal()}
+                    className="w-full text-center text-xs text-slate-600 hover:text-slate-400"
                   >
                     {t("victimDashboard.cancel")}
                   </button>

@@ -13,6 +13,8 @@ export type VictimFunnelStepperProps = {
   /** `minimal` = compact strip (dashboard) */
   variant?: "default" | "minimal";
   onStepClick?: (step: FunnelStepId) => void;
+  /** If set, a step is only clickable when this returns true (sequential flow). */
+  canClickStep?: (step: FunnelStepId) => boolean;
   stepsDisabled?: boolean;
   stepHint?: string;
   /** Eligibility was skipped — outer card can show a red warning frame */
@@ -43,12 +45,14 @@ export function VictimFunnelStepper({
   title,
   variant = "default",
   onStepClick,
+  canClickStep,
   stepsDisabled,
   stepHint,
   eligibilitySkipped = false,
 }: VictimFunnelStepperProps) {
   const doneCount = ORDER.filter((id) => steps[id] === "complete").length;
   const interactive = Boolean(onStepClick) && !stepsDisabled;
+  const stepAllowed = (id: FunnelStepId) => (canClickStep ? canClickStep(id) : true);
   const minimal = variant === "minimal";
 
   const SegmentBar = () => (
@@ -78,7 +82,9 @@ export function VictimFunnelStepper({
             const state = steps[id];
             const label = labels[id];
             const clickable =
-              interactive && (id === "eligibility" || id === "application" || id === "support");
+              interactive &&
+              (id === "eligibility" || id === "application" || id === "support") &&
+              stepAllowed(id);
             const active = state === "current";
             const done = state === "complete";
             const skipped = state === "skipped";
@@ -176,7 +182,9 @@ export function VictimFunnelStepper({
                 : "border-dashed border-slate-500 bg-slate-900/70 text-slate-500";
 
           const clickable =
-            interactive && (id === "eligibility" || id === "application" || id === "support");
+            interactive &&
+            (id === "eligibility" || id === "application" || id === "support") &&
+            stepAllowed(id);
 
           const Inner = (
             <div className="flex items-start gap-2.5 sm:flex-col sm:items-center sm:text-center sm:gap-2">
