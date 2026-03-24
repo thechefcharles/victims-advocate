@@ -37,6 +37,10 @@ export function applyHardFilters(
     return { ok: false, code: "profile_not_active" };
   }
 
+  if (org.profile_stage !== "searchable" && org.profile_stage !== "enriched") {
+    return { ok: false, code: "profile_not_searchable" };
+  }
+
   if (!org.accepting_clients && org.capacity_status === "closed") {
     return { ok: false, code: "not_accepting_closed" };
   }

@@ -7,6 +7,7 @@ import {
 
 export type CapacityStatus = "open" | "limited" | "waitlist" | "closed" | "unknown";
 export type OrgProfileStatus = "draft" | "active" | "archived";
+export type OrgProfileStage = "created" | "searchable" | "enriched";
 
 export const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
 export type ServiceType = (typeof SERVICE_TYPES)[number];
@@ -32,6 +33,7 @@ export type OrganizationProfile = {
   special_populations: SpecialPopulation[];
   accessibility_features: AccessibilityFeature[];
   profile_status: OrgProfileStatus;
+  profile_stage: OrgProfileStage;
   profile_last_updated_at: string | null;
 };
 

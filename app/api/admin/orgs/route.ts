@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("organizations")
-      .select("id, created_at, name, type, status, created_by")
+      .select("id, created_at, name, type, status, created_by, profile_status, profile_stage")
       .order("created_at", { ascending: false });
 
     if (error) throw new Error(error.message);

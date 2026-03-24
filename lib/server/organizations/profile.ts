@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
+import { computeOrganizationProfileStage } from "@/lib/organizations/profileStage";
 import { rowToOrganizationProfile, parseOrgProfilePatch } from "./validation";
 import type { OrganizationProfile, OrganizationProfileRow } from "./types";
 
@@ -87,9 +88,15 @@ export async function updateOrganizationProfile(params: {
 
   const prevStatus = String((before as Record<string, unknown>).profile_status ?? "draft");
 
+  const beforeProfile = rowToOrganizationProfile(before as Record<string, unknown>);
+  const merged: OrganizationProfile = { ...beforeProfile, ...patch };
+  const profile_stage = computeOrganizationProfileStage(merged);
+
   const updatePayload: Record<string, unknown> = {
     ...patch,
+    profile_stage,
     profile_last_updated_at: new Date().toISOString(),
+    last_profile_update: new Date().toISOString(),
   };
 
   const { data, error } = await supabase

@@ -42,6 +42,7 @@ function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
       ? (row.accessibility_features as string[])
       : [],
     profile_status: String(row.profile_status ?? "draft"),
+    profile_stage: String(row.profile_stage ?? "created"),
     profile_last_updated_at:
       row.profile_last_updated_at != null ? String(row.profile_last_updated_at) : null,
   };
@@ -52,9 +53,10 @@ export async function loadActiveOrganizations(): Promise<OrgRowForMatching[]> {
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_last_updated_at"
+      "id,name,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage,profile_last_updated_at"
     )
-    .eq("profile_status", "active");
+    .eq("profile_status", "active")
+    .in("profile_stage", ["searchable", "enriched"]);
 
   if (error) {
     throw new AppError("INTERNAL", "Failed to load organizations", undefined, 500);

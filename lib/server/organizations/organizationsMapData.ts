@@ -27,10 +27,11 @@ export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> 
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,status"
+      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status"
     )
     .eq("status", "active")
-    .eq("profile_status", "active");
+    .eq("profile_status", "active")
+    .in("profile_stage", ["searchable", "enriched"]);
 
   if (error) throw new Error(error.message);
 

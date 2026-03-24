@@ -27,6 +27,11 @@ import {
 import type { OrgRole } from "@/lib/server/auth/orgRoles";
 import { ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
+import {
+  listMissingForSearchable,
+  listOptionalEnrichedHints,
+} from "@/lib/organizations/profileStage";
+import type { OrganizationProfile } from "@/lib/server/organizations/types";
 
 const INVITE_ROLE_LABELS: Record<OrgRole, string> = {
   org_owner: "Org owner",
@@ -70,6 +75,7 @@ type OrgProfile = {
   special_populations: string[];
   accessibility_features: string[];
   profile_status: string;
+  profile_stage: string;
   profile_last_updated_at: string | null;
 };
 
@@ -336,7 +342,10 @@ export default function AdvocateOrgPage() {
         }
         const p = json.data?.profile as OrgProfile | undefined;
         if (p) {
-          setProfile(p);
+          setProfile({
+            ...p,
+            profile_stage: p.profile_stage ?? "created",
+          });
           setServiceTypes(p.service_types ?? []);
           setIntakeMethods(p.intake_methods ?? []);
           setSpecialPops(p.special_populations ?? []);
@@ -559,6 +568,60 @@ export default function AdvocateOrgPage() {
             </button>
           ))}
         </nav>
+
+        {profile && !profileLoading && (
+          <section
+            className="rounded-2xl border border-slate-700/80 bg-slate-900/40 p-4 text-sm text-slate-200 space-y-2"
+            aria-label="Matching profile stage"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Matching readiness
+            </p>
+            {profile.profile_stage === "created" && (
+              <>
+                <p className="text-slate-300">
+                  <span className="font-semibold text-slate-100">Created.</span> Add the basics below
+                  so your organization can become searchable for support matching.
+                </p>
+                {listMissingForSearchable(profile as OrganizationProfile).length > 0 && (
+                  <ul className="list-disc list-inside text-xs text-slate-400 space-y-1">
+                    {listMissingForSearchable(profile as OrganizationProfile).map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+            {profile.profile_stage === "searchable" && (
+              <>
+                <p className="text-slate-300">
+                  <span className="font-semibold text-slate-100">Searchable.</span> When your profile
+                  status is Active, your organization can appear in support matching.
+                </p>
+                {listOptionalEnrichedHints(profile as OrganizationProfile).length > 0 && (
+                  <p className="text-xs text-slate-500">
+                    You can add more detail any time:{" "}
+                    {listOptionalEnrichedHints(profile as OrganizationProfile).join(" · ")}
+                  </p>
+                )}
+              </>
+            )}
+            {profile.profile_stage === "enriched" && (
+              <p className="text-slate-300">
+                <span className="font-semibold text-slate-100">Enriched.</span> Your profile includes
+                extra information that helps build confidence over time.
+              </p>
+            )}
+            {!["created", "searchable", "enriched"].includes(profile.profile_stage) && (
+              <p className="text-xs text-slate-400">
+                Current stage: {profile.profile_stage}. Save your profile to refresh this label.
+              </p>
+            )}
+            <p className="text-[11px] text-slate-500">
+              Stages update when you save. Matching also requires profile status set to Active.
+            </p>
+          </section>
+        )}
 
         {/* Profile form — tabs profile → accessibility */}
         <form id="org-profile-form" onSubmit={handleSaveProfile} className="space-y-0">

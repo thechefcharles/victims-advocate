@@ -88,10 +88,11 @@ export async function loadEcosystemAggregates(filters: EcosystemFilters): Promis
   const { data: orgData, error: orgErr } = await supabase
     .from("organizations")
     .select(
-      "id,name,status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status"
+      "id,name,status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage"
     )
     .eq("profile_status", "active")
-    .eq("status", "active");
+    .eq("status", "active")
+    .in("profile_stage", ["searchable", "enriched"]);
 
   if (orgErr) {
     throw new Error(orgErr.message);

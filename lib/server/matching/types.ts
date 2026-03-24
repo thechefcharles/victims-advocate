@@ -30,6 +30,7 @@ export type OrgRowForMatching = {
   special_populations: string[];
   accessibility_features: string[];
   profile_status: string;
+  profile_stage: string;
   profile_last_updated_at: string | null;
 };
 

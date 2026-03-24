@@ -11,6 +11,8 @@ type Org = {
   name: string;
   type: string;
   status: string;
+  profile_status?: string | null;
+  profile_stage?: string | null;
 };
 
 type PendingProposal = {
@@ -346,6 +348,12 @@ export default function AdminOrgsPage() {
                     <span className="font-medium text-slate-100">{o.name}</span>
                     <span className="ml-2 text-xs text-slate-400">
                       {o.type} · {o.status}
+                      {o.profile_status != null && o.profile_status !== ""
+                        ? ` · profile ${o.profile_status}`
+                        : ""}
+                      {o.profile_stage != null && o.profile_stage !== ""
+                        ? ` · stage ${o.profile_stage}`
+                        : ""}
                     </span>
                   </div>
                   <Link
