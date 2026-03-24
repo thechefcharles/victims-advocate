@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type CaseRow = {
   id: string;
@@ -55,8 +56,10 @@ export default function ClientCasesPage() {
   }, [params, pathname]);
 
   const [cases, setCases] = useState<CaseRow[]>([]);
+  const [clientTitle, setClientTitle] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const fetchCases = useCallback(async () => {
     if (!clientId) {
@@ -88,12 +91,14 @@ export default function ClientCasesPage() {
         if (res.status === 403) {
           setErr("You don’t have access to this client.");
           setCases([]);
+          setClientTitle(null);
           return;
         }
 
         if (res.status === 404) {
           setErr("Client not found (or no cases shared yet).");
           setCases([]);
+          setClientTitle(null);
           return;
         }
 
@@ -102,10 +107,12 @@ export default function ClientCasesPage() {
 
       const json = await res.json();
       setCases((json.cases ?? []) as CaseRow[]);
+      setClientTitle(typeof json.client_display_name === "string" ? json.client_display_name : null);
     } catch (e) {
       console.error("Failed to load client cases:", e);
       setErr("Couldn’t load client cases. Please try again.");
       setCases([]);
+      setClientTitle(null);
     } finally {
       setLoading(false);
     }
@@ -122,13 +129,49 @@ export default function ClientCasesPage() {
   }, [clientId, fetchCases]);
 
   const clientDisplayName = useMemo(() => {
+    if (clientTitle?.trim()) return clientTitle.trim();
     const firstCase = cases?.[0];
     const app = safeParseApp(firstCase?.application);
     const first = app?.victim?.firstName?.trim?.() ?? "";
     const last = app?.victim?.lastName?.trim?.() ?? "";
     const full = `${first} ${last}`.trim();
     return full || `Client ${clientId ? clientId.slice(0, 8) : "—"}…`;
-  }, [cases, clientId]);
+  }, [clientTitle, cases, clientId]);
+
+  const removeClient = useCallback(async () => {
+    if (!clientId) return;
+    const ok = window.confirm(
+      `Remove ${clientDisplayName} from your client list?\n\n` +
+        "You will lose access to their cases and secure messages until they connect with you again."
+    );
+    if (!ok) return;
+
+    setRemoving(true);
+    setErr(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+      const res = await fetch(`/api/advocate/clients/${encodeURIComponent(clientId)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setErr(getApiErrorMessage(json, "Couldn’t remove this client."));
+        return;
+      }
+      router.replace("/dashboard/clients");
+    } catch (e) {
+      console.error(e);
+      setErr("Couldn’t remove this client. Please try again.");
+    } finally {
+      setRemoving(false);
+    }
+  }, [clientId, clientDisplayName, router]);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
@@ -142,7 +185,7 @@ export default function ClientCasesPage() {
             <p className="text-[11px] text-slate-400">Cases shared with you</p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 justify-end">
             <button
               type="button"
               onClick={fetchCases}
@@ -150,6 +193,14 @@ export default function ClientCasesPage() {
               className="text-[11px] rounded-full border border-slate-700 px-3 py-1.5 hover:bg-slate-900/60 disabled:opacity-50"
             >
               {loading ? "Refreshing…" : "Refresh"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void removeClient()}
+              disabled={removing || !clientId || loading}
+              className="text-[11px] rounded-full border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 font-medium text-rose-100 hover:bg-rose-950/50 disabled:opacity-50"
+            >
+              {removing ? "Removing…" : "Remove Client"}
             </button>
 
             <Link

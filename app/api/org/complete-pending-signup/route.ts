@@ -56,6 +56,15 @@ export async function POST(req: Request) {
       return apiFailFromError(result.error);
     }
 
+    if ("existingOrganization" in result) {
+      return apiOk({
+        completed: false,
+        reason: "org_already_exists",
+        organization_id: result.existingOrganization.id,
+        organization_name: result.existingOrganization.name,
+      });
+    }
+
     const nextMeta = { ...meta } as Record<string, unknown>;
     delete nextMeta.pending_org_name;
     delete nextMeta.pending_org_type;

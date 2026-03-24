@@ -1,0 +1,75 @@
+/**
+ * PATCH: advocate updates profiles.personal_info.advocate (partial merge).
+ */
+
+import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
+import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { logger } from "@/lib/server/logging";
+import {
+  advocatePersonalInfoPatchSchema,
+  mergeAdvocateIntoPersonalInfo,
+} from "@/lib/personalInfo";
+
+export async function PATCH(req: Request) {
+  try {
+    const ctx = await getAuthContext(req);
+    requireAuth(ctx);
+    requireRole(ctx, "advocate");
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+    }
+
+    const parsed = advocatePersonalInfoPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        parsed.error.flatten().formErrors.join("; ") || "Invalid fields",
+        undefined,
+        422
+      );
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: row, error: fetchErr } = await supabase
+      .from("profiles")
+      .select("personal_info")
+      .eq("id", ctx.userId)
+      .maybeSingle();
+
+    if (fetchErr) {
+      throw new Error(fetchErr.message);
+    }
+
+    const merged = mergeAdvocateIntoPersonalInfo(
+      row?.personal_info ?? {},
+      parsed.data
+    ) as Record<string, unknown>;
+
+    const { error: upErr } = await supabase
+      .from("profiles")
+      .update({
+        personal_info: merged,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", ctx.userId);
+
+    if (upErr) {
+      throw new Error(upErr.message);
+    }
+
+    logger.info("me.advocate_personal_info.updated", { userId: ctx.userId });
+    return apiOk({ advocatePersonalInfo: merged["advocate"] });
+  } catch (err) {
+    const appErr = toAppError(err);
+    logger.error("me.advocate_personal_info.patch.error", {
+      code: appErr.code,
+      message: appErr.message,
+    });
+    return apiFailFromError(appErr);
+  }
+}

@@ -3,6 +3,8 @@ import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/aut
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser } from "@/lib/server/data";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { buildAdvocateClientDisplayName } from "@/lib/server/profile/advocateClientDisplayName";
 
 function parseApp(app: unknown) {
   if (!app) return null;
@@ -50,12 +52,34 @@ export async function GET(
         (b.created_at || "").localeCompare(a.created_at || "")
       );
 
+    const supabase = getSupabaseAdmin();
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("personal_info")
+      .eq("id", cleanClientId)
+      .maybeSingle();
+
+    let email: string | null = null;
+    try {
+      const { data: udata } = await supabase.auth.admin.getUserById(cleanClientId);
+      email = udata?.user?.email ?? null;
+    } catch {
+      // ignore
+    }
+
+    const client_display_name = buildAdvocateClientDisplayName({
+      victimUserId: cleanClientId,
+      personalInfoRaw: profileRow?.personal_info ?? null,
+      applicationFromLatestCase: formatted[0]?.application ?? null,
+      email,
+    });
+
     logger.info("advocate.clients.cases.list", {
       userId: authCtx.userId,
       clientId: cleanClientId,
       count: formatted.length,
     });
-    return NextResponse.json({ cases: formatted });
+    return NextResponse.json({ cases: formatted, client_display_name });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("advocate.clients.cases.list.error", {

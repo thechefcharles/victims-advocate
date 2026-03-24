@@ -14,6 +14,7 @@ type AdvocateRow = {
   org_role: string;
   created_at: string;
   profile_role: string | null;
+  email: string | null;
 };
 
 type VictimCaseRef = {
@@ -107,11 +108,11 @@ export default function OrganizationDashboardPage() {
       <div className="max-w-4xl mx-auto space-y-10">
         <header>
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Organization</p>
-          <h1 className="text-2xl font-semibold mt-1">Your organization</h1>
+          <h1 className="text-2xl font-semibold mt-1">My Dashboard</h1>
           <p className="text-sm text-slate-400 mt-2">
-            Victims listed here are tied to cases assigned to your agency. Manage staff and invites in{" "}
+            Advocates in your agency and victims tied to cases. Manage staff and invites in{" "}
             <Link href="/advocate/org" className="text-emerald-400 hover:underline">
-              org settings
+              Org settings
             </Link>
             .
           </p>
@@ -120,6 +121,46 @@ export default function OrganizationDashboardPage() {
         {err && (
           <div className="text-sm text-red-300 border border-red-500/30 rounded-lg px-3 py-2">{err}</div>
         )}
+
+        <section className="space-y-3">
+          <h2 className="text-lg font-medium text-slate-100">Advocates in your organization</h2>
+          <p className="text-xs text-slate-500">
+            Team members with the advocate profile role (day-to-day case work).
+          </p>
+          {loading ? (
+            <p className="text-sm text-slate-400">Loading…</p>
+          ) : advocates.length === 0 ? (
+            <p className="text-sm text-slate-400">
+              No victim advocates in this org yet. Invite staff in{" "}
+              <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                Org settings
+              </Link>
+              .
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {advocates.map((a) => (
+                <li
+                  key={a.id}
+                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <span className="font-medium text-slate-100">
+                      {a.email ? (
+                        <span title={a.user_id}>{a.email}</span>
+                      ) : (
+                        <span className="font-mono text-xs text-slate-400" title={a.user_id}>
+                          {a.user_id.slice(0, 8)}…
+                        </span>
+                      )}
+                    </span>
+                    <span className="ml-2 text-slate-500 text-xs">{a.org_role}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section className="space-y-3">
           <h2 className="text-lg font-medium text-slate-100">Victims in your organization</h2>
@@ -177,37 +218,9 @@ export default function OrganizationDashboardPage() {
           )}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-lg font-medium text-slate-100">Advocate profiles in your org</h2>
-          <p className="text-xs text-slate-500">
-            Members with the advocate profile role (used for day-to-day case work).
-          </p>
-          {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
-          ) : advocates.length === 0 ? (
-            <p className="text-sm text-slate-400">
-              No victim advocates in this org yet. Add members with the advocate profile role.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {advocates.map((a) => (
-                <li
-                  key={a.id}
-                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm flex justify-between gap-3"
-                >
-                  <span className="font-mono text-xs text-slate-300 truncate" title={a.user_id}>
-                    Advocate · {a.user_id.slice(0, 8)}…
-                  </span>
-                  <span className="text-slate-500 text-xs">{a.org_role}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
         <div className="flex flex-wrap gap-4 text-xs text-slate-500">
           <Link href="/advocate/org" className="underline hover:text-slate-300">
-            Org workspace &amp; invites
+            Org settings
           </Link>
           <Link href="/" className="underline hover:text-slate-300">
             Home

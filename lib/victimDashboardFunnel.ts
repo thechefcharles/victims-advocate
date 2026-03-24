@@ -10,6 +10,18 @@ export type FunnelStepState = "complete" | "current" | "pending" | "skipped";
 
 export type FunnelSteps = Record<FunnelStepId, FunnelStepState>;
 
+/** Whether the user may navigate via the progress bar to this step (sequential gate). */
+export function canClickVictimFunnelStep(step: FunnelStepId, steps: FunnelSteps): boolean {
+  if (step === "eligibility") return true;
+  if (step === "application") {
+    return steps.eligibility === "complete" || steps.eligibility === "skipped";
+  }
+  if (step === "support") {
+    return steps.application === "complete";
+  }
+  return false;
+}
+
 type CaseLike = {
   eligibility_result?: string | null;
   status?: string | null;
@@ -32,6 +44,8 @@ export function getEligibilitySkippedFromApplication(application: unknown): bool
  * - No eligibility result, not skipped: eligibility is `current`.
  * - Eligibility result set, draft: application `current`.
  * - Submitted / closed: support phase.
+ * - Application is “complete” when the case is no longer `draft` (e.g. submitted). A future
+ *   “Submit CVC form” control may set status or a `_dashboard` flag; adjust this function then.
  */
 export function getVictimFunnelSteps(input: {
   caseCount: number;

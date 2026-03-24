@@ -2,8 +2,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
@@ -24,6 +24,7 @@ const NAV_QUICK_EXIT =
 
 export default function TopNav() {
   const router = useRouter();
+  const pathname = usePathname();
   const { loading, user, accessToken, isAdmin, role, orgId, orgRole } = useAuth();
   const { lang, setLang, t } = useI18n();
   const [unreadCount, setUnreadCount] = useState<number | null>(null);
@@ -50,38 +51,48 @@ export default function TopNav() {
     };
   }, [accountMenuOpen]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (!accessToken) {
-        setUnreadCount(null);
-        return;
-      }
-      try {
-        const res = await fetch("/api/notifications?unreadOnly=true&limit=50", {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelled) {
-          const items = Array.isArray(json.data?.notifications)
-            ? json.data.notifications
-            : Array.isArray(json.notifications)
-              ? json.notifications
-              : [];
-          setUnreadCount(items.length);
-        }
-      } catch {
-        if (!cancelled) setUnreadCount(null);
-      }
+  const refreshUnreadCount = useCallback(async () => {
+    if (!accessToken) {
+      setUnreadCount(null);
+      return;
     }
-    void load();
-    const id = setInterval(load, 60_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
+    try {
+      const res = await fetch("/api/notifications?unreadOnly=true&limit=50", {
+        cache: "no-store",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!res.ok) return;
+      const json = await res.json();
+      const items = Array.isArray(json.data?.notifications)
+        ? json.data.notifications
+        : Array.isArray(json.notifications)
+          ? json.notifications
+          : [];
+      setUnreadCount(items.length);
+    } catch {
+      setUnreadCount(null);
+    }
   }, [accessToken]);
+
+  useEffect(() => {
+    void refreshUnreadCount();
+    const id = setInterval(() => void refreshUnreadCount(), 60_000);
+    return () => clearInterval(id);
+  }, [refreshUnreadCount, pathname]);
+
+  useEffect(() => {
+    const onUnreadChanged = () => void refreshUnreadCount();
+    window.addEventListener("notifications-unread-changed", onUnreadChanged);
+    return () => window.removeEventListener("notifications-unread-changed", onUnreadChanged);
+  }, [refreshUnreadCount]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState === "visible") void refreshUnreadCount();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [refreshUnreadCount]);
 
   const handleLogout = async () => {
     const { data } = await supabase.auth.getSession();
@@ -161,18 +172,16 @@ export default function TopNav() {
             {loading ? (
               <span className="text-[11px] text-slate-400">{t("common.loading")}</span>
             ) : !user ? (
-              <>
-                <Link href={ROUTES.compensationHub} className={NAV_PRIMARY}>
-                  {t("nav.compensationHub")}
-                </Link>
-                <Link href={ROUTES.help} className={NAV_PRIMARY}>
-                  {t("nav.help")}
-                </Link>
-              </>
+              <Link href={ROUTES.help} className={NAV_PRIMARY}>
+                {t("nav.help")}
+              </Link>
             ) : isVictim ? (
               <>
                 <Link href={ROUTES.victimDashboard} className={NAV_PRIMARY}>
                   {t("nav.mySupport")}
+                </Link>
+                <Link href={ROUTES.victimMessages} className={NAV_PRIMARY}>
+                  {t("nav.messages")}
                 </Link>
                 <Link href={ROUTES.help} className={NAV_PRIMARY}>
                   {t("nav.help")}
@@ -180,9 +189,6 @@ export default function TopNav() {
               </>
             ) : (
               <>
-                <Link href={ROUTES.compensationHub} className={NAV_TEXT}>
-                  {t("nav.compensationHub")}
-                </Link>
                 <Link href={ROUTES.help} className={NAV_TEXT}>
                   {t("nav.help")}
                 </Link>
@@ -194,10 +200,10 @@ export default function TopNav() {
                 {isAdvocate && (
                   <>
                     <Link href={ROUTES.advocateHome} className={NAV_PRIMARY}>
-                      {t("nav.commandCenter")}
+                      {t("nav.myDashboardAdvocate")}
                     </Link>
-                    <Link href={ROUTES.dashboardClients} className={NAV_PRIMARY}>
-                      {t("nav.clients")}
+                    <Link href={ROUTES.advocateMessages} className={NAV_PRIMARY}>
+                      {t("nav.messages")}
                     </Link>
                     {showOrgLink && (
                       <Link href={ROUTES.advocateOrg} className={NAV_PRIMARY}>
@@ -207,8 +213,8 @@ export default function TopNav() {
                   </>
                 )}
                 {showOrgNavForOrgRole && (
-                  <Link href={ROUTES.advocateOrg} className={NAV_PRIMARY}>
-                    {t("nav.organization")}
+                  <Link href={ROUTES.organizationDashboard} className={NAV_PRIMARY}>
+                    {t("nav.myDashboardOrganization")}
                   </Link>
                 )}
               </>

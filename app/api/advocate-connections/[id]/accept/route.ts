@@ -7,8 +7,8 @@ import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/aut
 import { apiOk, apiFail, apiFailFromError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { toAppError, AppError } from "@/lib/server/api";
-import { createNotification } from "@/lib/server/notifications/create";
 import { upsertAdvocateCaseAccess } from "@/lib/server/advocate/grantAdvocateCaseAccess";
+import { removeVictimPendingConnectionNotificationsForRequest } from "@/lib/server/notifications/removeVictimPendingForRequest";
 
 export async function POST(
   req: Request,
@@ -59,28 +59,9 @@ export async function POST(
       });
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-      req.headers.get("origin") ||
-      "https://victims-advocate.vercel.app";
-
-    const victimActionPath = caseId
-      ? `/compensation/intake?case=${encodeURIComponent(caseId)}`
-      : "/compensation";
-
-    await createNotification(
-      {
-        userId: row.victim_user_id,
-        type: "advocate_connection_accepted",
-        title: "Connection accepted",
-        body: caseId
-          ? "Your advocate has accepted and can now work with you on this case."
-          : "Your advocate has accepted your connection request. You can now invite them to your cases.",
-        actionUrl: `${baseUrl.replace(/\/$/, "")}${victimActionPath}`,
-        metadata: { request_id: requestId, case_id: caseId ?? undefined },
-      },
-      ctx
+    await removeVictimPendingConnectionNotificationsForRequest(
+      row.victim_user_id as string,
+      requestId
     );
 
     logger.info("advocate_connection.accept", {
@@ -90,7 +71,7 @@ export async function POST(
       caseId: caseId ?? undefined,
     });
 
-    return apiOk({ message: "Connection accepted. The victim has been notified." });
+    return apiOk({ message: "Connection accepted." });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("advocate_connection.accept.error", {

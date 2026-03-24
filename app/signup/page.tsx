@@ -7,15 +7,21 @@ import { supabase } from "@/lib/supabaseClient";
 import { logAuthEvent } from "@/lib/auditClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type AccountType = "victim" | "advocate" | "organization";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useI18n();
+  const { refetchMe } = useAuth();
 
   const [accountType, setAccountType] = useState<AccountType>("victim");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  /** Victim: saved to profiles.personal_info.preferred_name */
+  const [preferredName, setPreferredName] = useState("");
   const [organization, setOrganization] = useState("");
   /** Illinois Crime Victim Assistance directory id (organization signup – required). */
   const [orgCatalogId, setOrgCatalogId] = useState<number | null>(null);
@@ -41,6 +47,11 @@ export default function SignupPage() {
         return;
       }
 
+      if (accountType === "victim" && !preferredName.trim()) {
+        setErr("Please enter your preferred name so we can personalize your account.");
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
@@ -49,6 +60,9 @@ export default function SignupPage() {
             role: accountType,
             organization:
               accountType === "advocate" ? organization.trim() || undefined : undefined,
+            ...(accountType === "victim" && preferredName.trim()
+              ? { preferred_name: preferredName.trim() }
+              : {}),
             ...(accountType === "organization" && orgCatalogId != null
               ? { pending_org_catalog_entry_id: orgCatalogId }
               : {}),
@@ -103,6 +117,24 @@ export default function SignupPage() {
         }
       } catch {
         // Non-blocking
+      }
+
+      if (accountType === "victim" && preferredName.trim()) {
+        try {
+          const pr = await fetch("/api/me/personal-info", {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+            body: JSON.stringify({ preferred_name: preferredName.trim() }),
+          });
+          if (pr.ok) {
+            await refetchMe();
+          }
+        } catch {
+          // Name remains in user_metadata; AuthProvider syncs on next sign-in
+        }
       }
 
       if (accountType === "organization" && orgCatalogId != null) {
@@ -229,6 +261,24 @@ export default function SignupPage() {
               />
             </label>
 
+            {accountType === "victim" && (
+              <label className="block space-y-1">
+                <span className="text-[11px] text-slate-400">{t("signup.preferredNameLabel")} *</span>
+                <input
+                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder={t("signup.preferredNamePlaceholder")}
+                  value={preferredName}
+                  onChange={(e) => setPreferredName(e.target.value)}
+                  autoComplete="nickname"
+                  required
+                  maxLength={200}
+                />
+                <span className="text-[11px] text-slate-500 leading-relaxed block">
+                  {t("signup.preferredNameHelp")}
+                </span>
+              </label>
+            )}
+
             {accountType === "advocate" && (
               <div className="space-y-3">
                 <ProgramCatalogSelect
@@ -342,7 +392,8 @@ export default function SignupPage() {
                 !agreeTerms ||
                 !agreeWaiver ||
                 !agreePrototype ||
-                (accountType === "organization" && orgCatalogId == null)
+                (accountType === "organization" && orgCatalogId == null) ||
+                (accountType === "victim" && !preferredName.trim())
               }
               type="submit"
             >

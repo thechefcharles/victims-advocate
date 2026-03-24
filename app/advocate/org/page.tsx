@@ -519,7 +519,7 @@ export default function AdvocateOrgPage() {
           title="Organization workspace"
           subtitle="Manage your organization profile, capacity, members, and designation."
           meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
-          backLink={{ href: ROUTES.advocateHome, label: "← Command Center" }}
+          backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
         />
 
         {err && (

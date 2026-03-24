@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
               className="rounded-xl border border-emerald-500/35 bg-emerald-950/20 p-4 hover:bg-emerald-950/35 transition"
             >
               <p className="text-sm font-semibold text-emerald-100">Review organizations</p>
-              <p className="text-xs text-emerald-200/70 mt-1">Create and manage org records</p>
+              <p className="text-xs text-emerald-200/70 mt-1">Create and manage org records, approve pending proposals</p>
             </Link>
             <Link
               href="/admin/cases"
