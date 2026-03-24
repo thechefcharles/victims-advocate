@@ -4,6 +4,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
 import { listCasesForUser, listCasesForOrganization } from "@/lib/server/data";
 import type { CaseRow, CaseListItem } from "@/lib/server/data";
 import { aggregateAlertsForCase, type AlertInputs } from "./alerts";
@@ -65,10 +66,7 @@ export async function loadCommandCenterData(params: {
   const { ctx, filters = {}, sort = "priority" } = params;
   const supabase = getSupabaseAdmin();
 
-  const canSeeOrgWide =
-    ctx.isAdmin ||
-    ctx.orgRole === "org_admin" ||
-    ctx.orgRole === "supervisor";
+  const canSeeOrgWide = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
 
   let caseList: CaseListItem[];
   if (canSeeOrgWide && ctx.orgId) {

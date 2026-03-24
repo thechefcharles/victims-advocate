@@ -4,15 +4,17 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
+import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 
-/** Org admin or supervisor with an active org. */
+/** Org owner, program manager, or supervisor with an active org. */
 export default function RequireOrgLeadership({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
   const allowed =
     role === "organization" &&
     !!orgId &&
-    (orgRole === "org_admin" || orgRole === "supervisor");
+    orgRole != null &&
+    (ORG_LEADERSHIP_ROLES as readonly string[]).includes(orgRole);
 
   useEffect(() => {
     if (loading) return;

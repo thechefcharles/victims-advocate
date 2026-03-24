@@ -131,7 +131,7 @@ export async function createOrganizationForUser(
   const { error: memErr } = await supabase.from("org_memberships").insert({
     user_id: ctx.userId,
     organization_id: org.id,
-    org_role: "org_admin",
+    org_role: "org_owner",
     status: "active",
     created_by: ctx.userId,
   });

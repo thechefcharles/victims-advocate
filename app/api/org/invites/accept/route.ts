@@ -109,11 +109,12 @@ export async function POST(req: Request) {
 
     await logEvent({
       ctx,
-      action: "org.invite.accept",
+      action: "role_assigned",
       resourceType: "org_invite",
       resourceId: invite.id,
       organizationId: invite.organization_id,
-      metadata: { email: invite.email, org_role: invite.org_role },
+      targetUserId: ctx.userId,
+      metadata: { email: invite.email, org_role: invite.org_role, via: "invite_accept" },
       req,
     });
 

@@ -108,7 +108,7 @@ export async function POST(
     const { error: memErr } = await supabase.from("org_memberships").insert({
       user_id: proposal.created_by,
       organization_id: org.id,
-      org_role: "org_admin",
+      org_role: "org_owner",
       status: "active",
       created_by: proposal.created_by,
     });

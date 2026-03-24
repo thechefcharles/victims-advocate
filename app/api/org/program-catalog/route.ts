@@ -3,7 +3,7 @@
  * Updates name, type, metadata, and catalog_entry_id to stay in sync with the directory.
  */
 
-import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/auth";
+import { getAuthContext, requireAuth, requireActiveAccount, isOrgManagement } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getCatalogProgramById } from "@/lib/catalog/loadCatalog";
@@ -16,7 +16,7 @@ export async function PATCH(req: Request) {
     requireAuth(ctx);
     requireActiveAccount(ctx, req);
 
-    if (!ctx.orgId || ctx.orgRole !== "org_admin") {
+    if (!ctx.orgId || !isOrgManagement(ctx.orgRole)) {
       return apiFail("FORBIDDEN", "Only an organization admin can update the agency directory link.", undefined, 403);
     }
 

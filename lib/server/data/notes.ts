@@ -4,6 +4,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { getCaseById } from "./cases";
 
@@ -111,10 +112,7 @@ export async function editCaseNote(params: {
   if (result.access.role === "owner") throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
 
   const canEdit =
-    ctx.isAdmin ||
-    ctx.orgRole === "org_admin" ||
-    ctx.orgRole === "supervisor" ||
-    note.author_user_id === ctx.userId;
+    ctx.isAdmin || isOrgLeadership(ctx.orgRole) || note.author_user_id === ctx.userId;
   if (!canEdit) throw new AppError("FORBIDDEN", "You cannot edit this note", undefined, 403);
 
   const { data: updated, error } = await supabase
@@ -154,10 +152,7 @@ export async function deleteCaseNote(params: { noteId: string; ctx: AuthContext 
   if (result.access.role === "owner") throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
 
   const canDelete =
-    ctx.isAdmin ||
-    ctx.orgRole === "org_admin" ||
-    ctx.orgRole === "supervisor" ||
-    note.author_user_id === ctx.userId;
+    ctx.isAdmin || isOrgLeadership(ctx.orgRole) || note.author_user_id === ctx.userId;
   if (!canDelete) throw new AppError("FORBIDDEN", "You cannot delete this note", undefined, 403);
 
   const { error } = await supabase

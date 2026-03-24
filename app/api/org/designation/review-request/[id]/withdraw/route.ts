@@ -2,7 +2,14 @@
  * Phase E: Withdraw pending designation review request (submitter or org admin).
  */
 
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  ORG_LEADERSHIP_ROLES,
+  isOrgManagement,
+} from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -18,9 +25,9 @@ export async function POST(req: Request, { params }: RouteCtx) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ["org_admin", "supervisor"]);
+    requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
 
-    const asOrgAdmin = ctx.orgRole === "org_admin";
+    const asOrgAdmin = isOrgManagement(ctx.orgRole);
 
     const { id } = await params;
     const requestId = id?.trim();

@@ -6,6 +6,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { listCaseDocuments } from "./documents";
 import { sameUserId } from "./ids";
@@ -79,7 +80,7 @@ export async function getCaseById(
     ctx.orgId &&
     caseOrgId &&
     ctx.orgId === caseOrgId &&
-    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
+    isOrgLeadership(ctx.orgRole);
 
   let access: CaseAccess;
   if (accessRow?.can_view) {
@@ -96,10 +97,7 @@ export async function getCaseById(
     return null;
   }
 
-  const includeRestricted =
-    ctx.isAdmin ||
-    ctx.orgRole === "org_admin" ||
-    ctx.orgRole === "supervisor";
+  const includeRestricted = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
   const documents = await listCaseDocuments({
     caseId,
     ctx,

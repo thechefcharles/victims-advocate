@@ -8,6 +8,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -33,7 +34,7 @@ export async function POST(
     requireAuth(ctx);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ["org_admin", "supervisor"]);
+    requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
 
     const { id: requestId } = await params;
     const rid = requestId?.trim();
@@ -88,7 +89,7 @@ export async function POST(
     const { error: memErr } = await supabase.from("org_memberships").insert({
       user_id: row.advocate_user_id,
       organization_id: row.organization_id,
-      org_role: "staff",
+      org_role: "victim_advocate",
       status: "active",
       created_by: ctx.userId,
     });

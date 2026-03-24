@@ -24,6 +24,17 @@ import {
   designationTrustBadgeClassName,
   formatReviewStatusLabel,
 } from "@/lib/trustDisplay";
+import type { OrgRole } from "@/lib/server/auth/orgRoles";
+import { ORG_MANAGEMENT_ROLES, ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
+
+const INVITE_ROLE_LABELS: Record<OrgRole, string> = {
+  org_owner: "Org owner",
+  program_manager: "Program manager",
+  supervisor: "Supervisor",
+  victim_advocate: "Victim advocate",
+  intake_specialist: "Intake specialist",
+  auditor: "Auditor",
+};
 
 type Member = {
   id: string;
@@ -69,7 +80,7 @@ export default function AdvocateOrgPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"staff" | "supervisor" | "org_admin">("staff");
+  const [inviteRole, setInviteRole] = useState<OrgRole>("victim_advocate");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -103,8 +114,12 @@ export default function AdvocateOrgPage() {
   };
 
   const canEditProfile =
-    myOrgRole === "org_admin" || myOrgRole === "supervisor";
+    myOrgRole === "org_owner" ||
+    myOrgRole === "program_manager" ||
+    myOrgRole === "supervisor";
   const canViewDesignation = canEditProfile;
+  const canManageMemberships =
+    myOrgRole != null && (ORG_MANAGEMENT_ROLES as readonly string[]).includes(myOrgRole);
 
   const [designation, setDesignation] = useState<{
     designation_tier: string;
@@ -561,8 +576,8 @@ export default function AdvocateOrgPage() {
           )}
           {!canEditProfile && myOrgRole && (
             <p className="text-xs text-amber-200/90 mb-4">
-              Your role ({myOrgRole}) can view this profile. Only org admin or supervisor can
-              edit.
+              Your role ({myOrgRole}) can view this profile. Only org owner, program manager, or
+              supervisor can edit.
             </p>
           )}
           {profileLoading ? (
@@ -845,6 +860,7 @@ export default function AdvocateOrgPage() {
           </div>
         )}
 
+        {canManageMemberships && (
         <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
           <h2 className="text-sm font-semibold text-slate-200 mb-3">
             Invite member
@@ -859,14 +875,14 @@ export default function AdvocateOrgPage() {
             />
             <select
               value={inviteRole}
-              onChange={(e) =>
-                setInviteRole(e.target.value as "staff" | "supervisor" | "org_admin")
-              }
+              onChange={(e) => setInviteRole(e.target.value as OrgRole)}
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
             >
-              <option value="staff">Staff</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="org_admin">Org Admin</option>
+              {ORG_MEMBERSHIP_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {INVITE_ROLE_LABELS[r]}
+                </option>
+              ))}
             </select>
             <button
               type="submit"
@@ -877,6 +893,7 @@ export default function AdvocateOrgPage() {
             </button>
           </form>
         </section>
+        )}
 
         {invites.length === 0 && !loading && (
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
@@ -907,13 +924,17 @@ export default function AdvocateOrgPage() {
                     <td className="py-2 text-slate-300">{inv.org_role}</td>
                     <td className="py-2 text-slate-400">{formatDate(inv.expires_at)}</td>
                     <td className="py-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRevokeInvite(inv.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        Revoke
-                      </button>
+                      {canManageMemberships ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeInvite(inv.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          Revoke
+                        </button>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -955,13 +976,17 @@ export default function AdvocateOrgPage() {
                       <td className="py-2 text-slate-300">{m.org_role}</td>
                       <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
                       <td className="py-2">
-                        <button
-                          type="button"
-                          onClick={() => handleRevokeMember(m.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          Revoke
-                        </button>
+                        {canManageMemberships ? (
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeMember(m.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            Revoke
+                          </button>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

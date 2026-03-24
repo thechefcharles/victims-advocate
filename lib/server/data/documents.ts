@@ -5,6 +5,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext, OrgRole } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { sameUserId } from "./ids";
 
@@ -48,7 +49,7 @@ export function canAccessDocument(
   if (document.status === "restricted") {
     if (ctx.isAdmin) return true;
     const orgRole = ctx.orgRole as OrgRole | null;
-    if (orgRole === "org_admin" || orgRole === "supervisor") return true;
+    if (isOrgLeadership(orgRole)) return true;
     if (document.uploaded_by_user_id === ctx.userId) return true;
     if (caseAccess.role === "owner") return true;
     if (caseAccess.can_edit) return true;
@@ -157,7 +158,7 @@ export async function listCaseDocuments(params: {
     ctx.orgId &&
     caseOrgId &&
     ctx.orgId === caseOrgId &&
-    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
+    isOrgLeadership(ctx.orgRole);
 
   let access: CaseAccessInfo;
   if (accessRow?.can_view) {
@@ -229,7 +230,7 @@ export async function assertDocumentAccess(params: {
     ctx.orgId &&
     caseOrgId &&
     ctx.orgId === caseOrgId &&
-    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
+    isOrgLeadership(ctx.orgRole);
 
   let access: CaseAccessInfo;
   if (accessRow?.can_view) {
@@ -309,7 +310,7 @@ export async function setDocumentRestriction(params: {
   if (!doc) throw new AppError("NOT_FOUND", "Document not found", undefined, 404);
   if (doc.status === "deleted") throw new AppError("DOCUMENT_DELETED", "Document is deleted", undefined, 404);
 
-  let canRestrict = ctx.isAdmin || ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor";
+  let canRestrict = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
   if (!canRestrict && doc.case_id) {
     const { data: acc } = await getSupabaseAdmin()
       .from("case_access")

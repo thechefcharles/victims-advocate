@@ -7,10 +7,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { config } from "@/lib/config";
 import { AppError } from "@/lib/server/api";
+import { ORG_MEMBERSHIP_ROLES, type OrgRole } from "@/lib/server/auth/orgRoles";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
-export type OrgRole = "staff" | "supervisor" | "org_admin";
+export type { OrgRole };
 
 export type AccountStatus = "active" | "disabled" | "deleted";
 
@@ -85,9 +86,11 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     .maybeSingle();
 
   const orgId = membership?.organization_id ?? null;
+  const rawOrgRole = membership?.org_role;
   const orgRole =
-    membership?.org_role && ["staff", "supervisor", "org_admin"].includes(membership.org_role)
-      ? (membership.org_role as OrgRole)
+    typeof rawOrgRole === "string" &&
+    (ORG_MEMBERSHIP_ROLES as readonly string[]).includes(rawOrgRole)
+      ? (rawOrgRole as OrgRole)
       : null;
 
   let organizationCatalogEntryId: number | null = null;

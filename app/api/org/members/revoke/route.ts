@@ -3,7 +3,13 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  ORG_MANAGEMENT_ROLES,
+} from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -14,7 +20,7 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, "org_admin");
+    requireOrgRole(ctx, ORG_MANAGEMENT_ROLES);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -64,11 +70,12 @@ export async function POST(req: Request) {
 
     await logEvent({
       ctx,
-      action: "org.member.revoke",
+      action: "member_removed",
       resourceType: "org_membership",
       resourceId: membershipId,
       organizationId: ctx.orgId!,
-      metadata: { user_id: existing.user_id, org_role: existing.org_role },
+      targetUserId: existing.user_id,
+      metadata: { org_role: existing.org_role },
       req,
     });
 

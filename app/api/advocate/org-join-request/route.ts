@@ -43,7 +43,7 @@ async function notifyOrgApprovers(params: {
     .select("user_id")
     .eq("organization_id", organizationId)
     .eq("status", "active")
-    .in("org_role", ["org_admin", "supervisor"]);
+    .in("org_role", ["org_owner", "program_manager", "supervisor"]);
 
   if (error) throw new Error(error.message);
 

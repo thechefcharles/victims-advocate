@@ -123,7 +123,12 @@ export type AuditAction =
   | "designation.review_submitted"
   | "designation.review_resolved"
   | "designation.review_withdrawn"
-  | "ecosystem.viewed";
+  | "ecosystem.viewed"
+  | "role_assigned"
+  | "role_changed"
+  | "member_invited"
+  | "member_suspended"
+  | "member_removed";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
@@ -133,6 +138,8 @@ export type LogEventParams = {
   resourceType?: string | null;
   resourceId?: string | null;
   organizationId?: string | null;
+  /** User affected by membership / role actions (ORG-1B audit_log.target_user_id). */
+  targetUserId?: string | null;
   severity?: AuditSeverity;
   metadata?: Record<string, unknown>;
   sensitivePayloadForHash?: string | null;
@@ -160,6 +167,7 @@ export async function logEvent(params: LogEventParams): Promise<void> {
       resourceType = null,
       resourceId = null,
       organizationId = null,
+      targetUserId = null,
       severity = "info",
       metadata = {},
       sensitivePayloadForHash = null,
@@ -193,6 +201,7 @@ export async function logEvent(params: LogEventParams): Promise<void> {
       actor_user_id: ctx?.userId ?? null,
       actor_role: ctx?.role ?? null,
       organization_id: asUuidOrNull(String(orgIdVal ?? "")),
+      target_user_id: asUuidOrNull(targetUserId ?? ""),
       action,
       resource_type: resourceType,
       resource_id: resourceId,

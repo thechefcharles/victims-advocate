@@ -17,9 +17,12 @@ import {
   type VictimPersonalInfo,
 } from "@/lib/personalInfo";
 
+import type { OrgRole as OrgMembershipRole } from "@/lib/server/auth/orgRoles";
+import { ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
+
 export type ProfileRole = "victim" | "advocate" | "organization";
 
-export type OrgRole = "staff" | "supervisor" | "org_admin" | null;
+export type OrgRole = OrgMembershipRole | null;
 
 export type AccountStatus = "active" | "disabled" | "deleted";
 
@@ -92,7 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAdmin(d?.isAdmin === true);
     setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
     const or = d?.orgRole;
-    setOrgRole(or === "staff" || or === "supervisor" || or === "org_admin" ? or : null);
+    setOrgRole(
+      typeof or === "string" && (ORG_MEMBERSHIP_ROLES as readonly string[]).includes(or)
+        ? (or as OrgMembershipRole)
+        : null
+    );
     const aff = d?.affiliatedCatalogEntryId;
     setAffiliatedCatalogEntryId(
       typeof aff === "number" && Number.isFinite(aff) ? aff : null

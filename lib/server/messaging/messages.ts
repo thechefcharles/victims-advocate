@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { appendCaseTimelineEvent } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -142,7 +143,7 @@ export async function softDeleteMessage(params: {
   if (msgErr || !msg) return;
 
   const isSender = (msg as any).sender_user_id === ctx.userId;
-  const canModerate = ctx.isAdmin || ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor";
+  const canModerate = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
   if (!isSender && !canModerate) {
     throw new AppError("FORBIDDEN", "Not allowed to delete this message", undefined, 403);
   }

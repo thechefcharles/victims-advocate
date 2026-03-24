@@ -9,6 +9,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, ["org_admin", "supervisor"]);
+      requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);

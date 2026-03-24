@@ -1,22 +1,27 @@
 /**
- * Phase 2: Change member org_role (org_admin).
+ * Phase 2: Change member org_role (org owner or program manager).
  */
 
-import { NextResponse } from "next/server";
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  ORG_MANAGEMENT_ROLES,
+  ORG_MEMBERSHIP_ROLES,
+  normalizeOrgRoleInput,
+} from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
-
-const ORG_ROLES = ["staff", "supervisor", "org_admin"] as const;
 
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, "org_admin");
+    requireOrgRole(ctx, ORG_MANAGEMENT_ROLES);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -25,18 +30,17 @@ export async function POST(req: Request) {
 
     const membershipId =
       typeof body.membership_id === "string" ? body.membership_id.trim() : "";
-    const newRole =
-      typeof body.org_role === "string"
-        ? body.org_role.trim().toLowerCase()
-        : "";
+    const rawNewRole =
+      typeof body.org_role === "string" ? body.org_role.trim().toLowerCase() : "";
+    const newRole = normalizeOrgRoleInput(rawNewRole);
 
     if (!membershipId) {
       return apiFail("VALIDATION_ERROR", "membership_id is required", undefined, 422);
     }
-    if (!ORG_ROLES.includes(newRole as (typeof ORG_ROLES)[number])) {
+    if (!newRole || !(ORG_MEMBERSHIP_ROLES as readonly string[]).includes(newRole)) {
       return apiFail(
         "VALIDATION_ERROR",
-        `org_role must be one of: ${ORG_ROLES.join(", ")}`,
+        `org_role must be one of: ${ORG_MEMBERSHIP_ROLES.join(", ")}`,
         undefined,
         422
       );
@@ -71,11 +75,12 @@ export async function POST(req: Request) {
 
     await logEvent({
       ctx,
-      action: "org.member.role_change",
+      action: "role_changed",
       resourceType: "org_membership",
       resourceId: membershipId,
       organizationId: ctx.orgId!,
-      metadata: { user_id: existing.user_id, from_role: existing.org_role, to_role: newRole },
+      targetUserId: existing.user_id,
+      metadata: { from_role: existing.org_role, to_role: newRole },
       req,
     });
 
