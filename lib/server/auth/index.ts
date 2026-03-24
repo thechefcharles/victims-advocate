@@ -24,4 +24,22 @@ export {
   requireVerifiedEmail,
   requireActiveAccount,
   requireFullAccess,
+  type RequireOrgRoleOptions,
 } from "./guards";
+export {
+  canPerform,
+  getOrgPermissionScope,
+  PERMISSION_RESOURCES,
+  type PermissionResource,
+  type PermissionAction,
+  type PermissionScope,
+} from "./orgMatrix";
+export {
+  scopeToOrg,
+  evaluateOrgMemberCaseAccess,
+  evaluateOrgMemberDocumentAccess,
+  logOrgPermissionDenied,
+  fetchSuperviseeUserIds,
+  isIntakeStageCaseStatus,
+  type CaseRowLike,
+} from "./orgCaseAccess";

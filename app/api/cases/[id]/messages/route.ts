@@ -4,6 +4,8 @@ import { apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { getCaseById } from "@/lib/server/data";
+import type { CaseRowLike } from "@/lib/server/auth/orgCaseAccess";
+import { assertCaseMessagingAllowed } from "@/lib/server/messaging/permissions";
 import { getOrCreateConversationForCase } from "@/lib/server/messaging/conversations";
 import { listMessages, sendMessage } from "@/lib/server/messaging/messages";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -18,10 +20,17 @@ export async function GET(req: Request, context: RouteParams) {
     requireFullAccess(ctx, req);
 
     const { id: caseId } = await context.params;
-    const caseResult = await getCaseById({ caseId, ctx });
+    const caseResult = await getCaseById({ caseId, ctx, req });
     if (!caseResult) {
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
+
+    await assertCaseMessagingAllowed({
+      ctx,
+      caseRow: caseResult.case as CaseRowLike,
+      mode: "view",
+      req,
+    });
 
     const conversation = await getOrCreateConversationForCase({ caseId, ctx });
     const messages = await listMessages({ conversationId: conversation.id, ctx });
@@ -65,7 +74,7 @@ export async function POST(req: Request, context: RouteParams) {
     requireFullAccess(ctx, req);
 
     const { id: caseId } = await context.params;
-    const caseResult = await getCaseById({ caseId, ctx });
+    const caseResult = await getCaseById({ caseId, ctx, req });
     if (!caseResult) {
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
@@ -74,7 +83,7 @@ export async function POST(req: Request, context: RouteParams) {
     const message_text = (body?.message_text ?? "").toString();
 
     const conversation = await getOrCreateConversationForCase({ caseId, ctx });
-    const message = await sendMessage({ conversation, ctx, message_text });
+    const message = await sendMessage({ conversation, ctx, message_text, req });
 
     return NextResponse.json({ conversation, message });
   } catch (err) {

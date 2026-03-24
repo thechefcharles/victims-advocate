@@ -4,8 +4,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
-import { isOrgLeadership } from "@/lib/server/auth";
-import { listCasesForUser, listCasesForOrganization } from "@/lib/server/data";
+import { listCasesForUser, listCasesForOrgRoleContext } from "@/lib/server/data";
 import type { CaseRow, CaseListItem } from "@/lib/server/data";
 import { aggregateAlertsForCase, type AlertInputs } from "./alerts";
 import { deriveCasePriority } from "./priority";
@@ -66,15 +65,9 @@ export async function loadCommandCenterData(params: {
   const { ctx, filters = {}, sort = "priority" } = params;
   const supabase = getSupabaseAdmin();
 
-  const canSeeOrgWide = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
-
   let caseList: CaseListItem[];
-  if (canSeeOrgWide && ctx.orgId) {
-    const rows = await listCasesForOrganization({ organizationId: ctx.orgId });
-    caseList = rows.map((c) => ({
-      ...c,
-      access: { role: "advocate", can_view: true, can_edit: true },
-    })) as CaseListItem[];
+  if (ctx.orgId) {
+    caseList = await listCasesForOrgRoleContext({ ctx });
   } else {
     caseList = await listCasesForUser({ ctx, filters: { role: "advocate" } });
   }

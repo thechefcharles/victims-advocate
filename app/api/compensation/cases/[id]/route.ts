@@ -20,7 +20,7 @@ export async function GET(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing id", undefined, 400);
     }
 
-    const result = await getCaseById({ caseId: id, ctx });
+    const result = await getCaseById({ caseId: id, ctx, req });
     if (!result) {
       return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }
@@ -59,7 +59,7 @@ export async function PATCH(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing id", undefined, 400);
     }
 
-    const result = await getCaseById({ caseId: id, ctx });
+    const result = await getCaseById({ caseId: id, ctx, req });
     if (!result || !result.access.can_edit) {
       return apiFail("FORBIDDEN", "Forbidden", undefined, 403);
     }
@@ -205,7 +205,7 @@ export async function DELETE(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing id", undefined, 400);
     }
 
-    const result = await getCaseById({ caseId: id, ctx });
+    const result = await getCaseById({ caseId: id, ctx, req });
     if (!result) {
       return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }

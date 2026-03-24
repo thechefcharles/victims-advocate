@@ -14,7 +14,7 @@ export async function POST(req: Request, context: RouteParams) {
     requireFullAccess(ctx, req);
 
     const { id } = await context.params;
-    await markMessageRead({ messageId: id, ctx });
+    await markMessageRead({ messageId: id, ctx, req });
     return NextResponse.json({ ok: true });
   } catch (err) {
     const appErr = toAppError(err);

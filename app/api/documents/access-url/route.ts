@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       documentId,
       ctx,
       accessType,
+      req,
     });
 
     const path = doc.storage_path;

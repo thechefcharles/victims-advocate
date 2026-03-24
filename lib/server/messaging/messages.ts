@@ -2,10 +2,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
-import { appendCaseTimelineEvent } from "@/lib/server/data";
+import { appendCaseTimelineEvent, getCaseById } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { notifyNewMessage } from "@/lib/server/notifications/triggers";
 import type { CaseConversationRow, CaseMessageRow } from "./types";
+import { assertCaseMessagingAllowed } from "./permissions";
+import type { CaseRowLike } from "@/lib/server/auth/orgCaseAccess";
 
 function truncatePreview(text: string, max = 160): string {
   const trimmed = text.trim();
@@ -33,12 +35,28 @@ export async function sendMessage(params: {
   conversation: CaseConversationRow;
   ctx: AuthContext;
   message_text: string;
+  req?: Request | null;
 }): Promise<CaseMessageRow> {
-  const { conversation, ctx } = params;
+  const { conversation, ctx, req } = params;
   const messageText = (params.message_text ?? "").trim();
   if (!messageText) {
     throw new AppError("VALIDATION_ERROR", "Message text is required", undefined, 400);
   }
+
+  const caseResult = await getCaseById({
+    caseId: conversation.case_id,
+    ctx,
+    req,
+  });
+  if (!caseResult) {
+    throw new AppError("FORBIDDEN", "Case not found", undefined, 404);
+  }
+  await assertCaseMessagingAllowed({
+    ctx,
+    caseRow: caseResult.case as CaseRowLike,
+    mode: "create",
+    req,
+  });
 
   const supabase = getSupabaseAdmin();
 
@@ -104,17 +122,32 @@ export async function sendMessage(params: {
 export async function markMessageRead(params: {
   messageId: string;
   ctx: AuthContext;
+  req?: Request | null;
 }): Promise<void> {
-  const { messageId, ctx } = params;
+  const { messageId, ctx, req } = params;
   const supabase = getSupabaseAdmin();
 
   const { data: msg, error: msgErr } = await supabase
     .from("case_messages")
-    .select("id")
+    .select("id, case_id")
     .eq("id", messageId)
     .maybeSingle();
 
   if (msgErr || !msg) return;
+
+  const caseId = (msg as { case_id?: string }).case_id;
+  if (caseId) {
+    const caseResult = await getCaseById({ caseId, ctx, req });
+    if (!caseResult) {
+      throw new AppError("FORBIDDEN", "Case not found", undefined, 404);
+    }
+    await assertCaseMessagingAllowed({
+      ctx,
+      caseRow: caseResult.case as CaseRowLike,
+      mode: "view",
+      req,
+    });
+  }
 
   const { error } = await supabase.from("message_reads").upsert(
     {

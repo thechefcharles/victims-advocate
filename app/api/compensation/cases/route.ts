@@ -1,10 +1,15 @@
 // app/api/compensation/cases/route.ts
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import {
+  canPerform,
+  getAuthContext,
+  logOrgPermissionDenied,
+  requireFullAccess,
+} from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { listCasesForUser, appendCaseTimelineEvent } from "@/lib/server/data";
+import { listCasesForUser, listCasesForOrgRoleContext, appendCaseTimelineEvent } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import type { CompensationApplication } from "@/lib/compensationSchema";
 
@@ -60,7 +65,10 @@ export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    const cases = await listCasesForUser({ ctx });
+    const cases =
+      (ctx.role === "advocate" || ctx.role === "organization") && ctx.orgId
+        ? await listCasesForOrgRoleContext({ ctx })
+        : await listCasesForUser({ ctx, req });
     logger.info("compensation.cases.list", { userId: ctx.userId, count: cases.length });
     return NextResponse.json({ cases });
   } catch (err) {
@@ -74,6 +82,21 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
+
+    if ((ctx.role === "advocate" || ctx.role === "organization") && ctx.orgRole) {
+      const ok = await canPerform(ctx.orgRole, "cases", "create");
+      if (!ok) {
+        await logOrgPermissionDenied({
+          ctx,
+          req,
+          resource: "cases",
+          action: "create",
+          metadata: { reason: "create_case_denied", orgRole: ctx.orgRole },
+        });
+        return apiFail("FORBIDDEN", "You cannot create cases for this organization", undefined, 403);
+      }
+    }
+
     const supabaseAdmin = getSupabaseAdmin();
 
     const body = (await req.json().catch(() => null)) as CreateCaseBody | null;

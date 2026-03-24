@@ -1,7 +1,11 @@
 export {
   getCaseById,
+  scopeToCase,
   listCasesForUser,
   listCasesForOrganization,
+  listCasesForSupervisorTeam,
+  listCasesAssignedInOrg,
+  listCasesForOrgRoleContext,
   type GetCaseByIdResult,
   type CaseListItem,
   type CaseAccess,

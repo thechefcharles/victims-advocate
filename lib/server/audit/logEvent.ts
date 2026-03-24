@@ -128,7 +128,8 @@ export type AuditAction =
   | "role_changed"
   | "member_invited"
   | "member_suspended"
-  | "member_removed";
+  | "member_removed"
+  | "org.permission_denied";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

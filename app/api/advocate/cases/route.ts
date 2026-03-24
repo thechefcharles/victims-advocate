@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/auth";
 import { apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { listCasesForUser } from "@/lib/server/data";
+import { listCasesForUser, listCasesForOrgRoleContext } from "@/lib/server/data";
 
 export async function GET(req: Request) {
   try {
@@ -11,7 +11,10 @@ export async function GET(req: Request) {
     requireRole(ctx, "advocate");
     // PHASE 1: call logEvent(...) here
 
-    const cases = await listCasesForUser({ ctx, filters: { role: "advocate" } });
+    const cases =
+      ctx.orgId
+        ? await listCasesForOrgRoleContext({ ctx })
+        : await listCasesForUser({ ctx, filters: { role: "advocate" }, req });
 
     const plainCases = cases.map((c: any) => c);
     logger.info("advocate.cases.list", { userId: ctx.userId, count: plainCases.length });

@@ -15,6 +15,10 @@ export type { OrgRole };
 
 export type AccountStatus = "active" | "disabled" | "deleted";
 
+/**
+ * Server auth snapshot for API routes (ORG-2A includes `orgRole` for matrix checks).
+ * Shape: `{ user, userId, role, orgId, orgRole, isAdmin, ... }`.
+ */
 export type AuthContext = {
   user: { id: string; email?: string };
   userId: string;
@@ -22,6 +26,7 @@ export type AuthContext = {
   /** For admins: underlying profile role when using "view as" override. */
   realRole?: ProfileRole;
   orgId: string | null;
+  /** Organization membership role (`org_membership_role`); null if not in an org. */
   orgRole: OrgRole | null;
   /** Illinois victim assistance directory program id (profile / advocate affiliation). */
   affiliatedCatalogEntryId: number | null;
