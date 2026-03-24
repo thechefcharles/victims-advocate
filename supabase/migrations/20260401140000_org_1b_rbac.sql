@@ -19,6 +19,13 @@ begin
   end if;
 end $$;
 
+-- Any policy whose expression touches org_memberships.org_role must be dropped before
+-- ALTER TYPE on that column (includes org_invites policies that subquery memberships).
+drop policy if exists "Org admin and supervisor can view org members" on public.org_memberships;
+drop policy if exists "Org admin can manage memberships in own org" on public.org_memberships;
+drop policy if exists "Org admin and supervisor can view invites" on public.org_invites;
+drop policy if exists "Org admin can manage invites" on public.org_invites;
+
 alter table public.org_memberships
   drop constraint if exists org_memberships_org_role_check;
 
@@ -63,6 +70,9 @@ where org_role = 'org_admin';
 update public.org_invites
 set org_role = 'victim_advocate'
 where org_role = 'staff';
+
+alter table public.org_invites
+  alter column org_role drop default;
 
 alter table public.org_invites
   alter column org_role type public.org_membership_role
