@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import {
-  canPerform,
-  getAuthContext,
-  logOrgPermissionDenied,
-  requireFullAccess,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -17,20 +12,6 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-
-    if ((ctx.role === "advocate" || ctx.role === "organization") && ctx.orgRole) {
-      const ok = await canPerform(ctx.orgRole, "documents", "create");
-      if (!ok) {
-        await logOrgPermissionDenied({
-          ctx,
-          req,
-          resource: "documents",
-          action: "create",
-          metadata: { reason: "upload_denied", orgRole: ctx.orgRole },
-        });
-        return apiFail("FORBIDDEN", "You cannot upload documents for this organization", undefined, 403);
-      }
-    }
 
     const formData = await req.formData();
     const file = formData.get("file");

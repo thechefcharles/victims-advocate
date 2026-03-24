@@ -1,6 +1,6 @@
 /**
- * ORG-2A: Load org_role_permissions and evaluate canPerform / scope for a role.
- * Matrix is global (same for all orgs); cached in-process to avoid repeated reads.
+ * @deprecated Phase 1 — not used by the live app access path. Table `org_role_permissions`
+ * may still exist in DB; do not call these helpers from routes.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";

@@ -7,7 +7,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_MANAGEMENT_ROLES,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
   ORG_MEMBERSHIP_ROLES,
   normalizeOrgRoleInput,
 } from "@/lib/server/auth";
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ORG_MANAGEMENT_ROLES);
+    requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {

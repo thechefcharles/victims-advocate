@@ -3,9 +3,16 @@ export {
   getOrgContext,
   type AuthContext,
   type ProfileRole,
-  type OrgRole,
   type AccountStatus,
 } from "./context";
+export type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+export {
+  SIMPLE_ORG_ROLES,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
+  SIMPLE_ORG_CASE_STAFF_ROLES,
+  mapDbOrgRoleToSimple,
+} from "@/lib/auth/simpleOrgRole";
 export {
   ORG_MEMBERSHIP_ROLES,
   ORG_LEADERSHIP_ROLES,
@@ -15,6 +22,7 @@ export {
   isOrgLeadership,
   isOrgManagement,
   isOrgCaseStaff,
+  type OrgRole,
 } from "./orgRoles";
 export {
   requireAuth,
@@ -27,19 +35,12 @@ export {
   type RequireOrgRoleOptions,
 } from "./guards";
 export {
-  canPerform,
-  getOrgPermissionScope,
-  PERMISSION_RESOURCES,
-  type PermissionResource,
-  type PermissionAction,
-  type PermissionScope,
-} from "./orgMatrix";
-export {
+  assertOwnOrOrgCaseAccess,
+  hasOrgScope,
+  isOwnCase,
+  orgMemberCanAccessCase,
+  orgMemberCanEditCase,
+  logAccessDenied,
   scopeToOrg,
-  evaluateOrgMemberCaseAccess,
-  evaluateOrgMemberDocumentAccess,
-  logOrgPermissionDenied,
-  fetchSuperviseeUserIds,
-  isIntakeStageCaseStatus,
-  type CaseRowLike,
-} from "./orgCaseAccess";
+  type CaseRowMinimal,
+} from "./simpleAccess";

@@ -2,18 +2,19 @@
  * Phase 0: Centralized case data access.
  * Phase 3: Org-scoped; returns NOT_FOUND for cross-org access (no existence leak).
  * Phase 6: Documents via listCaseDocuments (status + restricted visibility).
- * ORG-2A: org_role_permissions + assignment / supervisor scope for org staff.
+ * Phase 1: Simple org roles — owner/supervisor see org; advocate sees assigned cases only.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { isOrgLeadership } from "@/lib/server/auth";
 import {
-  evaluateOrgMemberCaseAccess,
-  fetchSuperviseeUserIds,
-  type CaseRowLike,
-} from "@/lib/server/auth/orgCaseAccess";
-import { getOrgPermissionScope } from "@/lib/server/auth/orgMatrix";
+  assertOwnOrOrgCaseAccess,
+  logAccessDenied,
+  orgMemberCanEditCase,
+  type CaseRowMinimal,
+} from "@/lib/server/auth/simpleAccess";
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { AppError } from "@/lib/server/api";
 import { listCaseDocuments } from "./documents";
 import { sameUserId } from "./ids";
@@ -80,27 +81,22 @@ export async function getCaseById(params: {
   const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
   const hasExplicitCaseAccess = accessRow?.can_view === true;
   const orgStaff = isOrgStaff(ctx, orgMatches);
+  const minimal = caseRow as CaseRowMinimal;
 
-  let viewAllowed = ctx.isAdmin || isOwner;
+  const { allowed, reason } = assertOwnOrOrgCaseAccess({
+    ctx,
+    caseRow: minimal,
+    hasExplicitCaseAccess,
+  });
 
-  if (!viewAllowed && orgStaff) {
-    const ok = await evaluateOrgMemberCaseAccess({
-      ctx,
-      caseRow: caseRow as CaseRowLike,
-      permissionAction: "view",
-      req,
-    });
-    if (!ok) {
-      return null;
+  if (!allowed) {
+    if (reason === "org_case_scope" && orgStaff && req) {
+      await logAccessDenied(ctx, req, {
+        resource: "case",
+        attemptedAction: "view",
+        targetId: caseId,
+      });
     }
-    viewAllowed = true;
-  }
-
-  if (!viewAllowed && hasExplicitCaseAccess) {
-    viewAllowed = true;
-  }
-
-  if (!viewAllowed) {
     return null;
   }
 
@@ -110,14 +106,9 @@ export async function getCaseById(params: {
   } else if (isOwner) {
     access = { role: "owner", can_view: true, can_edit: true };
   } else if (orgStaff && orgMatches) {
-    const canEdit = await evaluateOrgMemberCaseAccess({
-      ctx,
-      caseRow: caseRow as CaseRowLike,
-      permissionAction: "edit",
-      req,
-    });
+    const canEdit = orgMemberCanEditCase(ctx, minimal);
     access = {
-      role: (ctx.orgRole as string) ?? "org",
+      role: (ctx.orgRole as SimpleOrgRole) ?? "org",
       can_view: true,
       can_edit: canEdit,
     };
@@ -142,7 +133,7 @@ export async function getCaseById(params: {
   };
 }
 
-/** ORG-2A: Resolve case row after org + matrix checks (for routes that only need the case). */
+/** Resolve case row after access checks (for routes that only need the case). */
 export async function scopeToCase(
   ctx: AuthContext,
   caseId: string,
@@ -198,7 +189,9 @@ export async function listCasesForUser(params: {
   let rows = (data ?? []).filter((r: { cases?: unknown }) => r?.cases);
 
   if (!ctx.isAdmin && ctx.orgId) {
-    rows = rows.filter((r) => (r as { cases?: { organization_id?: string } }).cases?.organization_id === ctx.orgId);
+    rows = rows.filter(
+      (r) => (r as { cases?: { organization_id?: string } }).cases?.organization_id === ctx.orgId
+    );
   }
 
   if (filters?.clientId) {
@@ -215,13 +208,12 @@ export async function listCasesForUser(params: {
     const orgStaff = isOrgStaff(ctx, orgMatches);
 
     if (orgStaff && orgMatches) {
-      const ok = await evaluateOrgMemberCaseAccess({
+      const { allowed } = assertOwnOrOrgCaseAccess({
         ctx,
-        caseRow: c as CaseRowLike,
-        permissionAction: "view",
-        req,
+        caseRow: c as CaseRowMinimal,
+        hasExplicitCaseAccess: true,
       });
-      if (!ok) continue;
+      if (!allowed) continue;
     }
 
     const r = row as unknown as { role: string; can_view: boolean; can_edit: boolean };
@@ -238,9 +230,6 @@ export async function listCasesForUser(params: {
   return out;
 }
 
-/**
- * Phase 14: List all cases for an organization. Use only when caller has cases.view scope `all`.
- */
 export async function listCasesForOrganization(params: {
   organizationId: string;
 }): Promise<CaseRow[]> {
@@ -255,38 +244,6 @@ export async function listCasesForOrganization(params: {
   return (data ?? []) as CaseRow[];
 }
 
-/** ORG-2A: Supervisor team + unassigned pool within an org. */
-export async function listCasesForSupervisorTeam(params: {
-  organizationId: string;
-  supervisorUserId: string;
-}): Promise<CaseRow[]> {
-  const { organizationId, supervisorUserId } = params;
-  const supervisees = await fetchSuperviseeUserIds(supervisorUserId, organizationId);
-  const ids = Array.from(supervisees);
-
-  const supabaseAdmin = getSupabaseAdmin();
-  let q = supabaseAdmin
-    .from("cases")
-    .select("*")
-    .eq("organization_id", organizationId);
-
-  if (ids.length === 0) {
-    q = q.or(
-      `assigned_advocate_id.is.null,assigned_advocate_id.eq.${supervisorUserId}`
-    );
-  } else {
-    const inList = ids.join(",");
-    q = q.or(
-      `assigned_advocate_id.is.null,assigned_advocate_id.eq.${supervisorUserId},assigned_advocate_id.in.(${inList})`
-    );
-  }
-
-  const { data, error } = await q.order("created_at", { ascending: false });
-  if (error) throw new AppError("INTERNAL", "Failed to list supervisor cases", undefined, 500);
-  return (data ?? []) as CaseRow[];
-}
-
-/** ORG-2A: Cases assigned to the current user within an org. */
 export async function listCasesAssignedInOrg(params: {
   organizationId: string;
   userId: string;
@@ -304,7 +261,7 @@ export async function listCasesAssignedInOrg(params: {
 }
 
 /**
- * ORG-2A: Command center / org-wide listing by permission scope (cached matrix read inside getOrgPermissionScope).
+ * Org-scoped case lists: owner/supervisor → full org; advocate → assigned only.
  */
 export async function listCasesForOrgRoleContext(params: {
   ctx: AuthContext;
@@ -321,24 +278,9 @@ export async function listCasesForOrgRoleContext(params: {
     return listCasesForUser({ ctx, filters: { role: "advocate" } });
   }
 
-  const viewScope = await getOrgPermissionScope(ctx.orgRole, "cases", "view");
-  if (viewScope === null || viewScope === "none") {
-    return [];
-  }
-
-  if (viewScope === "all") {
+  const r = ctx.orgRole as SimpleOrgRole;
+  if (r === "owner" || r === "supervisor") {
     const rows = await listCasesForOrganization({ organizationId: ctx.orgId });
-    return rows.map((c) => ({
-      ...c,
-      access: { role: "advocate", can_view: true, can_edit: true },
-    })) as CaseListItem[];
-  }
-
-  if (viewScope === "team") {
-    const rows = await listCasesForSupervisorTeam({
-      organizationId: ctx.orgId,
-      supervisorUserId: ctx.userId,
-    });
     return rows.map((c) => ({
       ...c,
       access: { role: "advocate", can_view: true, can_edit: true },

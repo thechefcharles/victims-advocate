@@ -6,9 +6,6 @@ import { appendCaseTimelineEvent, getCaseById } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { notifyNewMessage } from "@/lib/server/notifications/triggers";
 import type { CaseConversationRow, CaseMessageRow } from "./types";
-import { assertCaseMessagingAllowed } from "./permissions";
-import type { CaseRowLike } from "@/lib/server/auth/orgCaseAccess";
-
 function truncatePreview(text: string, max = 160): string {
   const trimmed = text.trim();
   if (trimmed.length <= max) return trimmed;
@@ -51,12 +48,6 @@ export async function sendMessage(params: {
   if (!caseResult) {
     throw new AppError("FORBIDDEN", "Case not found", undefined, 404);
   }
-  await assertCaseMessagingAllowed({
-    ctx,
-    caseRow: caseResult.case as CaseRowLike,
-    mode: "create",
-    req,
-  });
 
   const supabase = getSupabaseAdmin();
 
@@ -141,12 +132,6 @@ export async function markMessageRead(params: {
     if (!caseResult) {
       throw new AppError("FORBIDDEN", "Case not found", undefined, 404);
     }
-    await assertCaseMessagingAllowed({
-      ctx,
-      caseRow: caseResult.case as CaseRowLike,
-      mode: "view",
-      req,
-    });
   }
 
   const { error } = await supabase.from("message_reads").upsert(

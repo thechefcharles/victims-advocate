@@ -32,12 +32,17 @@ export const ORG_LEADERSHIP_ROLES: OrgRole[] = [
 /** Org settings, membership revoke, role changes to managers (ORG-4 tightens further) */
 export const ORG_MANAGEMENT_ROLES: OrgRole[] = ["org_owner", "program_manager"];
 
-export function isOrgLeadership(r: OrgRole | null): boolean {
-  return r !== null && ORG_LEADERSHIP_ROLES.includes(r);
+/** Phase 1: supports normalized roles (owner/supervisor/advocate) and legacy DB enum strings. */
+export function isOrgLeadership(r: OrgRole | string | null): boolean {
+  if (!r) return false;
+  if (r === "owner" || r === "supervisor") return true;
+  return ORG_LEADERSHIP_ROLES.includes(r as OrgRole);
 }
 
-export function isOrgManagement(r: OrgRole | null): boolean {
-  return r !== null && ORG_MANAGEMENT_ROLES.includes(r);
+export function isOrgManagement(r: OrgRole | string | null): boolean {
+  if (!r) return false;
+  if (r === "owner") return true;
+  return ORG_MANAGEMENT_ROLES.includes(r as OrgRole);
 }
 
 /** Case/document work (excludes auditor for sensitive lists) */

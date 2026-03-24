@@ -5,9 +5,9 @@
  */
 
 import { AppError } from "@/lib/server/api";
-import type { AuthContext, OrgRole, ProfileRole } from "./context";
-import type { PermissionAction, PermissionResource } from "./orgMatrix";
-import { logOrgPermissionDenied } from "./orgCaseAccess";
+import type { AuthContext, ProfileRole } from "./context";
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+import { logAccessDenied } from "./simpleAccess";
 import { logEvent } from "@/lib/server/audit/logEvent";
 
 export function requireAuth(ctx: AuthContext | null): asserts ctx is AuthContext {
@@ -31,29 +31,25 @@ export function requireOrg(ctx: AuthContext): void {
 
 export type RequireOrgRoleOptions = {
   req?: Request | null;
-  /** Logged on denial (ORG-2A audit). */
-  resource?: PermissionResource;
-  attemptedAction?: PermissionAction;
+  resource?: string;
+  attemptedAction?: string;
 };
 
 export function requireOrgRole(
   ctx: AuthContext,
-  roles: OrgRole | OrgRole[],
+  roles: SimpleOrgRole | readonly SimpleOrgRole[],
   options?: RequireOrgRoleOptions
 ): void {
   if (!ctx.orgId) {
     throw new AppError("FORBIDDEN", "Organization membership required");
   }
-  const allowed = Array.isArray(roles) ? roles : [roles];
+  const allowed = (Array.isArray(roles) ? roles : [roles]) as SimpleOrgRole[];
   if (!ctx.orgRole || !allowed.includes(ctx.orgRole)) {
     const { req, resource, attemptedAction } = options ?? {};
     if (resource && attemptedAction) {
-      logOrgPermissionDenied({
-        ctx,
-        req,
+      logAccessDenied(ctx, req ?? null, {
         resource,
-        action: attemptedAction,
-        metadata: { reason: "org_role_guard", allowed_roles: allowed },
+        attemptedAction,
       }).catch(() => {});
     }
     throw new AppError("FORBIDDEN", "Insufficient organization role");

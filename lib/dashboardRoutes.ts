@@ -2,14 +2,12 @@
  * Single place for "which home dashboard" after login and redirects.
  */
 
-import type { OrgRole as OrgMembershipRole } from "@/lib/server/auth/orgRoles";
-
-export type OrgRole = OrgMembershipRole | null;
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 
 export type DashboardMe = {
   isAdmin?: boolean;
   orgId?: string | null;
-  orgRole?: OrgRole;
+  orgRole?: SimpleOrgRole | null;
   role?: "victim" | "advocate" | "organization";
 };
 

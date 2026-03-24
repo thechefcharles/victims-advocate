@@ -8,7 +8,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -34,7 +34,7 @@ export async function POST(
     requireAuth(ctx);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
+    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
 
     const { id: requestId } = await params;
     const rid = requestId?.trim();

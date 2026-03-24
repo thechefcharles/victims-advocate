@@ -25,7 +25,8 @@ import {
   formatReviewStatusLabel,
 } from "@/lib/trustDisplay";
 import type { OrgRole } from "@/lib/server/auth/orgRoles";
-import { ORG_MANAGEMENT_ROLES, ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
+import { ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
+import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
 
 const INVITE_ROLE_LABELS: Record<OrgRole, string> = {
   org_owner: "Org owner",
@@ -113,13 +114,9 @@ export default function AdvocateOrgPage() {
     return orgId ? `?organization_id=${encodeURIComponent(orgId)}` : "";
   };
 
-  const canEditProfile =
-    myOrgRole === "org_owner" ||
-    myOrgRole === "program_manager" ||
-    myOrgRole === "supervisor";
+  const canEditProfile = myOrgRole === "owner" || myOrgRole === "supervisor";
   const canViewDesignation = canEditProfile;
-  const canManageMemberships =
-    myOrgRole != null && (ORG_MANAGEMENT_ROLES as readonly string[]).includes(myOrgRole);
+  const canManageMemberships = myOrgRole === "owner";
 
   const [designation, setDesignation] = useState<{
     designation_tier: string;
@@ -309,7 +306,7 @@ export default function AdvocateOrgPage() {
         setInvites(inv);
         if (uid) {
           const me = m.find((x) => x.user_id === uid);
-          setMyOrgRole(me?.org_role ?? null);
+          setMyOrgRole(mapDbOrgRoleToSimple(me?.org_role ?? null));
         }
         setErr(null);
       } catch (e) {
@@ -576,8 +573,8 @@ export default function AdvocateOrgPage() {
           )}
           {!canEditProfile && myOrgRole && (
             <p className="text-xs text-amber-200/90 mb-4">
-              Your role ({myOrgRole}) can view this profile. Only org owner, program manager, or
-              supervisor can edit.
+              Your role ({myOrgRole}) can view this profile. Only an org owner or supervisor can
+              edit.
             </p>
           )}
           {profileLoading ? (

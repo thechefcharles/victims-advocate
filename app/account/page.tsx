@@ -91,7 +91,7 @@ export default function AccountPage() {
         </div>
 
         {role === "organization" &&
-          (orgRole === "org_owner" || orgRole === "program_manager") &&
+          orgRole === "owner" &&
           orgId && (
           <OrganizationCatalogForm
             accessToken={accessToken}
@@ -112,11 +112,9 @@ export default function AccountPage() {
           />
         )}
 
-        {role === "organization" &&
-          orgRole !== "org_owner" &&
-          orgRole !== "program_manager" && (
+        {role === "organization" && orgRole !== "owner" && (
           <p className="text-xs text-slate-500">
-            Only an organization owner or program manager can change which directory program this agency uses.
+            Only an organization owner can change which directory program this agency uses.
           </p>
         )}
       </main>

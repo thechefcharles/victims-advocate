@@ -17,12 +17,12 @@ import {
   type VictimPersonalInfo,
 } from "@/lib/personalInfo";
 
-import type { OrgRole as OrgMembershipRole } from "@/lib/server/auth/orgRoles";
-import { ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
+import { SIMPLE_ORG_ROLES, type SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
-export type OrgRole = OrgMembershipRole | null;
+/** Normalized org role from `/api/me` (owner | supervisor | advocate). */
+export type OrgRole = SimpleOrgRole | null;
 
 export type AccountStatus = "active" | "disabled" | "deleted";
 
@@ -96,8 +96,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
     const or = d?.orgRole;
     setOrgRole(
-      typeof or === "string" && (ORG_MEMBERSHIP_ROLES as readonly string[]).includes(or)
-        ? (or as OrgMembershipRole)
+      typeof or === "string" && (SIMPLE_ORG_ROLES as readonly string[]).includes(or)
+        ? (or as SimpleOrgRole)
         : null
     );
     const aff = d?.affiliatedCatalogEntryId;

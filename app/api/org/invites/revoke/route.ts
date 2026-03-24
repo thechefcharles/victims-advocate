@@ -8,7 +8,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_MANAGEMENT_ROLES,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
 } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, ORG_MANAGEMENT_ROLES);
+      requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
     }
 
     const body = await req.json().catch(() => null);

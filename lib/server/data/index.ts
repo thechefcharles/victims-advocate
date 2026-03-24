@@ -3,7 +3,6 @@ export {
   scopeToCase,
   listCasesForUser,
   listCasesForOrganization,
-  listCasesForSupervisorTeam,
   listCasesAssignedInOrg,
   listCasesForOrgRoleContext,
   type GetCaseByIdResult,

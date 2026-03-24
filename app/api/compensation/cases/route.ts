@@ -1,12 +1,7 @@
 // app/api/compensation/cases/route.ts
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import {
-  canPerform,
-  getAuthContext,
-  logOrgPermissionDenied,
-  requireFullAccess,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listCasesForUser, listCasesForOrgRoleContext, appendCaseTimelineEvent } from "@/lib/server/data";
@@ -82,20 +77,6 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-
-    if ((ctx.role === "advocate" || ctx.role === "organization") && ctx.orgRole) {
-      const ok = await canPerform(ctx.orgRole, "cases", "create");
-      if (!ok) {
-        await logOrgPermissionDenied({
-          ctx,
-          req,
-          resource: "cases",
-          action: "create",
-          metadata: { reason: "create_case_denied", orgRole: ctx.orgRole },
-        });
-        return apiFail("FORBIDDEN", "You cannot create cases for this organization", undefined, 403);
-      }
-    }
 
     const supabaseAdmin = getSupabaseAdmin();
 

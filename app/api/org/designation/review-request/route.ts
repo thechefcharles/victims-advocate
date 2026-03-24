@@ -7,7 +7,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
@@ -23,7 +23,7 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
+    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     const requestKind = String(body?.request_kind ?? "").trim() as ReviewRequestKind;

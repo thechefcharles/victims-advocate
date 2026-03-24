@@ -8,8 +8,8 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_LEADERSHIP_ROLES,
-  ORG_MANAGEMENT_ROLES,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
   ORG_MEMBERSHIP_ROLES,
   normalizeOrgRoleInput,
 } from "@/lib/server/auth";
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ORG_MANAGEMENT_ROLES);
+    requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {

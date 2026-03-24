@@ -7,7 +7,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
-  ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
   isOrgManagement,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
@@ -25,7 +25,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ORG_LEADERSHIP_ROLES);
+    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
 
     const asOrgAdmin = isOrgManagement(ctx.orgRole);
 
