@@ -140,6 +140,9 @@ export type AuditAction =
   | "member_invited"
   | "member_suspended"
   | "member_removed"
+  | "referral.created"
+  | "referral.accepted"
+  | "referral.declined"
   | "org.permission_denied";
 
 export type AuditSeverity = "info" | "warning" | "security";
