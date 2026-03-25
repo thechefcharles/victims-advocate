@@ -34,5 +34,7 @@ export type CreateReferralInput = {
   metadata?: Record<string, unknown>;
 };
 
-/** Server-only metadata key: user IDs granted temporary read-only case_access (Phase 3 may revoke). */
+/** Server-only metadata key: user IDs with review read path (includes pre-existing read-only). */
 export const REFERRAL_METADATA_REVIEW_GRANT_USER_IDS = "referral_review_grant_user_ids" as const;
+/** Server-only: user IDs for rows inserted for this referral — safe to delete on decline only. */
+export const REFERRAL_METADATA_REVIEW_INSERTED_USER_IDS = "referral_review_inserted_user_ids" as const;

@@ -88,3 +88,46 @@ export async function grantReferralReviewCaseAccessForReceivingLeaders(params: {
 
   return { grantedUserIds, insertedUserIds: insertedThisRun };
 }
+
+/**
+ * Remove temporary review `case_access` created for this referral (inserted recipients only).
+ * Skips rows that are now edit-capable or belong to a different case tenant org.
+ * Phase 4: case transfer will replace broader access patterns.
+ */
+export async function revokeReferralReviewCaseAccessForInsertedRecipients(params: {
+  caseId: string;
+  caseTenantOrganizationId: string;
+  insertedUserIds: string[];
+}): Promise<void> {
+  const { caseId, caseTenantOrganizationId, insertedUserIds } = params;
+  if (insertedUserIds.length === 0) return;
+
+  const supabase = getSupabaseAdmin();
+
+  for (const userId of insertedUserIds) {
+    const { data: row, error: selErr } = await supabase
+      .from("case_access")
+      .select("can_view, can_edit, organization_id, role")
+      .eq("case_id", caseId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selErr) {
+      throw new AppError("INTERNAL", "Failed to load case access for revoke", undefined, 500);
+    }
+    if (!row) continue;
+    if (row.can_edit === true) continue;
+    if (row.organization_id !== caseTenantOrganizationId) continue;
+    if (row.role !== "advocate") continue;
+
+    const { error: delErr } = await supabase
+      .from("case_access")
+      .delete()
+      .eq("case_id", caseId)
+      .eq("user_id", userId);
+
+    if (delErr) {
+      throw new AppError("INTERNAL", "Failed to revoke referral review access", undefined, 500);
+    }
+  }
+}
