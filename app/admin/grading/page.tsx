@@ -238,7 +238,7 @@ export default function AdminGradingPage() {
               Cases
             </Link>
             <Link href="/admin/designations" className="text-teal-400 hover:text-teal-200">
-              Designations
+              Review designation
             </Link>
           </div>
         </header>

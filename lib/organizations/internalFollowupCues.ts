@@ -1,9 +1,11 @@
 /**
- * Lightweight, operational follow-up copy for admin/internal org discovery.
- * Not a scoring engine — single plain-language cue per context.
+ * Operational follow-up copy for admin and ecosystem org rows (not scoring).
+ * Used by `/admin/orgs`, `/admin/ecosystem`, and server-side org summaries.
+ *
+ * @see docs/org-system-boundaries.md
  */
 
-export type OrgCueInput = {
+export type OrgFollowupCueInput = {
   orgStatus: string;
   profileStatus: string | null;
   profileStage: string | null;
@@ -16,19 +18,7 @@ export type OrgCueInput = {
   workflowMessagesInWindow?: number;
 };
 
-export function isMatchingAlignedOrg(org: {
-  status: string;
-  profile_status?: string | null;
-  profile_stage?: string | null;
-}): boolean {
-  if (org.status !== "active") return false;
-  const ps = org.profile_status?.trim();
-  if (ps && ps !== "active") return false;
-  const stage = (org.profile_stage ?? "").trim();
-  return stage === "searchable" || stage === "enriched";
-}
-
-export function buildOrgInternalFollowupCue(input: OrgCueInput): string {
+export function buildOrgInternalFollowupCue(input: OrgFollowupCueInput): string {
   if (input.orgStatus !== "active") {
     return "Review organization status when this partner should be active.";
   }

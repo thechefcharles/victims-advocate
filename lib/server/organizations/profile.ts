@@ -90,6 +90,7 @@ export async function updateOrganizationProfile(params: {
 
   const beforeProfile = rowToOrganizationProfile(before as Record<string, unknown>);
   const merged: OrganizationProfile = { ...beforeProfile, ...patch };
+  // `profile_stage` is derived only here and in migrations — see `lib/organizations/profileStage.ts`.
   const profile_stage = computeOrganizationProfileStage(merged);
 
   const updatePayload: Record<string, unknown> = {

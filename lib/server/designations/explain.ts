@@ -1,5 +1,6 @@
 /**
  * Phase E: Public-safe designation explanations and methodology links (no raw scores).
+ * Designation is a secondary trust signal vs fit-first matching (`docs/org-system-boundaries.md`).
  */
 
 import type { DesignationTier } from "./types";

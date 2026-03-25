@@ -1,6 +1,7 @@
 /**
  * Phase 1: Product-facing org roles (maps from DB `org_membership_role` enum).
  * DB still stores full enum; we normalize at auth boundary for simple access rules.
+ * Not a permission matrix — see `docs/org-system-boundaries.md`.
  */
 
 export const SIMPLE_ORG_ROLES = ["owner", "supervisor", "advocate"] as const;

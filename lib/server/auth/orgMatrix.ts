@@ -1,6 +1,7 @@
 /**
  * @deprecated Phase 1 — not used by the live app access path. Table `org_role_permissions`
  * may still exist in DB; do not call these helpers from routes.
+ * Product org access uses simple roles (`lib/auth/simpleOrgRole.ts`). Boundaries: `docs/org-system-boundaries.md`.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";

@@ -568,7 +568,7 @@ export default function AdvocateOrgPage() {
           contextLine="Advocate → Organization"
           eyebrow="Organization"
           title="Organization workspace"
-          subtitle="Keep your organization profile current, review readiness, and track designation confidence."
+          subtitle="Keep your organization profile current, review profile stage for matching, and track designation confidence."
           meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
           backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
         />
@@ -602,10 +602,10 @@ export default function AdvocateOrgPage() {
         {profile && !profileLoading && (
           <section
             className="rounded-2xl border border-slate-700/80 bg-slate-900/40 p-4 text-sm text-slate-200 space-y-2"
-            aria-label="Matching profile stage"
+            aria-label="Profile stage for matching"
           >
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              Matching readiness
+              Profile stage
             </p>
             {profile.profile_stage === "created" && (
               <>

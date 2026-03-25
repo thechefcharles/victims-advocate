@@ -15,3 +15,7 @@ Canonical paths and product names live in **[`lib/routes/pageRegistry.ts`](../li
 | Logged-in home | varies | See `getDashboardPath` in `lib/dashboardRoutes.ts` |
 
 Post-login “home” is **not** `/`; it is role-specific (`/victim/dashboard`, `/advocate` command center, etc.). Legacy `/advocate/dashboard` redirects to `/advocate`.
+
+## Org system (internal)
+
+Advocate and admin org tooling (`/advocate/org`, `/advocate/org-search`, `/admin/orgs`, …) is **not** public discovery. Scope and boundaries: **[`docs/org-system-boundaries.md`](org-system-boundaries.md)**.

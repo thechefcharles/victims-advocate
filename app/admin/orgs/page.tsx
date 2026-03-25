@@ -5,10 +5,8 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PageHeader } from "@/components/layout/PageHeader";
-import {
-  buildOrgInternalFollowupCue,
-  isMatchingAlignedOrg,
-} from "@/lib/admin/orgDiscoveryCues";
+import { buildOrgInternalFollowupCue } from "@/lib/organizations/internalFollowupCues";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 import { designationTierBadgeText, confidenceChipText } from "@/lib/trustDisplay";
 
 type AdminOrg = {
@@ -110,7 +108,7 @@ export default function AdminOrgsPage() {
   const filteredOrgs = useMemo(() => {
     const q = query.trim().toLowerCase();
     return orgs.filter((o) => {
-      if (!showUnreadyInternal && !isMatchingAlignedOrg(o)) return false;
+      if (!showUnreadyInternal && !isOrganizationMatchingEligible(o)) return false;
 
       if (q) {
         const nameMatch = o.name.toLowerCase().includes(q);
@@ -149,7 +147,7 @@ export default function AdminOrgsPage() {
   ]);
 
   const matchingCount = useMemo(
-    () => orgs.filter((o) => isMatchingAlignedOrg(o)).length,
+    () => orgs.filter((o) => isOrganizationMatchingEligible(o)).length,
     [orgs]
   );
 
@@ -534,7 +532,7 @@ export default function AdminOrgsPage() {
                           {o.accepting_clients === false ? " · not accepting" : ""}
                         </p>
                         <p className="text-[11px] text-slate-500 leading-relaxed border-l border-slate-700 pl-2">
-                          Next step: {cue}
+                          Follow-up: {cue}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1.5 shrink-0 items-end">

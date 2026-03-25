@@ -5,6 +5,12 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { stateInCoverage } from "@/lib/server/matching/filters";
 import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/service";
 
+/**
+ * Advocate-only internal org lookup. Default query matches `isOrganizationMatchingEligible`
+ * (active org, active profile, searchable|enriched). Admins may pass `include_unready=true`
+ * to widen the row set — see `docs/org-system-boundaries.md`.
+ */
+
 type OrgSearchRow = {
   id: string;
   name: string;

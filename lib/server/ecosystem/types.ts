@@ -41,6 +41,7 @@ export type OrgSegmentRow = {
   completeness_runs_in_window: number;
   messages_sent_in_window: number;
   match_rows_as_target_in_window: number;
+  /** One operational line from `buildOrgInternalFollowupCue` — not a score or ranking. */
   internal_followup_cue: string;
 };
 

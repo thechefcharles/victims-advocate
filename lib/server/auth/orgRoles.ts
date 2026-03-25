@@ -1,5 +1,6 @@
 /**
  * ORG-1B: Organization membership roles (matches public.org_membership_role enum).
+ * Product-facing behavior uses simplified roles via `lib/auth/simpleOrgRole.ts`; see `docs/org-system-boundaries.md`.
  */
 
 export const ORG_MEMBERSHIP_ROLES = [

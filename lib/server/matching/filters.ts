@@ -1,5 +1,7 @@
 /**
  * Phase B: Hard filters — exclude orgs that clearly do not fit.
+ * Profile stage / status gates align with `isOrganizationMatchingEligible` in
+ * `lib/organizations/profileStage.ts` (plus per-run rules below).
  */
 
 import type { MatchingInput, OrgRowForMatching } from "./types";

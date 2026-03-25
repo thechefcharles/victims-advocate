@@ -49,6 +49,25 @@ export function isOrganizationSearchable(profile: OrganizationProfile): boolean 
   return stage === "searchable" || stage === "enriched";
 }
 
+/**
+ * Row-level gate for matching and internal org search defaults (same filters as org loaders):
+ * organization `status` active, `profile_status` active (when set), `profile_stage` searchable or enriched.
+ * Not a substitute for per-match hard filters (services, geo, etc.).
+ *
+ * @see docs/org-system-boundaries.md
+ */
+export function isOrganizationMatchingEligible(org: {
+  status: string;
+  profile_status?: string | null;
+  profile_stage?: string | null;
+}): boolean {
+  if (org.status !== "active") return false;
+  const ps = org.profile_status?.trim();
+  if (ps && ps !== "active") return false;
+  const stage = (org.profile_stage ?? "").trim();
+  return stage === "searchable" || stage === "enriched";
+}
+
 /** Plain-language items still missing before the org can reach searchable. */
 export function listMissingForSearchable(profile: OrganizationProfile): string[] {
   const missing: string[] = [];

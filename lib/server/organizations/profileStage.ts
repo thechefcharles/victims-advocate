@@ -5,6 +5,7 @@
 export {
   computeOrganizationProfileStage,
   coverageAreaHasSignal,
+  isOrganizationMatchingEligible,
   isOrganizationSearchable,
   listMissingForSearchable,
   listOptionalEnrichedHints,

@@ -18,7 +18,7 @@ import {
   computeOrgProfileCompletenessLevel,
   type OrgProfileLike,
 } from "@/lib/server/organizations/profileCompleteness";
-import { buildOrgInternalFollowupCue } from "@/lib/admin/orgDiscoveryCues";
+import { buildOrgInternalFollowupCue } from "@/lib/organizations/internalFollowupCues";
 
 export type OrgRow = Record<string, unknown> & { id: string; name: string };
 
@@ -86,6 +86,8 @@ export async function loadEcosystemAggregates(filters: EcosystemFilters): Promis
   const since = new Date(Date.now() - filters.time_window_days * 86400000);
   const sinceIso = since.toISOString();
 
+  // Same org row bar as matching lists: active + active profile + searchable|enriched
+  // (`isOrganizationMatchingEligible` in lib/organizations/profileStage.ts).
   const { data: orgData, error: orgErr } = await supabase
     .from("organizations")
     .select(

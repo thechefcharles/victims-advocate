@@ -118,7 +118,7 @@ export default function AdvocateOrgSearchPage() {
           contextLine="Advocate"
           eyebrow="Find organizations"
           title="Search organizations"
-          subtitle="Find organizations that may be able to help using services, language, area, and availability filters."
+          subtitle="Internal casework search — filter by services, language, area, and availability. Not a public directory."
           backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
         />
 
@@ -132,7 +132,7 @@ export default function AdvocateOrgSearchPage() {
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 space-y-3">
           <p className="text-xs text-slate-400">
-            Internal search only. Results default to organizations that are active and searchable.
+            Internal only. Results default to the same profile stage bar as matching (searchable or enriched).
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or service" className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm" />
@@ -197,7 +197,7 @@ export default function AdvocateOrgSearchPage() {
                   <p className="text-sm font-semibold text-slate-100">{org.name}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
-                      readiness: {org.profile_stage}
+                      Profile stage: {org.profile_stage}
                     </span>
                     {org.designation_tier ? (
                       <span className="text-[10px] rounded-full border border-teal-700/50 px-2 py-0.5 text-teal-200">
@@ -217,9 +217,6 @@ export default function AdvocateOrgSearchPage() {
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Link href={`/advocate/org?organization_id=${org.id}`} className="rounded-full border border-slate-600 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-800">
                     View organization
-                  </Link>
-                  <Link href={`/advocate/org?organization_id=${org.id}`} className="rounded-full border border-emerald-600/50 px-3 py-1.5 text-[11px] font-semibold text-emerald-200 hover:bg-emerald-900/20">
-                    Open profile
                   </Link>
                 </div>
               </li>

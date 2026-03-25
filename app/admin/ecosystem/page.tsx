@@ -441,7 +441,7 @@ export default function AdminEcosystemPage() {
                       <th className="py-2 pr-2">Availability</th>
                       <th className="py-2 pr-2">Designation</th>
                       <th className="py-2 pr-2">Completeness</th>
-                      <th className="py-2 pr-2">Next step</th>
+                      <th className="py-2 pr-2">Follow-up</th>
                       <th className="py-2 pr-2 text-right">Activity</th>
                       <th className="py-2 pr-2 text-right">Actions</th>
                     </tr>
@@ -502,19 +502,19 @@ export default function AdminEcosystemPage() {
                               href={`/admin/designations?org=${o.organization_id}`}
                               className="text-slate-500 hover:text-slate-300"
                             >
-                              Designation
+                              Review designation
                             </Link>
                             <Link
                               href={`/admin/grading?org=${o.organization_id}`}
                               className="text-slate-500 hover:text-slate-300"
                             >
-                              Grading
+                              Review grading
                             </Link>
                             <Link
                               href={`/admin/grading?org=${o.organization_id}#org-signals-snapshot`}
                               className="text-slate-500 hover:text-slate-300"
                             >
-                              Signals
+                              Review signals
                             </Link>
                           </div>
                         </td>
