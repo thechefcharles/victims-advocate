@@ -90,6 +90,58 @@ export async function grantReferralReviewCaseAccessForReceivingLeaders(params: {
 }
 
 /**
+ * After an accepted referral + org transfer: remove read-only rows inserted for referral review,
+ * except optionally one user (typically the leader who accepted).
+ *
+ * Rationale (Phase 5): bulk transfer rewrites `case_access.organization_id` for everyone, which
+ * would leave all receiving leaders with indefinite read-only “review” semantics. We drop those
+ * temporary rows so access is explicit (invites / normal org workflows); the accepter keeps
+ * read-only continuity to open the case until edit access is granted separately.
+ */
+export async function revokeReferralInsertedReviewAccessAfterAccept(params: {
+  caseId: string;
+  /** `cases.organization_id` after transfer (receiving org). */
+  postTransferOrganizationId: string;
+  insertedUserIds: string[];
+  /** If set, this user's matching read-only row is not removed. */
+  keepUserId: string | null;
+}): Promise<void> {
+  const { caseId, postTransferOrganizationId, insertedUserIds, keepUserId } = params;
+  if (insertedUserIds.length === 0) return;
+
+  const supabase = getSupabaseAdmin();
+
+  for (const userId of insertedUserIds) {
+    if (keepUserId && userId === keepUserId) continue;
+
+    const { data: row, error: selErr } = await supabase
+      .from("case_access")
+      .select("can_view, can_edit, organization_id, role")
+      .eq("case_id", caseId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (selErr) {
+      throw new AppError("INTERNAL", "Failed to load case access for post-accept cleanup", undefined, 500);
+    }
+    if (!row) continue;
+    if (row.can_edit === true) continue;
+    if (row.organization_id !== postTransferOrganizationId) continue;
+    if (row.role !== "advocate") continue;
+
+    const { error: delErr } = await supabase
+      .from("case_access")
+      .delete()
+      .eq("case_id", caseId)
+      .eq("user_id", userId);
+
+    if (delErr) {
+      throw new AppError("INTERNAL", "Failed to clean up referral review access after accept", undefined, 500);
+    }
+  }
+}
+
+/**
  * Remove temporary review `case_access` created for this referral (inserted recipients only).
  * Skips rows that are now edit-capable or belong to a different case tenant org.
  * Phase 4: case transfer will replace broader access patterns.

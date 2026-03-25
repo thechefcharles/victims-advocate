@@ -22,6 +22,7 @@ import {
 } from "./types";
 import {
   grantReferralReviewCaseAccessForReceivingLeaders,
+  revokeReferralInsertedReviewAccessAfterAccept,
   revokeReferralReviewCaseAccessForInsertedRecipients,
 } from "./reviewAccess";
 
@@ -211,8 +212,8 @@ export async function createReferral(params: {
     if (error.code === "23505") {
       throw new AppError(
         "VALIDATION_ERROR",
-        "A pending referral for this case to this organization already exists",
-        undefined,
+        "A referral to this organization is already in progress.",
+        { reason: "referral_duplicate_pending" },
         422
       );
     }
@@ -267,8 +268,8 @@ export async function createReferral(params: {
       organizationId: caseTenantOrgId,
       actor: { userId: ctx.userId, role: ctx.role },
       eventType: "case.referral_sent",
-      title: "Referral sent to organization",
-      description: `A referral was sent to ${targetOrgName} for review.`,
+      title: "Referral sent for review",
+      description: `Sent to ${targetOrgName}. They can review and respond when ready.`,
       metadata: {
         referral_id: row.id,
         to_organization_id: toOrganizationId,
@@ -290,8 +291,8 @@ export async function createReferral(params: {
           caseId,
           organizationId: toOrganizationId,
           type: "referral.pending_review",
-          title: "New case referral",
-          body: null,
+          title: "Case referral needs review",
+          body: "Open the case when you are ready to respond.",
           actionUrl: `/compensation/intake?case=${encodeURIComponent(caseId)}`,
           previewSafe: true,
           metadata: { referralId: row.id, caseId },
@@ -608,14 +609,31 @@ export async function acceptCaseOrgReferral(params: {
 
   const out = asReferralRow(updated as Record<string, unknown>);
 
+  const insertedForCleanup = metadataStringArray(row.metadata, REFERRAL_METADATA_REVIEW_INSERTED_USER_IDS);
+  if (insertedForCleanup.length > 0) {
+    try {
+      await revokeReferralInsertedReviewAccessAfterAccept({
+        caseId: row.case_id,
+        postTransferOrganizationId: row.to_organization_id,
+        insertedUserIds: insertedForCleanup,
+        keepUserId: ctx.userId,
+      });
+    } catch (cleanupErr) {
+      logger.warn("referral.accept.review_access_cleanup_failed", {
+        referralId: row.id,
+        message: cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr),
+      });
+    }
+  }
+
   try {
     await appendCaseTimelineEvent({
       caseId: row.case_id,
       organizationId: row.to_organization_id,
       actor: { userId: ctx.userId, role: ctx.role },
       eventType: "case.referral_handoff_completed",
-      title: "Referral completed — case transferred",
-      description: `This case is now linked to ${toName} after an accepted referral.`,
+      title: "Organization connection updated",
+      description: `Your case is now connected to ${toName} after they accepted your referral.`,
       metadata: {
         referral_id: row.id,
         from_organization_id: transferResult.previousOrganizationId,
@@ -651,17 +669,45 @@ export async function acceptCaseOrgReferral(params: {
     recipients.add(row.requested_by_user_id);
   }
 
-  if (recipients.size > 0) {
+  const victimOrgUrl = `/victim/case/${encodeURIComponent(row.case_id)}/organization`;
+  const intakeUrl = `/compensation/intake?case=${encodeURIComponent(row.case_id)}`;
+
+  if (ownerId) {
     try {
       await createCaseNotification(
         {
-          recipients: [...recipients],
+          recipients: [ownerId],
           caseId: row.case_id,
           organizationId: row.to_organization_id,
           type: "referral.accepted",
-          title: "Referral accepted — case transferred",
-          body: null,
-          actionUrl: `/compensation/intake?case=${encodeURIComponent(row.case_id)}`,
+          title: "Referral accepted",
+          body: "Your case is connected to the organization you chose.",
+          actionUrl: victimOrgUrl,
+          previewSafe: true,
+          metadata: { referralId: row.id },
+        },
+        ctx
+      );
+    } catch (notifyErr) {
+      logger.warn("referral.accept.notification_failed", {
+        referralId: row.id,
+        message: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+      });
+    }
+  }
+
+  const nonOwnerRecipients = [...recipients].filter((id) => !ownerId || id !== ownerId);
+  if (nonOwnerRecipients.length > 0) {
+    try {
+      await createCaseNotification(
+        {
+          recipients: nonOwnerRecipients,
+          caseId: row.case_id,
+          organizationId: row.to_organization_id,
+          type: "referral.accepted",
+          title: "Referral accepted",
+          body: "The case was transferred to the receiving organization.",
+          actionUrl: intakeUrl,
           previewSafe: true,
           metadata: { referralId: row.id },
         },
@@ -795,17 +841,45 @@ export async function declineCaseOrgReferral(params: {
     recipients.add(row.requested_by_user_id);
   }
 
-  if (recipients.size > 0) {
+  const victimOrgUrlDecline = `/victim/case/${encodeURIComponent(row.case_id)}/organization`;
+  const intakeUrlDecline = `/compensation/intake?case=${encodeURIComponent(row.case_id)}`;
+
+  if (ownerId) {
     try {
       await createCaseNotification(
         {
-          recipients: [...recipients],
+          recipients: [ownerId],
           caseId: row.case_id,
           organizationId: caseTenantOrgId || null,
           type: "referral.declined",
-          title: "Referral update",
-          body: null,
-          actionUrl: `/compensation/intake?case=${encodeURIComponent(row.case_id)}`,
+          title: "Referral declined",
+          body: "The organization chose not to take this case right now.",
+          actionUrl: victimOrgUrlDecline,
+          previewSafe: true,
+          metadata: { referralId: row.id },
+        },
+        ctx
+      );
+    } catch (notifyErr) {
+      logger.warn("referral.decline.notification_failed", {
+        referralId: row.id,
+        message: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+      });
+    }
+  }
+
+  const nonOwnerRecipientsDecline = [...recipients].filter((id) => !ownerId || id !== ownerId);
+  if (nonOwnerRecipientsDecline.length > 0) {
+    try {
+      await createCaseNotification(
+        {
+          recipients: nonOwnerRecipientsDecline,
+          caseId: row.case_id,
+          organizationId: caseTenantOrgId || null,
+          type: "referral.declined",
+          title: "Referral declined",
+          body: "The receiving organization declined the referral.",
+          actionUrl: intakeUrlDecline,
           previewSafe: true,
           metadata: { referralId: row.id },
         },

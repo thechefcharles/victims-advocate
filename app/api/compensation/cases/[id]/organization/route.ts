@@ -74,11 +74,11 @@ export async function PATCH(req: Request, context: RouteParams) {
         organizationId: targetOrgId,
         actor: { userId: ctx.userId, role: ctx.role },
         eventType: "case.organization_transferred",
-        title: "Organization link updated",
+        title: "Organization connection updated",
         description:
           previousOrgId && previousOrgId !== targetOrgId
-            ? `Case organization changed from ${prevName} to ${nextName}.`
-            : `Case organization set to ${nextName}.`,
+            ? `Your case moved from ${prevName} to ${nextName}.`
+            : `Your case is now connected to ${nextName}.`,
         metadata: {
           from_organization_id: previousOrgId,
           to_organization_id: targetOrgId,

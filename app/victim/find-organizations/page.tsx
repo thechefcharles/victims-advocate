@@ -43,6 +43,7 @@ function VictimFindOrganizationsContent() {
     sendReferralSending: t("victimDashboard.findOrganizationsPage.sendReferralSending"),
     sendReferralDone: t("victimDashboard.findOrganizationsPage.sendReferralDone"),
     sendReferralFailed: t("victimDashboard.findOrganizationsPage.sendReferralFailed"),
+    sendReferralDuplicate: t("victimDashboard.findOrganizationsPage.sendReferralDuplicate"),
   };
 
   return (

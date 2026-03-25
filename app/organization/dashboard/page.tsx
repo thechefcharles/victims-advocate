@@ -253,10 +253,11 @@ export default function OrganizationDashboardPage() {
 
         {!refForbidden ? (
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-slate-100">Incoming referrals</h2>
+            <h2 className="text-lg font-medium text-slate-100">Incoming referrals (pending)</h2>
             <p className="text-xs text-slate-500">
-              Pending case referrals sent to your organization. Accepting transfers the case to your agency;
-              declining closes the request and removes temporary review access.
+              Only open requests appear here. Accepting connects the case to your organization and completes the
+              handoff. Declining closes the request and ends temporary review access. Accepted or declined items
+              leave this list; case history stays on the case timeline for people with access.
             </p>
             {refErr ? (
               <div className="text-sm text-amber-200/90 border border-amber-700/40 rounded-lg px-3 py-2">
@@ -266,7 +267,10 @@ export default function OrganizationDashboardPage() {
             {refLoading ? (
               <p className="text-sm text-slate-400">Loading referrals…</p>
             ) : referrals.length === 0 ? (
-              <p className="text-sm text-slate-400">No incoming referrals right now.</p>
+              <p className="text-sm text-slate-400">
+                Nothing waiting. When a survivor or partner sends a referral to your organization, it will show up
+                here until someone accepts or declines.
+              </p>
             ) : (
               <ul className="space-y-3">
                 {referrals.map((row) => {
@@ -312,7 +316,7 @@ export default function OrganizationDashboardPage() {
                           href={intakeHref}
                           className="inline-flex items-center justify-center rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800/80"
                         >
-                          Open case
+                          Review case
                         </Link>
                         <button
                           type="button"
@@ -320,7 +324,7 @@ export default function OrganizationDashboardPage() {
                           onClick={() => void actOnReferral(rid, "accept")}
                           className="inline-flex items-center justify-center rounded-lg border border-emerald-600/50 bg-emerald-950/40 px-3 py-1.5 text-xs font-semibold text-emerald-100 hover:bg-emerald-900/50 disabled:opacity-50"
                         >
-                          {busy ? "Working…" : "Accept"}
+                          {busy ? "Working…" : "Accept & connect case"}
                         </button>
                         <button
                           type="button"
@@ -328,7 +332,7 @@ export default function OrganizationDashboardPage() {
                           onClick={() => void actOnReferral(rid, "decline")}
                           className="inline-flex items-center justify-center rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800/80 disabled:opacity-50"
                         >
-                          {busy ? "Working…" : "Decline"}
+                          {busy ? "Working…" : "Decline request"}
                         </button>
                       </div>
                     </li>

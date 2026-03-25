@@ -199,13 +199,15 @@ export const es: I18nDict = {
             noOrgBody: "Aún no hay organización de servicios a víctimas para este caso.",
             referralUpdatesTitle: "Actualizaciones de referencia",
             referralUpdatesIntro:
-                "Cuando envías este caso a otra organización para revisión, el estado más reciente aparece aquí.",
-            referralsLoadError: "No se pudo cargar el estado de la referencia.",
-            referralStatusPending: "Referencia enviada para revisión",
+                "Cada línea es una organización a la que escribiste. Si aceptan, tu caso queda conectado con ellos.",
+            referralsLoadError: "No pudimos cargar el estado de la referencia. Puedes intentar más tarde.",
+            referralStatusPending: "Esperando su respuesta",
             referralStatusAccepted:
-                "Referencia aceptada — tu caso ya está vinculado a esta organización.",
+                "Aceptada — tu caso ya está conectado a esta organización",
             referralStatusDeclined:
-                "Referencia rechazada — esta organización no toma el caso en este momento.",
+                "Rechazaron la solicitud — tu caso sigue con tu organización actual",
+            referralUpdatesEmpty:
+                "Aún no hay referencias. Cuando envíes una desde Organizaciones cerca de ti, verás actualizaciones aquí.",
         },
         applyPathConnect: "Conectar con un defensor",
         applyPathSelf: "Solicitar por mi cuenta",
@@ -273,6 +275,8 @@ export const es: I18nDict = {
                 "Referencia enviada. El equipo de la organización puede revisar tu caso.",
             sendReferralFailed:
                 "No se pudo enviar la referencia. Inténtalo de nuevo u otra organización.",
+            sendReferralDuplicate:
+                "Ya tienes una referencia en curso con esta organización. Revisa Organización para este caso para ver el estado.",
         },
         caseActivityForCase: "Para este caso",
         caseDetailsHeading: "Detalles Del Caso",

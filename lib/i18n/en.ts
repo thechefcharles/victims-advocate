@@ -198,11 +198,13 @@ export const en: I18nDict = {
       noOrgBody: "No victim-service organization is selected for this case yet.",
       referralUpdatesTitle: "Referral updates",
       referralUpdatesIntro:
-        "When you send this case to another organization for review, the latest status appears here.",
-      referralsLoadError: "Could not load referral status.",
-      referralStatusPending: "Referral sent for review",
-      referralStatusAccepted: "Referral accepted — your case is now connected to this organization.",
-      referralStatusDeclined: "Referral declined — this organization is not taking the case right now.",
+        "Each line is one organization you contacted. If they accept, your case is connected to them.",
+      referralsLoadError: "We couldn’t load referral status. You can try again later.",
+      referralStatusPending: "Waiting for their response",
+      referralStatusAccepted: "Accepted — your case is now connected to this organization",
+      referralStatusDeclined: "They declined — your case stayed with your current organization",
+      referralUpdatesEmpty:
+        "No referrals yet. When you send one from Find organizations, updates will show here.",
     },
     applyPathConnect: "Connect With An Advocate",
     applyPathSelf: "Apply By Myself",
@@ -267,6 +269,8 @@ export const en: I18nDict = {
       sendReferralSending: "Sending…",
       sendReferralDone: "Referral sent. The organization’s team can review your case.",
       sendReferralFailed: "Could not send referral. Try again or pick another organization.",
+      sendReferralDuplicate:
+        "You already have a referral in progress to this organization. Check Organization for this case for status.",
     },
     caseActivityForCase: "For this case",
     caseDetailsHeading: "Case Details",

@@ -209,6 +209,7 @@ export type I18nDict = {
       referralStatusPending: string;
       referralStatusAccepted: string;
       referralStatusDeclined: string;
+      referralUpdatesEmpty: string;
     };
     /** Apply Now modal — first step: two choices only */
     applyPathConnect: string;
@@ -271,6 +272,7 @@ export type I18nDict = {
       sendReferralSending: string;
       sendReferralDone: string;
       sendReferralFailed: string;
+      sendReferralDuplicate: string;
     };
     /** Gamified 3-step strip + apply flow */
     progressTitle: string;

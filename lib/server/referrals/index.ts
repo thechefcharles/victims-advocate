@@ -23,4 +23,7 @@ export {
   listCaseOrgReferralsSummaryForViewer,
 } from "./service";
 export type { OrgReferralInboxItem, CaseOrgReferralSummaryItem } from "./service";
-export { revokeReferralReviewCaseAccessForInsertedRecipients } from "./reviewAccess";
+export {
+  revokeReferralReviewCaseAccessForInsertedRecipients,
+  revokeReferralInsertedReviewAccessAfterAccept,
+} from "./reviewAccess";

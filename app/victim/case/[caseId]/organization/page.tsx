@@ -222,7 +222,7 @@ export default function VictimCaseOrganizationManagePage() {
           )}
         </div>
 
-        {!loading && referrals.length > 0 ? (
+        {!loading ? (
           <div className={`${APP_CARD} space-y-3`}>
             <div>
               <p className="text-[10px] uppercase tracking-wide text-slate-600">
@@ -230,24 +230,28 @@ export default function VictimCaseOrganizationManagePage() {
               </p>
               <p className="mt-1 text-xs text-slate-500">{t("victimDashboard.caseOrgManage.referralUpdatesIntro")}</p>
             </div>
-            <ul className="space-y-2">
-              {referrals.map((r) => (
-                <li
-                  key={r.id}
-                  className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2 text-sm"
-                >
-                  <p className="font-medium text-slate-100">{r.to_organization_name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{referralStatusLabel(r.status)}</p>
-                  <p className="text-[10px] text-slate-600 mt-1">
-                    {new Date(r.created_at).toLocaleString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            {referrals.length === 0 ? (
+              <p className="text-sm text-slate-500">{t("victimDashboard.caseOrgManage.referralUpdatesEmpty")}</p>
+            ) : (
+              <ul className="space-y-2">
+                {referrals.map((r) => (
+                  <li
+                    key={r.id}
+                    className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2 text-sm"
+                  >
+                    <p className="font-medium text-slate-100">{r.to_organization_name}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{referralStatusLabel(r.status)}</p>
+                    <p className="text-[10px] text-slate-600 mt-1">
+                      {new Date(r.created_at).toLocaleString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         ) : null}
 

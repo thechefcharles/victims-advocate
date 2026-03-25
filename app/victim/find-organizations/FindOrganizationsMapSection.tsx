@@ -56,7 +56,25 @@ type Copy = {
   sendReferralSending: string;
   sendReferralDone: string;
   sendReferralFailed: string;
+  sendReferralDuplicate: string;
 };
+
+function referralPostErrorMessage(
+  json: unknown,
+  copy: Pick<Copy, "sendReferralFailed" | "sendReferralDuplicate">
+): string {
+  if (json && typeof json === "object") {
+    const err = (json as Record<string, unknown>).error;
+    if (err && typeof err === "object") {
+      const details = (err as Record<string, unknown>).details;
+      if (details && typeof details === "object") {
+        const reason = (details as Record<string, unknown>).reason;
+        if (reason === "referral_duplicate_pending") return copy.sendReferralDuplicate;
+      }
+    }
+  }
+  return getApiErrorMessage(json, copy.sendReferralFailed);
+}
 
 function geoErrorMessage(
   err: GeolocationPositionError,
@@ -331,7 +349,7 @@ export function FindOrganizationsMapSection({
                           if (!res.ok) {
                             setReferFeedback({
                               orgId: o.id,
-                              text: getApiErrorMessage(json, copy.sendReferralFailed),
+                              text: referralPostErrorMessage(json, copy),
                             });
                             setReferBusyId(null);
                             return;

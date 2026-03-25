@@ -2,7 +2,7 @@
  * Single source of truth for moving a case to a different organization tenant.
  * Used by owner-driven PATCH and referral accept (Phase 4+).
  *
- * Phase 5: optional messaging/access polish after transfer.
+ * Phase 5: referral accept removes other leaders’ temporary review rows (see referrals service); messaging stays `can_edit`-gated.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
