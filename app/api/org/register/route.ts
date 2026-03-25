@@ -1,7 +1,10 @@
 /**
- * Creates an organization from an Illinois directory entry; caller becomes org owner.
+ * Creates an organization from an Illinois directory entry.
+ * Platform admins become org_owner immediately; organization leaders get a pending org_claim_requests row
+ * until an administrator approves ownership.
  * Requires catalog_entry_id. One org per catalog entry.
- * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use POST /api/org/request-to-join.
+ * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use POST /api/org/claim-request
+ * (no owners yet) or POST /api/org/request-to-join.
  * For orgs not in the directory, use POST /api/org/pending-proposal.
  *
  * Authorization: profile role organization or platform admin only (survivor/advocate denied).
@@ -53,6 +56,7 @@ export async function POST(req: Request) {
       ctx,
       req,
       catalogEntryId,
+      assignOwnerImmediately: ctx.isAdmin,
     });
 
     if ("error" in result) {
@@ -71,8 +75,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const claimPending = result.claimPending === true;
     return apiOk(
-      { organization: result.organization, message: "Organization created. You are the org admin." },
+      {
+        organization: result.organization,
+        claimPending,
+        message: claimPending
+          ? "Your ownership request was submitted. A platform administrator will review it."
+          : "Organization created. You are the org admin.",
+      },
       undefined,
       201
     );

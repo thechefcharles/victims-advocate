@@ -47,6 +47,7 @@ export async function POST(req: Request) {
       catalogEntryId: hasCatalog ? catalogEntryId : null,
       name: hasCatalog ? undefined : name,
       type: hasCatalog ? undefined : type,
+      assignOwnerImmediately: ctx.isAdmin,
     });
 
     if ("error" in result) {
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
     return apiOk({
       completed: true,
       organization: result.organization,
+      claimPending: result.claimPending === true,
     });
   } catch (err) {
     const appErr = toAppError(err);

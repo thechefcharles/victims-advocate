@@ -13,7 +13,7 @@ import { OrganizationOnboarding } from "@/components/org/OrganizationOnboarding"
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user, loading, role, realRole, isAdmin } = useAuth();
+  const { orgId, user, loading, role, realRole, isAdmin, orgOwnershipClaim } = useAuth();
   const { t } = useI18n();
   const [initialCatalogId, setInitialCatalogId] = useState<number | null>(null);
   const [initialOrgNameHint, setInitialOrgNameHint] = useState<string | null>(null);
@@ -89,6 +89,16 @@ export default function OrganizationSetupPage() {
           <p className="text-sm text-slate-400">
             Choose the option that best matches your organization.
           </p>
+          {orgOwnershipClaim?.status === "pending" && (
+            <p className="text-sm text-amber-200/90 rounded-lg border border-amber-500/35 bg-amber-950/25 px-3 py-2">
+              Your ownership request is under review by a platform administrator.
+            </p>
+          )}
+          {orgOwnershipClaim?.status === "rejected" && (
+            <p className="text-sm text-red-200/90 rounded-lg border border-red-500/35 bg-red-950/20 px-3 py-2">
+              Your last ownership request was not approved. You can submit a new one below.
+            </p>
+          )}
         </header>
 
         <OrganizationOnboarding

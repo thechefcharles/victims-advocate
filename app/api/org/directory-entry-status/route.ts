@@ -43,11 +43,21 @@ export async function GET(req: Request) {
     if (error) throw new Error(error.message);
 
     if (org) {
+      const { count, error: cntErr } = await supabase
+        .from("org_memberships")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", org.id)
+        .eq("status", "active")
+        .eq("org_role", "org_owner");
+
+      if (cntErr) throw new Error(cntErr.message);
+
       return apiOk({
         catalog_entry_id: catalogEntryId,
         has_workspace: true,
         organization_id: org.id,
         organization_name: org.name ?? "Organization",
+        org_owner_count: count ?? 0,
       });
     }
 
@@ -56,6 +66,7 @@ export async function GET(req: Request) {
       has_workspace: false,
       organization_id: null,
       organization_name: null,
+      org_owner_count: null,
     });
   } catch (err) {
     const appErr = toAppError(err);

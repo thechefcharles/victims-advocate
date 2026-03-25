@@ -54,6 +54,16 @@ type PendingOrgRepJoinRequest = {
   requester_email: string | null;
 };
 
+type PendingOrgOwnershipClaim = {
+  id: string;
+  submitted_at: string;
+  user_id: string;
+  organization_id: string;
+  organization_name: string;
+  requester_display_name: string;
+  requester_email: string | null;
+};
+
 function formatServicesPreview(services: string[] | null | undefined, max = 3): string {
   if (!services?.length) return "—";
   const shown = services.slice(0, max).map((s) => s.replace(/_/g, " "));
@@ -65,6 +75,7 @@ export default function AdminOrgsPage() {
   const [orgs, setOrgs] = useState<AdminOrg[]>([]);
   const [proposals, setProposals] = useState<PendingProposal[]>([]);
   const [repJoinRequests, setRepJoinRequests] = useState<PendingOrgRepJoinRequest[]>([]);
+  const [ownershipClaims, setOwnershipClaims] = useState<PendingOrgOwnershipClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
@@ -119,6 +130,16 @@ export default function AdminOrgsPage() {
       setRepJoinRequests(joinJson.data?.requests ?? []);
     } else {
       setRepJoinRequests([]);
+    }
+
+    const claimRes = await fetch("/api/admin/org-claim-requests", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (claimRes.ok) {
+      const claimJson = await claimRes.json();
+      setOwnershipClaims(claimJson.data?.claims ?? []);
+    } else {
+      setOwnershipClaims([]);
     }
   };
 
@@ -240,6 +261,98 @@ export default function AdminOrgsPage() {
             </>
           }
         />
+
+        {ownershipClaims.length > 0 && (
+          <section className="rounded-2xl border border-violet-500/35 bg-violet-950/20 p-5">
+            <h2 className="text-sm font-semibold text-violet-100 mb-2">
+              Pending organization ownership claims ({ownershipClaims.length})
+            </h2>
+            <p className="text-xs text-violet-200/80 mb-4">
+              A directory or setup flow created the organization (or it already existed without an owner) and
+              the requester is asking to become <strong className="text-violet-100">Organization Owner</strong>.
+              Approve adds membership and marks the claim approved; reject closes the request without access.
+            </p>
+            <ul className="space-y-4">
+              {ownershipClaims.map((r) => (
+                <li
+                  key={r.id}
+                  className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-slate-100">{r.organization_name}</p>
+                      <p className="text-xs text-slate-400">
+                        Requester: {r.requester_display_name}
+                        {r.requester_email ? ` · ${r.requester_email}` : ""}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Submitted {new Date(r.submitted_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setActingId(r.id);
+                          try {
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const token = sessionData.session?.access_token;
+                            if (!token) return;
+                            const res = await fetch(`/api/admin/org-claim-requests/${r.id}/approve`, {
+                              method: "POST",
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (res.ok) await load();
+                            else {
+                              const json = await res.json().catch(() => ({}));
+                              setErr(getApiErrorMessage(json, "Could not approve"));
+                            }
+                          } finally {
+                            setActingId(null);
+                          }
+                        }}
+                        disabled={actingId !== null}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                      >
+                        {actingId === r.id ? "…" : "Approve"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setActingId(r.id);
+                          try {
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const token = sessionData.session?.access_token;
+                            if (!token) return;
+                            const res = await fetch(`/api/admin/org-claim-requests/${r.id}/reject`, {
+                              method: "POST",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({}),
+                            });
+                            if (res.ok) await load();
+                            else {
+                              const json = await res.json().catch(() => ({}));
+                              setErr(getApiErrorMessage(json, "Could not reject"));
+                            }
+                          } finally {
+                            setActingId(null);
+                          }
+                        }}
+                        disabled={actingId !== null}
+                        className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        {actingId === r.id ? "…" : "Reject"}
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {repJoinRequests.length > 0 && (
           <section className="rounded-2xl border border-cyan-500/35 bg-cyan-950/20 p-5">

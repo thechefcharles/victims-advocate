@@ -58,7 +58,7 @@ export function OrganizationOnboarding({
   initialLeaderTitleHint = null,
 }: Props) {
   const router = useRouter();
-  const { refetchMe, role, realRole, isAdmin } = useAuth();
+  const { refetchMe, role, realRole, isAdmin, orgOwnershipClaim } = useAuth();
 
   const [catalogId, setCatalogId] = useState<number | null>(initialCatalogId);
   const [selectedProgram, setSelectedProgram] = useState<IlVictimAssistanceProgram | null>(null);
@@ -74,7 +74,11 @@ export function OrganizationOnboarding({
   const [findSuccess, setFindSuccess] = useState<string | null>(null);
   const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
   const [claimComplete, setClaimComplete] = useState(false);
+  /** Non-admin directory register: org created, ownership awaiting platform admin. */
+  const [claimReviewPending, setClaimReviewPending] = useState(false);
   const [dirLookupLoading, setDirLookupLoading] = useState(false);
+  const [directoryOrgOwnerCount, setDirectoryOrgOwnerCount] = useState<number | null>(null);
+  const [claimOwnershipLoading, setClaimOwnershipLoading] = useState(false);
 
   const [addNewForm, setAddNewForm] = useState({
     name: "",
@@ -122,9 +126,12 @@ export function OrganizationOnboarding({
         if (res.ok && json.data?.has_workspace === true && json.data.organization_id) {
           setExistingOrgId(String(json.data.organization_id));
           setExistingOrgName(String(json.data.organization_name ?? "Organization"));
+          const c = json.data.org_owner_count;
+          setDirectoryOrgOwnerCount(typeof c === "number" ? c : null);
         } else if (res.ok && json.data?.has_workspace === false) {
           setExistingOrgId(null);
           setExistingOrgName(null);
+          setDirectoryOrgOwnerCount(null);
         }
       } finally {
         if (!cancelled) setDirLookupLoading(false);
@@ -139,6 +146,7 @@ export function OrganizationOnboarding({
   const clearFindConflict = () => {
     setExistingOrgId(null);
     setExistingOrgName(null);
+    setDirectoryOrgOwnerCount(null);
     setFindErr(null);
   };
 
@@ -148,11 +156,28 @@ export function OrganizationOnboarding({
     clearFindConflict();
     setFindSuccess(null);
     setClaimComplete(false);
+    setClaimReviewPending(false);
   };
 
   const getToken = async (): Promise<string | null> => {
     const { data: sessionData } = await supabase.auth.getSession();
     return sessionData.session?.access_token ?? null;
+  };
+
+  const refreshDirectoryOwnerCount = async (cid: number) => {
+    const token = await getToken();
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/org/directory-entry-status?catalog_entry_id=${cid}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json.data?.has_workspace === true && typeof json.data.org_owner_count === "number") {
+        setDirectoryOrgOwnerCount(json.data.org_owner_count);
+      }
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleClaimDirectoryOrg = async (e: React.FormEvent) => {
@@ -165,10 +190,6 @@ export function OrganizationOnboarding({
     }
     if (!profileIsOrg) {
       setFindErr("This step is only available to organization leader accounts.");
-      return;
-    }
-    if (existingOrgId) {
-      setFindErr("This directory entry already has a workspace. Request to join instead.");
       return;
     }
     setClaimLoading(true);
@@ -194,6 +215,8 @@ export function OrganizationOnboarding({
           if (conflict) {
             setExistingOrgId(conflict.id);
             setExistingOrgName(conflict.name);
+            setDirectoryOrgOwnerCount(null);
+            if (catalogId != null) await refreshDirectoryOwnerCount(catalogId);
             return;
           }
         }
@@ -211,8 +234,20 @@ export function OrganizationOnboarding({
         );
         return;
       }
-      setClaimComplete(true);
+      const data = json.data ?? json;
+      const claimPending =
+        typeof data === "object" &&
+        data !== null &&
+        (data as Record<string, unknown>).claimPending === true;
+      if (claimPending) {
+        setClaimReviewPending(true);
+        setClaimComplete(false);
+      } else {
+        setClaimComplete(true);
+        setClaimReviewPending(false);
+      }
       setFindSuccess(null);
+      void refetchMe();
     } finally {
       setClaimLoading(false);
     }
@@ -228,6 +263,65 @@ export function OrganizationOnboarding({
     await refetchMe();
     router.push("/account");
     router.refresh();
+  };
+
+  const handleRequestOwnership = async () => {
+    if (!existingOrgId) return;
+    setClaimOwnershipLoading(true);
+    setFindErr(null);
+    try {
+      const token = await getToken();
+      if (!token) {
+        setFindErr("Please sign in to continue.");
+        return;
+      }
+      const res = await fetch("/api/org/claim-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ organization_id: existingOrgId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        if (readApiErrorCode(json) === "DUPLICATE_CLAIM") {
+          setFindErr(
+            getApiErrorMessage(
+              json,
+              "You already have a pending ownership request for this organization."
+            )
+          );
+          return;
+        }
+        if (readApiErrorCode(json) === "ORG_ALREADY_HAS_OWNER") {
+          setFindErr(
+            getApiErrorMessage(
+              json,
+              "This organization already has an owner. Use Request To Join instead."
+            )
+          );
+          setDirectoryOrgOwnerCount((c) => (c === 0 ? 1 : c));
+          return;
+        }
+        if (res.status === 403 || readApiErrorCode(json) === "FORBIDDEN") {
+          setFindErr(
+            getApiErrorMessage(
+              json,
+              "Your account type cannot submit an ownership request this way."
+            )
+          );
+          return;
+        }
+        setFindErr(getApiErrorMessage(json, "Could not submit your ownership request."));
+        return;
+      }
+      setClaimReviewPending(true);
+      setFindSuccess(null);
+      void refetchMe();
+    } finally {
+      setClaimOwnershipLoading(false);
+    }
   };
 
   const handleRequestToJoin = async () => {
@@ -335,22 +429,41 @@ export function OrganizationOnboarding({
     }
   };
 
-  const joinPanel = existingOrgId ? (
-    <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
-      <p className="text-sm text-amber-100">
-        <span className="font-medium">{existingOrgName}</span> already has a NxtStps workspace for this
-        directory entry. Request To Join if you work there—no new organization is created.
-      </p>
-      <button
-        type="button"
-        onClick={handleRequestToJoin}
-        disabled={requestingJoin}
-        className="rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
-      >
-        {requestingJoin ? "Sending…" : "Request To Join This Organization"}
-      </button>
-    </div>
-  ) : null;
+  const joinPanel =
+    existingOrgId && directoryOrgOwnerCount !== null && directoryOrgOwnerCount > 0 ? (
+      <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+        <p className="text-sm text-amber-100">
+          <span className="font-medium">{existingOrgName}</span> already has a NxtStps workspace for this
+          directory entry. Request To Join if you work there—no new organization is created.
+        </p>
+        <button
+          type="button"
+          onClick={handleRequestToJoin}
+          disabled={requestingJoin}
+          className="rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+        >
+          {requestingJoin ? "Sending…" : "Request To Join This Organization"}
+        </button>
+      </div>
+    ) : null;
+
+  const ownershipClaimPanel =
+    existingOrgId && directoryOrgOwnerCount === 0 ? (
+      <div className="space-y-3 rounded-lg border border-blue-500/40 bg-blue-950/30 px-4 py-3">
+        <p className="text-sm text-blue-100">
+          <span className="font-medium">{existingOrgName}</span> already has a workspace, but it does not
+          have an organization owner yet. Submit an ownership request for platform administrator review.
+        </p>
+        <button
+          type="button"
+          onClick={() => void handleRequestOwnership()}
+          disabled={claimOwnershipLoading || !profileIsOrg}
+          className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        >
+          {claimOwnershipLoading ? "Submitting…" : "Request Ownership (Admin Review)"}
+        </button>
+      </div>
+    ) : null;
 
   return (
     <div className="space-y-8">
@@ -379,6 +492,44 @@ export function OrganizationOnboarding({
           <p className="mt-2 text-xs text-slate-500">
             We use this to prefill search and forms only—it does not create or join anything automatically.
           </p>
+        </div>
+      )}
+
+      {(orgOwnershipClaim?.status === "pending" || claimReviewPending) && (
+        <div className="rounded-2xl border border-amber-500/45 bg-amber-950/25 px-5 py-5 space-y-3">
+          <h3 className="text-base font-semibold text-amber-100">Your request is under review</h3>
+          <p className="text-sm text-amber-100/90">
+            {orgOwnershipClaim?.organizationName ? (
+              <>
+                We received your ownership request for{" "}
+                <span className="font-medium text-amber-50">{orgOwnershipClaim.organizationName}</span>. A
+                platform administrator will approve or decline it.
+              </>
+            ) : (
+              <>
+                We received your ownership request. A platform administrator will approve or decline it.
+              </>
+            )}
+          </p>
+          <p className="text-xs text-amber-200/75">
+            You can keep using your account. We&apos;ll notify you when there&apos;s an update.
+          </p>
+        </div>
+      )}
+
+      {orgOwnershipClaim?.status === "rejected" && !claimReviewPending && (
+        <div className="rounded-2xl border border-red-500/40 bg-red-950/20 px-5 py-5 space-y-3">
+          <h3 className="text-base font-semibold text-red-100">Your request was not approved</h3>
+          <p className="text-sm text-red-100/90">
+            Your ownership request for{" "}
+            <span className="font-medium text-red-50">{orgOwnershipClaim.organizationName}</span> was not
+            approved. You can submit a new request below if your situation changes.
+          </p>
+          {orgOwnershipClaim.reviewerNote ? (
+            <p className="text-xs text-red-200/80 border border-red-800/40 rounded-lg px-3 py-2 bg-red-950/40">
+              {orgOwnershipClaim.reviewerNote}
+            </p>
+          ) : null}
         </div>
       )}
 
@@ -451,17 +602,31 @@ export function OrganizationOnboarding({
             </p>
           )}
 
-          {!existingOrgId && catalogId != null && !dirLookupLoading && !claimComplete && (
+          {!existingOrgId &&
+            catalogId != null &&
+            !dirLookupLoading &&
+            !claimComplete &&
+            !claimReviewPending && (
             <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3 text-sm text-slate-300 space-y-2">
               <p className="text-slate-200 font-medium">Verified directory listing</p>
               <p>
                 This program is listed in the verified Illinois directory. If no workspace exists for it yet,
-                you can create your organization from this listing and become the Organization Owner. Only one
-                NxtStps organization is allowed per directory entry.
+                you can create your organization from this listing.{" "}
+                {isAdmin ? (
+                  <>
+                    As a platform administrator, you will be assigned as Organization Owner immediately.
+                  </>
+                ) : (
+                  <>
+                    Your ownership will be submitted for platform administrator review before you can manage
+                    the workspace.
+                  </>
+                )}{" "}
+                Only one NxtStps organization is allowed per directory entry.
               </p>
               <button
                 type="submit"
-                disabled={claimLoading || !profileIsOrg || claimComplete}
+                disabled={claimLoading || !profileIsOrg || claimComplete || claimReviewPending}
                 className="mt-2 w-full sm:w-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
                 {claimLoading ? "Working…" : "Set Up Organization From This Listing"}
@@ -469,6 +634,7 @@ export function OrganizationOnboarding({
             </div>
           )}
 
+          {ownershipClaimPanel}
           {joinPanel}
 
           {findErr && (
