@@ -1,13 +1,11 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
-import { CaseMessagesPanel } from "@/components/messaging/CaseMessagesPanel";
-import { ROUTES, advocateCaseMessagesUrl } from "@/lib/routes/pageRegistry";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 type AdvocateCaseRow = {
   id: string;
@@ -54,14 +52,9 @@ function truncatePreview(text: string, max = 90): string {
 }
 
 function AdvocateMessagesContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const caseParam = searchParams.get("case")?.trim() ?? "";
-
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [items, setItems] = useState<QueueItem[]>([]);
-  const [cases, setCases] = useState<AdvocateCaseRow[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -80,12 +73,10 @@ function AdvocateMessagesContent() {
       if (!listRes.ok) {
         setErr("Couldn’t load cases.");
         setItems([]);
-        setCases([]);
         return;
       }
       const listJson = await listRes.json();
       const caseRows = (listJson.cases ?? []) as AdvocateCaseRow[];
-      setCases(caseRows);
 
       const now = Date.now();
       const queue: QueueItem[] = [];
@@ -166,7 +157,6 @@ function AdvocateMessagesContent() {
       console.error(e);
       setErr("Something went wrong loading messages.");
       setItems([]);
-      setCases([]);
     } finally {
       setLoading(false);
     }
@@ -175,17 +165,6 @@ function AdvocateMessagesContent() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const validIds = useMemo(() => new Set(cases.map((c) => c.id)), [cases]);
-
-  useEffect(() => {
-    if (loading) return;
-    if (caseParam && !validIds.has(caseParam)) {
-      router.replace(ROUTES.advocateMessages);
-    }
-  }, [loading, caseParam, validIds, router]);
-
-  const activeCaseId = caseParam && validIds.has(caseParam) ? caseParam : null;
 
   const formatDate = (iso: string | null) => {
     if (!iso) return "—";
@@ -213,11 +192,11 @@ function AdvocateMessagesContent() {
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Advocate</p>
           <h1 className="text-2xl font-semibold text-slate-50">Messages</h1>
           <p className="text-sm text-slate-400 max-w-xl">
-            Unread or recent threads appear below. Open a thread to read and reply here—no need to
-            open the intake form.
+            Use this triage list to spot new survivor updates quickly. Open the case view to read
+            and reply.
           </p>
           <p className="text-[11px] text-slate-500">
-            Unread first, then recent. Each case has one secure thread.
+            Unread first, then recent. Use the case view to continue casework.
           </p>
         </header>
 
@@ -227,13 +206,12 @@ function AdvocateMessagesContent() {
           <div className="rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
             {err}
           </div>
-        ) : items.length === 0 && !activeCaseId ? (
+        ) : items.length === 0 ? (
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-4">
             <p className="text-sm text-slate-300">No unread or recent secure messages to show.</p>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
               When a survivor sends a message or a thread is active, the case will appear here. You
-              can also open any case from your dashboard queue, then return here with{" "}
-              <code className="text-slate-400">?case=…</code> in the URL.
+              can continue case updates from My Dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link
@@ -253,15 +231,10 @@ function AdvocateMessagesContent() {
         ) : items.length > 0 ? (
           <ul className="space-y-3">
             {items.map((row) => {
-              const open = activeCaseId === row.caseId;
               return (
                 <li
                   key={row.caseId}
-                  className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
-                    open
-                      ? "border-emerald-500/40 bg-emerald-950/20"
-                      : "border-slate-800 bg-slate-950/70"
-                  }`}
+                  className="rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-800 bg-slate-950/70"
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -275,36 +248,20 @@ function AdvocateMessagesContent() {
                       )}
                     </div>
                     <p className="text-[11px] text-slate-500">
-                      Latest activity · {formatDate(row.lastAt)}
+                      Latest survivor update · {formatDate(row.lastAt)}
                     </p>
                     <p className="text-xs text-slate-400 line-clamp-2">{row.preview}</p>
                   </div>
                   <Link
-                    href={advocateCaseMessagesUrl(row.caseId)}
+                    href={`/compensation/intake?case=${encodeURIComponent(row.caseId)}`}
                     className="inline-flex shrink-0 items-center justify-center rounded-full border border-emerald-500/50 px-4 py-2 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/10"
                   >
-                    {open ? "Thread open below" : "Open thread"}
+                    Open case
                   </Link>
                 </li>
               );
             })}
           </ul>
-        ) : activeCaseId ? (
-          <p className="text-sm text-slate-400">
-            Secure thread for the selected case
-            {items.length === 0 ? " (not in the recent/unread triage list)." : "."}
-          </p>
-        ) : null}
-
-        {activeCaseId ? (
-          <section className="pt-2 border-t border-slate-800/80">
-            <CaseMessagesPanel
-              caseId={activeCaseId}
-              headingTitle="Conversation"
-              headingSubtitle="Reply here. Your messages are tied to this case."
-              emptyStateText="No messages yet in this thread."
-            />
-          </section>
         ) : null}
       </div>
     </main>

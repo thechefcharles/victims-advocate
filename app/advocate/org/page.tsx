@@ -121,8 +121,10 @@ export default function AdvocateOrgPage() {
   };
 
   const canEditProfile = myOrgRole === "owner" || myOrgRole === "supervisor";
-  const canViewDesignation = canEditProfile;
+  const canManageOrg = canEditProfile;
+  const canViewDesignation = true;
   const canManageMemberships = myOrgRole === "owner";
+  const canManageReviews = canManageOrg;
 
   const [designation, setDesignation] = useState<{
     designation_tier: string;
@@ -155,6 +157,10 @@ export default function AdvocateOrgPage() {
   const [reviewBody, setReviewBody] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMsg, setReviewMsg] = useState<string | null>(null);
+  const [orgSignals, setOrgSignals] = useState<{
+    profile: { lastProfileUpdate: string | null; profileStage: string | null };
+    cases: { active: number };
+  } | null>(null);
 
   type OrgWorkspaceTab =
     | "profile"
@@ -208,6 +214,25 @@ export default function AdvocateOrgPage() {
     };
     run();
   }, [canViewDesignation, loading, profileLoading]);
+
+  useEffect(() => {
+    if (!canManageOrg || loading) return;
+    const run = async () => {
+      const token = await getToken();
+      if (!token) return;
+      const q = profileQuerySuffix();
+      const res = await fetch(`/api/org/signals${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setOrgSignals(null);
+        return;
+      }
+      setOrgSignals((json.data?.signals as { profile: { lastProfileUpdate: string | null; profileStage: string | null }; cases: { active: number } }) ?? null);
+    };
+    run();
+  }, [canManageOrg, loading, profileLoading]);
 
   const loadReviewRequests = async () => {
     const token = await getToken();
@@ -530,10 +555,11 @@ export default function AdvocateOrgPage() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
   };
 
-  const visibleTabs = orgTabs.filter(
-    (t) =>
-      (t.id !== "designation" && t.id !== "reviews") || canViewDesignation
-  );
+  const visibleTabs = orgTabs.filter((t) => {
+    if (t.id === "members" || t.id === "reviews") return canManageOrg;
+    if (t.id === "designation") return canViewDesignation;
+    return true;
+  });
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
@@ -542,7 +568,7 @@ export default function AdvocateOrgPage() {
           contextLine="Advocate → Organization"
           eyebrow="Organization"
           title="Organization workspace"
-          subtitle="Manage your organization profile, capacity, members, and designation."
+          subtitle="Keep your organization profile current, review readiness, and track designation confidence."
           meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
           backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
         />
@@ -624,6 +650,40 @@ export default function AdvocateOrgPage() {
             <p className="text-[11px] text-slate-500">
               Stages update when you save. Matching also requires profile status set to Active.
             </p>
+          </section>
+        )}
+
+        {profile && !profileLoading && canManageOrg && (
+          <section className="rounded-2xl border border-slate-700/70 bg-slate-900/30 p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Org health snapshot
+            </p>
+            <p className="text-sm text-slate-300">
+              Stage: <span className="text-slate-100 font-medium">{profile.profile_stage}</span>
+              {" · "}
+              Last profile update:{" "}
+              <span className="text-slate-100 font-medium">
+                {formatDate(
+                  orgSignals?.profile.lastProfileUpdate ?? profile.profile_last_updated_at ?? undefined
+                )}
+              </span>
+              {orgSignals?.cases?.active != null ? (
+                <>
+                  {" · "}Active cases:{" "}
+                  <span className="text-slate-100 font-medium">{orgSignals.cases.active}</span>
+                </>
+              ) : null}
+            </p>
+            <p className="text-xs text-slate-400">
+              {!["searchable", "enriched"].includes(profile.profile_stage)
+                ? "Complete required profile fields to become searchable."
+                : designation?.designation_confidence === "low"
+                  ? "Keep profile details current and use core workflows consistently to improve signal reliability over time."
+                  : "Your organization profile is in good shape. Keep services and capacity current."}
+            </p>
+            {designationConfidenceNote && (
+              <p className="text-xs text-slate-500">{designationConfidenceNote}</p>
+            )}
           </section>
         )}
 
@@ -912,7 +972,7 @@ export default function AdvocateOrgPage() {
           )}
         </form>
 
-        {activeTab === "members" && (
+        {canManageOrg && activeTab === "members" && (
           <>
         {inviteUrl && (
           <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3 text-sm">
@@ -1132,7 +1192,7 @@ export default function AdvocateOrgPage() {
           </section>
         )}
 
-        {canViewDesignation && activeTab === "reviews" && (
+        {canManageReviews && activeTab === "reviews" && (
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
             <h2 className="text-sm font-semibold text-slate-200">Designation review requests</h2>
             <p className="text-[11px] text-slate-500 leading-relaxed">
