@@ -37,6 +37,10 @@ export type I18nDict = {
     organization: string;
     /** Org settings / workspace (members, invites, profile). */
     orgSettings: string;
+    /** Org operational dashboard (`/organization/dashboard`) — distinct from org settings. */
+    organizationHome: string;
+    /** Nav CTA when profile role is organization but org membership is not complete yet. */
+    organizationSetupNav: string;
     adminHome: string;
   };
 

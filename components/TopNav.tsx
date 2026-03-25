@@ -11,6 +11,7 @@ import { logAuthEvent } from "@/lib/auditClient";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
 import { ROUTES } from "@/lib/routes/pageRegistry";
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
 
 /** Nav pills — secondary (slate); avoid competing with page primary CTAs */
 const NAV_PRIMARY =
@@ -132,12 +133,13 @@ export default function TopNav() {
   };
 
   const showOrgLink = Boolean(orgId);
+  const orgLeadershipMembership = hasActiveOrgLeadership(orgId, orgRole);
   /** Leadership uses canonical org workspace; staff advocates stay on `/advocate/org`. */
-  const advocateOrgWorkspaceHref =
-    showOrgLink && (orgRole === "owner" || orgRole === "supervisor")
-      ? ROUTES.organizationSettings
-      : ROUTES.advocateOrg;
-  const showOrgNavForOrgRole = role === "organization" && showOrgLink;
+  const advocateOrgWorkspaceHref = orgLeadershipMembership
+    ? ROUTES.organizationSettings
+    : ROUTES.advocateOrg;
+  /** Org-profile users: only show org dashboard nav when membership is leadership (matches layout). */
+  const showOrgNavForOrgRole = role === "organization" && orgLeadershipMembership;
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";
 
@@ -215,11 +217,24 @@ export default function TopNav() {
                         {t("nav.organization")}
                       </Link>
                     )}
+                    {orgLeadershipMembership && (
+                      <Link href={ROUTES.organizationDashboard} className={NAV_PRIMARY}>
+                        {t("nav.organizationHome")}
+                      </Link>
+                    )}
                   </>
                 )}
                 {showOrgNavForOrgRole && (
                   <Link href={ROUTES.organizationDashboard} className={NAV_PRIMARY}>
                     {t("nav.myDashboardOrganization")}
+                  </Link>
+                )}
+                {role === "organization" && !orgLeadershipMembership && (
+                  <Link
+                    href={orgId ? ROUTES.account : ROUTES.organizationSetup}
+                    className={NAV_PRIMARY}
+                  >
+                    {orgId ? t("nav.myAccount") : t("nav.organizationSetupNav")}
                   </Link>
                 )}
               </>

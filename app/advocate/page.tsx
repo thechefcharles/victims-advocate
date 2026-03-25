@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { ROUTES } from "@/lib/routes/pageRegistry";
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AdvocateClientsList } from "@/components/dashboard/AdvocateClientsList";
 import { AdvocateProfileCompletionBanner } from "@/components/dashboard/AdvocateProfileCompletionBanner";
@@ -37,10 +38,9 @@ type CommandCenterResponse = {
 export default function AdvocateDashboardPage() {
   const { accessToken, orgId, orgRole, organizationName, user, advocatePersonalInfo } = useAuth();
   const showOrgLink = Boolean(orgId);
-  const advocateOrgWorkspaceHref =
-    showOrgLink && (orgRole === "owner" || orgRole === "supervisor")
-      ? ROUTES.organizationSettings
-      : ROUTES.advocateOrg;
+  const advocateOrgWorkspaceHref = hasActiveOrgLeadership(orgId, orgRole)
+    ? ROUTES.organizationSettings
+    : ROUTES.advocateOrg;
   const consentReady = useConsentRedirect(accessToken, "/advocate");
   const { t, tf } = useI18n();
   const [commandCenter, setCommandCenter] = useState<CommandCenterResponse | null>(null);

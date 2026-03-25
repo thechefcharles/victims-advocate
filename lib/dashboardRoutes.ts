@@ -3,6 +3,7 @@
  */
 
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
 
 export type DashboardMe = {
   isAdmin?: boolean;
@@ -20,10 +21,11 @@ export function mapApiRoleToDashboard(
 }
 
 /**
- * Role-first routing — profile `role` always wins.
+ * Role-first routing — profile `role` always wins for default *home*.
  * (Victims may still have org-related fields for matching; they must never be sent to org dashboards.)
  *
- * Admin → /admin/dashboard · Victim → /victim/dashboard · Advocate → /advocate · Organization → setup or org dashboard
+ * Admin → /admin/dashboard · Victim → /victim/dashboard · Advocate → /advocate · Organization → setup,
+ * org leadership dashboard, or `/account` for org-profile staff without leadership (avoids /organization/dashboard redirect loop).
  */
 export function getDashboardPath(me: DashboardMe): string {
   if (me.isAdmin === true) return "/admin/dashboard";
@@ -31,7 +33,8 @@ export function getDashboardPath(me: DashboardMe): string {
   if (me.role === "advocate") return "/advocate";
   if (me.role === "organization") {
     if (!me.orgId) return "/organization/setup";
-    return "/organization/dashboard";
+    if (hasActiveOrgLeadership(me.orgId, me.orgRole)) return "/organization/dashboard";
+    return "/account";
   }
   return "/victim/dashboard";
 }
@@ -43,7 +46,8 @@ export function getWorkspaceCtaLabel(me: DashboardMe): string {
   if (me.role === "advocate") return "Go to My Dashboard";
   if (me.role === "organization") {
     if (!me.orgId) return "Set Up Organization Access";
-    return "Go to Organization Home";
+    if (hasActiveOrgLeadership(me.orgId, me.orgRole)) return "Go to Organization Home";
+    return "My account";
   }
   return "My dashboard";
 }

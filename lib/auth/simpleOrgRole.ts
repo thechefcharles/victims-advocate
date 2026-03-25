@@ -2,6 +2,9 @@
  * Phase 1: Product-facing org roles (maps from DB `org_membership_role` enum).
  * DB still stores full enum; we normalize at auth boundary for simple access rules.
  * Not a permission matrix — see `docs/org-system-boundaries.md`.
+ *
+ * Phase 2: `hasActiveOrgLeadership` — use for org *tool* access (dashboard, settings layout)
+ * instead of `profiles.role === "organization"`. Phase 3 may refine simple vs DB roles.
  */
 
 export const SIMPLE_ORG_ROLES = ["owner", "supervisor", "advocate"] as const;
@@ -34,4 +37,13 @@ export function mapDbOrgRoleToSimple(raw: string | null | undefined): SimpleOrgR
 
 export function isSimpleOrgRoleString(s: string): s is SimpleOrgRole {
   return (SIMPLE_ORG_ROLES as readonly string[]).includes(s);
+}
+
+/** Active org membership with owner|supervisor simple role (leadership tooling, not case-staff). */
+export function hasActiveOrgLeadership(
+  orgId: string | null | undefined,
+  orgRole: SimpleOrgRole | null | undefined
+): boolean {
+  if (!orgId || !orgRole) return false;
+  return (SIMPLE_ORG_LEADERSHIP_ROLES as readonly string[]).includes(orgRole);
 }

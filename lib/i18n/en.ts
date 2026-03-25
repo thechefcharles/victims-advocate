@@ -35,6 +35,8 @@ export const en: I18nDict = {
     clients: "Clients",
     organization: "Organization",
     orgSettings: "Org settings",
+    organizationHome: "Organization home",
+    organizationSetupNav: "Set up organization",
     adminHome: "Admin Home",
   },
 

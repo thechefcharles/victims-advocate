@@ -12,6 +12,7 @@ export {
   SIMPLE_ORG_MANAGEMENT_ROLES,
   SIMPLE_ORG_CASE_STAFF_ROLES,
   mapDbOrgRoleToSimple,
+  hasActiveOrgLeadership,
 } from "@/lib/auth/simpleOrgRole";
 export {
   ORG_MEMBERSHIP_ROLES,

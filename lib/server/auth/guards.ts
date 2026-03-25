@@ -2,6 +2,10 @@
  * Phase 0/2: Authorization guards.
  * Throw AppError for standardized handling.
  * Phase 5: optional req for audit logging on access denial.
+ *
+ * Phase 2 direction: `requireRole` / profile `role` = coarse persona & onboarding.
+ * Org *features* should prefer `requireOrg` + `requireOrgRole` (membership + simple org role).
+ * Phase 3: align program_manager / intake_specialist / auditor with the simple-role model.
  */
 
 import { AppError } from "@/lib/server/api";

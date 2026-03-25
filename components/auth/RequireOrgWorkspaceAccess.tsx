@@ -4,23 +4,21 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
 
 /**
  * Layout guard for `/organization/settings` (org profile, members, designation, etc.).
  *
- * Phase 1 (route/layout): allow platform admins (e.g. `?organization_id=` from admin tools) and
- * users with an active org whose **simple org role** is owner or supervisor — **without** requiring
- * `profiles.role === "advocate"`. Advocate staff without leadership still use `/advocate/org`.
+ * Membership-led: platform admins or `hasActiveOrgLeadership` (same bar as org dashboard).
+ * Advocate staff without leadership still use `/advocate/org`. Profile `role` is not part of this gate.
  *
- * Phase 2: tighten toward full membership-based authorization; keep profile role out of this gate.
+ * Phase 3 may refine simple vs raw DB org roles (program_manager, etc.).
  */
 export default function RequireOrgWorkspaceAccess({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
 
-  const leadershipOk =
-    Boolean(orgId) && (orgRole === "owner" || orgRole === "supervisor");
-  const allowed = Boolean(isAdmin) || leadershipOk;
+  const allowed = Boolean(isAdmin) || hasActiveOrgLeadership(orgId, orgRole);
 
   useEffect(() => {
     if (loading) return;

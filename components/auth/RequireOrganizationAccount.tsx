@@ -5,7 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
 
-/** Profile role organization (agency signup path), not platform admin. */
+/**
+ * `/organization/setup` — intentional `profiles.role === "organization"` for onboarding UX only.
+ * Phase 2: org *tool* routes use membership; setup remains profile-role scoped.
+ */
 export default function RequireOrganizationAccount({
   children,
 }: {

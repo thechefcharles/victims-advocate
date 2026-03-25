@@ -4,12 +4,17 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
-/** Org owner or supervisor with an active org (normalized roles from `/api/me`). */
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
+
+/**
+ * `/organization/dashboard` — operational home for org leadership.
+ * Phase 2: membership + simple org role (owner|supervisor), not `profiles.role === "organization"`.
+ * Admins may open the page (e.g. support); APIs remain source of truth.
+ */
 export default function RequireOrgLeadership({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { loading, user, isAdmin, role, orgId, orgRole } = useAuth();
-  const allowed =
-    role === "organization" && !!orgId && (orgRole === "owner" || orgRole === "supervisor");
+  const allowed = Boolean(isAdmin) || hasActiveOrgLeadership(orgId, orgRole);
 
   useEffect(() => {
     if (loading) return;
@@ -17,16 +22,12 @@ export default function RequireOrgLeadership({ children }: { children: React.Rea
       router.replace("/login");
       return;
     }
-    if (isAdmin) {
-      router.replace("/admin/dashboard");
-      return;
-    }
     if (!allowed) {
       router.replace(
         getDashboardPath({ isAdmin: false, orgId, orgRole, role })
       );
     }
-  }, [loading, user, isAdmin, allowed, orgId, orgRole, role, router]);
+  }, [loading, user, allowed, orgId, orgRole, role, router]);
 
   if (loading || !user || !allowed) {
     return (

@@ -35,6 +35,8 @@ export const es: I18nDict = {
         clients: "Clientes",
         organization: "Organización",
         orgSettings: "Ajustes de org",
+        organizationHome: "Inicio de organización",
+        organizationSetupNav: "Configurar organización",
         adminHome: "Administración",
     },
 
