@@ -52,6 +52,10 @@ type Copy = {
   noOrgs: string;
   loadError: string;
   privacyNote: string;
+  sendReferral: string;
+  sendReferralSending: string;
+  sendReferralDone: string;
+  sendReferralFailed: string;
 };
 
 function geoErrorMessage(
@@ -63,7 +67,14 @@ function geoErrorMessage(
   return copy.locationUnavailable;
 }
 
-export function FindOrganizationsMapSection({ copy }: { copy: Copy }) {
+export function FindOrganizationsMapSection({
+  copy,
+  referCaseId,
+}: {
+  copy: Copy;
+  /** When set (e.g. from `?case=`), show “Send referral” for each listed org. */
+  referCaseId?: string;
+}) {
   const [raw, setRaw] = useState<OrgFromApi[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "requesting" | "granted" | "denied" | "error">(
@@ -72,6 +83,8 @@ export function FindOrganizationsMapSection({ copy }: { copy: Copy }) {
   const [geoErr, setGeoErr] = useState<string | null>(null);
   const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [referBusyId, setReferBusyId] = useState<string | null>(null);
+  const [referFeedback, setReferFeedback] = useState<{ orgId: string; text: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -279,6 +292,63 @@ export function FindOrganizationsMapSection({ copy }: { copy: Copy }) {
                     {copy.capacity}: {o.capacity_status}
                   </span>
                 </div>
+                {referCaseId ? (
+                  <div className="mt-2">
+                    {referFeedback?.orgId === o.id ? (
+                      <p
+                        className={`text-[11px] mb-1.5 ${
+                          referFeedback.text === copy.sendReferralDone
+                            ? "text-emerald-300/95"
+                            : "text-amber-200/90"
+                        }`}
+                      >
+                        {referFeedback.text}
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      disabled={referBusyId !== null}
+                      onClick={async () => {
+                        setReferFeedback(null);
+                        setReferBusyId(o.id);
+                        try {
+                          const { data: sessionData } = await supabase.auth.getSession();
+                          const token = sessionData.session?.access_token;
+                          if (!token) {
+                            setReferFeedback({ orgId: o.id, text: copy.sendReferralFailed });
+                            setReferBusyId(null);
+                            return;
+                          }
+                          const res = await fetch(`/api/cases/${referCaseId}/org-referrals`, {
+                            method: "POST",
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ to_organization_id: o.id }),
+                          });
+                          const json = await res.json().catch(() => ({}));
+                          if (!res.ok) {
+                            setReferFeedback({
+                              orgId: o.id,
+                              text: getApiErrorMessage(json, copy.sendReferralFailed),
+                            });
+                            setReferBusyId(null);
+                            return;
+                          }
+                          setReferFeedback({ orgId: o.id, text: copy.sendReferralDone });
+                          setReferBusyId(null);
+                        } catch {
+                          setReferFeedback({ orgId: o.id, text: copy.sendReferralFailed });
+                          setReferBusyId(null);
+                        }
+                      }}
+                      className="rounded-lg border border-emerald-600/50 bg-emerald-950/40 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 hover:bg-emerald-900/50 disabled:opacity-50"
+                    >
+                      {referBusyId === o.id ? copy.sendReferralSending : copy.sendReferral}
+                    </button>
+                  </div>
+                ) : null}
               </li>
             ))}
           </ul>

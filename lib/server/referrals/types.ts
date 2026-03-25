@@ -23,11 +23,16 @@ export type CaseOrgReferralRow = {
   metadata: Record<string, unknown>;
 };
 
-/** Input for creating a referral (caller identity comes from AuthContext). */
+/**
+ * Input for creating a referral (caller identity comes from AuthContext).
+ * `fromOrganizationId` defaults to the case's `organization_id` when omitted or null.
+ */
 export type CreateReferralInput = {
   caseId: string;
-  /** Nullable when the sender has no org context (e.g. victim-only flow). */
-  fromOrganizationId: string | null;
   toOrganizationId: string;
+  fromOrganizationId?: string | null;
   metadata?: Record<string, unknown>;
 };
+
+/** Server-only metadata key: user IDs granted temporary read-only case_access (Phase 3 may revoke). */
+export const REFERRAL_METADATA_REVIEW_GRANT_USER_IDS = "referral_review_grant_user_ids" as const;

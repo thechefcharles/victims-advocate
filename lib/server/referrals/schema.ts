@@ -5,17 +5,26 @@ export const referralStatusSchema = z.enum(REFERRAL_STATUSES);
 
 const uuid = z.string().uuid();
 
-/**
- * Validates referral creation payloads (e.g. from future API routes).
- * `requested_by_user_id` is never taken from the client — set from AuthContext in the service.
- */
-export const createReferralPayloadSchema = z
+/** POST /api/cases/[id]/org-referrals body */
+export const postCaseOrgReferralBodySchema = z
   .object({
-    caseId: uuid,
-    fromOrganizationId: uuid.nullable(),
-    toOrganizationId: uuid,
+    to_organization_id: uuid,
     metadata: z.record(z.string(), z.unknown()).optional(),
   })
   .strict();
 
-export type CreateReferralPayloadParsed = z.infer<typeof createReferralPayloadSchema>;
+export type PostCaseOrgReferralBody = z.infer<typeof postCaseOrgReferralBodySchema>;
+
+/**
+ * Validates service-layer referral creation (case id from route + body fields).
+ */
+export const createCaseOrgReferralInputSchema = z
+  .object({
+    caseId: uuid,
+    toOrganizationId: uuid,
+    fromOrganizationId: uuid.nullable().optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
+  })
+  .strict();
+
+export type CreateCaseOrgReferralInputParsed = z.infer<typeof createCaseOrgReferralInputSchema>;

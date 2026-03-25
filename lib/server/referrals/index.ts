@@ -1,7 +1,11 @@
 export type { CaseOrgReferralRow, CreateReferralInput, ReferralStatus } from "./types";
-export { REFERRAL_STATUSES } from "./types";
-export { referralStatusSchema, createReferralPayloadSchema } from "./schema";
-export type { CreateReferralPayloadParsed } from "./schema";
+export { REFERRAL_STATUSES, REFERRAL_METADATA_REVIEW_GRANT_USER_IDS } from "./types";
+export {
+  referralStatusSchema,
+  postCaseOrgReferralBodySchema,
+  createCaseOrgReferralInputSchema,
+} from "./schema";
+export type { PostCaseOrgReferralBody, CreateCaseOrgReferralInputParsed } from "./schema";
 export {
   createReferral,
   getReferralById,

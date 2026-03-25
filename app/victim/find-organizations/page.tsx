@@ -39,6 +39,10 @@ function VictimFindOrganizationsContent() {
     noOrgs: t("victimDashboard.findOrganizationsPage.noOrgs"),
     loadError: t("victimDashboard.findOrganizationsPage.loadError"),
     privacyNote: t("victimDashboard.findOrganizationsPage.privacyNote"),
+    sendReferral: t("victimDashboard.findOrganizationsPage.sendReferral"),
+    sendReferralSending: t("victimDashboard.findOrganizationsPage.sendReferralSending"),
+    sendReferralDone: t("victimDashboard.findOrganizationsPage.sendReferralDone"),
+    sendReferralFailed: t("victimDashboard.findOrganizationsPage.sendReferralFailed"),
   };
 
   return (
@@ -79,7 +83,7 @@ function VictimFindOrganizationsContent() {
         ) : null}
 
         <section className={APP_CARD}>
-          <FindOrganizationsMapSection copy={mapCopy} />
+          <FindOrganizationsMapSection copy={mapCopy} referCaseId={caseId || undefined} />
         </section>
       </div>
     </main>

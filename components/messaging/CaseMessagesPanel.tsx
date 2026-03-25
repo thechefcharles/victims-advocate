@@ -20,6 +20,8 @@ export function CaseMessagesPanel({
   headingTitle,
   headingSubtitle,
   emptyStateText,
+  /** When set, skips permission fetch and controls whether the composer is shown. */
+  canSendOverride,
 }: {
   caseId: string | null;
   /** Overrides the main heading (e.g. “Messages”) */
@@ -28,6 +30,7 @@ export function CaseMessagesPanel({
   headingSubtitle?: string;
   /** Overrides the empty thread message */
   emptyStateText?: string;
+  canSendOverride?: boolean;
 }) {
   const { accessToken } = useAuth();
   const { strictPreviews } = useSafetySettings(accessToken);
@@ -36,6 +39,10 @@ export function CaseMessagesPanel({
   const [unreadCount, setUnreadCount] = useState(0);
   const [draft, setDraft] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  /** null = still resolving; false = read-only viewer (e.g. pending referral review). */
+  const [canSendMessages, setCanSendMessages] = useState<boolean | null>(
+    () => (canSendOverride !== undefined ? canSendOverride : null)
+  );
 
   const loadThread = useCallback(async () => {
     if (!caseId) return;
@@ -83,6 +90,35 @@ export function CaseMessagesPanel({
   }, [loadThread]);
 
   useEffect(() => {
+    if (canSendOverride !== undefined) {
+      setCanSendMessages(canSendOverride);
+      return;
+    }
+    if (!caseId || !accessToken) {
+      setCanSendMessages(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCanSendMessages(null);
+      try {
+        const res = await fetch(`/api/compensation/cases/${caseId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        const canEdit = Boolean((json as { access?: { can_edit?: boolean } }).access?.can_edit);
+        setCanSendMessages(canEdit);
+      } catch {
+        if (!cancelled) setCanSendMessages(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [caseId, accessToken, canSendOverride]);
+
+  useEffect(() => {
     // Best-effort mark messages as read when loaded (only ones not sent by current user)
     (async () => {
       const { data: u } = await supabase.auth.getUser();
@@ -98,6 +134,7 @@ export function CaseMessagesPanel({
 
   const send = useCallback(async () => {
     if (!caseId) return;
+    if (canSendMessages !== true) return;
     const text = draft.trim();
     if (!text) return;
 
@@ -129,7 +166,7 @@ export function CaseMessagesPanel({
     } finally {
       setLoading(false);
     }
-  }, [caseId, draft, loadThread]);
+  }, [caseId, draft, loadThread, canSendMessages]);
 
   const formatTime = (iso: string) => {
     const d = new Date(iso);
@@ -197,23 +234,31 @@ export function CaseMessagesPanel({
         )}
       </div>
 
-      <div className="flex items-end gap-2">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Write a message…"
-          rows={2}
-          className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/60 focus:border-blue-500/60"
-        />
-        <button
-          type="button"
-          onClick={send}
-          disabled={loading || !draft.trim()}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
-        >
-          Send
-        </button>
-      </div>
+      {canSendMessages === false ? (
+        <p className="text-[11px] text-slate-500 border border-slate-800 rounded-lg px-3 py-2 bg-slate-900/50">
+          View only — you can read this thread but do not have permission to send messages on this case.
+        </p>
+      ) : canSendMessages === true ? (
+        <div className="flex items-end gap-2">
+          <textarea
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Write a message…"
+            rows={2}
+            className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/60 focus:border-blue-500/60"
+          />
+          <button
+            type="button"
+            onClick={send}
+            disabled={loading || !draft.trim()}
+            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+          >
+            Send
+          </button>
+        </div>
+      ) : (
+        <p className="text-[11px] text-slate-500">Loading message permissions…</p>
+      )}
 
     </section>
   );

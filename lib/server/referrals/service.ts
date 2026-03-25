@@ -1,18 +1,22 @@
 /**
- * Case org referrals — persistence and read guards only.
+ * Case org referrals — create, read, list, and Phase 2 side effects (review access, timeline, notifications).
  *
- * Phase 2+: wire UI, grant temporary read-only case_access for receiving org reviewers,
- * send notifications, append timeline events, call shared org transfer helper on accept.
+ * Phase 3+: org inbox, accept/decline, revoke review access, shared org transfer helper.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
-import { getCaseById } from "@/lib/server/data";
+import { getCaseById, appendCaseTimelineEvent } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
-import { createReferralPayloadSchema } from "./schema";
+import { logger } from "@/lib/server/logging";
+import { createCaseNotification } from "@/lib/server/notifications/create";
+import { canOrganizationAppearInSearch } from "@/lib/organizations/profileStage";
+import { createCaseOrgReferralInputSchema } from "./schema";
 import type { CaseOrgReferralRow, CreateReferralInput, ReferralStatus } from "./types";
+import { REFERRAL_METADATA_REVIEW_GRANT_USER_IDS } from "./types";
+import { grantReferralReviewCaseAccessForReceivingLeaders } from "./reviewAccess";
 
 function asReferralRow(row: Record<string, unknown>): CaseOrgReferralRow {
   const meta = row.metadata;
@@ -51,24 +55,77 @@ function canViewReferralAsReceivingLeadership(ctx: AuthContext, row: CaseOrgRefe
   return isOrgLeadership(ctx.orgRole);
 }
 
-async function assertOrganizationExists(organizationId: string): Promise<void> {
+/**
+ * Referral creation: case owner, or anyone with edit-capable case access, or admin (case must exist).
+ */
+async function assertCanInitiateCaseOrgReferral(params: {
+  ctx: AuthContext;
+  caseId: string;
+  req?: Request | null;
+}): Promise<void> {
+  const { ctx, caseId, req } = params;
+  const supabase = getSupabaseAdmin();
+
+  if (ctx.isAdmin) {
+    const { data, error } = await supabase.from("cases").select("id").eq("id", caseId).maybeSingle();
+    if (error) throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
+    if (!data) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+    return;
+  }
+
+  const result = await getCaseById({ caseId, ctx, req });
+  if (!result) {
+    throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
+  }
+  const { access } = result;
+  if (access.role === "owner" || access.can_edit === true) {
+    return;
+  }
+  throw new AppError("FORBIDDEN", "You do not have permission to refer this case", undefined, 403);
+}
+
+type TargetOrgRow = {
+  id: string;
+  name: string | null;
+  status: string | null;
+  lifecycle_status: string | null;
+  public_profile_status: string | null;
+  profile_status: string | null;
+  profile_stage: string | null;
+};
+
+async function loadReferralTargetOrganization(organizationId: string): Promise<TargetOrgRow> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("organizations")
-    .select("id")
+    .select(
+      "id, name, status, lifecycle_status, public_profile_status, profile_status, profile_stage"
+    )
     .eq("id", organizationId)
     .maybeSingle();
+
   if (error) {
     throw new AppError("INTERNAL", "Organization lookup failed", undefined, 500);
   }
   if (!data) {
     throw new AppError("NOT_FOUND", "Organization not found", undefined, 404);
   }
+  return data as TargetOrgRow;
+}
+
+function assertReferralTargetEligibleForDiscovery(org: TargetOrgRow): void {
+  if (!canOrganizationAppearInSearch(org)) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "That organization is not available as a referral target in the directory",
+      undefined,
+      422
+    );
+  }
 }
 
 /**
- * Create a pending referral. No access grants, transfer, or notifications.
- * Caller must be admin or have normal case view access to the case.
+ * Create a pending referral, grant receiving-org leadership read-only case access, timeline + notifications.
  */
 export async function createReferral(params: {
   ctx: AuthContext;
@@ -77,19 +134,44 @@ export async function createReferral(params: {
 }): Promise<CaseOrgReferralRow> {
   const { ctx, input, req } = params;
 
-  const parsed = createReferralPayloadSchema.safeParse({
+  const parsed = createCaseOrgReferralInputSchema.safeParse({
     caseId: input.caseId.trim(),
-    fromOrganizationId: input.fromOrganizationId,
     toOrganizationId: input.toOrganizationId.trim(),
+    fromOrganizationId: input.fromOrganizationId,
     metadata: input.metadata,
   });
   if (!parsed.success) {
     throw new AppError("VALIDATION_ERROR", "Invalid referral payload", parsed.error.flatten(), 422);
   }
 
-  const { caseId, fromOrganizationId, toOrganizationId, metadata } = parsed.data;
+  const { caseId, toOrganizationId, fromOrganizationId: fromInput, metadata: clientMetadata } =
+    parsed.data;
 
-  if (fromOrganizationId != null && fromOrganizationId === toOrganizationId) {
+  await assertCanInitiateCaseOrgReferral({ ctx, caseId, req });
+
+  const supabase = getSupabaseAdmin();
+  const { data: caseRow, error: caseErr } = await supabase
+    .from("cases")
+    .select("id, organization_id")
+    .eq("id", caseId)
+    .maybeSingle();
+
+  if (caseErr || !caseRow) {
+    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+  }
+
+  const caseTenantOrgId = caseRow.organization_id as string;
+  if (toOrganizationId === caseTenantOrgId) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "This case already belongs to that organization. Choose a different organization to refer.",
+      undefined,
+      422
+    );
+  }
+
+  const resolvedFromOrgId = fromInput ?? caseTenantOrgId;
+  if (resolvedFromOrgId === toOrganizationId) {
     throw new AppError(
       "VALIDATION_ERROR",
       "Referral cannot target the same organization as the sending organization",
@@ -98,27 +180,22 @@ export async function createReferral(params: {
     );
   }
 
-  const allowed =
-    ctx.isAdmin || (await canViewCase({ ctx, caseId, req }));
-  if (!allowed) {
-    throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
-  }
+  const targetOrg = await loadReferralTargetOrganization(toOrganizationId);
+  assertReferralTargetEligibleForDiscovery(targetOrg);
 
-  await assertOrganizationExists(toOrganizationId);
-  if (fromOrganizationId != null) {
-    await assertOrganizationExists(fromOrganizationId);
-  }
+  const metadataBase: Record<string, unknown> = {
+    ...(clientMetadata ?? {}),
+  };
 
-  const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("case_org_referrals")
     .insert({
       case_id: caseId,
-      from_organization_id: fromOrganizationId,
+      from_organization_id: resolvedFromOrgId,
       to_organization_id: toOrganizationId,
       requested_by_user_id: ctx.userId,
       status: "pending",
-      metadata: metadata ?? {},
+      metadata: metadataBase,
     })
     .select("*")
     .single();
@@ -135,22 +212,105 @@ export async function createReferral(params: {
     throw new AppError("INTERNAL", "Failed to create referral", undefined, 500);
   }
 
-  const row = asReferralRow(data as Record<string, unknown>);
+  let row = asReferralRow(data as Record<string, unknown>);
 
-  const caseResult = await getCaseById({ caseId, ctx, req });
-  const orgForAudit =
-    fromOrganizationId ?? (caseResult?.case?.organization_id as string | null | undefined) ?? null;
+  const targetOrgName = (targetOrg.name ?? "").trim() || "Organization";
+  let grantUserIds: string[] = [];
+  let insertedReviewAccessUserIds: string[] = [];
+  try {
+    const grantResult = await grantReferralReviewCaseAccessForReceivingLeaders({
+      caseId,
+      caseTenantOrganizationId: caseTenantOrgId,
+      receivingOrganizationId: toOrganizationId,
+    });
+    grantUserIds = grantResult.grantedUserIds;
+    insertedReviewAccessUserIds = grantResult.insertedUserIds;
+
+    const mergedMeta: Record<string, unknown> = {
+      ...row.metadata,
+      [REFERRAL_METADATA_REVIEW_GRANT_USER_IDS]: grantUserIds,
+    };
+
+    const { data: updated, error: updErr } = await supabase
+      .from("case_org_referrals")
+      .update({
+        metadata: mergedMeta,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id)
+      .select("*")
+      .single();
+
+    if (updErr || !updated) {
+      throw new AppError("INTERNAL", "Failed to update referral metadata", undefined, 500);
+    }
+    row = asReferralRow(updated as Record<string, unknown>);
+  } catch (e) {
+    for (const uid of insertedReviewAccessUserIds) {
+      await supabase.from("case_access").delete().eq("case_id", caseId).eq("user_id", uid);
+    }
+    await supabase.from("case_org_referrals").delete().eq("id", row.id);
+    throw e;
+  }
+
+  try {
+    await appendCaseTimelineEvent({
+      caseId,
+      organizationId: caseTenantOrgId,
+      actor: { userId: ctx.userId, role: ctx.role },
+      eventType: "case.referral_sent",
+      title: "Referral sent to organization",
+      description: `A referral was sent to ${targetOrgName} for review.`,
+      metadata: {
+        referral_id: row.id,
+        to_organization_id: toOrganizationId,
+      },
+    });
+  } catch (timelineErr) {
+    logger.warn("referral.create.timeline_failed", {
+      caseId,
+      referralId: row.id,
+      message: timelineErr instanceof Error ? timelineErr.message : String(timelineErr),
+    });
+  }
+
+  if (grantUserIds.length > 0) {
+    try {
+      await createCaseNotification(
+        {
+          recipients: grantUserIds,
+          caseId,
+          organizationId: toOrganizationId,
+          type: "referral.pending_review",
+          title: "New case referral",
+          body: null,
+          actionUrl: `/compensation/intake?case=${encodeURIComponent(caseId)}`,
+          previewSafe: true,
+          metadata: { referralId: row.id, caseId },
+        },
+        ctx
+      );
+    } catch (notifyErr) {
+      logger.warn("referral.create.notification_failed", {
+        caseId,
+        referralId: row.id,
+        message: notifyErr instanceof Error ? notifyErr.message : String(notifyErr),
+      });
+    }
+  }
 
   await logEvent({
     ctx,
     action: "referral.created",
     resourceType: "case_org_referral",
     resourceId: row.id,
-    organizationId: orgForAudit,
+    organizationId: resolvedFromOrgId,
     metadata: {
       caseId,
       toOrganizationId,
-      fromOrganizationId,
+      fromOrganizationId: resolvedFromOrgId,
+      actorRole: ctx.role,
+      orgRole: ctx.orgRole ?? null,
     },
     req: req ?? undefined,
   });

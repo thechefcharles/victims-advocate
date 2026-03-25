@@ -258,6 +258,12 @@ export const es: I18nDict = {
             loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
             privacyNote:
                 "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
+            sendReferral: "Enviar referencia para revisión",
+            sendReferralSending: "Enviando…",
+            sendReferralDone:
+                "Referencia enviada. El equipo de la organización puede revisar tu caso.",
+            sendReferralFailed:
+                "No se pudo enviar la referencia. Inténtalo de nuevo u otra organización.",
         },
         caseActivityForCase: "Para este caso",
         caseDetailsHeading: "Detalles Del Caso",

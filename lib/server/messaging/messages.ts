@@ -49,6 +49,15 @@ export async function sendMessage(params: {
     throw new AppError("FORBIDDEN", "Case not found", undefined, 404);
   }
 
+  if (!caseResult.access.can_edit) {
+    throw new AppError(
+      "FORBIDDEN",
+      "You do not have permission to send messages on this case",
+      undefined,
+      403
+    );
+  }
+
   const supabase = getSupabaseAdmin();
 
   const { data: inserted, error } = await supabase

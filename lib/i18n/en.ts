@@ -256,6 +256,10 @@ export const en: I18nDict = {
       loadError: "We couldn’t load organizations. Please try again.",
       privacyNote:
         "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
+      sendReferral: "Send referral for review",
+      sendReferralSending: "Sending…",
+      sendReferralDone: "Referral sent. The organization’s team can review your case.",
+      sendReferralFailed: "Could not send referral. Try again or pick another organization.",
     },
     caseActivityForCase: "For this case",
     caseDetailsHeading: "Case Details",

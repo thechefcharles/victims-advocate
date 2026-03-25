@@ -260,6 +260,10 @@ export type I18nDict = {
       noOrgs: string;
       loadError: string;
       privacyNote: string;
+      sendReferral: string;
+      sendReferralSending: string;
+      sendReferralDone: string;
+      sendReferralFailed: string;
     };
     /** Gamified 3-step strip + apply flow */
     progressTitle: string;
