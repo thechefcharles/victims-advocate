@@ -26,6 +26,12 @@ function appBaseUrl(req: Request): string {
   ).replace(/\/$/, "");
 }
 
+async function fetchPlatformAdminUserIds(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string[]> {
+  const { data, error } = await supabase.from("profiles").select("id").eq("is_admin", true);
+  if (error) throw new Error(error.message);
+  return [...new Set((data ?? []).map((r) => r.id as string))];
+}
+
 async function notifyOrgApprovers(params: {
   ctx: AuthContext;
   req: Request;
@@ -48,12 +54,16 @@ async function notifyOrgApprovers(params: {
 
   if (error) throw new Error(error.message);
 
+  const adminIds = await fetchPlatformAdminUserIds(supabase);
+
   const base = appBaseUrl(req);
   const actionUrl = `${base}/notifications`;
   const identity = `${displayName}${email ? ` · ${email}` : ""}`;
-  const body = `${identity}\n\nRequested to join ${organizationName} as an organization representative. Review in Updates.`;
+  const body = `${identity}\n\nRequested to join ${organizationName} as an organization representative. Approve or decline in Updates, or ask a platform admin to review in Admin → Organizations.`;
 
-  const recipients = [...new Set((members ?? []).map((m) => m.user_id))];
+  const recipients = [
+    ...new Set([...(members ?? []).map((m) => m.user_id), ...adminIds]),
+  ];
   await Promise.all(
     recipients.map((memberUserId) =>
       createNotification(

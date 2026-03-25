@@ -33,8 +33,12 @@ export async function POST(
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireFullAccess(ctx, req);
-    requireOrg(ctx);
-    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+
+    const isPlatformAdmin = ctx.isAdmin === true;
+    if (!isPlatformAdmin) {
+      requireOrg(ctx);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+    }
 
     const { id: requestId } = await params;
     const rid = requestId?.trim();
@@ -57,7 +61,7 @@ export async function POST(
     if (row.status !== "pending") {
       return apiFail("VALIDATION_ERROR", "This request is no longer pending", undefined, 409);
     }
-    if (row.organization_id !== ctx.orgId) {
+    if (!isPlatformAdmin && row.organization_id !== ctx.orgId) {
       return apiFail("FORBIDDEN", "This request belongs to another organization", undefined, 403);
     }
 

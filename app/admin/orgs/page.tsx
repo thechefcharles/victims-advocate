@@ -42,6 +42,16 @@ type PendingProposal = {
   notes: string | null;
 };
 
+type PendingOrgRepJoinRequest = {
+  id: string;
+  created_at: string;
+  user_id: string;
+  organization_id: string;
+  organization_name: string;
+  requester_display_name: string;
+  requester_email: string | null;
+};
+
 function formatServicesPreview(services: string[] | null | undefined, max = 3): string {
   if (!services?.length) return "—";
   const shown = services.slice(0, max).map((s) => s.replace(/_/g, " "));
@@ -52,6 +62,7 @@ function formatServicesPreview(services: string[] | null | undefined, max = 3): 
 export default function AdminOrgsPage() {
   const [orgs, setOrgs] = useState<AdminOrg[]>([]);
   const [proposals, setProposals] = useState<PendingProposal[]>([]);
+  const [repJoinRequests, setRepJoinRequests] = useState<PendingOrgRepJoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [createName, setCreateName] = useState("");
@@ -96,6 +107,16 @@ export default function AdminOrgsPage() {
       setProposals(propJson.data?.proposals ?? []);
     } else {
       setProposals([]);
+    }
+
+    const joinRes = await fetch("/api/admin/org-rep-join-requests", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (joinRes.ok) {
+      const joinJson = await joinRes.json();
+      setRepJoinRequests(joinJson.data?.requests ?? []);
+    } else {
+      setRepJoinRequests([]);
     }
   };
 
@@ -217,6 +238,95 @@ export default function AdminOrgsPage() {
             </>
           }
         />
+
+        {repJoinRequests.length > 0 && (
+          <section className="rounded-2xl border border-cyan-500/35 bg-cyan-950/20 p-5">
+            <h2 className="text-sm font-semibold text-cyan-100 mb-2">
+              Pending requests to join an organization ({repJoinRequests.length})
+            </h2>
+            <p className="text-xs text-cyan-200/80 mb-4">
+              Someone with an organization leader account asked to join an existing workspace (usually after
+              finding the agency in the Illinois directory). Approve adds them as{" "}
+              <strong className="text-cyan-100">Organization Owner</strong> for that org. Org managers are
+              notified too, but you can act here if there is no owner yet.
+            </p>
+            <ul className="space-y-4">
+              {repJoinRequests.map((r) => (
+                <li
+                  key={r.id}
+                  className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-slate-100">{r.organization_name}</p>
+                      <p className="text-xs text-slate-400">
+                        Requester: {r.requester_display_name}
+                        {r.requester_email ? ` · ${r.requester_email}` : ""}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1">
+                        Submitted {new Date(r.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setActingId(r.id);
+                          try {
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const token = sessionData.session?.access_token;
+                            if (!token) return;
+                            const res = await fetch(`/api/org/rep-join-requests/${r.id}/approve`, {
+                              method: "POST",
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (res.ok) await load();
+                            else {
+                              const json = await res.json().catch(() => ({}));
+                              setErr(getApiErrorMessage(json, "Could not approve"));
+                            }
+                          } finally {
+                            setActingId(null);
+                          }
+                        }}
+                        disabled={actingId !== null}
+                        className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                      >
+                        {actingId === r.id ? "…" : "Approve Join Request"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setActingId(r.id);
+                          try {
+                            const { data: sessionData } = await supabase.auth.getSession();
+                            const token = sessionData.session?.access_token;
+                            if (!token) return;
+                            const res = await fetch(`/api/org/rep-join-requests/${r.id}/decline`, {
+                              method: "POST",
+                              headers: { Authorization: `Bearer ${token}` },
+                            });
+                            if (res.ok) await load();
+                            else {
+                              const json = await res.json().catch(() => ({}));
+                              setErr(getApiErrorMessage(json, "Could not decline"));
+                            }
+                          } finally {
+                            setActingId(null);
+                          }
+                        }}
+                        disabled={actingId !== null}
+                        className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        {actingId === r.id ? "…" : "Decline"}
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {proposals.filter((p) => p.status === "pending").length > 0 && (
           <section className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5">
