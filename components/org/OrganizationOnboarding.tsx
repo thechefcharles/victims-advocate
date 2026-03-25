@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { normalizeOrganizationWebsite } from "@/lib/utils/organizationWebsite";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
 import type { IlVictimAssistanceProgram } from "@/lib/catalog/ilProgramTypes";
@@ -396,7 +397,7 @@ export function OrganizationOnboarding({
           type: addNewForm.type,
           address: addNewForm.address.trim(),
           phone: addNewForm.phone.trim(),
-          website: addNewForm.website.trim() || null,
+          website: normalizeOrganizationWebsite(addNewForm.website),
           program_type: addNewForm.program_type.trim() || null,
           notes: addNewForm.notes.trim() || null,
         }),
@@ -757,11 +758,13 @@ export function OrganizationOnboarding({
             </label>
             <input
               id="onb-website"
-              type="url"
+              type="text"
+              inputMode="url"
+              autoComplete="url"
               value={addNewForm.website}
               onChange={(e) => setAddNewForm((p) => ({ ...p, website: e.target.value }))}
               className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
-              placeholder="https://…"
+              placeholder="example.org or https://…"
             />
           </div>
 
