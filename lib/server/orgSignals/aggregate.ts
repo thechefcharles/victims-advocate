@@ -1,0 +1,257 @@
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { AppError } from "@/lib/server/api";
+import {
+  average,
+  clampRate,
+  daysBetween,
+  profileCompletenessBucket,
+  replyConfidence,
+  toIsoOrNull,
+} from "./helpers";
+import type { OrganizationSignals } from "./types";
+
+type CaseRow = { id: string; created_at: string; updated_at: string; status: string };
+type MessageRow = { case_id: string; created_at: string; sender_role: string | null };
+type RunCaseRow = { case_id: string };
+type CompletenessRunRow = { case_id: string; result: Record<string, unknown> | null };
+type AppointmentRow = { case_id: string };
+
+function isCaseActive(status: string): boolean {
+  const s = status.toLowerCase();
+  return s !== "closed";
+}
+
+function isOrgSideRole(role: string | null): boolean {
+  const r = (role ?? "").toLowerCase();
+  return r === "advocate" || r === "org_owner" || r === "supervisor" || r === "victim_advocate";
+}
+
+function isVictimSideRole(role: string | null): boolean {
+  return (role ?? "").toLowerCase() === "victim";
+}
+
+export async function getOrganizationSignals(organizationId: string): Promise<OrganizationSignals> {
+  const supabase = getSupabaseAdmin();
+  const computedAt = new Date().toISOString();
+
+  const { data: org, error: orgErr } = await supabase
+    .from("organizations")
+    .select(
+      "id,profile_status,profile_stage,last_profile_update,profile_last_updated_at,service_types,languages,coverage_area,capacity_status,intake_methods"
+    )
+    .eq("id", organizationId)
+    .maybeSingle();
+
+  if (orgErr || !org) {
+    throw new AppError("NOT_FOUND", "Organization not found", undefined, 404);
+  }
+
+  const nowIso = computedAt;
+  const staleCutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+  const messageRecentCutoff = new Date(Date.now() - 30 * 86400000).toISOString();
+
+  const { data: caseRows, error: caseErr } = await supabase
+    .from("cases")
+    .select("id,created_at,updated_at,status")
+    .eq("organization_id", organizationId);
+  if (caseErr) throw new AppError("INTERNAL", "Failed to load cases", caseErr, 500);
+
+  const cases = (caseRows ?? []) as CaseRow[];
+  const caseIds = new Set(cases.map((c) => c.id));
+  const totalCases = cases.length;
+  const activeCases = cases.filter((c) => isCaseActive(c.status));
+  const staleCases = activeCases.filter((c) => c.updated_at && c.updated_at < staleCutoff);
+  const caseAges = cases
+    .map((c) => daysBetween(c.created_at, nowIso))
+    .filter((v): v is number => v != null && v >= 0);
+
+  const [
+    messagesAllRes,
+    messagesRecentRes,
+    routingRes,
+    completenessRes,
+    ocrRes,
+    apptRes,
+  ] = await Promise.all([
+    supabase
+      .from("case_messages")
+      .select("case_id,created_at,sender_role")
+      .eq("organization_id", organizationId),
+    supabase
+      .from("case_messages")
+      .select("case_id,created_at,sender_role")
+      .eq("organization_id", organizationId)
+      .gte("created_at", messageRecentCutoff),
+    supabase.from("routing_runs").select("case_id").eq("organization_id", organizationId),
+    supabase
+      .from("completeness_runs")
+      .select("case_id,result")
+      .eq("organization_id", organizationId)
+      .order("created_at", { ascending: false }),
+    supabase.from("ocr_runs").select("case_id").eq("organization_id", organizationId),
+    supabase.from("appointments").select("case_id").eq("organization_id", organizationId),
+  ]);
+
+  if (messagesAllRes.error) {
+    throw new AppError("INTERNAL", "Failed to load message signals", messagesAllRes.error, 500);
+  }
+  if (messagesRecentRes.error) {
+    throw new AppError("INTERNAL", "Failed to load recent message signals", messagesRecentRes.error, 500);
+  }
+  if (routingRes.error) {
+    throw new AppError("INTERNAL", "Failed to load routing usage signals", routingRes.error, 500);
+  }
+  if (completenessRes.error) {
+    throw new AppError(
+      "INTERNAL",
+      "Failed to load completeness usage signals",
+      completenessRes.error,
+      500
+    );
+  }
+  if (ocrRes.error) {
+    throw new AppError("INTERNAL", "Failed to load OCR usage signals", ocrRes.error, 500);
+  }
+
+  const messagesAll = (messagesAllRes.data ?? []) as MessageRow[];
+  const messagesRecent = (messagesRecentRes.data ?? []) as MessageRow[];
+  const routingRows = (routingRes.data ?? []) as RunCaseRow[];
+  const completenessRows = (completenessRes.data ?? []) as CompletenessRunRow[];
+  const ocrRows = (ocrRes.data ?? []) as RunCaseRow[];
+
+  const casesWithMessages = new Set(messagesAll.map((m) => m.case_id).filter((id) => caseIds.has(id)));
+  const recentMessageThreads = new Set(
+    messagesRecent.map((m) => m.case_id).filter((id) => caseIds.has(id))
+  );
+
+  const msgByCase = new Map<string, MessageRow[]>();
+  for (const m of messagesAll) {
+    if (!caseIds.has(m.case_id)) continue;
+    const arr = msgByCase.get(m.case_id) ?? [];
+    arr.push(m);
+    msgByCase.set(m.case_id, arr);
+  }
+
+  const firstReplyHours: number[] = [];
+  for (const rows of msgByCase.values()) {
+    const sorted = [...rows].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
+    const firstVictim = sorted.find((m) => isVictimSideRole(m.sender_role));
+    if (!firstVictim) continue;
+    const victimTime = Date.parse(firstVictim.created_at);
+    if (Number.isNaN(victimTime)) continue;
+    const firstOrgReply = sorted.find((m) => {
+      if (!isOrgSideRole(m.sender_role)) return false;
+      const t = Date.parse(m.created_at);
+      return !Number.isNaN(t) && t >= victimTime;
+    });
+    if (!firstOrgReply) continue;
+    const replyTime = Date.parse(firstOrgReply.created_at);
+    if (Number.isNaN(replyTime)) continue;
+    firstReplyHours.push((replyTime - victimTime) / 3600000);
+  }
+
+  const routingCaseSet = new Set(routingRows.map((r) => r.case_id).filter((id) => caseIds.has(id)));
+  const completenessCaseSet = new Set(
+    completenessRows.map((r) => r.case_id).filter((id) => caseIds.has(id))
+  );
+  const ocrCaseSet = new Set(ocrRows.map((r) => r.case_id).filter((id) => caseIds.has(id)));
+
+  let appointmentsUsageRate: number | null = null;
+  let appointmentsNotAvailable = false;
+  if (apptRes.error) {
+    appointmentsNotAvailable = true;
+  } else {
+    const apptRows = (apptRes.data ?? []) as AppointmentRow[];
+    const apptCaseSet = new Set(apptRows.map((a) => a.case_id).filter((id) => caseIds.has(id)));
+    appointmentsUsageRate = clampRate(apptCaseSet.size, totalCases);
+  }
+
+  const latestCompletenessByCase = new Map<string, Record<string, unknown>>();
+  for (const row of completenessRows) {
+    if (!caseIds.has(row.case_id)) continue;
+    if (latestCompletenessByCase.has(row.case_id)) continue;
+    if (row.result && typeof row.result === "object") {
+      latestCompletenessByCase.set(row.case_id, row.result);
+    }
+  }
+
+  let casesWithBlocking = 0;
+  let casesWithMissingDocs = 0;
+  for (const result of latestCompletenessByCase.values()) {
+    const summary = result.summary_counts as Record<string, unknown> | undefined;
+    const blocking = summary?.blocking_count;
+    if (typeof blocking === "number" && blocking > 0) {
+      casesWithBlocking++;
+    }
+    const missingItems = Array.isArray(result.missing_items)
+      ? (result.missing_items as Array<Record<string, unknown>>)
+      : [];
+    const hasMissingDoc = missingItems.some((i) => i.type === "missing_document");
+    if (hasMissingDoc) {
+      casesWithMissingDocs++;
+    }
+  }
+
+  const lastProfileUpdate =
+    toIsoOrNull(org.last_profile_update) ?? toIsoOrNull(org.profile_last_updated_at);
+  const hasCoverage =
+    !!org.coverage_area &&
+    typeof org.coverage_area === "object" &&
+    !Array.isArray(org.coverage_area) &&
+    Object.keys(org.coverage_area as Record<string, unknown>).length > 0;
+
+  const flags: string[] = [];
+  if (totalCases < 5) flags.push("insufficient_case_volume");
+  if (recentMessageThreads.size < 3) flags.push("limited_message_data");
+  if (org.profile_stage !== "searchable" && org.profile_stage !== "enriched") {
+    flags.push("profile_not_searchable");
+  }
+  if (
+    (routingCaseSet.size === 0 && completenessCaseSet.size === 0 && ocrCaseSet.size === 0) ||
+    totalCases < 3
+  ) {
+    flags.push("workflow_usage_sparse");
+  }
+  if (appointmentsNotAvailable) flags.push("appointments_not_available");
+
+  return {
+    organizationId,
+    computedAt,
+    profile: {
+      profileStatus: org.profile_status != null ? String(org.profile_status) : null,
+      profileStage: org.profile_stage != null ? String(org.profile_stage) : null,
+      lastProfileUpdate,
+      completeness: profileCompletenessBucket({
+        serviceTypesCount: Array.isArray(org.service_types) ? org.service_types.length : 0,
+        languagesCount: Array.isArray(org.languages) ? org.languages.length : 0,
+        hasCoverage,
+        hasCapacity: String(org.capacity_status ?? "unknown").toLowerCase() !== "unknown",
+        hasIntakeMethods: Array.isArray(org.intake_methods) && org.intake_methods.length > 0,
+      }),
+    },
+    cases: {
+      total: totalCases,
+      active: activeCases.length,
+      stale: staleCases.length,
+      avgAgeDays: average(caseAges),
+    },
+    messaging: {
+      orgCasesWithMessages: casesWithMessages.size,
+      recentMessageThreads: recentMessageThreads.size,
+      avgFirstReplyHours: average(firstReplyHours),
+      replySignalConfidence: replyConfidence(firstReplyHours.length),
+    },
+    workflow: {
+      routingUsageRate: clampRate(routingCaseSet.size, totalCases),
+      completenessUsageRate: clampRate(completenessCaseSet.size, totalCases),
+      ocrUsageRate: clampRate(ocrCaseSet.size, totalCases),
+      appointmentsUsageRate,
+    },
+    completeness: {
+      blockingIssueRate: clampRate(casesWithBlocking, latestCompletenessByCase.size),
+      casesWithMissingDocsRate: clampRate(casesWithMissingDocs, latestCompletenessByCase.size),
+    },
+    flags,
+  };
+}
+

@@ -7,6 +7,39 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ORG_GRADING_VERSION } from "@/lib/grading/version";
 
 type Org = { id: string; name: string; type: string; status: string };
+type OrganizationSignals = {
+  organizationId: string;
+  computedAt: string;
+  profile: {
+    profileStatus: string | null;
+    profileStage: string | null;
+    lastProfileUpdate: string | null;
+    completeness: "minimal" | "partial" | "complete" | null;
+  };
+  cases: {
+    total: number;
+    active: number;
+    stale: number;
+    avgAgeDays: number | null;
+  };
+  messaging: {
+    orgCasesWithMessages: number;
+    recentMessageThreads: number;
+    avgFirstReplyHours: number | null;
+    replySignalConfidence: "low" | "medium" | "high";
+  };
+  workflow: {
+    routingUsageRate: number | null;
+    completenessUsageRate: number | null;
+    ocrUsageRate: number | null;
+    appointmentsUsageRate: number | null;
+  };
+  completeness: {
+    blockingIssueRate: number | null;
+    casesWithMissingDocsRate: number | null;
+  };
+  flags: string[];
+};
 
 type CatDetail = {
   score: number;
@@ -37,6 +70,7 @@ export default function AdminGradingPage() {
   const [batchRunning, setBatchRunning] = useState(false);
   const [current, setCurrent] = useState<ScoreRow | null>(null);
   const [history, setHistory] = useState<ScoreRow[]>([]);
+  const [signals, setSignals] = useState<OrganizationSignals | null>(null);
 
   const loadOrgs = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -79,6 +113,22 @@ export default function AdminGradingPage() {
     setHistory((d.history as ScoreRow[]) ?? []);
   };
 
+  const loadSignals = async (id: string) => {
+    if (!id) return;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) return;
+    const res = await fetch(`/api/admin/org-signals/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      setSignals(null);
+      return;
+    }
+    const json = await res.json().catch(() => null);
+    setSignals((json?.data?.signals as OrganizationSignals | null) ?? null);
+  };
+
   useEffect(() => {
     (async () => {
       setLoading(true);
@@ -88,7 +138,9 @@ export default function AdminGradingPage() {
   }, []);
 
   useEffect(() => {
-    if (orgId) loadScore(orgId);
+    if (!orgId) return;
+    loadScore(orgId);
+    loadSignals(orgId);
   }, [orgId]);
 
   const runGrading = async (force: boolean) => {
@@ -113,6 +165,7 @@ export default function AdminGradingPage() {
         return;
       }
       await loadScore(orgId);
+      await loadSignals(orgId);
     } finally {
       setRunning(false);
     }
@@ -138,7 +191,10 @@ export default function AdminGradingPage() {
         setErr(getApiErrorMessage(json, "Batch grading failed"));
         return;
       }
-      if (orgId) await loadScore(orgId);
+      if (orgId) {
+        await loadScore(orgId);
+        await loadSignals(orgId);
+      }
     } finally {
       setBatchRunning(false);
     }
@@ -312,6 +368,67 @@ export default function AdminGradingPage() {
                 ))}
               </div>
             </div>
+          </section>
+        )}
+
+        {signals && (
+          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-slate-200">Org signal snapshot (internal)</h2>
+            <p className="text-xs text-slate-500">
+              Lightweight derived operational signals for internal scoring/debug use. Not public and
+              not shown to survivors.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+                <p className="text-slate-500 uppercase">Profile</p>
+                <p className="text-slate-300 mt-1">
+                  {signals.profile.profileStatus ?? "—"} · {signals.profile.profileStage ?? "—"}
+                </p>
+                <p className="text-slate-400">Completeness: {signals.profile.completeness ?? "—"}</p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+                <p className="text-slate-500 uppercase">Cases</p>
+                <p className="text-slate-300 mt-1">
+                  total {signals.cases.total} · active {signals.cases.active} · stale {signals.cases.stale}
+                </p>
+                <p className="text-slate-400">
+                  avg age {signals.cases.avgAgeDays != null ? `${signals.cases.avgAgeDays.toFixed(1)}d` : "—"}
+                </p>
+              </div>
+              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
+                <p className="text-slate-500 uppercase">Messaging</p>
+                <p className="text-slate-300 mt-1">
+                  threads {signals.messaging.recentMessageThreads} · confidence{" "}
+                  {signals.messaging.replySignalConfidence}
+                </p>
+                <p className="text-slate-400">
+                  avg first reply{" "}
+                  {signals.messaging.avgFirstReplyHours != null
+                    ? `${signals.messaging.avgFirstReplyHours.toFixed(1)}h`
+                    : "—"}
+                </p>
+              </div>
+            </div>
+
+            {signals.flags.length > 0 && (
+              <div>
+                <p className="text-[11px] text-slate-500 uppercase mb-1">Signal flags</p>
+                <ul className="flex flex-wrap gap-2">
+                  {signals.flags.map((f) => (
+                    <li
+                      key={f}
+                      className="text-xs rounded-full border border-slate-600 px-2 py-0.5 text-slate-300"
+                    >
+                      {f.replace(/_/g, " ")}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <pre className="text-[11px] bg-slate-950/80 border border-slate-800 rounded-lg p-3 overflow-x-auto text-slate-400">
+              {JSON.stringify(signals, null, 2)}
+            </pre>
           </section>
         )}
 
