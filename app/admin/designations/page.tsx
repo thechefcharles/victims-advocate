@@ -27,6 +27,13 @@ type DesignationRow = {
   is_current: boolean;
 };
 
+type DesignationPresentation = {
+  confidence_note: string;
+  hints: string[];
+  signal_flags: string[];
+  internal_explanation: { headline: string; bullets: string[] };
+};
+
 export default function AdminDesignationsPage() {
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState("");
@@ -35,6 +42,7 @@ export default function AdminDesignationsPage() {
   const [running, setRunning] = useState(false);
   const [current, setCurrent] = useState<DesignationRow | null>(null);
   const [history, setHistory] = useState<DesignationRow[]>([]);
+  const [presentation, setPresentation] = useState<DesignationPresentation | null>(null);
 
   const loadOrgs = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -72,6 +80,7 @@ export default function AdminDesignationsPage() {
     const d = json.data ?? json;
     setCurrent((d.current as DesignationRow) ?? null);
     setHistory((d.history as DesignationRow[]) ?? []);
+    setPresentation((d.presentation as DesignationPresentation | null) ?? null);
   };
 
   useEffect(() => {
@@ -234,6 +243,31 @@ export default function AdminDesignationsPage() {
                 </ul>
               </div>
             )}
+            {presentation?.confidence_note && (
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-300">
+                {presentation.confidence_note}
+              </div>
+            )}
+            {presentation?.internal_explanation && (
+              <div className="text-xs text-slate-400 border-t border-slate-800 pt-3">
+                <p className="font-medium text-slate-300">{presentation.internal_explanation.headline}</p>
+                <ul className="list-disc list-inside mt-1 space-y-0.5">
+                  {presentation.internal_explanation.bullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {presentation?.hints?.length ? (
+              <div>
+                <p className="text-[11px] text-slate-500 uppercase mb-1">Reliability improvement hints</p>
+                <ul className="list-disc list-inside text-xs text-slate-400 space-y-0.5">
+                  {presentation.hints.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
         )}
 

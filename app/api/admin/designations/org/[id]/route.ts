@@ -7,6 +7,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import {
   getCurrentOrgDesignation,
+  getDesignationPresentation,
   getOrgDesignationHistory,
 } from "@/lib/server/designations/service";
 
@@ -28,11 +29,13 @@ export async function GET(req: Request, { params }: RouteCtx) {
 
     const current = await getCurrentOrgDesignation(organizationId);
     const history = await getOrgDesignationHistory(organizationId, 15);
+    const presentation = await getDesignationPresentation({ organizationId, row: current });
 
     return apiOk({
       organization_id: organizationId,
       current,
       history,
+      presentation,
     });
   } catch (err) {
     const appErr = toAppError(err);

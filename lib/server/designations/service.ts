@@ -6,10 +6,16 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
 import { ORG_DESIGNATION_VERSION } from "@/lib/designations/version";
 import { getLatestOrgQualityScore } from "@/lib/server/grading/service";
+import { getOrganizationSignals } from "@/lib/server/orgSignals/aggregate";
 import {
   evaluateDesignationFromGrading,
   finalizeDesignationEvaluation,
 } from "./evaluate";
+import {
+  buildDesignationConfidenceNote,
+  buildDesignationImprovementHints,
+  buildDesignationInternalExplanation,
+} from "./explain";
 import type { DesignationEvaluation, OrgDesignationRow } from "./types";
 
 function mapDesignationRow(r: Record<string, unknown>): OrgDesignationRow {
@@ -88,7 +94,8 @@ export async function computeAndPersistDesignation(params: {
   actorUserId?: string | null;
 }): Promise<{ row: OrgDesignationRow; evaluation: DesignationEvaluation }> {
   const grading = await getLatestOrgQualityScore(params.organizationId);
-  const partial = evaluateDesignationFromGrading(grading);
+  const signals = await getOrganizationSignals(params.organizationId).catch(() => null);
+  const partial = evaluateDesignationFromGrading(grading, signals);
   const evaluation = finalizeDesignationEvaluation(partial);
 
   const supabase = getSupabaseAdmin();
@@ -133,5 +140,45 @@ export function toPublicDesignationPayload(row: OrgDesignationRow) {
     designation_version: row.designation_version,
     updated_at: row.created_at,
     internal_preview: true as const,
+  };
+}
+
+export async function getDesignationPresentation(params: {
+  organizationId: string;
+  row: OrgDesignationRow | null;
+}) {
+  const signals = await getOrganizationSignals(params.organizationId).catch(() => null);
+  const signalFlags = signals?.flags ?? [];
+  const hints = buildDesignationImprovementHints(signals);
+
+  if (!params.row) {
+    return {
+      confidence_note:
+        "There is not yet enough platform evidence to show a reliable designation.",
+      hints,
+      signal_flags: signalFlags,
+      internal_explanation: buildDesignationInternalExplanation({
+        tier: "insufficient_data",
+        confidence: "low",
+        signalFlags,
+        signals,
+      }),
+    };
+  }
+
+  return {
+    confidence_note: buildDesignationConfidenceNote({
+      confidence: params.row.designation_confidence,
+      tier: params.row.designation_tier,
+      signalFlags,
+    }),
+    hints,
+    signal_flags: signalFlags,
+    internal_explanation: buildDesignationInternalExplanation({
+      tier: params.row.designation_tier,
+      confidence: params.row.designation_confidence,
+      signalFlags,
+      signals,
+    }),
   };
 }

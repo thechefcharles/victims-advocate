@@ -14,6 +14,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import {
   getCurrentOrgDesignation,
+  getDesignationPresentation,
   toPublicDesignationPayload,
 } from "@/lib/server/designations/service";
 import { explainDesignationTier, methodologyLinks } from "@/lib/server/designations/explain";
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
     }
 
     const row = await getCurrentOrgDesignation(orgId);
+    const presentation = await getDesignationPresentation({ organizationId: orgId, row });
     const methodology = methodologyLinks();
 
     if (!row) {
@@ -46,6 +48,8 @@ export async function GET(req: Request) {
           "No designation on file yet. Designations are assigned when administrators refresh them after internal grading.",
         internal_preview: true,
         explanation: explainDesignationTier("insufficient_data"),
+        confidence_note: presentation.confidence_note,
+        hints: presentation.hints,
         methodology,
       });
     }
@@ -53,6 +57,8 @@ export async function GET(req: Request) {
     return apiOk({
       designation: toPublicDesignationPayload(row),
       explanation: explainDesignationTier(row.designation_tier as DesignationTier),
+      confidence_note: presentation.confidence_note,
+      hints: presentation.hints,
       methodology,
     });
   } catch (err) {

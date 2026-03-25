@@ -3,6 +3,7 @@
  */
 
 import type { OrgQualityScoreRow } from "@/lib/server/grading/types";
+import type { OrganizationSignals } from "@/lib/server/orgSignals/types";
 import {
   THRESHOLD_COMPREHENSIVE,
   THRESHOLD_ESTABLISHED_MIN,
@@ -17,11 +18,16 @@ function hasFlag(flags: string[], f: string): boolean {
 
 function deriveDesignationConfidence(
   tier: DesignationTier,
-  gradingConfidence: OrgQualityScoreRow["score_confidence"] | null
+  gradingConfidence: OrgQualityScoreRow["score_confidence"] | null,
+  signalFlags: string[]
 ): DesignationConfidence {
   if (tier === "insufficient_data") {
     return "low";
   }
+  if (signalFlags.includes("insufficient_case_volume")) return "low";
+  if (signalFlags.includes("limited_message_data")) return "low";
+  if (signalFlags.includes("workflow_usage_sparse")) return "low";
+  if (signalFlags.includes("profile_not_searchable")) return "low";
   if (gradingConfidence === "high" && tier === "comprehensive") {
     return "high";
   }
@@ -35,7 +41,8 @@ function deriveDesignationConfidence(
 }
 
 export function evaluateDesignationFromGrading(
-  grading: OrgQualityScoreRow | null
+  grading: OrgQualityScoreRow | null,
+  signals: OrganizationSignals | null
 ): Omit<DesignationEvaluation, "public_summary"> & { grading_for_summary: OrgQualityScoreRow | null } {
   const flags: string[] = [];
   let tier: DesignationTier = "insufficient_data";
@@ -59,6 +66,21 @@ export function evaluateDesignationFromGrading(
   }
 
   gradingConfidence = grading.score_confidence;
+  const signalFlags = signals?.flags ?? [];
+  for (const f of signalFlags) {
+    if (
+      [
+        "insufficient_case_volume",
+        "limited_message_data",
+        "workflow_usage_sparse",
+        "profile_not_searchable",
+        "appointments_not_available",
+      ].includes(f)
+    ) {
+      flags.push(f);
+    }
+  }
+
   const gf = grading.flags ?? [];
   for (const f of gf) {
     if (
@@ -78,6 +100,9 @@ export function evaluateDesignationFromGrading(
   const insufficientSignal =
     lowGradingConfidence ||
     hasFlag(gf, "insufficient_data") ||
+    signalFlags.includes("profile_not_searchable") ||
+    (signalFlags.includes("insufficient_case_volume") &&
+      signalFlags.includes("workflow_usage_sparse")) ||
     (hasFlag(gf, "limited_case_volume") &&
       hasFlag(gf, "profile_incomplete") &&
       score < THRESHOLD_ESTABLISHED_MIN);
@@ -97,7 +122,11 @@ export function evaluateDesignationFromGrading(
     tier = "foundational";
   }
 
-  const designation_confidence = deriveDesignationConfidence(tier, gradingConfidence);
+  const designation_confidence = deriveDesignationConfidence(
+    tier,
+    gradingConfidence,
+    signalFlags
+  );
 
   return {
     designation_tier: tier,

@@ -130,6 +130,8 @@ export default function AdvocateOrgPage() {
     public_summary: string | null;
   } | null>(null);
   const [designationMsg, setDesignationMsg] = useState<string | null>(null);
+  const [designationConfidenceNote, setDesignationConfidenceNote] = useState<string | null>(null);
+  const [designationHints, setDesignationHints] = useState<string[]>([]);
   const [designationExplain, setDesignationExplain] = useState<{
     headline: string;
     bullets: string[];
@@ -187,6 +189,8 @@ export default function AdvocateOrgPage() {
       if (!res.ok) return;
       const d = json.data?.designation ?? json.designation;
       const expl = json.data?.explanation;
+      setDesignationConfidenceNote(json.data?.confidence_note ?? null);
+      setDesignationHints(Array.isArray(json.data?.hints) ? (json.data.hints as string[]) : []);
       if (expl?.headline) {
         setDesignationExplain({ headline: expl.headline, bullets: expl.bullets ?? [] });
       }
@@ -1105,6 +1109,19 @@ export default function AdvocateOrgPage() {
                   <p className="text-sm text-slate-300 leading-relaxed mt-2">
                     {designation.public_summary}
                   </p>
+                )}
+                {designationConfidenceNote && (
+                  <p className="text-xs text-slate-400 mt-2">{designationConfidenceNote}</p>
+                )}
+                {designationHints.length > 0 && (
+                  <div className="mt-2 text-xs text-slate-400">
+                    <p className="font-medium text-slate-300">Improving reliability over time</p>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {designationHints.slice(0, 4).map((h) => (
+                        <li key={h}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </>
             ) : (
