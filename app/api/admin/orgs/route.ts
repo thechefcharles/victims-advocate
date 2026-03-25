@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
+import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/service";
 
 const ORG_TYPES = ["nonprofit", "hospital", "gov", "other"] as const;
 
@@ -24,12 +25,25 @@ export async function GET(req: Request) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("organizations")
-      .select("id, created_at, name, type, status, created_by, profile_status, profile_stage")
-      .order("created_at", { ascending: false });
+      .select(
+        "id, created_at, name, type, status, created_by, profile_status, profile_stage, accepting_clients, capacity_status, service_types, languages"
+      )
+      .order("name", { ascending: true });
 
     if (error) throw new Error(error.message);
 
-    return apiOk({ orgs: data ?? [] });
+    const rows = data ?? [];
+    const desMap = await getCurrentDesignationsForOrgIds(rows.map((r) => r.id));
+    const orgs = rows.map((r) => {
+      const d = desMap.get(r.id);
+      return {
+        ...r,
+        designation_tier: d?.designation_tier ?? null,
+        designation_confidence: d?.designation_confidence ?? null,
+      };
+    });
+
+    return apiOk({ orgs });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("admin.orgs.list.error", { code: appErr.code, message: appErr.message });

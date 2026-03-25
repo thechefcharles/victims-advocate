@@ -18,6 +18,7 @@ import {
   computeOrgProfileCompletenessLevel,
   type OrgProfileLike,
 } from "@/lib/server/organizations/profileCompleteness";
+import { buildOrgInternalFollowupCue } from "@/lib/admin/orgDiscoveryCues";
 
 export type OrgRow = Record<string, unknown> & { id: string; name: string };
 
@@ -292,6 +293,20 @@ export function summarizeOrgForSegment(
   const counties = countiesFromCoverage(org.coverage_area as Record<string, unknown>);
   const acc = (org.accessibility_features as string[]) || [];
   const virtual = acc.map((x) => x.toLowerCase()).includes("virtual_services");
+  const profileStage = String(org.profile_stage ?? "created");
+  const profileStatus = String(org.profile_status ?? "");
+  const internal_followup_cue = buildOrgInternalFollowupCue({
+    orgStatus: String(org.status),
+    profileStatus: org.profile_status != null ? String(org.profile_status) : null,
+    profileStage: org.profile_stage != null ? String(org.profile_stage) : null,
+    capacityStatus: org.capacity_status != null ? String(org.capacity_status) : null,
+    acceptingClients: org.accepting_clients === true,
+    designationTier: des?.designation_tier ?? null,
+    designationConfidence: des?.designation_confidence ?? null,
+    routingInWindow: wf.routing_runs_in_window,
+    completenessInWindow: wf.completeness_runs_in_window,
+    workflowMessagesInWindow: wf.messages_sent_in_window,
+  });
   return {
     organization_id: org.id,
     organization_name: String(org.name),
@@ -304,10 +319,13 @@ export function summarizeOrgForSegment(
     languages: (org.languages as string[]) || [],
     capacity_status: String(org.capacity_status ?? "unknown"),
     accepting_clients: Boolean(org.accepting_clients),
+    profile_status: profileStatus,
+    profile_stage: profileStage,
     designation_tier: des?.designation_tier ?? null,
     designation_confidence: des?.designation_confidence ?? null,
     profile_completeness: computeOrgProfileCompletenessLevel(org as OrgProfileLike),
     virtual_services: virtual,
+    internal_followup_cue,
     ...wf,
   };
 }

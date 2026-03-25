@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ORG_GRADING_VERSION } from "@/lib/grading/version";
@@ -62,6 +63,7 @@ type ScoreRow = {
 };
 
 export default function AdminGradingPage() {
+  const searchParams = useSearchParams();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -90,7 +92,6 @@ export default function AdminGradingPage() {
     const json = await res.json();
     const list = (json.data?.orgs ?? []) as Org[];
     setOrgs(list);
-    if (list.length && !orgId) setOrgId(list[0].id);
     setErr(null);
   };
 
@@ -136,6 +137,16 @@ export default function AdminGradingPage() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (orgs.length === 0) return;
+    const fromUrl = searchParams.get("org")?.trim();
+    if (fromUrl && orgs.some((o) => o.id === fromUrl)) {
+      setOrgId(fromUrl);
+      return;
+    }
+    setOrgId((prev) => prev || orgs[0]!.id);
+  }, [orgs, searchParams]);
 
   useEffect(() => {
     if (!orgId) return;
@@ -372,7 +383,10 @@ export default function AdminGradingPage() {
         )}
 
         {signals && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
+          <section
+            id="org-signals-snapshot"
+            className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4 scroll-mt-24"
+          >
             <h2 className="text-sm font-semibold text-slate-200">Org signal snapshot (internal)</h2>
             <p className="text-xs text-slate-500">
               Lightweight derived operational signals for internal scoring/debug use. Not public and

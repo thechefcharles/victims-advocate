@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ORG_DESIGNATION_VERSION } from "@/lib/designations/version";
@@ -35,6 +36,7 @@ type DesignationPresentation = {
 };
 
 export default function AdminDesignationsPage() {
+  const searchParams = useSearchParams();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -60,7 +62,6 @@ export default function AdminDesignationsPage() {
     const json = await res.json();
     const list = (json.data?.orgs ?? []) as Org[];
     setOrgs(list);
-    if (list.length && !orgId) setOrgId(list[0].id);
   };
 
   const loadDesignation = async (id: string) => {
@@ -90,6 +91,16 @@ export default function AdminDesignationsPage() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (orgs.length === 0) return;
+    const fromUrl = searchParams.get("org")?.trim();
+    if (fromUrl && orgs.some((o) => o.id === fromUrl)) {
+      setOrgId(fromUrl);
+      return;
+    }
+    setOrgId((prev) => prev || orgs[0]!.id);
+  }, [orgs, searchParams]);
 
   useEffect(() => {
     if (orgId) loadDesignation(orgId);
