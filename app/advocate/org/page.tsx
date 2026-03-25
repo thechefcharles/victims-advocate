@@ -32,6 +32,7 @@ import {
   listOptionalEnrichedHints,
 } from "@/lib/organizations/profileStage";
 import type { OrganizationProfile } from "@/lib/server/organizations/types";
+import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
 
 const INVITE_ROLE_LABELS: Record<OrgRole, string> = {
   org_owner: "Org owner",
@@ -630,6 +631,17 @@ export default function AdvocateOrgPage() {
             {err}
           </div>
         )}
+
+        {profile && !profileLoading ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <NxtStpsVerifiedBadge
+              org={{
+                lifecycle_status: profile.lifecycle_status ?? null,
+                public_profile_status: profile.public_profile_status ?? null,
+              }}
+            />
+          </div>
+        ) : null}
 
         {profile && !profileLoading && profile.public_profile_status === "draft" && (
           <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300 space-y-2">

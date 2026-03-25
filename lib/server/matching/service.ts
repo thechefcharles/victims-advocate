@@ -184,6 +184,9 @@ export async function persistOrganizationMatchRun(params: {
           coverage_area: org.coverage_area,
           accepting_clients: org.accepting_clients,
           capacity_status: org.capacity_status,
+          // Display-only governance context for trust badges.
+          lifecycle_status: org.lifecycle_status,
+          public_profile_status: org.public_profile_status,
           accessibility_features: org.accessibility_features,
           special_populations: org.special_populations,
         }

@@ -11,6 +11,7 @@ import { designationTierBadgeText, confidenceChipText } from "@/lib/trustDisplay
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
+import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
 
 type OrgResult = {
   id: string;
@@ -20,6 +21,8 @@ type OrgResult = {
   coverage_area: Record<string, unknown>;
   accepting_clients: boolean;
   capacity_status: string;
+  lifecycle_status?: string;
+  public_profile_status?: string;
   profile_stage: string;
   designation_tier: string | null;
   designation_confidence: string | null;
@@ -199,6 +202,7 @@ export default function AdvocateOrgSearchPage() {
                     <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
                       Profile stage: {org.profile_stage}
                     </span>
+                    <NxtStpsVerifiedBadge org={org} />
                     {org.designation_tier ? (
                       <span className="text-[10px] rounded-full border border-teal-700/50 px-2 py-0.5 text-teal-200">
                         {designationTierBadgeText(org.designation_tier) ?? org.designation_tier}
