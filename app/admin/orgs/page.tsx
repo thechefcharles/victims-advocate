@@ -17,6 +17,7 @@ import {
   profileStageLabel,
   publicProfileStatusLabel,
 } from "@/lib/admin/orgAdminLabels";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 type AdminOrg = {
   id: string;
@@ -1070,7 +1071,7 @@ export default function AdminOrgsPage() {
                       </div>
                       <div className="flex flex-col gap-1.5 shrink-0 items-end min-w-[11rem]">
                         <Link
-                          href={`/advocate/org?organization_id=${o.id}`}
+                          href={`${ROUTES.organizationSettings}?organization_id=${o.id}`}
                           className="text-xs font-semibold text-emerald-400 hover:text-emerald-300"
                         >
                           View organization

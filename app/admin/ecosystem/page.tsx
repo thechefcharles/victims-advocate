@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { confidenceChipText, designationTierBadgeText } from "@/lib/trustDisplay";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
@@ -493,7 +494,7 @@ export default function AdminEcosystemPage() {
                         <td className="py-2 pr-2 text-right">
                           <div className="flex flex-col items-end gap-0.5">
                             <Link
-                              href={`/advocate/org?organization_id=${o.organization_id}`}
+                              href={`${ROUTES.organizationSettings}?organization_id=${o.organization_id}`}
                               className="text-teal-400/90 hover:text-teal-300"
                             >
                               View

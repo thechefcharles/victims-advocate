@@ -132,6 +132,11 @@ export default function TopNav() {
   };
 
   const showOrgLink = Boolean(orgId);
+  /** Leadership uses canonical org workspace; staff advocates stay on `/advocate/org`. */
+  const advocateOrgWorkspaceHref =
+    showOrgLink && (orgRole === "owner" || orgRole === "supervisor")
+      ? ROUTES.organizationSettings
+      : ROUTES.advocateOrg;
   const showOrgNavForOrgRole = role === "organization" && showOrgLink;
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";
@@ -206,7 +211,7 @@ export default function TopNav() {
                       {t("nav.messages")}
                     </Link>
                     {showOrgLink && (
-                      <Link href={ROUTES.advocateOrg} className={NAV_PRIMARY}>
+                      <Link href={advocateOrgWorkspaceHref} className={NAV_PRIMARY}>
                         {t("nav.organization")}
                       </Link>
                     )}

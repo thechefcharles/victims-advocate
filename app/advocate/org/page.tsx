@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
@@ -86,6 +87,9 @@ type OrgProfile = {
 const QUICK_LANG = ["en", "es", "zh", "fr", "ar", "vi", "ko", "tl"] as const;
 
 export default function AdvocateOrgPage() {
+  const pathname = usePathname();
+  const isOrganizationSettingsRoute = pathname?.startsWith("/organization/settings") ?? false;
+
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -618,12 +622,16 @@ export default function AdvocateOrgPage() {
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
-          contextLine="Advocate → Organization"
+          contextLine={isOrganizationSettingsRoute ? "Organization" : "Advocate → Organization"}
           eyebrow="Organization"
           title="Organization workspace"
           subtitle="Keep your organization profile current, review profile stage for matching, and track designation confidence."
           meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
-          backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
+          backLink={
+            isOrganizationSettingsRoute
+              ? { href: ROUTES.organizationDashboard, label: "← Organization dashboard" }
+              : { href: ROUTES.advocateHome, label: "← My Dashboard" }
+          }
         />
 
         {err && (

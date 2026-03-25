@@ -7,6 +7,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 type AdvocateRow = {
   id: string;
@@ -208,7 +209,7 @@ export default function OrganizationDashboardPage() {
           <h1 className="text-2xl font-semibold mt-1">My Dashboard</h1>
           <p className="text-sm text-slate-400 mt-2">
             Advocates in your agency and victims tied to cases. Manage staff and invites in{" "}
-            <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+            <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
               Org settings
             </Link>
             .
@@ -220,7 +221,7 @@ export default function OrganizationDashboardPage() {
                   Your organization&apos;s public listing is{" "}
                   <span className="text-amber-200/90">under platform review</span>. Details and updates live
                   in{" "}
-                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                  <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                     Org settings
                   </Link>
                   .
@@ -228,7 +229,7 @@ export default function OrganizationDashboardPage() {
               ) : publicProfileStatus === "paused" ? (
                 <>
                   Public visibility is <span className="text-slate-200">paused</span>. Open{" "}
-                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                  <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                     Org settings
                   </Link>{" "}
                   for status and next steps.
@@ -237,7 +238,7 @@ export default function OrganizationDashboardPage() {
                 <>
                   Your organization is <span className="text-slate-200">not yet public</span>. Complete your
                   profile and submit for review in{" "}
-                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                  <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                     Org settings
                   </Link>
                   .
@@ -353,7 +354,7 @@ export default function OrganizationDashboardPage() {
           ) : advocates.length === 0 ? (
             <p className="text-sm text-slate-400">
               No victim advocates in this org yet. Invite staff in{" "}
-              <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+              <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                 Org settings
               </Link>
               .
@@ -440,7 +441,7 @@ export default function OrganizationDashboardPage() {
         </section>
 
         <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-          <Link href="/advocate/org" className="underline hover:text-slate-300">
+          <Link href={ROUTES.organizationSettings} className="underline hover:text-slate-300">
             Org settings
           </Link>
           <Link href="/" className="underline hover:text-slate-300">
