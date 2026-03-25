@@ -27,7 +27,7 @@ export function buildServiceReasons(overlap: string[]): string[] {
   const out: string[] = [];
   for (const s of overlap) {
     const label = SERVICE_LABELS[s] ?? s.replace(/_/g, " ");
-    out.push(`Likely able to help with ${label}`);
+    out.push(`Offers ${label}`);
   }
   return out;
 }
@@ -38,10 +38,10 @@ export function buildGeographyReason(params: {
   stateKnown: boolean;
 }): string[] {
   if (params.viaVirtual) {
-    return ["May serve you through virtual services (outside listed area)"];
+    return ["Offers virtual services"];
   }
   if (params.stateMatch && params.stateKnown) {
-    return ["Serves your state or region"];
+    return ["Serves your area"];
   }
   if (!params.stateKnown) {
     return [];
@@ -150,7 +150,7 @@ export function buildProfileIncompleteFlag(completeness: number): string | null 
 
 export function buildCoverageUnclearFlag(coverageDefined: boolean): string | null {
   if (!coverageDefined) {
-    return "Coverage area unclear — confirm service area directly";
+    return "Coverage details are limited";
   }
   return null;
 }

@@ -3,6 +3,7 @@
  */
 
 import type { MatchingInput, MatchEvaluation, OrgRowForMatching } from "./types";
+import { MATCHING_SCORE_WEIGHTS, MATCHING_THRESHOLDS } from "./config";
 import { orgProfileCompleteness, stateInCoverage } from "./filters";
 import {
   buildAccessibilityReasons,
@@ -22,21 +23,23 @@ function serviceOverlap(org: OrgRowForMatching, needed: string[]): string[] {
 }
 
 function scoreCapacity(org: OrgRowForMatching): number {
-  if (org.accepting_clients && org.capacity_status === "open") return 18;
-  if (org.accepting_clients) return 14;
-  if (org.capacity_status === "open") return 12;
-  if (org.capacity_status === "limited") return 8;
-  if (org.capacity_status === "waitlist") return 5;
-  return 4;
+  if (org.accepting_clients && org.capacity_status === "open") {
+    return MATCHING_SCORE_WEIGHTS.capacity_open_accepting;
+  }
+  if (org.accepting_clients) return MATCHING_SCORE_WEIGHTS.capacity_accepting;
+  if (org.capacity_status === "open") return MATCHING_SCORE_WEIGHTS.capacity_open_only;
+  if (org.capacity_status === "limited") return MATCHING_SCORE_WEIGHTS.capacity_limited;
+  if (org.capacity_status === "waitlist") return MATCHING_SCORE_WEIGHTS.capacity_waitlist;
+  return MATCHING_SCORE_WEIGHTS.capacity_other;
 }
 
 function scoreResponse(org: OrgRowForMatching): number {
   const h = org.avg_response_time_hours;
-  if (h == null) return 3;
-  if (h <= 24) return 8;
-  if (h <= 72) return 6;
-  if (h <= 168) return 4;
-  return 2;
+  if (h == null) return MATCHING_SCORE_WEIGHTS.response_slow_or_unknown;
+  if (h <= 24) return MATCHING_SCORE_WEIGHTS.response_fast_24h;
+  if (h <= 72) return MATCHING_SCORE_WEIGHTS.response_72h;
+  if (h <= 168) return MATCHING_SCORE_WEIGHTS.response_week;
+  return MATCHING_SCORE_WEIGHTS.response_slow_or_unknown;
 }
 
 export type EvaluateContext = {
@@ -49,33 +52,48 @@ export function evaluateOrgMatch(
   ctx: EvaluateContext
 ): MatchEvaluation {
   const overlap = serviceOverlap(org, input.service_types_needed);
-  const serviceScore = Math.min(42, overlap.length * 14);
+  const serviceNeedCount = Math.max(1, input.service_types_needed.length);
+  const serviceOverlapRatio = overlap.length / serviceNeedCount;
+  const serviceScore = Math.min(
+    MATCHING_SCORE_WEIGHTS.service_overlap_cap,
+    overlap.length * MATCHING_SCORE_WEIGHTS.service_overlap_each
+  );
 
   const { inArea, defined } = stateInCoverage(org.coverage_area || {}, input.state_code);
   let geoScore = 0;
   if (ctx.geo_excluded_but_virtual) {
-    geoScore = 22;
+    geoScore = MATCHING_SCORE_WEIGHTS.coverage_virtual_fallback;
   } else if (input.state_code && defined && inArea) {
-    geoScore = 26;
+    geoScore = MATCHING_SCORE_WEIGHTS.coverage_state_match;
   } else if (!defined) {
-    geoScore = 8;
+    geoScore = MATCHING_SCORE_WEIGHTS.coverage_unknown;
   } else {
-    geoScore = 10;
+    geoScore = 0;
   }
 
   const capScore = scoreCapacity(org);
   const lang = buildLanguageReasons(org, input.preferred_language);
-  const langScore = lang.match ? 12 : lang.unknown ? 2 : 4;
+  const langScore = lang.match
+    ? MATCHING_SCORE_WEIGHTS.language_match
+    : lang.unknown
+      ? MATCHING_SCORE_WEIGHTS.language_unknown
+      : MATCHING_SCORE_WEIGHTS.language_non_match;
 
   const acc = buildAccessibilityReasons(org, input.needs_accessibility_features);
-  const accScore = Math.min(12, acc.matched.length * 6 + (acc.reasons.length > 0 ? 2 : 0));
+  const accScore = Math.min(
+    MATCHING_SCORE_WEIGHTS.accessibility_cap,
+    acc.matched.length * MATCHING_SCORE_WEIGHTS.accessibility_each
+  );
 
   const specReasons = buildSpecialPopulationReasons(org, input.special_population_flags);
-  const specScore = Math.min(12, specReasons.length * 5);
+  const specScore = Math.min(
+    MATCHING_SCORE_WEIGHTS.special_population_cap,
+    specReasons.length * MATCHING_SCORE_WEIGHTS.special_population_each
+  );
 
   const respScore = scoreResponse(org);
 
-  let raw =
+  const raw =
     serviceScore +
     geoScore +
     capScore +
@@ -102,7 +120,7 @@ export function evaluateOrgMatch(
   ];
   const flags: string[] = [];
   if (lang.unknown && input.preferred_language) {
-    flags.push("Language match unknown — confirm directly");
+    flags.push("Language match is unknown");
   }
   const covFlag = buildCoverageUnclearFlag(defined);
   if (covFlag) flags.push(covFlag);
@@ -110,16 +128,34 @@ export function evaluateOrgMatch(
   if (profFlag) flags.push(profFlag);
   const sparse = buildSparseIntakeFlag(input);
   if (sparse) flags.push(sparse);
+  if (input.service_types_needed.length === 0) {
+    flags.push("Service needs are limited — recommendations use broader fit signals");
+  }
+
+  // Service fit must remain the dominant ranking factor.
+  if (
+    input.service_types_needed.length > 0 &&
+    serviceOverlapRatio < MATCHING_THRESHOLDS.weak_service_overlap_ratio
+  ) {
+    flags.push("Service overlap is limited for your current needs");
+  }
 
   let match_tier: MatchEvaluation["match_tier"];
   let strong_match = false;
   let possible_match = false;
   let limited_match = false;
 
-  if (completeness < 0.32 || match_score < 32) {
+  if (
+    completeness < MATCHING_THRESHOLDS.limited_profile_completeness ||
+    match_score < MATCHING_THRESHOLDS.possible_min_score
+  ) {
     match_tier = "limited_match";
     limited_match = true;
-  } else if (match_score >= 68 && completeness >= 0.4) {
+  } else if (
+    match_score >= MATCHING_THRESHOLDS.strong_min_score &&
+    completeness >= MATCHING_THRESHOLDS.strong_min_completeness &&
+    (input.service_types_needed.length === 0 || overlap.length > 0)
+  ) {
     match_tier = "strong_match";
     strong_match = true;
   } else {
@@ -132,6 +168,13 @@ export function evaluateOrgMatch(
     strong_match = false;
     possible_match = true;
     flags.push("Recommendations based on limited intake details");
+  }
+
+  if (
+    input.intake_sparse &&
+    !flags.includes("More information in your application may improve recommendations")
+  ) {
+    flags.push("More information in your application may improve recommendations");
   }
 
   return {
@@ -158,5 +201,14 @@ export function evaluateOrgMatch(
     designation_reason: null,
     designation_boost_points: 0,
     designation_tie_ordinal: 0,
+    score_breakdown: {
+      service: serviceScore,
+      coverage: geoScore,
+      availability: capScore,
+      language: langScore,
+      accessibility: accScore,
+      special_populations: specScore,
+      response_time: respScore,
+    },
   };
 }

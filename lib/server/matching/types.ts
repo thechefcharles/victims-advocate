@@ -63,6 +63,16 @@ export type MatchEvaluation = {
   designation_boost_points: number;
   /** Internal: tie-break ordering (omitted from API). */
   designation_tie_ordinal: number;
+  /** Internal: transparent component scoring for debugging rank order. */
+  score_breakdown?: {
+    service: number;
+    coverage: number;
+    availability: number;
+    language: number;
+    accessibility: number;
+    special_populations: number;
+    response_time: number;
+  };
 };
 
 export type OrganizationMatchRunRow = {
