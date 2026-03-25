@@ -5,9 +5,15 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { buildOrgInternalFollowupCue } from "@/lib/organizations/internalFollowupCues";
 import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 import { designationTierBadgeText, confidenceChipText } from "@/lib/trustDisplay";
+import {
+  buildAdminOrgCue,
+  lifecycleStatusLabel,
+  operationalStatusLabel,
+  profileStageLabel,
+  publicProfileStatusLabel,
+} from "@/lib/admin/orgAdminLabels";
 
 type AdminOrg = {
   id: string;
@@ -30,6 +36,9 @@ type AdminOrg = {
   designation_confidence?: string | null;
   /** Phase 4: org-led sensitive profile edit logged; non-blocking. */
   has_sensitive_profile_flag?: boolean;
+  /** Phase 5: pending org_claim_requests for this org */
+  has_pending_ownership_claim?: boolean;
+  has_pending_activation?: boolean;
 };
 
 type PendingProposal = {
@@ -94,6 +103,8 @@ export default function AdminOrgsPage() {
   >("all");
   const [acceptingFilter, setAcceptingFilter] = useState<"all" | "yes" | "no">("all");
   const [showUnreadyInternal, setShowUnreadyInternal] = useState(false);
+  /** Phase 5: show orgs with follow-up cues only */
+  const [followUpOnly, setFollowUpOnly] = useState(false);
 
   const load = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -159,6 +170,15 @@ export default function AdminOrgsPage() {
     return orgs.filter((o) => {
       if (!showUnreadyInternal && !isOrganizationMatchingEligible(o)) return false;
 
+      if (followUpOnly) {
+        const needsFollowUp =
+          (o.org_owner_count ?? 0) === 0 ||
+          o.has_pending_ownership_claim === true ||
+          o.has_pending_activation === true ||
+          o.has_sensitive_profile_flag === true;
+        if (!needsFollowUp) return false;
+      }
+
       if (q) {
         const nameMatch = o.name.toLowerCase().includes(q);
         const svc = (o.service_types ?? []).some((s) => s.toLowerCase().includes(q));
@@ -193,12 +213,54 @@ export default function AdminOrgsPage() {
     designationFilter,
     acceptingFilter,
     showUnreadyInternal,
+    followUpOnly,
   ]);
 
   const matchingCount = useMemo(
     () => orgs.filter((o) => isOrganizationMatchingEligible(o)).length,
     [orgs]
   );
+
+  const runOrgLifecycle = async (
+    orgId: string,
+    action: "pause" | "resume" | "archive" | "resolve-flags"
+  ) => {
+    const key = `${action}:${orgId}`;
+    setActingId(key);
+    setErr(null);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) return;
+      const path =
+        action === "resolve-flags"
+          ? `/api/admin/orgs/${orgId}/resolve-profile-flags`
+          : `/api/admin/orgs/${orgId}/${action}`;
+      const res = await fetch(path, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        await load();
+      } else {
+        const json = await res.json().catch(() => ({}));
+        setErr(
+          getApiErrorMessage(
+            json,
+            action === "pause"
+              ? "Could not pause public profile"
+              : action === "resume"
+                ? "Could not resume public profile"
+                : action === "archive"
+                  ? "Could not archive organization"
+                  : "Could not update profile flags"
+          )
+        );
+      }
+    } finally {
+      setActingId(null);
+    }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,7 +299,7 @@ export default function AdminOrgsPage() {
           contextLine="Admin → Organizations"
           eyebrow="Admin · Internal only"
           title="Organizations"
-          subtitle="Internal oversight of partner organizations: readiness, designation, and follow-up. Default view emphasizes organizations aligned with matching (active profile, searchable or enriched stage)."
+          subtitle="Operational control surface: operational status, lifecycle, public visibility, profile stage, ownership, activation, and sensitive edits — without changing matching rules yet."
           rightActions={
             <>
               <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
@@ -265,11 +327,54 @@ export default function AdminOrgsPage() {
           }
         />
 
-        {ownershipClaims.length > 0 && (
-          <section className="rounded-2xl border border-violet-500/35 bg-violet-950/20 p-5">
-            <h2 className="text-sm font-semibold text-violet-100 mb-2">
-              Pending organization ownership claims ({ownershipClaims.length})
-            </h2>
+        {!loading && (
+          <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400 space-y-1">
+            {(() => {
+              const qClaims = ownershipClaims.length;
+              const qJoins = repJoinRequests.length;
+              const qAct = orgs.filter((o) => o.public_profile_status === "pending_review").length;
+              const qProp = proposals.filter((p) => p.status === "pending").length;
+              const total = qClaims + qJoins + qAct + qProp;
+              if (total === 0) {
+                return (
+                  <p>
+                    <span className="text-slate-500">Queues:</span> no pending ownership claims, join
+                    requests, activations, or proposals.
+                  </p>
+                );
+              }
+              return (
+                <p>
+                  <span className="text-slate-500">Queues:</span>{" "}
+                  <span className="text-slate-300">{qClaims} ownership</span> ·{" "}
+                  <span className="text-slate-300">{qJoins} join</span> ·{" "}
+                  <span className="text-slate-300">{qAct} activation</span> ·{" "}
+                  <span className="text-slate-300">{qProp} proposals</span>
+                </p>
+              );
+            })()}
+            {orgs.some((o) => o.has_sensitive_profile_flag) ? (
+              <p className="text-violet-200/80">
+                Some organizations have unresolved sensitive profile flags — see rows below or{" "}
+                <Link href="/admin/audit" className="text-violet-300 hover:underline">
+                  Audit log
+                </Link>
+                .
+              </p>
+            ) : (
+              <p className="text-slate-500">No unresolved sensitive-change flags on the list right now.</p>
+            )}
+          </div>
+        )}
+
+        <section className="rounded-2xl border border-violet-500/35 bg-violet-950/20 p-5">
+          <h2 className="text-sm font-semibold text-violet-100 mb-2">
+            Pending organization ownership claims ({ownershipClaims.length})
+          </h2>
+          {ownershipClaims.length === 0 ? (
+            <p className="text-xs text-slate-500 py-1">No pending ownership claims.</p>
+          ) : (
+            <>
             <p className="text-xs text-violet-200/80 mb-4">
               A directory or setup flow created the organization (or it already existed without an owner) and
               the requester is asking to become <strong className="text-violet-100">Organization Owner</strong>.
@@ -354,22 +459,26 @@ export default function AdminOrgsPage() {
                 </li>
               ))}
             </ul>
-          </section>
-        )}
+            </>
+          )}
+        </section>
 
-        {repJoinRequests.length > 0 && (
-          <section className="rounded-2xl border border-cyan-500/35 bg-cyan-950/20 p-5">
-            <h2 className="text-sm font-semibold text-cyan-100 mb-2">
-              Pending requests to join an organization ({repJoinRequests.length})
-            </h2>
-            <p className="text-xs text-cyan-200/80 mb-4">
-              Someone with an organization leader account asked to join an existing workspace (usually after
-              finding the agency in the Illinois directory). Approve adds them as{" "}
-              <strong className="text-cyan-100">Organization Owner</strong> for that org. Org managers are
-              notified too, but you can act here if there is no owner yet.
-            </p>
-            <ul className="space-y-4">
-              {repJoinRequests.map((r) => (
+        <section className="rounded-2xl border border-cyan-500/35 bg-cyan-950/20 p-5">
+          <h2 className="text-sm font-semibold text-cyan-100 mb-2">
+            Pending requests to join an organization ({repJoinRequests.length})
+          </h2>
+          {repJoinRequests.length === 0 ? (
+            <p className="text-xs text-slate-500 py-1">No pending join requests.</p>
+          ) : (
+            <>
+              <p className="text-xs text-cyan-200/80 mb-4">
+                Someone with an organization leader account asked to join an existing workspace (usually after
+                finding the agency in the Illinois directory). Approve adds them as{" "}
+                <strong className="text-cyan-100">Organization Owner</strong> for that org. Org managers are
+                notified too, but you can act here if there is no owner yet.
+              </p>
+              <ul className="space-y-4">
+                {repJoinRequests.map((r) => (
                 <li
                   key={r.id}
                   className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
@@ -441,26 +550,30 @@ export default function AdminOrgsPage() {
                     </div>
                   </div>
                 </li>
-              ))}
-            </ul>
-          </section>
-        )}
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
 
-        {orgs.filter((o) => o.public_profile_status === "pending_review").length > 0 && (
-          <section className="rounded-2xl border border-teal-500/35 bg-teal-950/15 p-5">
-            <h2 className="text-sm font-semibold text-teal-100 mb-2">
-              Organizations pending activation (
-              {orgs.filter((o) => o.public_profile_status === "pending_review").length})
-            </h2>
-            <p className="text-xs text-teal-200/80 mb-4">
-              An organization owner submitted this workspace for public visibility. Activating sets{" "}
-              <strong className="text-teal-100">public profile</strong> to active (matching/search enforcement
-              still follows Phase 6). Reject returns the org to draft so they can revise and resubmit.
-            </p>
-            <ul className="space-y-4">
-              {orgs
-                .filter((o) => o.public_profile_status === "pending_review")
-                .map((o) => (
+        <section className="rounded-2xl border border-teal-500/35 bg-teal-950/15 p-5">
+          <h2 className="text-sm font-semibold text-teal-100 mb-2">
+            Organizations pending activation (
+            {orgs.filter((o) => o.public_profile_status === "pending_review").length})
+          </h2>
+          {orgs.filter((o) => o.public_profile_status === "pending_review").length === 0 ? (
+            <p className="text-xs text-slate-500 py-1">There are no organizations pending activation.</p>
+          ) : (
+            <>
+              <p className="text-xs text-teal-200/80 mb-4">
+                An organization owner submitted this workspace for public visibility. Activating sets{" "}
+                <strong className="text-teal-100">public profile</strong> to active (matching/search enforcement
+                still follows Phase 6). Reject returns the org to draft so they can revise and resubmit.
+              </p>
+              <ul className="space-y-4">
+                {orgs
+                  .filter((o) => o.public_profile_status === "pending_review")
+                  .map((o) => (
                   <li
                     key={o.id}
                     className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
@@ -539,26 +652,30 @@ export default function AdminOrgsPage() {
                       </div>
                     </div>
                   </li>
-                ))}
-            </ul>
-          </section>
-        )}
+                  ))}
+              </ul>
+            </>
+          )}
+        </section>
 
-        {proposals.filter((p) => p.status === "pending").length > 0 && (
-          <section className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5">
-            <h2 className="text-sm font-semibold text-amber-100 mb-3">
-              Pending organization requests ({proposals.filter((p) => p.status === "pending").length})
-            </h2>
-            <p className="text-xs text-amber-200/80 mb-4">
-              <strong className="text-amber-100">Approve &amp; create organization</strong> adds a new
-              organization record in NxtStps and sets the submitter as{" "}
-              <strong className="text-amber-100">Organization Owner</strong>.{" "}
-              <strong className="text-amber-100">Decline</strong> closes the request without creating an org.
-            </p>
-            <ul className="space-y-4">
-              {proposals
-                .filter((p) => p.status === "pending")
-                .map((p) => (
+        <section className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5">
+          <h2 className="text-sm font-semibold text-amber-100 mb-3">
+            Pending organization requests ({proposals.filter((p) => p.status === "pending").length})
+          </h2>
+          {proposals.filter((p) => p.status === "pending").length === 0 ? (
+            <p className="text-xs text-slate-500 py-1">No pending organization proposals.</p>
+          ) : (
+            <>
+              <p className="text-xs text-amber-200/80 mb-4">
+                <strong className="text-amber-100">Approve &amp; create organization</strong> adds a new
+                organization record in NxtStps and sets the submitter as{" "}
+                <strong className="text-amber-100">Organization Owner</strong>.{" "}
+                <strong className="text-amber-100">Decline</strong> closes the request without creating an org.
+              </p>
+              <ul className="space-y-4">
+                {proposals
+                  .filter((p) => p.status === "pending")
+                  .map((p) => (
                   <li
                     key={p.id}
                     className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
@@ -647,10 +764,11 @@ export default function AdminOrgsPage() {
                       </div>
                     </div>
                   </li>
-                ))}
-            </ul>
-          </section>
-        )}
+                  ))}
+              </ul>
+            </>
+          )}
+        </section>
 
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
           <p className="text-sm text-slate-300 flex-1 min-w-[200px]">
@@ -796,6 +914,20 @@ export default function AdminOrgsPage() {
                 <option value="no">No</option>
               </select>
             </label>
+            <label className="flex flex-wrap items-center gap-2 text-xs text-slate-400 cursor-pointer sm:col-span-2 lg:col-span-3">
+              <input
+                type="checkbox"
+                checked={followUpOnly}
+                onChange={(e) => setFollowUpOnly(e.target.checked)}
+                className="rounded border-slate-600"
+              />
+              <span>
+                Follow-up only{" "}
+                <span className="text-slate-500">
+                  (no owner, pending claim, pending activation, or sensitive profile flag)
+                </span>
+              </span>
+            </label>
           </div>
 
           {loading ? (
@@ -814,6 +946,12 @@ export default function AdminOrgsPage() {
                 Try clearing search text, setting filters to “All,” or enabling “Show incomplete / unready” if
                 you expect organizations still in draft.
               </p>
+              {followUpOnly ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  There are no organizations with follow-up cues (missing owner, pending claim, pending
+                  activation, or sensitive profile flag) under the current filters.
+                </p>
+              ) : null}
               {!showUnreadyInternal && matchingCount === 0 ? (
                 <p className="mt-2 text-xs text-slate-500">
                   No organizations are currently ready for matching in this directory. Use the internal
@@ -824,36 +962,84 @@ export default function AdminOrgsPage() {
           ) : (
             <ul className="space-y-3">
               {filteredOrgs.map((o) => {
-                const cue = buildOrgInternalFollowupCue({
+                const adminCue = buildAdminOrgCue({
                   orgStatus: o.status,
-                  profileStatus: o.profile_status ?? null,
-                  profileStage: o.profile_stage ?? null,
-                  capacityStatus: o.capacity_status ?? null,
-                  acceptingClients: o.accepting_clients ?? null,
-                  designationTier: o.designation_tier ?? null,
-                  designationConfidence: o.designation_confidence ?? null,
+                  lifecycle_status: o.lifecycle_status,
+                  public_profile_status: o.public_profile_status,
+                  org_owner_count: o.org_owner_count,
+                  has_pending_ownership_claim: o.has_pending_ownership_claim,
+                  has_sensitive_profile_flag: o.has_sensitive_profile_flag,
                 });
+                const opArchived = o.status === "archived";
+                const pub = String(o.public_profile_status ?? "draft");
+                const canPause = !opArchived && pub !== "paused";
+                const canResume = !opArchived && pub === "paused";
+                const canArchive = !opArchived;
                 return (
                   <li
                     key={o.id}
                     className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="space-y-1 min-w-0">
+                      <div className="space-y-1 min-w-0 flex-1">
                         <p className="font-medium text-slate-100 truncate">{o.name}</p>
-                        <p className="text-[11px] text-slate-500">
-                          {o.type} · org {o.status}
-                          {o.profile_status ? ` · profile ${o.profile_status}` : ""}
-                        </p>
-                        {(o.org_owner_count ?? 0) === 0 ? (
-                          <p className="text-[11px] text-amber-200/90 mt-1 rounded border border-amber-800/50 bg-amber-950/40 px-2 py-1 inline-block">
-                            No Organization Owner Assigned — invite or assign someone with owner access.
-                          </p>
-                        ) : null}
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
+                        <p className="text-[11px] text-slate-500">{o.type}</p>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          <span
+                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            title={operationalStatusLabel(o.status)}
+                          >
+                            Op: {o.status}
+                          </span>
+                          <span
+                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            title={lifecycleStatusLabel(o.lifecycle_status)}
+                          >
+                            Life: {o.lifecycle_status ?? "—"}
+                          </span>
+                          <span
+                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            title={publicProfileStatusLabel(o.public_profile_status)}
+                          >
+                            Public: {o.public_profile_status ?? "—"}
+                          </span>
+                          <span
+                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            title={profileStageLabel(o.profile_stage)}
+                          >
                             Stage: {o.profile_stage ?? "—"}
                           </span>
+                          <span
+                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            title="Active org_owner memberships"
+                          >
+                            Owners: {o.org_owner_count ?? 0}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {(o.org_owner_count ?? 0) === 0 ? (
+                            <span className="text-[10px] rounded-full border border-amber-800/45 bg-amber-950/35 px-2 py-0.5 text-amber-100/95">
+                              No owner assigned
+                            </span>
+                          ) : null}
+                          {o.has_pending_ownership_claim ? (
+                            <span className="text-[10px] rounded-full border border-violet-800/40 bg-violet-950/30 px-2 py-0.5 text-violet-100/90">
+                              Ownership claim pending
+                            </span>
+                          ) : null}
+                          {o.has_pending_activation ? (
+                            <span className="text-[10px] rounded-full border border-teal-800/40 bg-teal-950/25 px-2 py-0.5 text-teal-100/90">
+                              Pending activation
+                            </span>
+                          ) : null}
+                          {o.has_sensitive_profile_flag ? (
+                            <span
+                              className="text-[10px] rounded-full border border-violet-800/45 px-2 py-0.5 text-violet-200/90"
+                              title="Sensitive profile fields changed — informational; audit has detail."
+                            >
+                              Sensitive edits logged
+                            </span>
+                          ) : null}
                           {o.designation_tier ? (
                             <span className="text-[10px] rounded-full border border-teal-800/50 px-2 py-0.5 text-teal-200/90">
                               {designationTierBadgeText(o.designation_tier) ?? o.designation_tier}
@@ -866,14 +1052,6 @@ export default function AdminOrgsPage() {
                               No designation yet
                             </span>
                           )}
-                          {o.has_sensitive_profile_flag ? (
-                            <span
-                              className="text-[10px] rounded-full border border-violet-800/45 px-2 py-0.5 text-violet-200/90"
-                              title="Recent sensitive profile field changes by the organization (non-blocking). Check audit log for detail."
-                            >
-                              Recent profile changes
-                            </span>
-                          ) : null}
                         </div>
                         <p className="text-xs text-slate-400 pt-1">
                           Services: {formatServicesPreview(o.service_types)} · Capacity:{" "}
@@ -882,10 +1060,10 @@ export default function AdminOrgsPage() {
                           {o.accepting_clients === false ? " · not accepting" : ""}
                         </p>
                         <p className="text-[11px] text-slate-500 leading-relaxed border-l border-slate-700 pl-2">
-                          Follow-up: {cue}
+                          Next: {adminCue}
                         </p>
                       </div>
-                      <div className="flex flex-col gap-1.5 shrink-0 items-end">
+                      <div className="flex flex-col gap-1.5 shrink-0 items-end min-w-[11rem]">
                         <Link
                           href={`/advocate/org?organization_id=${o.id}`}
                           className="text-xs font-semibold text-emerald-400 hover:text-emerald-300"
@@ -910,6 +1088,66 @@ export default function AdminOrgsPage() {
                         >
                           Review signals
                         </Link>
+                        <div
+                          className="mt-2 pt-2 border-t border-slate-800 w-full space-y-1"
+                          aria-label="Admin-only lifecycle"
+                        >
+                          <p className="text-[10px] uppercase tracking-wide text-slate-600 text-right">
+                            Admin
+                          </p>
+                          {canPause ? (
+                            <button
+                              type="button"
+                              disabled={actingId !== null}
+                              onClick={() => void runOrgLifecycle(o.id, "pause")}
+                              className="w-full rounded border border-slate-600 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                            >
+                              {actingId === `pause:${o.id}` ? "…" : "Pause public profile"}
+                            </button>
+                          ) : null}
+                          {canResume ? (
+                            <button
+                              type="button"
+                              disabled={actingId !== null}
+                              onClick={() => void runOrgLifecycle(o.id, "resume")}
+                              className="w-full rounded border border-slate-600 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                            >
+                              {actingId === `resume:${o.id}` ? "…" : "Resume public profile"}
+                            </button>
+                          ) : null}
+                          {canArchive ? (
+                            <button
+                              type="button"
+                              disabled={actingId !== null}
+                              onClick={() => {
+                                if (
+                                  typeof window !== "undefined" &&
+                                  !window.confirm(
+                                    "Archive this organization? Operational and lifecycle status become archived; public profile will be paused. This is intended for partners that should no longer appear in admin workflows."
+                                  )
+                                ) {
+                                  return;
+                                }
+                                void runOrgLifecycle(o.id, "archive");
+                              }}
+                              className="w-full rounded border border-red-900/50 px-2 py-1 text-[11px] text-red-200/90 hover:bg-red-950/40 disabled:opacity-50"
+                            >
+                              {actingId === `archive:${o.id}` ? "…" : "Archive organization"}
+                            </button>
+                          ) : null}
+                          {o.has_sensitive_profile_flag ? (
+                            <button
+                              type="button"
+                              disabled={actingId !== null}
+                              onClick={() => void runOrgLifecycle(o.id, "resolve-flags")}
+                              className="w-full rounded border border-violet-800/40 px-2 py-1 text-[11px] text-violet-200/90 hover:bg-violet-950/30 disabled:opacity-50"
+                            >
+                              {actingId === `resolve-flags:${o.id}`
+                                ? "…"
+                                : "Mark sensitive flags reviewed"}
+                            </button>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </li>

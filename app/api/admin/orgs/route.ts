@@ -52,6 +52,7 @@ export async function GET(req: Request) {
     }
 
     const sensitiveFlagByOrg = new Set<string>();
+    const pendingClaimByOrg = new Set<string>();
     if (orgIds.length > 0) {
       const { data: flagRows, error: flagErr } = await supabase
         .from("organization_profile_flags")
@@ -67,17 +68,34 @@ export async function GET(req: Request) {
           if (oid) sensitiveFlagByOrg.add(oid);
         }
       }
+
+      const { data: claimRows, error: claimErr } = await supabase
+        .from("org_claim_requests")
+        .select("organization_id")
+        .eq("status", "pending")
+        .in("organization_id", orgIds);
+      if (claimErr) {
+        logger.warn("admin.orgs.pending_claims", { message: claimErr.message });
+      } else if (claimRows) {
+        for (const cr of claimRows) {
+          const oid = cr.organization_id as string;
+          if (oid) pendingClaimByOrg.add(oid);
+        }
+      }
     }
 
     const orgs = rows.map((r) => {
       const d = desMap.get(r.id);
       const org_owner_count = ownerCountByOrg.get(r.id) ?? 0;
+      const pub = String(r.public_profile_status ?? "");
       return {
         ...r,
         org_owner_count,
         designation_tier: d?.designation_tier ?? null,
         designation_confidence: d?.designation_confidence ?? null,
         has_sensitive_profile_flag: sensitiveFlagByOrg.has(r.id),
+        has_pending_ownership_claim: pendingClaimByOrg.has(r.id),
+        has_pending_activation: pub === "pending_review",
       };
     });
 
