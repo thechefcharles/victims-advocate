@@ -5,23 +5,39 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
-import { OrganizationCreationSection } from "@/components/org/OrganizationCreationSection";
+import { OrganizationOnboarding } from "@/components/org/OrganizationOnboarding";
 
 /**
- * First-time setup for users with profile role organization and no org membership.
- * Routed from /dashboard after verify + consent (see getDashboardPath).
+ * Organization leader onboarding: directory find/join + pending proposal.
+ * Not available to survivor or advocate accounts (except platform admins).
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user } = useAuth();
+  const { orgId, user, loading, role, realRole, isAdmin } = useAuth();
   const { t } = useI18n();
   const [initialCatalogId, setInitialCatalogId] = useState<number | null>(null);
   const [initialOrgNameHint, setInitialOrgNameHint] = useState<string | null>(null);
+  const [initialLeaderTitleHint, setInitialLeaderTitleHint] = useState<string | null>(null);
   const [prefilled, setPrefilled] = useState(false);
+
+  const profileRole = realRole ?? role;
 
   useEffect(() => {
     if (orgId) router.replace("/organization/dashboard");
   }, [orgId, router]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (isAdmin) return;
+    if (profileRole === "victim") {
+      router.replace("/victim/dashboard");
+      return;
+    }
+    if (profileRole === "advocate") {
+      router.replace("/advocate");
+      return;
+    }
+  }, [loading, user, profileRole, isAdmin, router]);
 
   useEffect(() => {
     if (!user || prefilled) return;
@@ -40,6 +56,11 @@ export default function OrganizationSetupPage() {
       setInitialOrgNameHint(hintRaw.trim());
     }
 
+    const titleRaw = meta?.org_onboarding_leader_title;
+    if (typeof titleRaw === "string" && titleRaw.trim()) {
+      setInitialLeaderTitleHint(titleRaw.trim());
+    }
+
     setPrefilled(true);
   }, [user, prefilled]);
 
@@ -51,28 +72,33 @@ export default function OrganizationSetupPage() {
     );
   }
 
+  if (!loading && user && !isAdmin && (profileRole === "victim" || profileRole === "advocate")) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
+        <p className="text-sm text-slate-400">Redirecting…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
-      <div className="max-w-md mx-auto space-y-6">
-        <header>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">
-            Organization setup
-          </p>
-          <h1 className="text-2xl font-semibold">Find or set up your organization</h1>
-          <p className="text-sm text-slate-400 mt-2">
-            Your personal account is ready. Next, connect your agency from the Illinois directory or
-            submit it for approval if it&apos;s not listed. Nothing here recreates the signup step—you
-            already have an account.
+      <div className="max-w-2xl mx-auto space-y-8">
+        <header className="space-y-2">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Organization onboarding</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Find Or Set Up Your Organization</h1>
+          <p className="text-sm text-slate-400">
+            Choose the option that best matches your organization.
           </p>
         </header>
 
-        <OrganizationCreationSection
+        <OrganizationOnboarding
           initialCatalogId={initialCatalogId}
           initialOrgNameHint={initialOrgNameHint}
+          initialLeaderTitleHint={initialLeaderTitleHint}
           backLink={
             <Link
               href="/dashboard"
-              className="text-sm text-slate-400 hover:text-slate-200"
+              className="text-sm text-slate-400 hover:text-slate-200 inline-block"
             >
               {t("common.backToWorkspace")}
             </Link>

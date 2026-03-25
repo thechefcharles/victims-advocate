@@ -9,6 +9,8 @@ type Props = {
   label?: string;
   required?: boolean;
   id?: string;
+  /** Prefill the search box (e.g. onboarding hint); does not select a row. */
+  initialSearchQuery?: string | null;
 };
 
 export function ProgramCatalogSelect({
@@ -17,11 +19,17 @@ export function ProgramCatalogSelect({
   label = "Illinois Crime Victim Assistance program",
   required = false,
   id = "program-catalog",
+  initialSearchQuery = null,
 }: Props) {
   const [programs, setPrograms] = useState<IlVictimAssistanceProgram[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => initialSearchQuery?.trim() ?? "");
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const q = initialSearchQuery?.trim();
+    if (q) setQuery(q);
+  }, [initialSearchQuery]);
 
   useEffect(() => {
     let cancelled = false;

@@ -1,8 +1,10 @@
 /**
- * Authenticated user creates an organization and becomes org_admin.
- * Requires catalog_entry_id (select from Illinois directory). One org per catalog entry.
- * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use request-to-join flow.
+ * Creates an organization from an Illinois directory entry; caller becomes org owner.
+ * Requires catalog_entry_id. One org per catalog entry.
+ * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use POST /api/org/request-to-join.
  * For orgs not in the directory, use POST /api/org/pending-proposal.
+ *
+ * Authorization: profile role organization or platform admin only (survivor/advocate denied).
  */
 
 import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/auth";
@@ -16,6 +18,15 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireActiveAccount(ctx, req);
+
+    if (!ctx.isAdmin && ctx.realRole !== "organization") {
+      return apiFail(
+        "FORBIDDEN",
+        "Only organization representatives or administrators can register an organization from the Illinois directory. Survivor and advocate accounts cannot use this action.",
+        undefined,
+        403
+      );
+    }
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
