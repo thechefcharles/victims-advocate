@@ -821,6 +821,12 @@ export default function AdvocateOrgPage() {
               edit.
             </p>
           )}
+          {canEditProfile && (
+            <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+              Some updates may be reviewed by NxtStps for trust and accuracy. Routine details (hours,
+              capacity, languages, and similar) save immediately.
+            </p>
+          )}
           {profileLoading ? (
             <p className="text-sm text-slate-400">Loading profile…</p>
           ) : !profile ? (

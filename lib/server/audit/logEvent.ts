@@ -47,6 +47,7 @@ export type AuditAction =
   | "admin.org_claim_request.approved"
   | "admin.org_claim_request.rejected"
   | "org.profile_updated"
+  | "org.profile.sensitive_update"
   | "org.profile_status_changed"
   | "policy.create"
   | "policy.activate"

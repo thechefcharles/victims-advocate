@@ -51,6 +51,24 @@ export async function GET(req: Request) {
       }
     }
 
+    const sensitiveFlagByOrg = new Set<string>();
+    if (orgIds.length > 0) {
+      const { data: flagRows, error: flagErr } = await supabase
+        .from("organization_profile_flags")
+        .select("organization_id")
+        .eq("resolved", false)
+        .eq("flag_type", "sensitive_change")
+        .in("organization_id", orgIds);
+      if (flagErr) {
+        logger.warn("admin.orgs.profile_flags", { message: flagErr.message });
+      } else if (flagRows) {
+        for (const fr of flagRows) {
+          const oid = fr.organization_id as string;
+          if (oid) sensitiveFlagByOrg.add(oid);
+        }
+      }
+    }
+
     const orgs = rows.map((r) => {
       const d = desMap.get(r.id);
       const org_owner_count = ownerCountByOrg.get(r.id) ?? 0;
@@ -59,6 +77,7 @@ export async function GET(req: Request) {
         org_owner_count,
         designation_tier: d?.designation_tier ?? null,
         designation_confidence: d?.designation_confidence ?? null,
+        has_sensitive_profile_flag: sensitiveFlagByOrg.has(r.id),
       };
     });
 

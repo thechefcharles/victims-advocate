@@ -28,6 +28,8 @@ type AdminOrg = {
   languages?: string[] | null;
   designation_tier?: string | null;
   designation_confidence?: string | null;
+  /** Phase 4: org-led sensitive profile edit logged; non-blocking. */
+  has_sensitive_profile_flag?: boolean;
 };
 
 type PendingProposal = {
@@ -864,6 +866,14 @@ export default function AdminOrgsPage() {
                               No designation yet
                             </span>
                           )}
+                          {o.has_sensitive_profile_flag ? (
+                            <span
+                              className="text-[10px] rounded-full border border-violet-800/45 px-2 py-0.5 text-violet-200/90"
+                              title="Recent sensitive profile field changes by the organization (non-blocking). Check audit log for detail."
+                            >
+                              Recent profile changes
+                            </span>
+                          ) : null}
                         </div>
                         <p className="text-xs text-slate-400 pt-1">
                           Services: {formatServicesPreview(o.service_types)} · Capacity:{" "}

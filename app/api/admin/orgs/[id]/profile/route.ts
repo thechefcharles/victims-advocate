@@ -58,7 +58,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
       return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
     }
 
-    const result = await updateOrganizationProfile({ ctx, body, organizationId: orgId });
+    const result = await updateOrganizationProfile({ ctx, body, organizationId: orgId, req });
 
     const metaBase = {
       organization_id: orgId,

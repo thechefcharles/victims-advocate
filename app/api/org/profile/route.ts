@@ -74,6 +74,7 @@ export async function POST(req: Request) {
       ctx,
       body,
       organizationId: isAdmin ? orgIdParam ?? ctx.orgId : ctx.orgId,
+      req,
     });
 
     const orgId = result.row.id;
