@@ -255,8 +255,8 @@ export default function OrganizationDashboardPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-medium text-slate-100">Incoming referrals</h2>
             <p className="text-xs text-slate-500">
-              Pending case referrals sent to your organization. Accept or decline after review — case
-              transfer is a separate step.
+              Pending case referrals sent to your organization. Accepting transfers the case to your agency;
+              declining closes the request and removes temporary review access.
             </p>
             {refErr ? (
               <div className="text-sm text-amber-200/90 border border-amber-700/40 rounded-lg px-3 py-2">

@@ -197,6 +197,15 @@ export const es: I18nDict = {
             updated: "Organización actualizada.",
             updateFailed: "No se pudo actualizar. Inténtalo de nuevo.",
             noOrgBody: "Aún no hay organización de servicios a víctimas para este caso.",
+            referralUpdatesTitle: "Actualizaciones de referencia",
+            referralUpdatesIntro:
+                "Cuando envías este caso a otra organización para revisión, el estado más reciente aparece aquí.",
+            referralsLoadError: "No se pudo cargar el estado de la referencia.",
+            referralStatusPending: "Referencia enviada para revisión",
+            referralStatusAccepted:
+                "Referencia aceptada — tu caso ya está vinculado a esta organización.",
+            referralStatusDeclined:
+                "Referencia rechazada — esta organización no toma el caso en este momento.",
         },
         applyPathConnect: "Conectar con un defensor",
         applyPathSelf: "Solicitar por mi cuenta",

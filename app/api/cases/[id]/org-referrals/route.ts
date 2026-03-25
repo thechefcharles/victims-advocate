@@ -2,10 +2,42 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { postCaseOrgReferralBodySchema } from "@/lib/server/referrals/schema";
-import { createReferral } from "@/lib/server/referrals/service";
+import { createReferral, listCaseOrgReferralsSummaryForViewer } from "@/lib/server/referrals/service";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export async function GET(req: Request, context: RouteParams) {
+  try {
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
+
+    const { id: caseId } = await context.params;
+    if (!caseId?.trim()) {
+      return apiFail("VALIDATION_ERROR", "Missing case id", undefined, 400);
+    }
+
+    const referrals = await listCaseOrgReferralsSummaryForViewer({
+      ctx,
+      caseId: caseId.trim(),
+      req,
+    });
+    if (referrals === null) {
+      return apiFail("FORBIDDEN", "Access denied", undefined, 403);
+    }
+
+    return apiOk({ referrals });
+  } catch (err) {
+    const appErr = toAppError(err);
+    if (appErr.code === "INTERNAL") {
+      logger.error("cases.org-referrals.get.error", {
+        code: appErr.code,
+        message: appErr.message,
+      });
+    }
+    return apiFailFromError(appErr);
+  }
 }
 
 export async function POST(req: Request, context: RouteParams) {

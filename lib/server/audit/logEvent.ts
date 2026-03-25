@@ -76,6 +76,7 @@ export type AuditAction =
   | "case.intake_field_deferred"
   | "case.intake_field_skipped"
   | "case.intake_amended"
+  | "case.organization_transferred"
   | "intake.field_skipped"
   | "intake.field_deferred"
   | "intake.field_amended"

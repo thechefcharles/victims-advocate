@@ -20,6 +20,7 @@ export {
   acceptCaseOrgReferral,
   declineCaseOrgReferral,
   listOrgReferralsInboxEnriched,
+  listCaseOrgReferralsSummaryForViewer,
 } from "./service";
-export type { OrgReferralInboxItem } from "./service";
+export type { OrgReferralInboxItem, CaseOrgReferralSummaryItem } from "./service";
 export { revokeReferralReviewCaseAccessForInsertedRecipients } from "./reviewAccess";

@@ -202,6 +202,13 @@ export type I18nDict = {
       updated: string;
       updateFailed: string;
       noOrgBody: string;
+      /** Referral handoff visibility (Phase 4) */
+      referralUpdatesTitle: string;
+      referralUpdatesIntro: string;
+      referralsLoadError: string;
+      referralStatusPending: string;
+      referralStatusAccepted: string;
+      referralStatusDeclined: string;
     };
     /** Apply Now modal — first step: two choices only */
     applyPathConnect: string;

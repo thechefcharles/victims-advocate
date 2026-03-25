@@ -9,6 +9,7 @@ import type { AuthContext } from "@/lib/server/auth";
 import { isOrgLeadership } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { getCaseById, appendCaseTimelineEvent } from "@/lib/server/data";
+import { applyCaseOrganizationTransfer } from "@/lib/server/cases/transfer";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
 import { createCaseNotification } from "@/lib/server/notifications/create";
@@ -402,6 +403,43 @@ export async function listReferralsForCase(params: {
   return null;
 }
 
+export type CaseOrgReferralSummaryItem = {
+  id: string;
+  status: ReferralStatus;
+  created_at: string;
+  to_organization_id: string;
+  to_organization_name: string;
+};
+
+/** Resolved target-org names for survivor-facing referral status (uses same access as listReferralsForCase). */
+export async function listCaseOrgReferralsSummaryForViewer(params: {
+  ctx: AuthContext;
+  caseId: string;
+  req?: Request | null;
+}): Promise<CaseOrgReferralSummaryItem[] | null> {
+  const referrals = await listReferralsForCase(params);
+  if (!referrals) return null;
+  if (referrals.length === 0) return [];
+
+  const supabase = getSupabaseAdmin();
+  const ids = [...new Set(referrals.map((r) => r.to_organization_id))];
+  const { data: orgs, error } = await supabase.from("organizations").select("id, name").in("id", ids);
+  if (error) {
+    throw new AppError("INTERNAL", "Failed to load organization names for referrals", undefined, 500);
+  }
+  const nameMap = new Map(
+    (orgs ?? []).map((o) => [o.id as string, (((o.name as string) ?? "").trim() || "Organization")])
+  );
+
+  return referrals.map((r) => ({
+    id: r.id,
+    status: r.status,
+    created_at: r.created_at,
+    to_organization_id: r.to_organization_id,
+    to_organization_name: nameMap.get(r.to_organization_id) ?? "Organization",
+  }));
+}
+
 /**
  * Inbox-style list for a receiving organization (`to_organization_id`).
  * Non-admins must be org leadership for `organizationId === ctx.orgId`.
@@ -495,7 +533,8 @@ export function assertCanRespondToCaseOrgReferral(ctx: AuthContext, row: CaseOrg
 }
 
 /**
- * Phase 4: call `applyCaseOrganizationTransfer` here after accept when product is ready.
+ * Accept referral: transfers case to receiving org (`applyCaseOrganizationTransfer`), then marks referral accepted.
+ * Phase 5: notification/access polish.
  */
 export async function acceptCaseOrgReferral(params: {
   ctx: AuthContext;
@@ -517,6 +556,28 @@ export async function acceptCaseOrgReferral(params: {
   }
 
   const supabase = getSupabaseAdmin();
+
+  const { data: caseRow, error: caseFetchErr } = await supabase
+    .from("cases")
+    .select("id, organization_id, owner_user_id, name")
+    .eq("id", row.case_id)
+    .maybeSingle();
+  if (caseFetchErr || !caseRow) {
+    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+  }
+
+  const { data: toOrg } = await supabase
+    .from("organizations")
+    .select("name")
+    .eq("id", row.to_organization_id)
+    .maybeSingle();
+  const toName = ((toOrg?.name as string) ?? "").trim() || "Organization";
+
+  const transferResult = await applyCaseOrganizationTransfer({
+    caseId: row.case_id,
+    targetOrganizationId: row.to_organization_id,
+  });
+
   const now = new Date().toISOString();
   const { data: updated, error: updErr } = await supabase
     .from("case_org_referrals")
@@ -532,39 +593,34 @@ export async function acceptCaseOrgReferral(params: {
     .maybeSingle();
 
   if (updErr || !updated) {
+    logger.error("referral.accept.referral_row_update_failed_after_transfer", {
+      referralId: row.id,
+      caseId: row.case_id,
+      message: updErr?.message,
+    });
     throw new AppError(
-      "VALIDATION_ERROR",
-      "This referral is no longer pending",
-      undefined,
-      422
+      "INTERNAL",
+      "The case was transferred but the referral could not be marked accepted. Please contact support.",
+      { referralId: row.id, caseId: row.case_id },
+      500
     );
   }
 
   const out = asReferralRow(updated as Record<string, unknown>);
 
-  const { data: caseRow } = await supabase
-    .from("cases")
-    .select("id, organization_id, owner_user_id, name")
-    .eq("id", row.case_id)
-    .maybeSingle();
-  const caseTenantOrgId = (caseRow?.organization_id as string) ?? "";
-
-  const { data: toOrg } = await supabase
-    .from("organizations")
-    .select("name")
-    .eq("id", row.to_organization_id)
-    .maybeSingle();
-  const toName = ((toOrg?.name as string) ?? "").trim() || "Organization";
-
   try {
     await appendCaseTimelineEvent({
       caseId: row.case_id,
-      organizationId: caseTenantOrgId,
+      organizationId: row.to_organization_id,
       actor: { userId: ctx.userId, role: ctx.role },
-      eventType: "case.referral_accepted",
-      title: "Referral accepted",
-      description: `${toName} accepted the referral. Case transfer will follow separately.`,
-      metadata: { referral_id: row.id, to_organization_id: row.to_organization_id },
+      eventType: "case.referral_handoff_completed",
+      title: "Referral completed — case transferred",
+      description: `This case is now linked to ${toName} after an accepted referral.`,
+      metadata: {
+        referral_id: row.id,
+        from_organization_id: transferResult.previousOrganizationId,
+        to_organization_id: row.to_organization_id,
+      },
     });
   } catch (timelineErr) {
     logger.warn("referral.accept.timeline_failed", {
@@ -573,7 +629,22 @@ export async function acceptCaseOrgReferral(params: {
     });
   }
 
-  const ownerId = (caseRow?.owner_user_id as string) ?? null;
+  await logEvent({
+    ctx,
+    action: "case.organization_transferred",
+    resourceType: "case",
+    resourceId: row.case_id,
+    organizationId: row.to_organization_id,
+    metadata: {
+      from_organization_id: transferResult.previousOrganizationId,
+      to_organization_id: row.to_organization_id,
+      source: "referral_accept",
+      referral_id: row.id,
+    },
+    req: req ?? undefined,
+  });
+
+  const ownerId = (caseRow.owner_user_id as string) ?? null;
   const recipients = new Set<string>();
   if (ownerId) recipients.add(ownerId);
   if (row.requested_by_user_id && row.requested_by_user_id !== ownerId) {
@@ -586,9 +657,9 @@ export async function acceptCaseOrgReferral(params: {
         {
           recipients: [...recipients],
           caseId: row.case_id,
-          organizationId: caseTenantOrgId || null,
+          organizationId: row.to_organization_id,
           type: "referral.accepted",
-          title: "Referral accepted",
+          title: "Referral accepted — case transferred",
           body: null,
           actionUrl: `/compensation/intake?case=${encodeURIComponent(row.case_id)}`,
           previewSafe: true,
@@ -613,6 +684,8 @@ export async function acceptCaseOrgReferral(params: {
     metadata: {
       caseId: row.case_id,
       toOrganizationId: row.to_organization_id,
+      previousOrganizationId: transferResult.previousOrganizationId,
+      transferred: true,
       actorRole: ctx.role,
       orgRole: ctx.orgRole ?? null,
     },

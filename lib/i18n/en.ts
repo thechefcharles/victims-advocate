@@ -196,6 +196,13 @@ export const en: I18nDict = {
       updated: "Organization updated.",
       updateFailed: "Could not update organization. Try again.",
       noOrgBody: "No victim-service organization is selected for this case yet.",
+      referralUpdatesTitle: "Referral updates",
+      referralUpdatesIntro:
+        "When you send this case to another organization for review, the latest status appears here.",
+      referralsLoadError: "Could not load referral status.",
+      referralStatusPending: "Referral sent for review",
+      referralStatusAccepted: "Referral accepted — your case is now connected to this organization.",
+      referralStatusDeclined: "Referral declined — this organization is not taking the case right now.",
     },
     applyPathConnect: "Connect With An Advocate",
     applyPathSelf: "Apply By Myself",

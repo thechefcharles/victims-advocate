@@ -21,6 +21,14 @@ type SupportTeamPayload = {
   advocates: { id: string; label: string }[];
 };
 
+type ReferralSummary = {
+  id: string;
+  status: string;
+  created_at: string;
+  to_organization_id: string;
+  to_organization_name: string;
+};
+
 export default function VictimCaseOrganizationManagePage() {
   const params = useParams();
   const caseId = typeof params.caseId === "string" ? params.caseId : "";
@@ -28,8 +36,10 @@ export default function VictimCaseOrganizationManagePage() {
   const { t } = useI18n();
 
   const [team, setTeam] = useState<SupportTeamPayload | null>(null);
+  const [referrals, setReferrals] = useState<ReferralSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [referralErr, setReferralErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -37,28 +47,47 @@ export default function VictimCaseOrganizationManagePage() {
     if (!accessToken || !caseId) return;
     setLoading(true);
     setErr(null);
+    setReferralErr(null);
     try {
-      const res = await fetch(`/api/compensation/cases/${caseId}/support-team`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to load"));
+      const [teamRes, refRes] = await Promise.all([
+        fetch(`/api/compensation/cases/${caseId}/support-team`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        fetch(`/api/cases/${caseId}/org-referrals`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ]);
+
+      const teamJson = await teamRes.json().catch(() => ({}));
+      if (!teamRes.ok) {
+        setErr(getApiErrorMessage(teamJson, "Failed to load"));
         setTeam(null);
-        return;
+      } else {
+        const d = (teamJson?.data ?? teamJson) as SupportTeamPayload;
+        setTeam({
+          organization: d?.organization ?? null,
+          advocates: Array.isArray(d?.advocates) ? d.advocates : [],
+        });
       }
-      const d = (json?.data ?? json) as SupportTeamPayload;
-      setTeam({
-        organization: d?.organization ?? null,
-        advocates: Array.isArray(d?.advocates) ? d.advocates : [],
-      });
+
+      const refJson = await refRes.json().catch(() => ({}));
+      if (refRes.ok) {
+        const list = (refJson?.data?.referrals ?? refJson?.referrals) as ReferralSummary[] | undefined;
+        setReferrals(Array.isArray(list) ? list : []);
+      } else if (refRes.status === 403) {
+        setReferrals([]);
+      } else {
+        setReferrals([]);
+        setReferralErr(getApiErrorMessage(refJson, t("victimDashboard.caseOrgManage.referralsLoadError")));
+      }
     } catch {
       setErr("Failed to load");
       setTeam(null);
+      setReferrals([]);
     } finally {
       setLoading(false);
     }
-  }, [accessToken, caseId]);
+  }, [accessToken, caseId, t]);
 
   useEffect(() => {
     void load();
@@ -107,6 +136,12 @@ export default function VictimCaseOrganizationManagePage() {
   const org = team?.organization;
   const isLegacy = org?.name === LEGACY_ORG_NAME;
 
+  const referralStatusLabel = (status: string) => {
+    if (status === "accepted") return t("victimDashboard.caseOrgManage.referralStatusAccepted");
+    if (status === "declined") return t("victimDashboard.caseOrgManage.referralStatusDeclined");
+    return t("victimDashboard.caseOrgManage.referralStatusPending");
+  };
+
   return (
     <main className={APP_PAGE_MAIN}>
       <div className="relative max-w-2xl mx-auto space-y-6">
@@ -122,6 +157,11 @@ export default function VictimCaseOrganizationManagePage() {
 
         {err ? (
           <p className="text-sm text-red-300 border border-red-500/30 rounded-lg px-3 py-2">{err}</p>
+        ) : null}
+        {!loading && referralErr && referrals.length === 0 ? (
+          <p className="text-sm text-amber-200/90 border border-amber-700/40 rounded-lg px-3 py-2">
+            {referralErr}
+          </p>
         ) : null}
         {toast ? (
           <p className="text-sm text-emerald-200 border border-emerald-500/30 rounded-lg px-3 py-2">{toast}</p>
@@ -181,6 +221,35 @@ export default function VictimCaseOrganizationManagePage() {
             </>
           )}
         </div>
+
+        {!loading && referrals.length > 0 ? (
+          <div className={`${APP_CARD} space-y-3`}>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-600">
+                {t("victimDashboard.caseOrgManage.referralUpdatesTitle")}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">{t("victimDashboard.caseOrgManage.referralUpdatesIntro")}</p>
+            </div>
+            <ul className="space-y-2">
+              {referrals.map((r) => (
+                <li
+                  key={r.id}
+                  className="rounded-lg border border-slate-800/80 bg-slate-950/40 px-3 py-2 text-sm"
+                >
+                  <p className="font-medium text-slate-100">{r.to_organization_name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{referralStatusLabel(r.status)}</p>
+                  <p className="text-[10px] text-slate-600 mt-1">
+                    {new Date(r.created_at).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         <p className="text-[11px] text-slate-500">
           <Link href={victimCasePaths.advocate(caseId)} className="text-slate-400 hover:text-slate-200 underline">
