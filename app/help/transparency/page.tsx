@@ -16,7 +16,7 @@ export default function TransparencyPage() {
             Transparency on NxtStps
           </h1>
           <p className="text-slate-400 max-w-2xl">
-            We balance clarity for survivors and partners with protection for sensitive data—here’s
+            We balance clarity for victims and partners with protection for sensitive data—here’s
             what that means in practice.
           </p>
         </header>
@@ -48,7 +48,7 @@ export default function TransparencyPage() {
           <div>
             <h2 className="font-semibold text-slate-100 mb-2">Why this exists</h2>
             <p className="text-slate-300">
-              Survivors deserve understandable suggestions; organizations deserve fair representation.
+              Victims deserve understandable suggestions; organizations deserve fair representation.
               Transparency pages set expectations without exposing internal operations.
             </p>
           </div>

@@ -93,7 +93,7 @@ export type CaseNextActionInput = {
   intakeMissingReviewCount?: number;
   /** Skipped + deferred fields count */
   intakeDeferredSkippedCount?: number;
-  /** Survivor has an advocate assigned */
+  /** Victim has an advocate assigned */
   hasAdvocateConnected?: boolean;
 };
 

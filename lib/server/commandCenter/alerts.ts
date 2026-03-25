@@ -19,7 +19,7 @@ export type AlertInputs = {
   restricted_document_count: number;
   assigned_advocate_id: string | null;
   last_activity_at: string | null;
-  unread_survivor_message_count?: number;
+  unread_victim_message_count?: number;
   missing_required_docs?: boolean;
   missing_required_fields?: boolean;
 };
@@ -68,7 +68,7 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
     restricted_document_count,
     assigned_advocate_id,
     last_activity_at,
-    unread_survivor_message_count,
+    unread_victim_message_count,
     missing_required_docs,
     missing_required_fields,
   } = input;
@@ -155,18 +155,18 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
     );
   }
 
-  if ((unread_survivor_message_count ?? 0) > 0 && isActive) {
+  if ((unread_victim_message_count ?? 0) > 0 && isActive) {
     alerts.push(
       makeAlert(
         case_id,
         organization_id,
-        "unread_survivor_message",
+        "unread_victim_message",
         "high",
-        "Unread survivor message",
-        `${unread_survivor_message_count} unread message(s) from the survivor.`,
-        ["unread_survivor_message"],
+        "Unread victim message",
+        `${unread_victim_message_count} unread message(s) from the victim.`,
+        ["unread_victim_message"],
         ["messaging"],
-        "Review the survivor message and respond."
+        "Review the victim message and respond."
       )
     );
   }

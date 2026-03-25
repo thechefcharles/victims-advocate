@@ -19,7 +19,7 @@ export async function advocateHasClientAccess(
 }
 
 /**
- * True if this survivor would appear in GET /api/advocate/clients (shared cases as advocate,
+ * True if this victim would appear in GET /api/advocate/clients (shared cases as advocate,
  * or accepted connection without a case yet).
  */
 export async function advocateHasClientRelationship(

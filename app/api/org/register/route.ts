@@ -7,7 +7,7 @@
  * (no owners yet) or POST /api/org/request-to-join.
  * For orgs not in the directory, use POST /api/org/pending-proposal.
  *
- * Authorization: profile role organization or platform admin only (survivor/advocate denied).
+ * Authorization: profile role organization or platform admin only (victim/advocate denied).
  */
 
 import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/auth";
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (!ctx.isAdmin && ctx.realRole !== "organization") {
       return apiFail(
         "FORBIDDEN",
-        "Only organization representatives or administrators can register an organization from the Illinois directory. Survivor and advocate accounts cannot use this action.",
+        "Only organization representatives or administrators can register an organization from the Illinois directory. Victim and advocate accounts cannot use this action.",
         undefined,
         403
       );

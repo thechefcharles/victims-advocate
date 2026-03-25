@@ -351,9 +351,9 @@ export const en: I18nDict = {
     connectOrganizationLink: "Connect your Organization",
     profileBannerTitle: "Complete your advocate profile",
     profileBannerBody:
-      "Add your work contact details so survivors and your team know how to reach you.",
+      "Add your work contact details so victims and your team know how to reach you.",
     profileBannerBodyNoName:
-      "Add how we should address you and your work contact details—helps survivors and your team reach you.",
+      "Add how we should address you and your work contact details—helps victims and your team reach you.",
     profileBannerCta: "Update in My account",
   },
 
@@ -436,7 +436,7 @@ export const en: I18nDict = {
     guestConnectHint:
       "To connect with an advocate you’ll need a free account—we’ll guide you when you tap Connect with an advocate.",
     nonVictimRoleHint:
-      "Advocate connections are for survivor accounts—Get help now opens Help for other roles.",
+      "Advocate connections are for victim accounts—Get help now opens Help for other roles.",
     openAdvocateDashboard: "Open Case Dashboard",
   },
 
@@ -745,7 +745,7 @@ export const en: I18nDict = {
     hero: {
       title: "Victim Compensation — one hub",
       subtitle:
-        "Process Crime Victim Compensation, check status, and manage cases—one platform for survivors, advocates, and organizations.",
+        "Process Crime Victim Compensation, check status, and manage cases—one platform for victims, advocates, and organizations.",
       disclaimer:
         "NxtStps is a supportive tool. It does not replace legal advice, emergency services, or medical care. You can pause anytime.",
       ctaCreateAccount: "Create An Account",
@@ -833,7 +833,7 @@ export const en: I18nDict = {
     audience: {
       title: "Who NxtStps supports",
       subtitle:
-        "NxtStps is designed for everyone who touches the victim-services journey—from survivors themselves to advocates, hospitals, and state agencies.",
+        "NxtStps is designed for everyone who touches the victim-services journey—from victims themselves to advocates, hospitals, and state agencies.",
       tabs: {
         victims: "Victims",
         advocates: "Advocates",
@@ -879,7 +879,7 @@ export const en: I18nDict = {
     transparency: {
       title: "Victim services should be fast, clear, and fair.",
       body:
-        "NxtStps eliminates confusion, missing documents, and preventable denials—giving survivors and advocates a stable, transparent path to support.",
+        "NxtStps eliminates confusion, missing documents, and preventable denials—giving victims and advocates a stable, transparent path to support.",
       b1: "No hidden fees.",
       b2: "No judgment.",
       b3: "No confusing legal language.",
@@ -2206,7 +2206,7 @@ approxBillAmount: "Approx. bill amount",
   accountAdvocate: {
     title: "Advocate profile",
     intro:
-      "This information helps survivors and your organization identify you. Your organization is managed by your team—it shows here when your account is linked.",
+      "This information helps victims and your organization identify you. Your organization is managed by your team—it shows here when your account is linked.",
     privacyNote: "We do not collect SSN or tax IDs here.",
     organizationSection: "Organization",
     organizationHelp:

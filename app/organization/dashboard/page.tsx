@@ -268,7 +268,7 @@ export default function OrganizationDashboardPage() {
               <p className="text-sm text-slate-400">Loading referrals…</p>
             ) : referrals.length === 0 ? (
               <p className="text-sm text-slate-400">
-                Nothing waiting. When a survivor or partner sends a referral to your organization, it will show up
+                Nothing waiting. When a victim or partner sends a referral to your organization, it will show up
                 here until someone accepts or declines.
               </p>
             ) : (

@@ -225,7 +225,7 @@ export default function AdminGradingPage() {
             </p>
             <h1 className="text-2xl font-bold">CBO quality grading</h1>
             <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
-              Internal scoring supports designation mapping — scores are not shown to survivors or the
+              Internal scoring supports designation mapping — scores are not shown to victims or the
               public. Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not
               public, not used in matching.
             </p>
@@ -390,7 +390,7 @@ export default function AdminGradingPage() {
             <h2 className="text-sm font-semibold text-slate-200">Org signal snapshot (internal)</h2>
             <p className="text-xs text-slate-500">
               Lightweight derived operational signals for internal scoring/debug use. Not public and
-              not shown to survivors.
+              not shown to victims.
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
               <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">

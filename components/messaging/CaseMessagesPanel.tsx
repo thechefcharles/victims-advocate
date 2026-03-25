@@ -218,7 +218,7 @@ export function CaseMessagesPanel({
             <div key={m.id} className="text-xs">
               <div className="flex items-baseline gap-2">
                 <span className="text-[11px] font-semibold text-slate-200">
-                  {m.sender_role === "victim" ? "Survivor" : "Advocate"}
+                  {m.sender_role === "victim" ? "Victim" : "Advocate"}
                 </span>
                 <span className="text-[10px] text-slate-500">{formatTime(m.created_at)}</span>
               </div>

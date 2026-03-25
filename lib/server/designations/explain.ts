@@ -16,7 +16,7 @@ export const METHODOLOGY = {
 export function methodologyLinks(): Array<{ label: string; href: string; description: string }> {
   return [
     {
-      label: "How survivor–organization matching works",
+      label: "How victim–organization matching works",
       href: METHODOLOGY.matchingPath,
       description:
         "Deterministic matching from intake needs and organization profiles — not rankings or reviews.",
@@ -144,7 +144,7 @@ export function buildDesignationImprovementHints(signals: OrganizationSignals | 
     hints.push("Run completeness checks regularly to strengthen workflow reliability signals.");
   }
   if (signals.messaging.replySignalConfidence === "low") {
-    hints.push("Use case-based messaging consistently when coordinating with survivors.");
+    hints.push("Use case-based messaging consistently when coordinating with victims.");
   }
   if (!signals.profile.lastProfileUpdate) {
     hints.push("Keep profile and capacity details up to date as operations change.");

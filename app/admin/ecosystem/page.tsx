@@ -178,7 +178,7 @@ export default function AdminEcosystemPage() {
         />
 
         <p className="text-xs text-slate-500 border-l-2 border-slate-700 pl-3 py-1 max-w-3xl">
-          This is an internal aggregated view. No survivor-identifying data is shown.
+          This is an internal aggregated view. No victim-identifying data is shown.
         </p>
 
         {overview && s && (

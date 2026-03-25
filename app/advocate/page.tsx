@@ -19,7 +19,7 @@ type CommandCenterCase = {
   priority_reasons: string[];
   alert_count: number;
   completeness_blocking_count: number;
-  unread_survivor_message_count?: number;
+  unread_victim_message_count?: number;
 };
 
 type CommandCenterSummary = {
@@ -142,7 +142,7 @@ export default function AdvocateDashboardPage() {
           <p className="text-[11px] uppercase tracking-wide text-blue-300">Primary action</p>
           <h2 className="text-base font-semibold text-blue-100">Continue case follow-up</h2>
           <p className="text-xs text-blue-100/80">
-            Open your next case needing attention, then review survivor updates and follow-up tasks.
+            Open your next case needing attention, then review victim updates and follow-up tasks.
           </p>
           <div className="flex flex-wrap gap-2">
             <Link
@@ -183,7 +183,7 @@ export default function AdvocateDashboardPage() {
             </div>
           ) : topAttentionCases.length === 0 ? (
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-400">
-              No urgent follow-up right now. Continue with active cases and review recent survivor
+              No urgent follow-up right now. Continue with active cases and review recent victim
               updates in message triage.
             </div>
           ) : (

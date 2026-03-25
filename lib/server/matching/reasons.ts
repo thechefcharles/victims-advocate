@@ -15,9 +15,9 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 const POP_LABELS: Record<string, string> = {
-  sexual_assault: "survivors of sexual assault",
-  domestic_violence: "domestic violence survivors",
-  homicide_survivors: "homicide survivors and families",
+  sexual_assault: "victims of sexual assault",
+  domestic_violence: "domestic violence victims",
+  homicide_survivors: "homicide victims and families",
   spanish_speaking: "Spanish-speaking clients",
   children: "children and families",
   immigrant_clients: "immigrant clients",

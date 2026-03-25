@@ -112,18 +112,18 @@ function AdvocateMessagesContent() {
           const lastAt = last?.created_at ?? null;
           const ownerId = c.owner_user_id ?? "";
 
-          const lastSurvivorMsg = sorted.find(
+          const lastVictimMsg = sorted.find(
             (m) => ownerId && m.sender_user_id === ownerId
           );
 
           let preview = "";
           if (unreadCount > 0) {
-            preview = lastSurvivorMsg?.message_text
-              ? truncatePreview(lastSurvivorMsg.message_text)
+            preview = lastVictimMsg?.message_text
+              ? truncatePreview(lastVictimMsg.message_text)
               : "New Secure Message";
           } else {
-            preview = lastSurvivorMsg?.message_text
-              ? truncatePreview(lastSurvivorMsg.message_text)
+            preview = lastVictimMsg?.message_text
+              ? truncatePreview(lastVictimMsg.message_text)
               : truncatePreview(last.message_text ?? "");
           }
 
@@ -192,7 +192,7 @@ function AdvocateMessagesContent() {
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Advocate</p>
           <h1 className="text-2xl font-semibold text-slate-50">Messages</h1>
           <p className="text-sm text-slate-400 max-w-xl">
-            Use this triage list to spot new survivor updates quickly. Open the case view to read
+            Use this triage list to spot new victim updates quickly. Open the case view to read
             and reply.
           </p>
           <p className="text-[11px] text-slate-500">
@@ -210,7 +210,7 @@ function AdvocateMessagesContent() {
           <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-4">
             <p className="text-sm text-slate-300">No unread or recent secure messages to show.</p>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              When a survivor sends a message or a thread is active, the case will appear here. You
+              When a victim sends a message or a thread is active, the case will appear here. You
               can continue case updates from My Dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -248,7 +248,7 @@ function AdvocateMessagesContent() {
                       )}
                     </div>
                     <p className="text-[11px] text-slate-500">
-                      Latest survivor update · {formatDate(row.lastAt)}
+                      Latest victim update · {formatDate(row.lastAt)}
                     </p>
                     <p className="text-xs text-slate-400 line-clamp-2">{row.preview}</p>
                   </div>

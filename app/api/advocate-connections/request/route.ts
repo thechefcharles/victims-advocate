@@ -24,7 +24,7 @@ function connectionRequestsBaseUrl(req: Request): string {
   ).replace(/\/$/, "");
 }
 
-/** Single advocate notification: survivor wants to connect on this case. */
+/** Single advocate notification: victim wants to connect on this case. */
 async function notifyAdvocateConnectionRequest(
   ctx: AuthContext,
   req: Request,

@@ -412,7 +412,7 @@ export type CaseOrgReferralSummaryItem = {
   to_organization_name: string;
 };
 
-/** Resolved target-org names for survivor-facing referral status (uses same access as listReferralsForCase). */
+/** Resolved target-org names for victim-facing referral status (uses same access as listReferralsForCase). */
 export async function listCaseOrgReferralsSummaryForViewer(params: {
   ctx: AuthContext;
   caseId: string;

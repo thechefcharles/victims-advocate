@@ -208,7 +208,7 @@ export default function AdminKnowledgePage() {
           contextLine="Admin → Knowledge base"
           eyebrow="Admin · Knowledge"
           title="Knowledge base"
-          subtitle="Help articles and eligibility text shown to advocates and survivors. Draft first, then activate."
+          subtitle="Help articles and eligibility text shown to advocates and victims. Draft first, then activate."
           rightActions={
             <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
               Cases

@@ -64,7 +64,7 @@ export type I18nDict = {
     previewHiddenTitle: string;
     /** Advocate inbox: incoming connection request */
     connectionRequestIncomingTitle: string;
-    /** Survivor: outbound request awaiting advocate response */
+    /** Victim: outbound request awaiting advocate response */
     connectionRequestPendingTitle: string;
     /** Organization inbox: advocate wants to join */
     orgJoinRequestIncomingTitle: string;

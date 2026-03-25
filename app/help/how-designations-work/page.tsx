@@ -34,14 +34,14 @@ export default function HowDesignationsWorkPage() {
             <h2 className="font-semibold text-slate-100 mb-2">What it does not do</h2>
             <p className="text-slate-300">
               Designations are <strong className="text-slate-200">not</strong> clinical ratings, legal
-              judgments, or survivor reviews. We <strong className="text-slate-200">do not</strong>{" "}
+              judgments, or victim reviews. We <strong className="text-slate-200">do not</strong>{" "}
               publish numeric quality scores publicly.
             </p>
           </div>
           <div>
             <h2 className="font-semibold text-slate-100 mb-2">Why it exists</h2>
             <p className="text-slate-300">
-              To give survivors and partners a readable signal of how organizations show up on the
+              To give victims and partners a readable signal of how organizations show up on the
               platform—without pretending to measure real-world service quality.
             </p>
           </div>

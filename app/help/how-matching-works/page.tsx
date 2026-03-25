@@ -13,7 +13,7 @@ export default function HowMatchingWorksPage() {
         <header className="space-y-2">
           <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Trust &amp; safety</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-50">
-            How survivor–organization matching works
+            How victim–organization matching works
           </h1>
           <p className="text-slate-400 max-w-2xl">
             Suggestions are based on needs and explainable reasons—not popularity or hidden scores.

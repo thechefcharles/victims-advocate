@@ -74,7 +74,7 @@ function parseConnectionRequest(n: Notification): {
   const victimName =
     typeof m.victim_display_name === "string" && m.victim_display_name.trim()
       ? m.victim_display_name.trim()
-      : "Survivor";
+      : "Victim";
   const victimEmail = typeof m.victim_email === "string" ? m.victim_email.trim() : null;
   const scopedToCase = typeof m.case_id === "string" && m.case_id.length > 0;
   return { requestId: rid, victimName, victimEmail, scopedToCase };

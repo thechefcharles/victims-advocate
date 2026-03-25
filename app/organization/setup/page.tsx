@@ -9,7 +9,7 @@ import { OrganizationOnboarding } from "@/components/org/OrganizationOnboarding"
 
 /**
  * Organization leader onboarding: directory find/join + pending proposal.
- * Not available to survivor or advocate accounts (except platform admins).
+ * Not available to victim or advocate accounts (except platform admins).
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
