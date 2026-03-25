@@ -5,18 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
-import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { OrganizationCreationSection } from "@/components/org/OrganizationCreationSection";
 
 /**
- * First-time setup for users who signed up as an organization representative.
- * Create org from directory (or request to join if exists) or submit new org for approval.
+ * First-time setup for users with profile role organization and no org membership.
+ * Routed from /dashboard after verify + consent (see getDashboardPath).
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user, isAdmin, role, orgRole } = useAuth();
+  const { orgId, user } = useAuth();
   const { t } = useI18n();
   const [initialCatalogId, setInitialCatalogId] = useState<number | null>(null);
+  const [initialOrgNameHint, setInitialOrgNameHint] = useState<string | null>(null);
   const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
@@ -34,6 +34,12 @@ export default function OrganizationSetupPage() {
           ? parseInt(String(raw).trim(), 10)
           : null;
     if (pendingId != null) setInitialCatalogId(pendingId);
+
+    const hintRaw = meta?.org_onboarding_display_name_hint;
+    if (typeof hintRaw === "string" && hintRaw.trim()) {
+      setInitialOrgNameHint(hintRaw.trim());
+    }
+
     setPrefilled(true);
   }, [user, prefilled]);
 
@@ -50,20 +56,22 @@ export default function OrganizationSetupPage() {
       <div className="max-w-md mx-auto space-y-6">
         <header>
           <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">
-            Organization account
+            Organization setup
           </p>
-          <h1 className="text-2xl font-semibold">Finish creating your organization</h1>
+          <h1 className="text-2xl font-semibold">Find or set up your organization</h1>
           <p className="text-sm text-slate-400 mt-2">
-            Select your agency from the Illinois directory, or submit a new organization for admin
-            approval if it&apos;s not listed.
+            Your personal account is ready. Next, connect your agency from the Illinois directory or
+            submit it for approval if it&apos;s not listed. Nothing here recreates the signup step—you
+            already have an account.
           </p>
         </header>
 
         <OrganizationCreationSection
           initialCatalogId={initialCatalogId}
+          initialOrgNameHint={initialOrgNameHint}
           backLink={
             <Link
-              href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+              href="/dashboard"
               className="text-sm text-slate-400 hover:text-slate-200"
             >
               {t("common.backToWorkspace")}

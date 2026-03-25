@@ -68,7 +68,7 @@ export const en: I18nDict = {
     preferredNameLabel: "Preferred name",
     preferredNamePlaceholder: "e.g. Alex or Alex Martinez",
     preferredNameHelp:
-      "We use this to personalize your dashboard and messages. You can add legal name and more in account settings later.",
+      "We use your name to personalize your dashboard and messages. You can add more detail in account settings later.",
   },
 
   victimDashboard: {

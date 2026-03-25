@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -22,12 +22,15 @@ type Props = {
   backLink?: React.ReactNode;
   /** Pre-selected catalog id (e.g. from pending_org_catalog_entry_id) */
   initialCatalogId?: number | null;
+  /** Prefill "add new organization" name from signup hints (does not create an org). */
+  initialOrgNameHint?: string | null;
 };
 
 export function OrganizationCreationSection({
   onSuccess,
   backLink,
   initialCatalogId = null,
+  initialOrgNameHint = null,
 }: Props) {
   const router = useRouter();
   const { refetchMe } = useAuth();
@@ -49,6 +52,12 @@ export function OrganizationCreationSection({
     program_type: "",
     notes: "",
   });
+
+  useEffect(() => {
+    const hint = initialOrgNameHint?.trim();
+    if (!hint) return;
+    setAddNewForm((f) => (f.name.trim() ? f : { ...f, name: hint }));
+  }, [initialOrgNameHint]);
 
   const handleDirectorySubmit = async (e: React.FormEvent) => {
     e.preventDefault();

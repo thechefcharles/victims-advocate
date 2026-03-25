@@ -228,7 +228,7 @@ export default function SignupForm() {
           </Link>
 
           <Link
-            href="/signup/advocate"
+            href="/signup?intent=advocate"
             className="underline underline-offset-2 hover:text-slate-200"
           >
             I’m a victim advocate
