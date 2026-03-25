@@ -167,6 +167,7 @@ export const ROUTES = {
   advocateMessages: "/advocate/messages",
   advocateConnectionRequests: "/advocate/connection-requests",
   advocateFindOrganizations: "/advocate/find-organizations",
+  advocateOrgSearch: "/advocate/org-search",
   advocateOrg: "/advocate/org",
   organizationDashboard: "/organization/dashboard",
   organizationSetup: "/organization/setup",
