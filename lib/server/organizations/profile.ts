@@ -2,8 +2,34 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { computeOrganizationProfileStage } from "@/lib/organizations/profileStage";
+import { parseOrgLifecycleStatus, parseOrgPublicProfileStatus } from "@/lib/server/organizations/state";
 import { rowToOrganizationProfile, parseOrgProfilePatch } from "./validation";
 import type { OrganizationProfile, OrganizationProfileRow } from "./types";
+
+export function organizationRowToProfileRow(row: Record<string, unknown>): OrganizationProfileRow {
+  const profile = rowToOrganizationProfile(row);
+  const lifecycle_status = parseOrgLifecycleStatus(row.lifecycle_status) ?? "seeded";
+  const public_profile_status = parseOrgPublicProfileStatus(row.public_profile_status) ?? "draft";
+  const activation_submitted_at =
+    row.activation_submitted_at != null && String(row.activation_submitted_at).trim() !== ""
+      ? String(row.activation_submitted_at)
+      : null;
+
+  return {
+    id: String(row.id),
+    name: String(row.name ?? ""),
+    type: String(row.type ?? ""),
+    status: String(row.status ?? ""),
+    metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<
+      string,
+      unknown
+    >,
+    ...profile,
+    lifecycle_status,
+    public_profile_status,
+    activation_submitted_at,
+  };
+}
 
 export async function getOrganizationProfileForContext(params: {
   ctx: AuthContext;
@@ -37,18 +63,7 @@ export async function getOrganizationProfileForContext(params: {
   }
 
   const row = data as Record<string, unknown>;
-  const profile = rowToOrganizationProfile(row);
-  return {
-    id: String(row.id),
-    name: String(row.name ?? ""),
-    type: String(row.type ?? ""),
-    status: String(row.status ?? ""),
-    metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<
-      string,
-      unknown
-    >,
-    ...profile,
-  };
+  return organizationRowToProfileRow(row);
 }
 
 export type OrgProfileUpdateResult = {
@@ -116,17 +131,7 @@ export async function updateOrganizationProfile(params: {
   const nextStatus = profile.profile_status;
   const updatedKeys = Object.keys(patch);
   return {
-    row: {
-      id: String(row.id),
-      name: String(row.name ?? ""),
-      type: String(row.type ?? ""),
-      status: String(row.status ?? ""),
-      metadata: (row.metadata && typeof row.metadata === "object" ? row.metadata : {}) as Record<
-        string,
-        unknown
-      >,
-      ...profile,
-    },
+    row: organizationRowToProfileRow(row),
     updatedKeys,
     prevProfileStatus: prevStatus,
     profileStatusChanged: prevStatus !== nextStatus,

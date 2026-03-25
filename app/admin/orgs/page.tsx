@@ -17,6 +17,7 @@ type AdminOrg = {
   status: string;
   lifecycle_status?: string;
   public_profile_status?: string;
+  activation_submitted_at?: string | null;
   /** Active memberships with org_owner role */
   org_owner_count?: number;
   profile_status?: string | null;
@@ -439,6 +440,104 @@ export default function AdminOrgsPage() {
                   </div>
                 </li>
               ))}
+            </ul>
+          </section>
+        )}
+
+        {orgs.filter((o) => o.public_profile_status === "pending_review").length > 0 && (
+          <section className="rounded-2xl border border-teal-500/35 bg-teal-950/15 p-5">
+            <h2 className="text-sm font-semibold text-teal-100 mb-2">
+              Organizations pending activation (
+              {orgs.filter((o) => o.public_profile_status === "pending_review").length})
+            </h2>
+            <p className="text-xs text-teal-200/80 mb-4">
+              An organization owner submitted this workspace for public visibility. Activating sets{" "}
+              <strong className="text-teal-100">public profile</strong> to active (matching/search enforcement
+              still follows Phase 6). Reject returns the org to draft so they can revise and resubmit.
+            </p>
+            <ul className="space-y-4">
+              {orgs
+                .filter((o) => o.public_profile_status === "pending_review")
+                .map((o) => (
+                  <li
+                    key={o.id}
+                    className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <p className="font-medium text-slate-100">{o.name}</p>
+                        <p className="text-xs text-slate-400">
+                          Owners (active): {o.org_owner_count ?? 0} · Lifecycle:{" "}
+                          {o.lifecycle_status ?? "—"} · Stage: {o.profile_stage ?? "—"}
+                        </p>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Submitted{" "}
+                          {o.activation_submitted_at
+                            ? new Date(o.activation_submitted_at).toLocaleString()
+                            : "—"}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setActingId(o.id);
+                            try {
+                              const { data: sessionData } = await supabase.auth.getSession();
+                              const token = sessionData.session?.access_token;
+                              if (!token) return;
+                              const res = await fetch(`/api/admin/orgs/${o.id}/activate`, {
+                                method: "POST",
+                                headers: { Authorization: `Bearer ${token}` },
+                              });
+                              if (res.ok) await load();
+                              else {
+                                const json = await res.json().catch(() => ({}));
+                                setErr(getApiErrorMessage(json, "Could not activate"));
+                              }
+                            } finally {
+                              setActingId(null);
+                            }
+                          }}
+                          disabled={actingId !== null}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+                        >
+                          {actingId === o.id ? "…" : "Activate Organization"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setActingId(o.id);
+                            try {
+                              const { data: sessionData } = await supabase.auth.getSession();
+                              const token = sessionData.session?.access_token;
+                              if (!token) return;
+                              const res = await fetch(`/api/admin/orgs/${o.id}/reject-activation`, {
+                                method: "POST",
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({}),
+                              });
+                              if (res.ok) await load();
+                              else {
+                                const json = await res.json().catch(() => ({}));
+                                setErr(getApiErrorMessage(json, "Could not reject"));
+                              }
+                            } finally {
+                              setActingId(null);
+                            }
+                          }}
+                          disabled={actingId !== null}
+                          className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                        >
+                          {actingId === o.id ? "…" : "Reject / Request Changes"}
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
             </ul>
           </section>
         )}

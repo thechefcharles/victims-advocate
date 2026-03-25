@@ -7,7 +7,9 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { meetsSearchableMinimum } from "@/lib/organizations/profileStage";
 import { logger } from "@/lib/server/logging";
+import type { OrganizationProfile } from "./types";
 
 export const ORG_LIFECYCLE_STATUSES = ["seeded", "managed", "archived"] as const;
 export type OrgLifecycleStatus = (typeof ORG_LIFECYCLE_STATUSES)[number];
@@ -55,6 +57,59 @@ export function isOrganizationPublic(org: OrganizationStateFields): boolean {
  */
 export function canOrganizationAppearInSearch(org: OrganizationStateFields): boolean {
   return isOrganizationManaged(org) && isOrganizationPublic(org);
+}
+
+export type ActivationSubmitEligibility =
+  | { ok: true }
+  | { ok: false; reason: string };
+
+/**
+ * Phase 3: whether an org leader may submit for public activation review.
+ * Caller must still enforce org_owner (or platform admin) separately.
+ */
+export function canOrganizationSubmitForActivation(params: {
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
+  name: string;
+  profile: OrganizationProfile;
+}): ActivationSubmitEligibility {
+  const orgFields: OrganizationStateFields = {
+    lifecycle_status: params.lifecycle_status,
+    public_profile_status: params.public_profile_status,
+  };
+
+  if (!isOrganizationManaged(orgFields)) {
+    return {
+      ok: false,
+      reason:
+        "Organization ownership must be confirmed before you can request public activation.",
+    };
+  }
+
+  const pub = parseOrgPublicProfileStatus(params.public_profile_status);
+  if (pub === "pending_review") {
+    return { ok: false, reason: "A review request is already in progress." };
+  }
+  if (pub === "active") {
+    return { ok: false, reason: "Your organization is already publicly active." };
+  }
+  if (pub !== "draft" && pub !== "paused") {
+    return { ok: false, reason: "Cannot submit for review in the current state." };
+  }
+
+  if (!params.name.trim()) {
+    return { ok: false, reason: "Organization name is required." };
+  }
+
+  if (!meetsSearchableMinimum(params.profile)) {
+    return {
+      ok: false,
+      reason:
+        "Add services, languages, coverage area, and capacity before submitting for review.",
+    };
+  }
+
+  return { ok: true };
 }
 
 /**

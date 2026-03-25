@@ -24,6 +24,7 @@ export type OrganizationMapRow = {
 
 export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> {
   const supabase = getSupabaseAdmin();
+  // Phase 6: require lifecycle_status === "managed" and public_profile_status === "active" for public map rows.
   const { data, error } = await supabase
     .from("organizations")
     .select(

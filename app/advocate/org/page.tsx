@@ -64,6 +64,9 @@ type OrgProfile = {
   name: string;
   type: string;
   status: string;
+  lifecycle_status?: string;
+  public_profile_status?: string;
+  activation_submitted_at?: string | null;
   service_types: string[];
   languages: string[];
   coverage_area: Record<string, unknown>;
@@ -96,6 +99,8 @@ export default function AdvocateOrgPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
+  const [activationSubmitting, setActivationSubmitting] = useState(false);
+  const [activationMsg, setActivationMsg] = useState<string | null>(null);
 
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [intakeMethods, setIntakeMethods] = useState<string[]>([]);
@@ -125,6 +130,12 @@ export default function AdvocateOrgPage() {
   const canViewDesignation = true;
   const canManageMemberships = myOrgRole === "owner";
   const canManageReviews = canManageOrg;
+  const canSubmitPublicActivation =
+    myOrgRole === "owner" &&
+    profile?.lifecycle_status === "managed" &&
+    (profile?.public_profile_status === "draft" || profile?.public_profile_status === "paused") &&
+    profile &&
+    listMissingForSearchable(profile as OrganizationProfile).length === 0;
 
   const [designation, setDesignation] = useState<{
     designation_tier: string;
@@ -374,6 +385,9 @@ export default function AdvocateOrgPage() {
           setProfile({
             ...p,
             profile_stage: p.profile_stage ?? "created",
+            lifecycle_status: p.lifecycle_status,
+            public_profile_status: p.public_profile_status,
+            activation_submitted_at: p.activation_submitted_at ?? null,
           });
           setServiceTypes(p.service_types ?? []);
           setIntakeMethods(p.intake_methods ?? []);
@@ -405,6 +419,44 @@ export default function AdvocateOrgPage() {
   const toggleInSet = (arr: string[], v: string, set: (x: string[]) => void) => {
     if (arr.includes(v)) set(arr.filter((x) => x !== v));
     else set([...arr, v]);
+  };
+
+  const handleSubmitForPublicActivation = async () => {
+    setActivationMsg(null);
+    setActivationSubmitting(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch("/api/org/submit-for-review", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setActivationMsg(getApiErrorMessage(json, "Could not submit for review"));
+        return;
+      }
+      const p = json.data?.profile as OrgProfile | undefined;
+      if (p) {
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...p,
+                public_profile_status: p.public_profile_status ?? "pending_review",
+                activation_submitted_at: p.activation_submitted_at ?? prev.activation_submitted_at,
+              }
+            : prev
+        );
+      } else {
+        setProfile((prev) =>
+          prev ? { ...prev, public_profile_status: "pending_review" } : prev
+        );
+      }
+      setActivationMsg(null);
+    } finally {
+      setActivationSubmitting(false);
+    }
   };
 
   const handleSaveProfile = async (e: FormEvent) => {
@@ -576,6 +628,71 @@ export default function AdvocateOrgPage() {
         {err && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
             {err}
+          </div>
+        )}
+
+        {profile && !profileLoading && profile.public_profile_status === "draft" && (
+          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300 space-y-2">
+            <p className="text-slate-200 font-medium">Public visibility</p>
+            <p>
+              Your organization is not yet public on NxtStps. After your profile meets the basics below,
+              you can submit it for platform review.
+            </p>
+            {canSubmitPublicActivation ? (
+              <button
+                type="button"
+                onClick={() => void handleSubmitForPublicActivation()}
+                disabled={activationSubmitting}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+              >
+                {activationSubmitting ? "Submitting…" : "Submit for Review"}
+              </button>
+            ) : myOrgRole === "owner" ? (
+              <p className="text-xs text-slate-500">
+                {profile.lifecycle_status !== "managed"
+                  ? "Ownership must be confirmed before you can request public activation."
+                  : "Complete services, languages, coverage area, and capacity to enable submit."}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                Only an organization owner can submit for public review.
+              </p>
+            )}
+            {activationMsg && (
+              <p className="text-xs text-amber-200/90">{activationMsg}</p>
+            )}
+          </div>
+        )}
+
+        {profile && !profileLoading && profile.public_profile_status === "pending_review" && (
+          <div className="rounded-xl border border-amber-500/35 bg-amber-950/20 px-4 py-3 text-sm text-amber-100/95">
+            <p className="font-medium text-amber-50">Your organization is under review</p>
+            <p className="mt-1 text-amber-100/85">
+              A platform administrator is reviewing your request for public visibility. You can keep updating
+              your team and profile unless you are asked to pause.
+            </p>
+          </div>
+        )}
+
+        {profile && !profileLoading && profile.public_profile_status === "paused" && (
+          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
+            <p className="font-medium text-slate-200">Your organization is currently not visible</p>
+            <p className="mt-1 text-slate-400">
+              Public listing is paused. Contact support or use org tools if you need this changed.
+            </p>
+            {canSubmitPublicActivation && (
+              <button
+                type="button"
+                onClick={() => void handleSubmitForPublicActivation()}
+                disabled={activationSubmitting}
+                className="mt-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+              >
+                {activationSubmitting ? "Submitting…" : "Submit for Review"}
+              </button>
+            )}
+            {activationMsg && (
+              <p className="mt-2 text-xs text-amber-200/90">{activationMsg}</p>
+            )}
           </div>
         )}
 

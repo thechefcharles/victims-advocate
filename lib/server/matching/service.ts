@@ -50,7 +50,7 @@ function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
 
 export async function loadActiveOrganizations(): Promise<OrgRowForMatching[]> {
   const supabase = getSupabaseAdmin();
-  // TODO (org-state): restrict to lifecycle_status = managed AND public_profile_status = active (Phase 6+).
+  // Phase 6: require lifecycle_status === "managed" AND public_profile_status === "active" (plus existing profile_stage gates).
   const { data, error } = await supabase
     .from("organizations")
     .select(

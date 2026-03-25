@@ -48,5 +48,7 @@ export type OrganizationProfileRow = OrganizationProfile & {
   lifecycle_status?: OrgLifecycleStatus;
   /** Phase 1: draft | pending_review | active | paused */
   public_profile_status?: OrgPublicProfileStatus;
+  /** Phase 3: when org leader submitted for public activation review */
+  activation_submitted_at?: string | null;
   metadata: Record<string, unknown>;
 };

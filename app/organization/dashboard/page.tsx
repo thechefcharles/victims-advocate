@@ -39,6 +39,7 @@ export default function OrganizationDashboardPage() {
   const [victims, setVictims] = useState<VictimRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [publicProfileStatus, setPublicProfileStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!consentReady) return;
@@ -90,6 +91,27 @@ export default function OrganizationDashboardPage() {
     };
   }, [consentReady]);
 
+  useEffect(() => {
+    if (!consentReady || !accessToken) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/org/profile", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const json = await res.json().catch(() => null);
+        if (!res.ok || cancelled) return;
+        const st = json?.data?.profile?.public_profile_status;
+        if (typeof st === "string" && !cancelled) setPublicProfileStatus(st);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [consentReady, accessToken]);
+
   const maskVictimLabel = (name: string, userId: string) => {
     if (!strictPreviews) return name || "Unknown";
     return `Victim ${userId.slice(0, 8)}…`;
@@ -116,6 +138,38 @@ export default function OrganizationDashboardPage() {
             </Link>
             .
           </p>
+          {publicProfileStatus && publicProfileStatus !== "active" && (
+            <p className="mt-3 text-sm text-slate-400 rounded-lg border border-slate-700/80 bg-slate-900/40 px-3 py-2">
+              {publicProfileStatus === "pending_review" ? (
+                <>
+                  Your organization&apos;s public listing is{" "}
+                  <span className="text-amber-200/90">under platform review</span>. Details and updates live
+                  in{" "}
+                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                    Org settings
+                  </Link>
+                  .
+                </>
+              ) : publicProfileStatus === "paused" ? (
+                <>
+                  Public visibility is <span className="text-slate-200">paused</span>. Open{" "}
+                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                    Org settings
+                  </Link>{" "}
+                  for status and next steps.
+                </>
+              ) : (
+                <>
+                  Your organization is <span className="text-slate-200">not yet public</span>. Complete your
+                  profile and submit for review in{" "}
+                  <Link href="/advocate/org" className="text-emerald-400 hover:underline">
+                    Org settings
+                  </Link>
+                  .
+                </>
+              )}
+            </p>
+          )}
         </header>
 
         {err && (
