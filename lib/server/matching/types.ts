@@ -19,6 +19,12 @@ export type MatchingInput = {
 export type OrgRowForMatching = {
   id: string;
   name: string;
+  /** Operational status: only `active` orgs are eligible for product matching/discovery. */
+  status: string;
+  /** Phase 6: only `managed` orgs are eligible for product matching/discovery. */
+  lifecycle_status: string;
+  /** Phase 6: only `public_profile_status === "active"` orgs are eligible. */
+  public_profile_status: string;
   service_types: string[];
   languages: string[];
   coverage_area: Record<string, unknown>;

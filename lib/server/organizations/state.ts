@@ -7,7 +7,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { meetsSearchableMinimum } from "@/lib/organizations/profileStage";
+import {
+  canOrganizationAppearInSearch as canOrganizationAppearInSearchFinal,
+  meetsSearchableMinimum,
+} from "@/lib/organizations/profileStage";
 import { logger } from "@/lib/server/logging";
 import type { OrganizationProfile } from "./types";
 
@@ -52,11 +55,16 @@ export function isOrganizationPublic(org: OrganizationStateFields): boolean {
 }
 
 /**
- * Intended for discovery/matching once Phase 6+ applies these gates.
- * Today matching still uses profile_status/profile_stage — do not use this for filtering yet.
+ * Alias for the canonical Phase 6 matching/discovery eligibility gate.
  */
-export function canOrganizationAppearInSearch(org: OrganizationStateFields): boolean {
-  return isOrganizationManaged(org) && isOrganizationPublic(org);
+export function canOrganizationAppearInSearch(org: {
+  status?: string | null;
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
+  profile_status?: string | null;
+  profile_stage?: string | null;
+}): boolean {
+  return canOrganizationAppearInSearchFinal(org);
 }
 
 export type ActivationSubmitEligibility =

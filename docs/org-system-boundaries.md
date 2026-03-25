@@ -10,8 +10,8 @@ Internal reference for engineers. This document describes what the **current** o
 - **Profile stages**  
   `created` → `searchable` → `enriched`, computed from profile fields (`lib/organizations/profileStage.ts`). **Searchable** is the minimum bar before an org is considered for matching lists.
 
-- **Matching eligibility (org row)**  
-  Same default bar as org loaders and advocate internal search: active organization, active `profile_status`, `profile_stage` in `searchable` | `enriched`. Implemented as `isOrganizationMatchingEligible()` in `lib/organizations/profileStage.ts`.
+- **Matching/discovery eligibility (org row)**  
+  Final Phase 6 gate: `status === "active"`, `lifecycle_status === "managed"`, `public_profile_status === "active"`, `profile_status === "active"`, and `profile_stage` in `searchable` | `enriched`. Implemented as `canOrganizationAppearInSearch()` / `isOrganizationMatchingEligible()` in `lib/organizations/profileStage.ts`.
 
 - **Fit-first matching**  
   Service/coverage fit dominates; designation is a small, capped boost (`lib/server/matching/`).

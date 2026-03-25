@@ -5,7 +5,10 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
+import {
+  isOrganizationAdminInspectableEligible,
+  isOrganizationMatchingEligible,
+} from "@/lib/organizations/profileStage";
 import { designationTierBadgeText, confidenceChipText } from "@/lib/trustDisplay";
 import {
   buildAdminOrgCue,
@@ -168,7 +171,9 @@ export default function AdminOrgsPage() {
   const filteredOrgs = useMemo(() => {
     const q = query.trim().toLowerCase();
     return orgs.filter((o) => {
-      if (!showUnreadyInternal && !isOrganizationMatchingEligible(o)) return false;
+      // Admin default list stays broader than product matching eligibility.
+      // Toggle "Show incomplete / unready organizations" to inspect everything else.
+      if (!showUnreadyInternal && !isOrganizationAdminInspectableEligible(o)) return false;
 
       if (followUpOnly) {
         const needsFollowUp =
@@ -831,7 +836,7 @@ export default function AdminOrgsPage() {
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-200">All organizations</h2>
             <p className="text-[11px] text-slate-500">
-              Matching-aligned in directory: {matchingCount} of {orgs.length}
+              Product-visible in matching/discovery: {matchingCount} of {orgs.length}
             </p>
           </div>
 

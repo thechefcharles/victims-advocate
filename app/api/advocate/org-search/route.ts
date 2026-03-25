@@ -4,15 +4,23 @@ import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { stateInCoverage } from "@/lib/server/matching/filters";
 import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/service";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 
 /**
- * Advocate-only internal org lookup. Default query matches `isOrganizationMatchingEligible`
- * (active org, active profile, searchable|enriched). Admins may pass `include_unready=true`
- * to widen the row set — see `docs/org-system-boundaries.md`.
+ * Advocate-only internal org lookup.
+ *
+ * Default candidate universe follows the final Phase 6 product visibility gate
+ * (`isOrganizationMatchingEligible` / `canOrganizationAppearInSearch`).
+ *
+ * Admins may pass `include_unready=true` to widen the row set by profile stage,
+ * while keeping managed/public eligibility intact (this route is still internal).
  */
 
 type OrgSearchRow = {
   id: string;
+  status: string;
+  lifecycle_status: string;
+  public_profile_status: string;
   name: string;
   service_types: string[];
   languages: string[];
@@ -53,13 +61,14 @@ export async function GET(req: Request) {
     const includeUnready = url.searchParams.get("include_unready") === "true" && ctx.isAdmin;
 
     const supabase = getSupabaseAdmin();
-    // Phase 6: additionally require lifecycle_status === "managed" and public_profile_status === "active".
     let query = supabase
       .from("organizations")
       .select(
-        "id,name,service_types,languages,coverage_area,accepting_clients,capacity_status,profile_status,profile_stage,accessibility_features,special_populations"
+        "id,name,status,lifecycle_status,public_profile_status,service_types,languages,coverage_area,accepting_clients,capacity_status,profile_status,profile_stage,accessibility_features,special_populations"
       )
       .eq("status", "active")
+      .eq("lifecycle_status", "managed")
+      .eq("public_profile_status", "active")
       .eq("profile_status", "active");
 
     if (!includeUnready) {
@@ -70,6 +79,9 @@ export async function GET(req: Request) {
     if (error) throw error;
 
     let rows = (data ?? []).map((r) => ({
+      status: String(r.status ?? "inactive"),
+      lifecycle_status: String(r.lifecycle_status ?? "seeded"),
+      public_profile_status: String(r.public_profile_status ?? "draft"),
       id: String(r.id),
       name: String(r.name ?? ""),
       service_types: Array.isArray(r.service_types) ? (r.service_types as string[]) : [],
@@ -91,6 +103,8 @@ export async function GET(req: Request) {
     })) as OrgSearchRow[];
 
     rows = rows.filter((org) => {
+      // Default (non-admin override) must follow the final visibility gate.
+      if (!includeUnready && !isOrganizationMatchingEligible(org)) return false;
       if (!hasQueryMatch(org, q)) return false;
       if (service && !org.service_types.some((s) => s.toLowerCase() === service)) return false;
       if (language && !org.languages.some((l) => l.toLowerCase() === language)) return false;

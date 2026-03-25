@@ -252,7 +252,7 @@ export const en: I18nDict = {
       notAccepting: "Not accepting new clients",
       capacity: "Capacity",
       noOrgs:
-        "There aren’t any organizations in the directory yet. New partners are added over time—please check back later.",
+        "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
       loadError: "We couldn’t load organizations. Please try again.",
       privacyNote:
         "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
@@ -372,9 +372,9 @@ export const en: I18nDict = {
     notAccepting: "Not accepting new clients",
     capacity: "Capacity",
     noOrgs:
-      "There aren’t any organizations in the directory yet. New partners are added over time—please check back later.",
+      "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
     noOrgsInState:
-      "No organizations match this state filter. Try “All states” or pick another state.",
+      "No organizations match this state filter right now. Organizations must be publicly active and matching-ready. Try “All states” or pick another state.",
     loadError: "We couldn’t load organizations. Please try again.",
     privacyNote:
       "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",

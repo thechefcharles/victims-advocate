@@ -9,6 +9,7 @@ import {
   statesFromCoverage,
 } from "@/lib/server/ecosystem/regions";
 import { computeOrgMapPoint } from "@/lib/server/organizations/mapCoordinates";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 
 export type OrganizationMapRow = {
   id: string;
@@ -24,19 +25,30 @@ export type OrganizationMapRow = {
 
 export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> {
   const supabase = getSupabaseAdmin();
-  // Phase 6: require lifecycle_status === "managed" and public_profile_status === "active" for public map rows.
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status"
+      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status,lifecycle_status,public_profile_status"
     )
     .eq("status", "active")
+    .eq("lifecycle_status", "managed")
+    .eq("public_profile_status", "active")
     .eq("profile_status", "active")
     .in("profile_stage", ["searchable", "enriched"]);
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((row) => {
+  const eligible = (data ?? []).filter((row) =>
+    isOrganizationMatchingEligible({
+      status: row.status,
+      lifecycle_status: row.lifecycle_status,
+      public_profile_status: row.public_profile_status,
+      profile_status: row.profile_status,
+      profile_stage: row.profile_stage,
+    })
+  );
+
+  return eligible.map((row) => {
     const cov = row.coverage_area as Record<string, unknown>;
     const states = statesFromCoverage(cov);
     const counties = countiesFromCoverage(cov);

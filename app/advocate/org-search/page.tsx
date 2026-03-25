@@ -132,7 +132,7 @@ export default function AdvocateOrgSearchPage() {
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 space-y-3">
           <p className="text-xs text-slate-400">
-            Internal only. Results default to the same profile stage bar as matching (searchable or enriched).
+            Internal only. Results default to matching-ready organizations (managed + publicly active; searchable or enriched).
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or service" className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm" />
@@ -184,7 +184,7 @@ export default function AdvocateOrgSearchPage() {
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-400 space-y-2">
             <p>No organizations match these filters.</p>
             <p className="text-xs text-slate-500">
-              Try adjusting service, language, or area filters. Organizations must be active and searchable to appear here.
+              Try adjusting service, language, or area filters. Organizations must be publicly active and matching-ready to appear here.
             </p>
           </section>
         ) : null}

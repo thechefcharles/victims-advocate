@@ -25,7 +25,7 @@ export const TRUST_LINK_HREF = {
 
 export const EMPTY_COPY = {
   noMatchingResults:
-    "No support organizations were recommended yet. Complete more case information or ask an advocate to review options.",
+    "No support organizations were recommended yet. Complete more case information or ask an advocate to review options. Only publicly active, matching-ready organizations appear here.",
   noDesignationYet:
     "No designation on file yet. Administrators update this after internal review.",
   insufficientDataDesignation:

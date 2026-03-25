@@ -19,6 +19,7 @@ import {
   type OrgProfileLike,
 } from "@/lib/server/organizations/profileCompleteness";
 import { buildOrgInternalFollowupCue } from "@/lib/organizations/internalFollowupCues";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 
 export type OrgRow = Record<string, unknown> & { id: string; name: string };
 
@@ -86,15 +87,16 @@ export async function loadEcosystemAggregates(filters: EcosystemFilters): Promis
   const since = new Date(Date.now() - filters.time_window_days * 86400000);
   const sinceIso = since.toISOString();
 
-  // Same org row bar as matching lists: active + active profile + searchable|enriched
-  // (`isOrganizationMatchingEligible` in lib/organizations/profileStage.ts).
+  // Org row bar aligns with matching/discovery eligibility (Phase 6).
   const { data: orgData, error: orgErr } = await supabase
     .from("organizations")
     .select(
-      "id,name,status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage"
+      "id,name,status,lifecycle_status,public_profile_status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage"
     )
     .eq("profile_status", "active")
     .eq("status", "active")
+    .eq("lifecycle_status", "managed")
+    .eq("public_profile_status", "active")
     .in("profile_stage", ["searchable", "enriched"]);
 
   if (orgErr) {
@@ -102,7 +104,9 @@ export async function loadEcosystemAggregates(filters: EcosystemFilters): Promis
   }
 
   const allActiveOrgs = (orgData ?? []) as OrgRow[];
-  const filteredOrgs = allActiveOrgs.filter((o) => filterOrgForEcosystem(o, filters));
+  const filteredOrgs = allActiveOrgs.filter(
+    (o) => isOrganizationMatchingEligible(o as any) && filterOrgForEcosystem(o, filters)
+  );
 
   const desMap = await getCurrentDesignationsForOrgIds(allActiveOrgs.map((o) => o.id));
 

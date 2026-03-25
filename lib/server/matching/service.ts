@@ -14,11 +14,15 @@ import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/servi
 import { integrateDesignationIntoMatches } from "./integration";
 import type { DesignationIntegrationMeta } from "./integration";
 import type { OrganizationMatchRunRow } from "./types";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 
 function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
   return {
     id: String(row.id),
     name: String(row.name ?? ""),
+    status: String(row.status ?? ""),
+    lifecycle_status: String(row.lifecycle_status ?? ""),
+    public_profile_status: String(row.public_profile_status ?? ""),
     service_types: Array.isArray(row.service_types) ? (row.service_types as string[]) : [],
     languages: Array.isArray(row.languages) ? (row.languages as string[]) : [],
     coverage_area:
@@ -50,19 +54,25 @@ function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
 
 export async function loadActiveOrganizations(): Promise<OrgRowForMatching[]> {
   const supabase = getSupabaseAdmin();
-  // Phase 6: require lifecycle_status === "managed" AND public_profile_status === "active" (plus existing profile_stage gates).
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage,profile_last_updated_at"
+      "id,name,status,lifecycle_status,public_profile_status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage,profile_last_updated_at"
     )
+    // Final Phase 6 rule: only product-visible orgs can be used as matching candidates.
+    // (Matching then still uses per-match hard filters below.)
+    .eq("status", "active")
+    .eq("lifecycle_status", "managed")
+    .eq("public_profile_status", "active")
     .eq("profile_status", "active")
     .in("profile_stage", ["searchable", "enriched"]);
 
   if (error) {
     throw new AppError("INTERNAL", "Failed to load organizations", undefined, 500);
   }
-  return (data ?? []).map((r) => rowToOrg(r as Record<string, unknown>));
+  const mapped = (data ?? []).map((r) => rowToOrg(r as Record<string, unknown>));
+  // Defensive: ensure DB query and helper stay aligned for future schema changes.
+  return mapped.filter((o) => isOrganizationMatchingEligible(o));
 }
 
 export async function runOrganizationMatchingWithOrgs(
@@ -239,7 +249,9 @@ export async function persistOrganizationMatchRun(params: {
       possible_match: false,
       limited_match: true,
       reasons: [],
-      flags: ["No organizations matched the current criteria — try updating the application or org profiles"],
+      flags: [
+        "No organizations matched the current criteria — make sure your case details are complete and that organizations meet visibility requirements.",
+      ],
       metadata: { empty_run: true, designation_integration: params.designation_meta },
       run_group_id: params.runGroupId,
       actor_user_id: params.actorUserId,

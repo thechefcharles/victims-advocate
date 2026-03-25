@@ -50,20 +50,77 @@ export function isOrganizationSearchable(profile: OrganizationProfile): boolean 
 }
 
 /**
- * Row-level gate for matching and internal org search defaults (same filters as org loaders):
- * organization `status` active, `profile_status` active (when set), `profile_stage` searchable or enriched.
- * Not a substitute for per-match hard filters (services, geo, etc.).
+ * Final “can appear in product matching/discovery” gate (Phase 6 enforcement).
  *
- * @see docs/org-system-boundaries.md
+ * This helper is the single source of truth for whether an org is eligible to be
+ * included in matching / recommendation / discovery surfaces.
+ *
+ * Why so strict:
+ * - `status` (operational) must be active
+ * - `lifecycle_status` must be managed (owner approved)
+ * - `public_profile_status` must be active (public listing approved)
+ * - `profile_status` must be active (profile ready)
+ * - `profile_stage` must be searchable/enriched (minimum signals)
+ *
+ * Admin/internal surfaces should intentionally use a broader rule (see
+ * `isOrganizationAdminInspectableEligible`), and should not silently reuse this helper.
+ *
+ * Not a substitute for per-match hard filters (services, geo, etc.).
  */
-export function isOrganizationMatchingEligible(org: {
-  status: string;
+export function canOrganizationAppearInSearch(org: {
+  status?: string | null;
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
   profile_status?: string | null;
   profile_stage?: string | null;
 }): boolean {
-  if (org.status !== "active") return false;
-  const ps = org.profile_status?.trim();
+  const status = (org.status ?? "").trim();
+  if (status !== "active") return false;
+
+  const lifecycle = (org.lifecycle_status ?? "").trim();
+  if (lifecycle !== "managed") return false;
+
+  const pub = (org.public_profile_status ?? "").trim();
+  if (pub !== "active") return false;
+
+  const ps = (org.profile_status ?? "").trim();
+  if (ps !== "active") return false;
+
+  const stage = (org.profile_stage ?? "").trim();
+  return stage === "searchable" || stage === "enriched";
+}
+
+/**
+ * Matching/discovery row gate.
+ * Kept for backwards compatibility; prefer `canOrganizationAppearInSearch` in new code.
+ */
+export function isOrganizationMatchingEligible(org: {
+  status?: string | null;
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
+  profile_status?: string | null;
+  profile_stage?: string | null;
+}): boolean {
+  return canOrganizationAppearInSearch(org);
+}
+
+/**
+ * Admin inspection default gate (broader than product visibility).
+ *
+ * Admins often need to inspect “active operational + active profile”
+ * orgs even when they are not publicly active or not lifecycle-managed.
+ */
+export function isOrganizationAdminInspectableEligible(org: {
+  status?: string | null;
+  profile_status?: string | null;
+  profile_stage?: string | null;
+}): boolean {
+  const status = (org.status ?? "").trim();
+  if (status !== "active") return false;
+
+  const ps = (org.profile_status ?? "").trim();
   if (ps && ps !== "active") return false;
+
   const stage = (org.profile_stage ?? "").trim();
   return stage === "searchable" || stage === "enriched";
 }

@@ -1,7 +1,8 @@
 /**
  * Phase B: Hard filters — exclude orgs that clearly do not fit.
- * Profile stage / status gates align with `isOrganizationMatchingEligible` in
- * `lib/organizations/profileStage.ts` (plus per-run rules below).
+ *
+ * Note: final Phase 6 visibility eligibility (status + lifecycle + public + profile +
+ * searchable/enriched stage) is enforced in the candidate loader.
  */
 
 import type { MatchingInput, OrgRowForMatching } from "./types";
