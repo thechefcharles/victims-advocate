@@ -42,7 +42,7 @@ export function getWorkspaceCtaLabel(me: DashboardMe): string {
   if (me.role === "victim") return "My dashboard";
   if (me.role === "advocate") return "Go to My Dashboard";
   if (me.role === "organization") {
-    if (!me.orgId) return "Continue organization setup";
+    if (!me.orgId) return "Set Up Organization Access";
     return "Go to Organization Home";
   }
   return "My dashboard";

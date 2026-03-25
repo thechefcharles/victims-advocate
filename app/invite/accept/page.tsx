@@ -77,12 +77,12 @@ function AcceptContent() {
         {status === "success" ? (
           <>
             <p className="text-emerald-300 font-medium">{message}</p>
-            <Link
-              href="/advocate"
+            <a
+              href="/dashboard"
               className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
             >
-              Go to dashboard
-            </Link>
+              Continue To Your Workspace
+            </a>
           </>
         ) : (
           <>

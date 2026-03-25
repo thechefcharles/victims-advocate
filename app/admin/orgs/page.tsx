@@ -15,6 +15,8 @@ type AdminOrg = {
   name: string;
   type: string;
   status: string;
+  /** Active memberships with org_owner role */
+  org_owner_count?: number;
   profile_status?: string | null;
   profile_stage?: string | null;
   accepting_clients?: boolean | null;
@@ -219,10 +221,13 @@ export default function AdminOrgsPage() {
         {proposals.filter((p) => p.status === "pending").length > 0 && (
           <section className="rounded-2xl border border-amber-500/40 bg-amber-950/20 p-5">
             <h2 className="text-sm font-semibold text-amber-100 mb-3">
-              Pending organization proposals ({proposals.filter((p) => p.status === "pending").length})
+              Pending organization requests ({proposals.filter((p) => p.status === "pending").length})
             </h2>
             <p className="text-xs text-amber-200/80 mb-4">
-              Orgs not in the directory — submitted by users for admin approval.
+              <strong className="text-amber-100">Approve &amp; create organization</strong> adds a new
+              organization record in NxtStps and sets the submitter as{" "}
+              <strong className="text-amber-100">Organization Owner</strong>.{" "}
+              <strong className="text-amber-100">Decline</strong> closes the request without creating an org.
             </p>
             <ul className="space-y-4">
               {proposals
@@ -285,7 +290,7 @@ export default function AdminOrgsPage() {
                           disabled={actingId !== null}
                           className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
                         >
-                          {actingId === p.id ? "…" : "Approve"}
+                          {actingId === p.id ? "…" : "Approve & Create Organization"}
                         </button>
                         <button
                           type="button"
@@ -335,7 +340,13 @@ export default function AdminOrgsPage() {
         </div>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Create</h2>
+          <h2 className="text-sm font-semibold text-slate-200 mb-1">Create organization (admin)</h2>
+          <p className="text-xs text-slate-500 mb-3">
+            Creates an active organization record only—no Organization Owner is added automatically. Use org
+            invites or membership tools to assign an owner, or expect{" "}
+            <span className="text-slate-400">No Organization Owner Assigned</span> in the list below until you
+            do.
+          </p>
           <form onSubmit={handleCreate} className="flex flex-wrap gap-3">
             <input
               type="text"
@@ -361,7 +372,7 @@ export default function AdminOrgsPage() {
               disabled={submitting || !createName.trim()}
               className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
             >
-              {submitting ? "Creating…" : "Create"}
+              {submitting ? "Creating…" : "Create Organization"}
             </button>
           </form>
         </section>
@@ -508,6 +519,11 @@ export default function AdminOrgsPage() {
                           {o.type} · org {o.status}
                           {o.profile_status ? ` · profile ${o.profile_status}` : ""}
                         </p>
+                        {(o.org_owner_count ?? 0) === 0 ? (
+                          <p className="text-[11px] text-amber-200/90 mt-1 rounded border border-amber-800/50 bg-amber-950/40 px-2 py-1 inline-block">
+                            No Organization Owner Assigned — invite or assign someone with owner access.
+                          </p>
+                        ) : null}
                         <div className="flex flex-wrap gap-2 pt-1">
                           <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
                             Stage: {o.profile_stage ?? "—"}

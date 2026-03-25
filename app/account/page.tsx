@@ -49,6 +49,22 @@ export default function AccountPage() {
           {t("nav.accountPlaceholderTitle")}
         </h1>
 
+        {role === "organization" && !orgId && (
+          <div className="rounded-2xl border border-amber-500/35 bg-amber-950/25 px-5 py-4 space-y-2">
+            <p className="text-sm font-medium text-amber-100">Set Up Organization Access</p>
+            <p className="text-xs text-amber-100/80 leading-relaxed">
+              You don&apos;t belong to an organization workspace yet. Find your agency in the directory,
+              request to join, or submit details if you&apos;re not listed.
+            </p>
+            <Link
+              href="/organization/setup"
+              className="inline-block text-sm font-semibold text-amber-300 hover:text-amber-200 underline-offset-2"
+            >
+              Open organization onboarding →
+            </Link>
+          </div>
+        )}
+
         {isVictimProfile && (
           <VictimPersonalInfoForm
             accessToken={accessToken}

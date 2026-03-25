@@ -73,6 +73,8 @@ export function OrganizationOnboarding({
   const [proposalErr, setProposalErr] = useState<string | null>(null);
   const [findSuccess, setFindSuccess] = useState<string | null>(null);
   const [proposalSuccess, setProposalSuccess] = useState<string | null>(null);
+  const [claimComplete, setClaimComplete] = useState(false);
+  const [dirLookupLoading, setDirLookupLoading] = useState(false);
 
   const [addNewForm, setAddNewForm] = useState({
     name: "",
@@ -96,6 +98,44 @@ export function OrganizationOnboarding({
     setCatalogId(initialCatalogId);
   }, [initialCatalogId]);
 
+  useEffect(() => {
+    if (catalogId == null || !profileIsOrg) {
+      setDirLookupLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setDirLookupLoading(true);
+
+    (async () => {
+      const token = await getToken();
+      if (!token || cancelled) {
+        if (!cancelled) setDirLookupLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/org/directory-entry-status?catalog_entry_id=${catalogId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (cancelled) return;
+        if (res.ok && json.data?.has_workspace === true && json.data.organization_id) {
+          setExistingOrgId(String(json.data.organization_id));
+          setExistingOrgName(String(json.data.organization_name ?? "Organization"));
+        } else if (res.ok && json.data?.has_workspace === false) {
+          setExistingOrgId(null);
+          setExistingOrgName(null);
+        }
+      } finally {
+        if (!cancelled) setDirLookupLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [catalogId, profileIsOrg]);
+
   const clearFindConflict = () => {
     setExistingOrgId(null);
     setExistingOrgName(null);
@@ -107,6 +147,7 @@ export function OrganizationOnboarding({
     setSelectedProgram(program);
     clearFindConflict();
     setFindSuccess(null);
+    setClaimComplete(false);
   };
 
   const getToken = async (): Promise<string | null> => {
@@ -165,16 +206,28 @@ export function OrganizationOnboarding({
           );
           return;
         }
-        setFindErr(getApiErrorMessage(json, "Could not link this directory entry."));
+        setFindErr(
+          getApiErrorMessage(json, "Could not set up your organization from this directory listing.")
+        );
         return;
       }
-      await refetchMe();
-      setFindSuccess("Organization linked. Redirecting you to your workspace…");
-      router.push("/organization/dashboard");
-      router.refresh();
+      setClaimComplete(true);
+      setFindSuccess(null);
     } finally {
       setClaimLoading(false);
     }
+  };
+
+  const continueToOrgDashboard = async () => {
+    await refetchMe();
+    router.push("/organization/dashboard");
+    router.refresh();
+  };
+
+  const continueToAccountProfile = async () => {
+    await refetchMe();
+    router.push("/account");
+    router.refresh();
   };
 
   const handleRequestToJoin = async () => {
@@ -210,7 +263,7 @@ export function OrganizationOnboarding({
         return;
       }
       setFindSuccess(
-        "Request sent. People who manage that organization or an administrator will be notified. Watch your updates for a response."
+        "Your Request To Join has been sent. Organization administrators (or platform staff) will review it. Check Updates for a response—you can keep using your account in the meantime."
       );
       setExistingOrgId(null);
       setExistingOrgName(null);
@@ -286,7 +339,7 @@ export function OrganizationOnboarding({
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
       <p className="text-sm text-amber-100">
         <span className="font-medium">{existingOrgName}</span> already has a NxtStps workspace for this
-        directory entry. You can request access—nothing new is created automatically.
+        directory entry. Request To Join if you work there—no new organization is created.
       </p>
       <button
         type="button"
@@ -294,7 +347,7 @@ export function OrganizationOnboarding({
         disabled={requestingJoin}
         className="rounded-lg bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
       >
-        {requestingJoin ? "Sending request…" : "Request to join this organization"}
+        {requestingJoin ? "Sending…" : "Request To Join This Organization"}
       </button>
     </div>
   ) : null;
@@ -329,9 +382,40 @@ export function OrganizationOnboarding({
         </div>
       )}
 
+      {claimComplete && (
+        <div className="rounded-2xl border border-emerald-500/50 bg-emerald-950/30 px-5 py-5 space-y-3">
+          <h3 className="text-base font-semibold text-emerald-100">Your Organization Has Been Created</h3>
+          <p className="text-sm text-emerald-100/90">
+            You are now the <span className="font-medium text-emerald-50">Organization Owner</span> for this
+            agency in NxtStps.
+          </p>
+          <p className="text-xs text-emerald-200/70">Next, open your workspace or add profile details for your team.</p>
+          <div className="flex flex-col sm:flex-row gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => void continueToOrgDashboard()}
+              className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 text-center"
+            >
+              Continue To Organization Dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => void continueToAccountProfile()}
+              className="rounded-lg border border-emerald-600/50 px-4 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/40 text-center"
+            >
+              Complete Your Organization Profile
+            </button>
+          </div>
+        </div>
+      )}
+
       {findSuccess && (
-        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-          {findSuccess}
+        <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100 space-y-2">
+          <p>{findSuccess}</p>
+          <p className="text-xs text-emerald-200/80">
+            What happens next: an administrator or org manager will approve or decline your Request To Join.
+            You don&apos;t need to submit again unless you&apos;re asked to.
+          </p>
         </div>
       )}
 
@@ -340,10 +424,10 @@ export function OrganizationOnboarding({
         className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">1. Find my organization</h2>
+          <h2 className="text-lg font-semibold text-slate-50">1. Find My Organization</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Search the Illinois Crime Victim Assistance Services directory, then link your agency or request
-            access if a workspace already exists.
+            Search the Illinois Crime Victim Assistance Services directory. If your agency already has a
+            workspace, use Request To Join. If not, you can set one up from this verified listing.
           </p>
         </div>
 
@@ -357,26 +441,30 @@ export function OrganizationOnboarding({
             initialSearchQuery={initialOrgNameHint?.trim() || null}
           />
 
+          {catalogId != null && dirLookupLoading && (
+            <p className="text-xs text-slate-500">Checking whether this listing already has a workspace…</p>
+          )}
+
           {selectedProgram && !existingOrgId && (
             <p className="text-xs text-slate-500 leading-relaxed">
               Selected: #{selectedProgram.id} · {selectedProgram.organization} — {selectedProgram.programType}
             </p>
           )}
 
-          {!existingOrgId && catalogId != null && (
+          {!existingOrgId && catalogId != null && !dirLookupLoading && !claimComplete && (
             <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3 text-sm text-slate-300 space-y-2">
-              <p className="text-slate-200 font-medium">Directory claim (verified listing)</p>
+              <p className="text-slate-200 font-medium">Verified directory listing</p>
               <p>
-                This listing comes from the verified Illinois directory. If no duplicate workspace exists,
-                you can link it to your account and become the organization owner. We don&apos;t create a
-                second organization for the same directory entry.
+                This program is listed in the verified Illinois directory. If no workspace exists for it yet,
+                you can create your organization from this listing and become the Organization Owner. Only one
+                NxtStps organization is allowed per directory entry.
               </p>
               <button
                 type="submit"
-                disabled={claimLoading || !profileIsOrg}
+                disabled={claimLoading || !profileIsOrg || claimComplete}
                 className="mt-2 w-full sm:w-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
               >
-                {claimLoading ? "Working…" : "Link directory entry — I’ll be the organization owner"}
+                {claimLoading ? "Working…" : "Set Up Organization From This Listing"}
               </button>
             </div>
           )}
@@ -396,20 +484,20 @@ export function OrganizationOnboarding({
         className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">2. Request to join an existing organization</h2>
+          <h2 className="text-lg font-semibold text-slate-50">2. Request To Join</h2>
           <p className="text-sm text-slate-400 mt-1">
-            Use the directory in step 1. When your agency already has a workspace, you&apos;ll see a{" "}
-            <span className="text-slate-300">Request to join</span> option instead of claiming it.
+            If your agency already has a NxtStps workspace, select it in{" "}
+            <span className="text-slate-300">Find My Organization</span>—we&apos;ll show Request To Join when
+            that&apos;s the case. You don&apos;t need to try Set Up first.
           </p>
         </div>
         <p className="text-sm text-slate-500">
-          We&apos;ll notify people who manage that organization (or an administrator). You won&apos;t create a
-          duplicate org from this action.
+          We&apos;ll notify people who manage that organization (or an administrator). This never creates a
+          duplicate organization.
         </p>
         <p className="text-xs text-slate-600">
-          After you select your agency in step 1, if a workspace already exists you&apos;ll see{" "}
-          <span className="text-slate-400">Request to join this organization</span> there—use that to start
-          the request.
+          The Request To Join button appears in section 1 as soon as we detect an existing workspace for your
+          directory selection.
         </p>
       </section>
 
@@ -418,7 +506,7 @@ export function OrganizationOnboarding({
         className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">3. My organization is not listed</h2>
+          <h2 className="text-lg font-semibold text-slate-50">3. My Organization Is Not Listed</h2>
           <p className="text-sm text-slate-400 mt-1">
             Tell us about your agency. We&apos;ll review your request before creating a new organization—nothing
             goes live immediately.
@@ -548,7 +636,7 @@ export function OrganizationOnboarding({
             disabled={proposalLoading || !profileIsOrg}
             className="w-full rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-white disabled:opacity-50"
           >
-            {proposalLoading ? "Submitting…" : "Submit for admin review"}
+            {proposalLoading ? "Submitting…" : "Submit For Admin Review"}
           </button>
         </form>
       </section>

@@ -34,10 +34,29 @@ export async function GET(req: Request) {
 
     const rows = data ?? [];
     const desMap = await getCurrentDesignationsForOrgIds(rows.map((r) => r.id));
+
+    const orgIds = rows.map((r) => r.id);
+    const ownerCountByOrg = new Map<string, number>();
+    if (orgIds.length > 0) {
+      const { data: ownerRows, error: ownErr } = await supabase
+        .from("org_memberships")
+        .select("organization_id")
+        .eq("status", "active")
+        .eq("org_role", "org_owner")
+        .in("organization_id", orgIds);
+      if (ownErr) throw new Error(ownErr.message);
+      for (const row of ownerRows ?? []) {
+        const oid = row.organization_id as string;
+        ownerCountByOrg.set(oid, (ownerCountByOrg.get(oid) ?? 0) + 1);
+      }
+    }
+
     const orgs = rows.map((r) => {
       const d = desMap.get(r.id);
+      const org_owner_count = ownerCountByOrg.get(r.id) ?? 0;
       return {
         ...r,
+        org_owner_count,
         designation_tier: d?.designation_tier ?? null,
         designation_confidence: d?.designation_confidence ?? null,
       };
