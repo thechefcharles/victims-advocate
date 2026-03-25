@@ -4,6 +4,7 @@ import {
   SERVICE_TYPE_OPTIONS,
   SPECIAL_POPULATION_OPTIONS,
 } from "@/lib/organizations/profileOptions";
+import type { OrgLifecycleStatus, OrgPublicProfileStatus } from "@/lib/server/organizations/state";
 
 export type CapacityStatus = "open" | "limited" | "waitlist" | "closed" | "unknown";
 export type OrgProfileStatus = "draft" | "active" | "archived";
@@ -41,6 +42,11 @@ export type OrganizationProfileRow = OrganizationProfile & {
   id: string;
   name: string;
   type: string;
+  /** Operational: active | suspended | archived */
   status: string;
+  /** Phase 1: seeded | managed | archived */
+  lifecycle_status?: OrgLifecycleStatus;
+  /** Phase 1: draft | pending_review | active | paused */
+  public_profile_status?: OrgPublicProfileStatus;
   metadata: Record<string, unknown>;
 };

@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase
       .from("organizations")
       .select(
-        "id, created_at, name, type, status, created_by, profile_status, profile_stage, accepting_clients, capacity_status, service_types, languages"
+        "id, created_at, name, type, status, lifecycle_status, public_profile_status, created_by, profile_status, profile_stage, accepting_clients, capacity_status, service_types, languages"
       )
       .order("name", { ascending: true });
 

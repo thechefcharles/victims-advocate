@@ -15,6 +15,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
 
 function appBaseUrl(req: Request): string {
   return (
@@ -104,6 +105,8 @@ export async function POST(
       }
       throw new Error(memErr.message);
     }
+
+    await syncOrganizationLifecycleFromOwnership(supabase, row.organization_id);
 
     const now = new Date().toISOString();
     const { error: updErr } = await supabase

@@ -9,6 +9,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { sha256Hex } from "@/lib/server/audit/hash";
 import { logger } from "@/lib/server/logging";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
 
 export async function POST(req: Request) {
   try {
@@ -96,6 +97,10 @@ export async function POST(req: Request) {
       .single();
 
     if (membershipErr) throw new Error(membershipErr.message);
+
+    if (invite.org_role === "org_owner") {
+      await syncOrganizationLifecycleFromOwnership(supabase, invite.organization_id);
+    }
 
     const { error: updateErr } = await supabase
       .from("org_invites")

@@ -11,6 +11,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { createNotification } from "@/lib/server/notifications/create";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
 
 function appBaseUrl(req: Request): string {
   return (
@@ -117,6 +118,8 @@ export async function POST(
       await supabase.from("organizations").delete().eq("id", org.id);
       throw new Error(memErr.message);
     }
+
+    await syncOrganizationLifecycleFromOwnership(supabase, org.id);
 
     const now = new Date().toISOString();
     const { error: updErr } = await supabase

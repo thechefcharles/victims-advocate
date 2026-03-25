@@ -15,6 +15,8 @@ type AdminOrg = {
   name: string;
   type: string;
   status: string;
+  lifecycle_status?: string;
+  public_profile_status?: string;
   /** Active memberships with org_owner role */
   org_owner_count?: number;
   profile_status?: string | null;

@@ -8,6 +8,7 @@ import { AppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
 import { orgRowFromCatalogEntry } from "@/lib/server/org/catalogOrgFields";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
 
 export const ORG_TYPES = ["nonprofit", "hospital", "gov", "other"] as const;
 
@@ -140,6 +141,8 @@ export async function createOrganizationForUser(
     await supabase.from("organizations").delete().eq("id", org.id);
     return { error: new AppError("INTERNAL", "Failed to create membership", undefined, 500) };
   }
+
+  await syncOrganizationLifecycleFromOwnership(supabase, org.id);
 
   await logEvent({
     ctx,

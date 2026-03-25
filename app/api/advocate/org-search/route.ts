@@ -53,6 +53,7 @@ export async function GET(req: Request) {
     const includeUnready = url.searchParams.get("include_unready") === "true" && ctx.isAdmin;
 
     const supabase = getSupabaseAdmin();
+    // TODO (org-state): additionally require lifecycle_status = managed and public_profile_status = active (Phase 6+).
     let query = supabase
       .from("organizations")
       .select(
