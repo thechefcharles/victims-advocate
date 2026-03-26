@@ -1,6 +1,8 @@
 /**
- * Org leadership approves an advocate’s join request (creates membership as staff).
- * Phase 3: new members default to `victim_advocate` (product “Advocate”); not owner-tier.
+ * Org leadership approves an advocate’s join request (creates staff membership).
+ * Phase 4: optional JSON `{ "org_role": "supervisor" | "victim_advocate" | "intake_specialist" }`
+ * (same set as self-serve invites). Defaults to `victim_advocate`. Owner-tier roles are never
+ * assignable here.
  */
 
 import {
@@ -10,7 +12,11 @@ import {
   requireOrg,
   requireOrgRole,
   SIMPLE_ORG_LEADERSHIP_ROLES,
+  ORG_SELF_SERVE_INVITE_ROLES,
+  normalizeOrgRoleInput,
+  type OrgRole,
 } from "@/lib/server/auth";
+import { dbOrgRoleProductLabel } from "@/lib/auth/simpleOrgRole";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
@@ -41,6 +47,28 @@ export async function POST(
     const rid = requestId?.trim();
     if (!rid) {
       return apiFail("VALIDATION_ERROR", "Missing request id", undefined, 422);
+    }
+
+    let assignedRole: OrgRole = "victim_advocate";
+    const contentType = req.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const body = await req.json().catch(() => null);
+      const raw =
+        body && typeof body === "object" && typeof (body as { org_role?: unknown }).org_role === "string"
+          ? String((body as { org_role: string }).org_role).trim().toLowerCase()
+          : "";
+      if (raw) {
+        const parsed = normalizeOrgRoleInput(raw);
+        if (!parsed || !(ORG_SELF_SERVE_INVITE_ROLES as readonly string[]).includes(parsed)) {
+          return apiFail(
+            "VALIDATION_ERROR",
+            `org_role must be one of: ${ORG_SELF_SERVE_INVITE_ROLES.join(", ")}`,
+            undefined,
+            422
+          );
+        }
+        assignedRole = parsed;
+      }
     }
 
     const supabase = getSupabaseAdmin();
@@ -90,7 +118,7 @@ export async function POST(
     const { error: memErr } = await supabase.from("org_memberships").insert({
       user_id: row.advocate_user_id,
       organization_id: row.organization_id,
-      org_role: "victim_advocate",
+      org_role: assignedRole,
       status: "active",
       created_by: ctx.userId,
     });
@@ -121,6 +149,7 @@ export async function POST(
       .eq("id", row.organization_id)
       .maybeSingle();
     const orgName = (org as { name?: string } | null)?.name ?? "your organization";
+    const roleLabel = dbOrgRoleProductLabel(assignedRole);
 
     const base = appBaseUrl(req);
     await createNotification(
@@ -129,13 +158,14 @@ export async function POST(
         organizationId: row.organization_id,
         type: "advocate_org_join_resolved",
         title: "Organization request approved",
-        body: `You’ve been added to ${orgName} as staff. Open your dashboard to continue.`,
-        actionUrl: `${base}/advocate`,
+        body: `You’ve been added to ${orgName} as ${roleLabel}. Open your dashboard to continue.`,
+        actionUrl: `${base}/dashboard`,
         previewSafe: true,
         metadata: {
           request_id: rid,
           organization_id: row.organization_id,
           outcome: "approved",
+          org_role: assignedRole,
         },
       },
       ctx
@@ -147,11 +177,11 @@ export async function POST(
       resourceType: "advocate_org_join_request",
       resourceId: rid,
       organizationId: row.organization_id,
-      metadata: { advocate_user_id: row.advocate_user_id },
+      metadata: { advocate_user_id: row.advocate_user_id, org_role: assignedRole },
       req,
     });
 
-    return apiOk({ ok: true });
+    return apiOk({ ok: true, org_role: assignedRole, org_role_label: roleLabel });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.join_request.approve.error", {

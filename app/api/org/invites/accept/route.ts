@@ -1,5 +1,6 @@
 /**
- * Phase 2: Accept org invite (authenticated user, email must match).
+ * Accept org invite (authenticated user, email must match).
+ * Phase 4: response includes `orgRoleLabel` for product-facing success copy; DB role stored on membership.
  */
 
 import { NextResponse } from "next/server";
@@ -10,6 +11,7 @@ import { logEvent } from "@/lib/server/audit/logEvent";
 import { sha256Hex } from "@/lib/server/audit/hash";
 import { logger } from "@/lib/server/logging";
 import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
+import { dbOrgRoleProductLabel } from "@/lib/auth/simpleOrgRole";
 
 export async function POST(req: Request) {
   try {
@@ -126,6 +128,7 @@ export async function POST(req: Request) {
     return apiOk({
       orgId: membership.organization_id,
       orgRole: membership.org_role,
+      orgRoleLabel: dbOrgRoleProductLabel(membership.org_role),
     });
   } catch (err) {
     const appErr = toAppError(err);

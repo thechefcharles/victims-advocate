@@ -6,6 +6,12 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useI18n } from "@/components/i18n/i18nProvider";
+import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
+import type { OrgRole } from "@/lib/server/auth/orgRoles";
+import {
+  ORG_SELF_SERVE_INVITE_ROLES,
+  labelStaffAssignableOrgRole,
+} from "@/lib/auth/staffAssignableOrgRoles";
 
 type Notification = {
   id: string;
@@ -111,13 +117,17 @@ function ReadCheckIcon({ label }: { label: string }) {
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const { accessToken, role } = useAuth();
+  const { accessToken, orgId, orgRole, isAdmin } = useAuth();
   const { t } = useI18n();
   const { strictPreviews } = useSafetySettings(accessToken);
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Notification[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  /** Advocate join approval: chosen staff role per notification row (defaults to Advocate). */
+  const [advocateJoinRoleByNotifId, setAdvocateJoinRoleByNotifId] = useState<Record<string, OrgRole>>(
+    {}
+  );
 
   const load = useCallback(async () => {
     if (!accessToken) return;
@@ -163,7 +173,8 @@ export default function NotificationsPage() {
     notificationId: string,
     requestId: string,
     decision: "approve" | "decline",
-    isOrgRepRequest: boolean
+    isOrgRepRequest: boolean,
+    staffOrgRole?: OrgRole
   ) => {
     if (!accessToken) return;
     setUpdatingId(notificationId);
@@ -176,9 +187,16 @@ export default function NotificationsPage() {
         decision === "approve"
           ? `${base}/${encodeURIComponent(requestId)}/approve`
           : `${base}/${encodeURIComponent(requestId)}/decline`;
+      const sendStaffRole = decision === "approve" && !isOrgRepRequest;
       const res = await fetch(path, {
         method: "POST",
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          ...(sendStaffRole ? { "Content-Type": "application/json" } : {}),
+        },
+        body: sendStaffRole
+          ? JSON.stringify({ org_role: staffOrgRole ?? "victim_advocate" })
+          : undefined,
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
@@ -292,8 +310,12 @@ export default function NotificationsPage() {
           const isRead = isNotificationRead(n);
           const isUnread = !isRead && String(n.status ?? "").toLowerCase() !== "dismissed";
           const isAdvocateConnection = connAdv !== null && isUnread;
-          const isOrgJoinUnread =
-            (orgJoin !== null || orgRepJoin !== null) && isUnread && role === "organization";
+          const canActOnJoinRequest =
+            (orgJoin !== null || orgRepJoin !== null) &&
+            isUnread &&
+            (orgJoin !== null
+              ? hasActiveOrgLeadership(orgId, orgRole)
+              : isAdmin || hasActiveOrgLeadership(orgId, orgRole));
           const isVictimPendingUnread = n.type === "victim_connection_request_pending" && isUnread;
 
           return (
@@ -309,7 +331,7 @@ export default function NotificationsPage() {
                 <div className="flex min-w-0 items-start gap-2">
                   {isRead ? <ReadCheckIcon label={t("notificationsPage.readBadgeLabel")} /> : null}
                   <div className="min-w-0 font-medium">
-                    {isOrgJoinUnread
+                    {canActOnJoinRequest
                       ? strictPreviews
                         ? t("notificationsPage.previewHiddenTitle")
                         : t("notificationsPage.orgJoinRequestIncomingTitle")
@@ -331,7 +353,7 @@ export default function NotificationsPage() {
                 </span>
               </div>
 
-              {isOrgJoinUnread ? (
+              {canActOnJoinRequest ? (
                 !strictPreviews && n.preview_safe && n.body ? (
                   <p className="mt-2 text-xs text-slate-300 whitespace-pre-line sm:pl-7">{n.body}</p>
                 ) : null
@@ -361,8 +383,32 @@ export default function NotificationsPage() {
 
               {isUnread && (
                 <div className="mt-3 flex flex-wrap items-center gap-2 sm:pl-7">
-                  {isOrgJoinUnread && (orgJoin ?? orgRepJoin) ? (
+                  {canActOnJoinRequest && (orgJoin ?? orgRepJoin) ? (
                     <>
+                      {orgJoin !== null ? (
+                        <label className="flex w-full max-w-xs flex-col gap-1 sm:pl-7">
+                          <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                            Role for new member
+                          </span>
+                          <select
+                            value={advocateJoinRoleByNotifId[n.id] ?? "victim_advocate"}
+                            onChange={(e) =>
+                              setAdvocateJoinRoleByNotifId((prev) => ({
+                                ...prev,
+                                [n.id]: e.target.value as OrgRole,
+                              }))
+                            }
+                            disabled={updatingId === n.id}
+                            className="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-slate-100"
+                          >
+                            {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
+                              <option key={r} value={r}>
+                                {labelStaffAssignableOrgRole(r)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() =>
@@ -370,7 +416,10 @@ export default function NotificationsPage() {
                             n.id,
                             (orgJoin ?? orgRepJoin)!.requestId,
                             "approve",
-                            orgRepJoin !== null
+                            orgRepJoin !== null,
+                            orgJoin !== null
+                              ? advocateJoinRoleByNotifId[n.id] ?? "victim_advocate"
+                              : undefined
                           )
                         }
                         disabled={updatingId === n.id}

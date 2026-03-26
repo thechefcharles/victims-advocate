@@ -26,7 +26,10 @@ import {
   formatReviewStatusLabel,
 } from "@/lib/trustDisplay";
 import type { OrgRole } from "@/lib/server/auth/orgRoles";
-import { ORG_SELF_SERVE_INVITE_ROLES } from "@/lib/server/auth/orgRoles";
+import {
+  ORG_SELF_SERVE_INVITE_ROLES,
+  labelStaffAssignableOrgRole,
+} from "@/lib/auth/staffAssignableOrgRoles";
 import { dbOrgRoleProductLabel, mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
 import {
   listMissingForSearchable,
@@ -34,19 +37,6 @@ import {
 } from "@/lib/organizations/profileStage";
 import type { OrganizationProfile } from "@/lib/server/organizations/types";
 import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
-
-function selfServeInviteRoleLabel(role: OrgRole): string {
-  switch (role) {
-    case "supervisor":
-      return "Supervisor";
-    case "victim_advocate":
-      return "Advocate";
-    case "intake_specialist":
-      return "Advocate (intake)";
-    default:
-      return role;
-  }
-}
 
 type Member = {
   id: string;
@@ -1151,7 +1141,7 @@ export default function AdvocateOrgPage() {
             >
               {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {selfServeInviteRoleLabel(r)}
+                  {labelStaffAssignableOrgRole(r)}
                 </option>
               ))}
             </select>

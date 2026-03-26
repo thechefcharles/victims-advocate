@@ -49,7 +49,11 @@ function AcceptContent() {
         }
 
         setStatus("success");
-        setMessage(`You’ve joined the organization as ${json.data?.orgRole ?? "member"}.`);
+        const label =
+          typeof json.data?.orgRoleLabel === "string" && json.data.orgRoleLabel.trim()
+            ? json.data.orgRoleLabel.trim()
+            : "member";
+        setMessage(`You’ve joined the organization as ${label}.`);
       } catch (e) {
         setStatus("error");
         setMessage(e instanceof Error ? e.message : "Failed to accept invite");

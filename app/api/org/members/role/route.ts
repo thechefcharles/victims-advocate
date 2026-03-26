@@ -1,5 +1,5 @@
 /**
- * Phase 2: Change member org_role (org owner or program manager).
+ * Change member org_role (simple-owner tier). Phase 3/4: owner-tier DB roles blocked for non-admins.
  */
 
 import {

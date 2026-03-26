@@ -39,8 +39,8 @@ export const ORG_LEADERSHIP_ROLES: OrgRole[] = [
 export const ORG_MANAGEMENT_ROLES: OrgRole[] = ["org_owner", "program_manager"];
 
 /**
- * Roles allowed on self-serve org invites. Excludes owner-tier DB roles — those come from
- * claim/admin/onboarding flows, not casual invites.
+ * Staff roles for self-serve org invites and advocate join approvals (same set).
+ * Excludes owner-tier DB roles — those come from claim/admin/onboarding, not these flows.
  */
 export const ORG_SELF_SERVE_INVITE_ROLES: OrgRole[] = [
   "supervisor",

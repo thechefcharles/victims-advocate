@@ -1,5 +1,6 @@
 /**
- * Phase 2: Org invites — create (org owner / program manager), list (leadership).
+ * Org invites — create (simple-owner tier), list (leadership).
+ * Phase 4: POST body `org_role` limited to `ORG_SELF_SERVE_INVITE_ROLES` (staff only; owner-tier via claim/admin).
  */
 
 import { NextResponse } from "next/server";
