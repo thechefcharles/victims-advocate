@@ -1,6 +1,11 @@
 /**
- * ORG-1B: Organization membership roles (matches public.org_membership_role enum).
- * Product-facing behavior uses simplified roles via `lib/auth/simpleOrgRole.ts`; see `docs/org-system-boundaries.md`.
+ * ORG-1B: DB `org_membership_role` enum values (storage + API bodies).
+ *
+ * Product model is **Owner · Supervisor · Advocate** via `mapDbOrgRoleToSimple`:
+ * `program_manager` is **owner-equivalent** for leadership/management (same simple `owner` as `org_owner`).
+ * Lifecycle / “has an owner” checks intentionally count **only** `org_owner` rows (see organizations/state).
+ *
+ * Phase 4: invite/membership UX may further narrow assignable roles.
  */
 
 export const ORG_MEMBERSHIP_ROLES = [
@@ -23,15 +28,28 @@ export function normalizeOrgRoleInput(raw: string): OrgRole | null {
   return null;
 }
 
-/** Can manage org invites, designation, join requests, most org admin APIs */
+/** DB roles treated as receiving-side leadership (referral review grants, join approvers, etc.). */
 export const ORG_LEADERSHIP_ROLES: OrgRole[] = [
   "org_owner",
   "program_manager",
   "supervisor",
 ];
 
-/** Org settings, membership revoke, role changes to managers (ORG-4 tightens further) */
+/** DB roles with owner-tier management powers (invites, member role changes) — both map to simple `owner`. */
 export const ORG_MANAGEMENT_ROLES: OrgRole[] = ["org_owner", "program_manager"];
+
+/**
+ * Roles allowed on self-serve org invites. Excludes owner-tier DB roles — those come from
+ * claim/admin/onboarding flows, not casual invites.
+ */
+export const ORG_SELF_SERVE_INVITE_ROLES: OrgRole[] = [
+  "supervisor",
+  "victim_advocate",
+  "intake_specialist",
+];
+
+/** DB roles that cannot be assigned via POST /api/org/members/role without platform admin. */
+export const ORG_OWNER_TIER_DB_ROLES: OrgRole[] = ["org_owner", "program_manager"];
 
 /** Phase 1: supports normalized roles (owner/supervisor/advocate) and legacy DB enum strings. */
 export function isOrgLeadership(r: OrgRole | string | null): boolean {
@@ -46,7 +64,11 @@ export function isOrgManagement(r: OrgRole | string | null): boolean {
   return ORG_MANAGEMENT_ROLES.includes(r as OrgRole);
 }
 
-/** Case/document work (excludes auditor for sensitive lists) */
+/**
+ * Case/document work for org-scoped lists (excludes `auditor` — intentional; auditors are not full case staff).
+ * Maps to simple Advocate for victim_advocate + intake_specialist; auditor still maps to simple advocate in auth
+ * but is omitted here for sensitive operations.
+ */
 export const ORG_CASE_STAFF_ROLES: OrgRole[] = [
   "org_owner",
   "program_manager",

@@ -10,7 +10,7 @@ import {
   requireOrgRole,
   SIMPLE_ORG_LEADERSHIP_ROLES,
   SIMPLE_ORG_MANAGEMENT_ROLES,
-  ORG_MEMBERSHIP_ROLES,
+  ORG_SELF_SERVE_INVITE_ROLES,
   normalizeOrgRoleInput,
 } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -92,12 +92,12 @@ export async function POST(req: Request) {
     if (!isValidEmail(email)) {
       return apiFail("VALIDATION_ERROR", "Invalid email format", undefined, 422);
     }
-    if (!(ORG_MEMBERSHIP_ROLES as readonly string[]).includes(orgRole)) {
+    if (!(ORG_SELF_SERVE_INVITE_ROLES as readonly string[]).includes(orgRole)) {
       return apiFail(
-        "VALIDATION_ERROR",
-        `org_role must be one of: ${ORG_MEMBERSHIP_ROLES.join(", ")}`,
+        "FORBIDDEN",
+        `Self-serve invites may only use: ${ORG_SELF_SERVE_INVITE_ROLES.join(", ")}. Owner roles are assigned via claim or admin flows.`,
         undefined,
-        422
+        403
       );
     }
 

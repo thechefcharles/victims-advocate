@@ -9,6 +9,7 @@ import {
   requireOrgRole,
   SIMPLE_ORG_MANAGEMENT_ROLES,
   ORG_MEMBERSHIP_ROLES,
+  ORG_OWNER_TIER_DB_ROLES,
   normalizeOrgRoleInput,
 } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -43,6 +44,18 @@ export async function POST(req: Request) {
         `org_role must be one of: ${ORG_MEMBERSHIP_ROLES.join(", ")}`,
         undefined,
         422
+      );
+    }
+
+    if (
+      !ctx.isAdmin &&
+      (ORG_OWNER_TIER_DB_ROLES as readonly string[]).includes(newRole)
+    ) {
+      return apiFail(
+        "FORBIDDEN",
+        "Owner-tier roles cannot be assigned through membership edit; use organization claim or platform admin.",
+        undefined,
+        403
       );
     }
 

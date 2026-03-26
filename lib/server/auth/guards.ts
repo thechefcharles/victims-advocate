@@ -5,7 +5,7 @@
  *
  * Phase 2 direction: `requireRole` / profile `role` = coarse persona & onboarding.
  * Org *features* should prefer `requireOrg` + `requireOrgRole` (membership + simple org role).
- * Phase 3: align program_manager / intake_specialist / auditor with the simple-role model.
+ * Phase 3: DB org roles normalize via `mapDbOrgRoleToSimple`; use `requireOrg` + `requireOrgRole` for org tools.
  */
 
 import { AppError } from "@/lib/server/api";

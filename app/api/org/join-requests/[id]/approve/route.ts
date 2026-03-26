@@ -1,5 +1,6 @@
 /**
- * Org admin / supervisor approves an advocate’s join request (creates membership as staff).
+ * Org leadership approves an advocate’s join request (creates membership as staff).
+ * Phase 3: new members default to `victim_advocate` (product “Advocate”); not owner-tier.
  */
 
 import {

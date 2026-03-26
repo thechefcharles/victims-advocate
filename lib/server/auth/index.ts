@@ -13,11 +13,14 @@ export {
   SIMPLE_ORG_CASE_STAFF_ROLES,
   mapDbOrgRoleToSimple,
   hasActiveOrgLeadership,
+  dbOrgRoleProductLabel,
 } from "@/lib/auth/simpleOrgRole";
 export {
   ORG_MEMBERSHIP_ROLES,
   ORG_LEADERSHIP_ROLES,
   ORG_MANAGEMENT_ROLES,
+  ORG_SELF_SERVE_INVITE_ROLES,
+  ORG_OWNER_TIER_DB_ROLES,
   ORG_CASE_STAFF_ROLES,
   normalizeOrgRoleInput,
   isOrgLeadership,

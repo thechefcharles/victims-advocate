@@ -26,8 +26,8 @@ import {
   formatReviewStatusLabel,
 } from "@/lib/trustDisplay";
 import type { OrgRole } from "@/lib/server/auth/orgRoles";
-import { ORG_MEMBERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
-import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
+import { ORG_SELF_SERVE_INVITE_ROLES } from "@/lib/server/auth/orgRoles";
+import { dbOrgRoleProductLabel, mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
 import {
   listMissingForSearchable,
   listOptionalEnrichedHints,
@@ -35,14 +35,18 @@ import {
 import type { OrganizationProfile } from "@/lib/server/organizations/types";
 import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
 
-const INVITE_ROLE_LABELS: Record<OrgRole, string> = {
-  org_owner: "Org owner",
-  program_manager: "Program manager",
-  supervisor: "Supervisor",
-  victim_advocate: "Victim advocate",
-  intake_specialist: "Intake specialist",
-  auditor: "Auditor",
-};
+function selfServeInviteRoleLabel(role: OrgRole): string {
+  switch (role) {
+    case "supervisor":
+      return "Supervisor";
+    case "victim_advocate":
+      return "Advocate";
+    case "intake_specialist":
+      return "Advocate (intake)";
+    default:
+      return role;
+  }
+}
 
 type Member = {
   id: string;
@@ -1145,9 +1149,9 @@ export default function AdvocateOrgPage() {
               onChange={(e) => setInviteRole(e.target.value as OrgRole)}
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
             >
-              {ORG_MEMBERSHIP_ROLES.map((r) => (
+              {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
                 <option key={r} value={r}>
-                  {INVITE_ROLE_LABELS[r]}
+                  {selfServeInviteRoleLabel(r)}
                 </option>
               ))}
             </select>
@@ -1188,7 +1192,7 @@ export default function AdvocateOrgPage() {
                 {invites.map((inv) => (
                   <tr key={inv.id} className="border-b border-slate-900">
                     <td className="py-2 text-slate-200">{inv.email}</td>
-                    <td className="py-2 text-slate-300">{inv.org_role}</td>
+                    <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(inv.org_role)}</td>
                     <td className="py-2 text-slate-400">{formatDate(inv.expires_at)}</td>
                     <td className="py-2">
                       {canManageMemberships ? (
@@ -1240,7 +1244,7 @@ export default function AdvocateOrgPage() {
                       <td className="py-2 text-slate-200">
                         {m.email || m.user_id.slice(0, 8) + "…"}
                       </td>
-                      <td className="py-2 text-slate-300">{m.org_role}</td>
+                      <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(m.org_role)}</td>
                       <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
                       <td className="py-2">
                         {canManageMemberships ? (

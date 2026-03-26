@@ -1,13 +1,14 @@
 /**
  * Temporary read-only case_access for receiving-org leadership when a referral is pending.
- * Phase 3 may revoke using `referral_review_grant_user_ids` on the referral row metadata.
+ * Phase 4 may revoke using `referral_review_grant_user_ids` on the referral row metadata.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
+import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 
-/** MVP: org_owner and supervisor only (not program_manager, not advocates). */
-const RECEIVING_LEADER_ROLES = ["org_owner", "supervisor"] as const;
+/** Must match `ORG_LEADERSHIP_ROLES` — program_manager is owner-equivalent (Phase 3). */
+const RECEIVING_LEADER_ROLES = ORG_LEADERSHIP_ROLES;
 
 export type ReferralReviewAccessGrantResult = {
   /** All receiving leaders with read path (existing read-only or newly inserted). */

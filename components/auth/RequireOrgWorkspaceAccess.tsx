@@ -11,8 +11,6 @@ import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
  *
  * Membership-led: platform admins or `hasActiveOrgLeadership` (same bar as org dashboard).
  * Advocate staff without leadership still use `/advocate/org`. Profile `role` is not part of this gate.
- *
- * Phase 3 may refine simple vs raw DB org roles (program_manager, etc.).
  */
 export default function RequireOrgWorkspaceAccess({ children }: { children: React.ReactNode }) {
   const router = useRouter();
