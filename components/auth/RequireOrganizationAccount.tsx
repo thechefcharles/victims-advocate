@@ -6,8 +6,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
 
 /**
- * `/organization/setup` — intentional `profiles.role === "organization"` for onboarding UX only.
- * Phase 2: org *tool* routes use membership; setup remains profile-role scoped.
+ * `/organization/setup` — `profiles.role === "organization"` means **org-leader signup intent**, not org power.
+ * Org authority comes from `org_memberships` + org role after onboarding. Phase 5: keep this gate here only.
  */
 export default function RequireOrganizationAccount({
   children,

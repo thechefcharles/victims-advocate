@@ -1,6 +1,6 @@
 /**
  * Phase 0: Single source of truth for auth context (server-side).
- * API routes obtain consistent auth object via getAuthContext(req).
+ * Phase 5: `role` is profile/onboarding persona; org *power* is `orgId` + `orgRole` (membership), not `role === "organization"`.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -16,7 +16,7 @@ export type AccountStatus = "active" | "disabled" | "deleted";
 
 /**
  * Server auth snapshot. Core access fields: `user`, `userId`, `role`, `orgId`, `orgRole`, `isAdmin`.
- * `orgRole` is normalized owner | supervisor | advocate (see `mapDbOrgRoleToSimple`).
+ * `orgRole` is normalized owner | supervisor | advocate (see `mapDbOrgRoleToSimple`) — use for org authorization.
  */
 export type AuthContext = {
   user: { id: string; email?: string };

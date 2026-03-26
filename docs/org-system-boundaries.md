@@ -60,5 +60,12 @@ Internal reference for engineers. This document describes what the **current** o
 | DB enum / leadership helpers | `lib/server/auth/orgRoles.ts` |
 | Designation explanations | `lib/server/designations/explain.ts` |
 | Trust labels / badges (UI) | `lib/trustDisplay.ts` |
+| Billing scaffolding (no gating yet) | `lib/billing/orgBillingReadiness.ts`, `organizations.billing_*` columns |
+
+## Billing readiness (Phase 5)
+
+- **`organizations`** is the future **customer / subscription** entity. Columns **`billing_plan_key`** (default `free`) and **`billing_status`** (default `not_applicable`) are scaffolding only — **no paywalls**, no Stripe in this phase.
+- **Future billing authority:** simple **owner-tier** org membership (`orgRole === "owner"` after DB mapping), not `profiles.role === "organization"`.
+- **App hook:** `isOrgFeatureBlockedByBilling()` in `lib/billing/orgBillingReadiness.ts` is always **`false`** until product enables paid gating. Keep billing separate from signup, invites, join, and claim flows.
 
 When adding features, extend these modules or add a **single** well-named module rather than duplicating gates or labels.

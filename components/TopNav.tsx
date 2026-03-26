@@ -138,7 +138,10 @@ export default function TopNav() {
   const advocateOrgWorkspaceHref = orgLeadershipMembership
     ? ROUTES.organizationSettings
     : ROUTES.advocateOrg;
-  /** Org-profile users: only show org dashboard nav when membership is leadership (matches layout). */
+  /**
+   * Org-profile leaders: primary “My Dashboard” to org operational home.
+   * Advocate-profile leaders use the advocate block (Organization home) instead — avoids duplicate pills.
+   */
   const showOrgNavForOrgRole = role === "organization" && orgLeadershipMembership;
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";

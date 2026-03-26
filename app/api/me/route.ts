@@ -115,6 +115,7 @@ export async function GET(req: Request) {
       }
     }
 
+    // Onboarding: org-signup intent without membership — not org authorization
     if ((ctx.role === "organization" || ctx.realRole === "organization") && !ctx.orgId) {
       try {
         const supabase = getSupabaseAdmin();

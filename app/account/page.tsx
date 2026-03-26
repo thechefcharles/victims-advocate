@@ -10,6 +10,7 @@ import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliation
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
 import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
 import { AdvocatePersonalInfoForm } from "@/components/account/AdvocatePersonalInfoForm";
+import { hasOrgBillingAuthoritySimpleRole } from "@/lib/billing/orgBillingReadiness";
 
 export default function AccountPage() {
   const {
@@ -49,6 +50,7 @@ export default function AccountPage() {
           {t("nav.accountPlaceholderTitle")}
         </h1>
 
+        {/* Onboarding intent: org-leader signup path without membership yet */}
         {role === "organization" && !orgId && (
           <div className="rounded-2xl border border-amber-500/35 bg-amber-950/25 px-5 py-4 space-y-2">
             <p className="text-sm font-medium text-amber-100">Set Up Organization Access</p>
@@ -106,9 +108,7 @@ export default function AccountPage() {
           </Link>
         </div>
 
-        {role === "organization" &&
-          orgRole === "owner" &&
-          orgId && (
+        {orgId && hasOrgBillingAuthoritySimpleRole(orgRole) && (
           <OrganizationCatalogForm
             accessToken={accessToken}
             initialCatalogId={organizationCatalogEntryId}
@@ -128,7 +128,7 @@ export default function AccountPage() {
           />
         )}
 
-        {role === "organization" && orgRole !== "owner" && (
+        {orgId && !hasOrgBillingAuthoritySimpleRole(orgRole) && (
           <p className="text-xs text-slate-500">
             Only an organization owner can change which directory program this agency uses.
           </p>

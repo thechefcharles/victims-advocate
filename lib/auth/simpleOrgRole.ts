@@ -12,6 +12,8 @@
  * **Exception:** `isOrgCaseStaff` (server `orgRoles.ts`) still excludes `auditor` from some
  * sensitive case lists — auditors are not treated as full case staff there.
  *
+ * Phase 5: `profiles.role` is onboarding/default-home; org authorization uses this mapping + membership.
+ *
  * See `docs/org-system-boundaries.md`.
  */
 

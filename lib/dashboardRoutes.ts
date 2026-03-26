@@ -1,5 +1,8 @@
 /**
  * Single place for "which home dashboard" after login and redirects.
+ *
+ * Phase 5: `profiles.role` is primarily **onboarding + default home** (victim | advocate | organization).
+ * Org *authorization* uses membership + `orgRole` (see RequireOrgLeadership, RequireOrgWorkspaceAccess).
  */
 
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";

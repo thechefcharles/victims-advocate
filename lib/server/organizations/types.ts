@@ -50,5 +50,9 @@ export type OrganizationProfileRow = OrganizationProfile & {
   public_profile_status?: OrgPublicProfileStatus;
   /** Phase 3: when org leader submitted for public activation review */
   activation_submitted_at?: string | null;
+  /** Phase 5: future plan id (default free); not used for gating yet. */
+  billing_plan_key?: string;
+  /** Phase 5: future subscription state; not used for gating yet. */
+  billing_status?: string;
   metadata: Record<string, unknown>;
 };
