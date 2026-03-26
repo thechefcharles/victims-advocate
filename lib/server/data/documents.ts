@@ -1,10 +1,18 @@
 /**
  * Phase 0/3: Centralized document data access.
- * Phase 6: Status lifecycle (active/deleted/restricted), canAccessDocument, signed-URL flow support.
+ * Phase 6: Restricted visibility.
+ * Phase 1: Same case-scope rules as cases (owner/supervisor/advocate).
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import type { AuthContext, OrgRole } from "@/lib/server/auth";
+import type { AuthContext } from "@/lib/server/auth";
+import { isOrgLeadership } from "@/lib/server/auth";
+import {
+  assertOwnOrOrgCaseAccess,
+  orgMemberCanEditCase,
+  type CaseRowMinimal,
+} from "@/lib/server/auth/simpleAccess";
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { AppError } from "@/lib/server/api";
 import { sameUserId } from "./ids";
 
@@ -31,12 +39,14 @@ export type DocumentRow = {
 
 export type CaseAccessInfo = { role: string; can_view: boolean; can_edit: boolean };
 
-/**
- * Phase 6: Survivor-safe restricted document access.
- * - deleted: no access.
- * - active: allowed (caller already has case access).
- * - restricted: victim only if they uploaded it; org_admin/supervisor/admin always; advocate if uploader or can_edit.
- */
+function isOrgStaff(ctx: AuthContext, orgMatches: boolean): boolean {
+  return (
+    orgMatches &&
+    (ctx.role === "advocate" || ctx.role === "organization") &&
+    Boolean(ctx.orgRole)
+  );
+}
+
 export function canAccessDocument(
   ctx: AuthContext,
   document: DocumentRow,
@@ -47,8 +57,7 @@ export function canAccessDocument(
 
   if (document.status === "restricted") {
     if (ctx.isAdmin) return true;
-    const orgRole = ctx.orgRole as OrgRole | null;
-    if (orgRole === "org_admin" || orgRole === "supervisor") return true;
+    if (isOrgLeadership(ctx.orgRole)) return true;
     if (document.uploaded_by_user_id === ctx.userId) return true;
     if (caseAccess.role === "owner") return true;
     if (caseAccess.can_edit) return true;
@@ -58,14 +67,58 @@ export function canAccessDocument(
   return false;
 }
 
-/**
- * Phase 6: Get document by id. Returns null if not found or no org/case access (no existence leak).
- */
+async function buildDocumentCaseAccessInfo(params: {
+  ctx: AuthContext;
+  caseRow: CaseRowMinimal;
+  accessRow: { role?: string | null; can_view?: boolean; can_edit?: boolean } | null;
+}): Promise<CaseAccessInfo | null> {
+  const { ctx, caseRow, accessRow } = params;
+  const hasExplicitCaseAccess = accessRow?.can_view === true;
+
+  const { allowed } = assertOwnOrOrgCaseAccess({
+    ctx,
+    caseRow,
+    hasExplicitCaseAccess,
+  });
+  if (!allowed) return null;
+
+  if (ctx.isAdmin) {
+    return { role: "admin", can_view: true, can_edit: true };
+  }
+  if (sameUserId(caseRow.owner_user_id, ctx.userId)) {
+    return { role: "owner", can_view: true, can_edit: true };
+  }
+
+  const caseOrgId = caseRow.organization_id ?? null;
+  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
+  const orgStaff = isOrgStaff(ctx, orgMatches);
+
+  if (orgStaff && orgMatches) {
+    const canEdit = orgMemberCanEditCase(ctx, caseRow);
+    return {
+      role: (ctx.orgRole as SimpleOrgRole) ?? "org",
+      can_view: true,
+      can_edit: canEdit,
+    };
+  }
+
+  if (accessRow?.can_view) {
+    return {
+      role: accessRow.role ?? "viewer",
+      can_view: true,
+      can_edit: accessRow.can_edit ?? false,
+    };
+  }
+  return null;
+}
+
 export async function getDocumentById(params: {
   documentId: string;
   ctx: AuthContext;
+  req?: Request | null;
 }): Promise<DocumentRow | null> {
-  const { documentId, ctx } = params;
+  const { documentId, ctx, req: _req } = params;
+  void _req;
   const supabase = getSupabaseAdmin();
 
   const { data: doc, error } = await supabase
@@ -90,7 +143,7 @@ export async function getDocumentById(params: {
 
   const { data: caseRow } = await supabase
     .from("cases")
-    .select("organization_id, owner_user_id")
+    .select("organization_id, owner_user_id, assigned_advocate_id, id")
     .eq("id", caseId)
     .maybeSingle();
   if (!caseRow) return null;
@@ -102,38 +155,35 @@ export async function getDocumentById(params: {
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  const caseOrgId = caseRow.organization_id as string | null;
-  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
-  const isOwner = sameUserId(caseRow.owner_user_id, ctx.userId);
   const hasExplicitCaseAccess = accessRow?.can_view === true;
-  const allowed =
-    ctx.isAdmin || isOwner || orgMatches || hasExplicitCaseAccess;
+  const { allowed } = assertOwnOrOrgCaseAccess({
+    ctx,
+    caseRow: caseRow as CaseRowMinimal,
+    hasExplicitCaseAccess,
+  });
   if (!allowed) return null;
 
   return row;
 }
 
-/**
- * Phase 6: List documents for a case. Enforces org + case_access. Default status = 'active'; use includeRestricted for org_admin/supervisor/admin.
- */
 export async function listCaseDocuments(params: {
   caseId: string;
   ctx: AuthContext;
   includeRestricted?: boolean;
+  req?: Request | null;
 }): Promise<DocumentRow[]> {
-  const { caseId, ctx, includeRestricted = false } = params;
+  const { caseId, ctx, includeRestricted = false, req: _req } = params;
+  void _req;
   const supabase = getSupabaseAdmin();
 
   const { data: caseRow, error: caseErr } = await supabase
     .from("cases")
-    .select("id, organization_id, owner_user_id")
+    .select("id, organization_id, owner_user_id, assigned_advocate_id")
     .eq("id", caseId)
     .maybeSingle();
 
   if (caseErr) throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
   if (!caseRow) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
-
-  const caseOrgId = caseRow.organization_id as string | null;
 
   const { data: accessRow, error: accessError } = await supabase
     .from("case_access")
@@ -144,36 +194,13 @@ export async function listCaseDocuments(params: {
 
   if (accessError) throw new AppError("INTERNAL", "Permission lookup failed", undefined, 500);
 
-  const isOwner = sameUserId(caseRow.owner_user_id, ctx.userId);
-  const orgMatches = !!(ctx.orgId && caseOrgId && ctx.orgId === caseOrgId);
-  const hasExplicitCaseAccess = accessRow?.can_view === true;
-
-  const allowed =
-    ctx.isAdmin || isOwner || orgMatches || hasExplicitCaseAccess;
-  if (!allowed) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
-
-  const orgLeadershipDocs =
-    !ctx.isAdmin &&
-    ctx.orgId &&
-    caseOrgId &&
-    ctx.orgId === caseOrgId &&
-    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
-
-  let access: CaseAccessInfo;
-  if (accessRow?.can_view) {
-    access = {
-      role: accessRow.role ?? "viewer",
-      can_view: true,
-      can_edit: accessRow.can_edit ?? false,
-    };
-  } else if (ctx.isAdmin) {
-    access = { role: "admin", can_view: true, can_edit: true };
-  } else if (orgLeadershipDocs) {
-    access = { role: "org_leadership", can_view: true, can_edit: true };
-  } else if (isOwner) {
-    access = { role: "owner", can_view: true, can_edit: true };
-  } else {
-    throw new AppError("FORBIDDEN", "Access denied", undefined, 403);
+  const access = await buildDocumentCaseAccessInfo({
+    ctx,
+    caseRow: caseRow as CaseRowMinimal,
+    accessRow,
+  });
+  if (!access) {
+    throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
   }
 
   let query = supabase
@@ -190,92 +217,92 @@ export async function listCaseDocuments(params: {
   return rows.filter((d) => canAccessDocument(ctx, d, access));
 }
 
-/**
- * Phase 6: Assert caller can access document for view/download. Throws on denial.
- */
 export async function assertDocumentAccess(params: {
   documentId: string;
   ctx: AuthContext;
   accessType: "view" | "download";
+  req?: Request | null;
 }): Promise<DocumentRow> {
-  const { documentId, ctx, accessType } = params;
-  const doc = await getDocumentById({ documentId, ctx });
+  const { documentId, ctx, accessType: _accessType, req } = params;
+  void _accessType;
+  const doc = await getDocumentById({ documentId, ctx, req });
   if (!doc) throw new AppError("NOT_FOUND", "Document not found", undefined, 404);
-  if (doc.status === "deleted") throw new AppError("DOCUMENT_DELETED", "This document has been deleted", undefined, 404);
+  if (doc.status === "deleted")
+    throw new AppError("DOCUMENT_DELETED", "This document has been deleted", undefined, 404);
 
   const caseId = doc.case_id;
   if (!caseId) throw new AppError("FORBIDDEN", "Document not attached to a case", undefined, 403);
 
-  const { data: caseRow } = await getSupabaseAdmin()
+  const supabase = getSupabaseAdmin();
+  const { data: caseRow } = await supabase
     .from("cases")
-    .select("organization_id, owner_user_id")
+    .select("organization_id, owner_user_id, assigned_advocate_id, id")
     .eq("id", caseId)
     .maybeSingle();
-  const caseOrgId = (caseRow as { organization_id?: string } | null)?.organization_id ?? null;
-  const isOwner = sameUserId(
-    (caseRow as { owner_user_id?: unknown } | null)?.owner_user_id,
-    ctx.userId
-  );
 
-  const { data: accessRow } = await getSupabaseAdmin()
+  const { data: accessRow } = await supabase
     .from("case_access")
     .select("role, can_view, can_edit")
     .eq("case_id", caseId)
     .eq("user_id", ctx.userId)
     .maybeSingle();
 
-  const orgLeadershipAssert =
-    !ctx.isAdmin &&
-    ctx.orgId &&
-    caseOrgId &&
-    ctx.orgId === caseOrgId &&
-    (ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor");
-
-  let access: CaseAccessInfo;
-  if (accessRow?.can_view) {
-    access = {
-      role: accessRow.role ?? "viewer",
-      can_view: accessRow.can_view,
-      can_edit: accessRow.can_edit ?? false,
-    };
-  } else if (ctx.isAdmin) {
-    access = { role: "admin", can_view: true, can_edit: true };
-  } else if (orgLeadershipAssert) {
-    access = { role: "org_leadership", can_view: true, can_edit: true };
-  } else if (isOwner) {
-    access = { role: "owner", can_view: true, can_edit: true };
-  } else {
+  const access = await buildDocumentCaseAccessInfo({
+    ctx,
+    caseRow: (caseRow ?? {}) as CaseRowMinimal,
+    accessRow,
+  });
+  if (!access) {
     throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
   }
   if (!canAccessDocument(ctx, doc, access)) {
-    if (doc.status === "restricted") throw new AppError("DOCUMENT_RESTRICTED", "This document is restricted", undefined, 403);
+    if (doc.status === "restricted")
+      throw new AppError("DOCUMENT_RESTRICTED", "This document is restricted", undefined, 403);
     throw new AppError("DOCUMENT_ACCESS_DENIED", "Access denied", undefined, 403);
   }
   return doc;
 }
 
-/**
- * Phase 6: Soft delete document. Permissions: uploader, advocate with can_edit, or admin.
- */
 export async function softDeleteDocument(params: {
   documentId: string;
   ctx: AuthContext;
+  req?: Request | null;
 }): Promise<DocumentRow> {
-  const { documentId, ctx } = params;
-  const doc = await getDocumentById({ documentId, ctx });
+  const { documentId, ctx, req } = params;
+  const doc = await getDocumentById({ documentId, ctx, req });
   if (!doc) throw new AppError("NOT_FOUND", "Document not found", undefined, 404);
   if (doc.status === "deleted") return doc;
 
   const caseId = doc.case_id;
   let canDelete = ctx.isAdmin || doc.uploaded_by_user_id === ctx.userId;
+
   if (!canDelete && caseId) {
-    const { data: acc } = await getSupabaseAdmin()
+    const supabase = getSupabaseAdmin();
+    const { data: caseRow } = await supabase
+      .from("cases")
+      .select("organization_id, owner_user_id, assigned_advocate_id, id")
+      .eq("id", caseId)
+      .maybeSingle();
+    const { data: acc } = await supabase
       .from("case_access")
       .select("can_edit")
       .eq("case_id", caseId)
       .eq("user_id", ctx.userId)
       .maybeSingle();
-    canDelete = acc?.can_edit === true;
+    const hasExplicit = acc?.can_edit === true;
+    const orgMatches = !!(
+      ctx.orgId &&
+      caseRow &&
+      (caseRow as { organization_id?: string }).organization_id === ctx.orgId
+    );
+    const orgStaff = isOrgStaff(ctx, orgMatches);
+
+    if (orgStaff && orgMatches && caseRow) {
+      const cr = caseRow as CaseRowMinimal;
+      canDelete = orgMemberCanEditCase(ctx, cr);
+    } else if (hasExplicit) {
+      canDelete = true;
+    }
   }
   if (!canDelete) throw new AppError("FORBIDDEN", "You cannot delete this document", undefined, 403);
 
@@ -295,9 +322,6 @@ export async function softDeleteDocument(params: {
   return updated as unknown as DocumentRow;
 }
 
-/**
- * Phase 6: Set document restriction. Preferred: org_admin/supervisor/admin; v1 allow advocate with can_edit + admin.
- */
 export async function setDocumentRestriction(params: {
   documentId: string;
   restricted: boolean;
@@ -309,7 +333,7 @@ export async function setDocumentRestriction(params: {
   if (!doc) throw new AppError("NOT_FOUND", "Document not found", undefined, 404);
   if (doc.status === "deleted") throw new AppError("DOCUMENT_DELETED", "Document is deleted", undefined, 404);
 
-  let canRestrict = ctx.isAdmin || ctx.orgRole === "org_admin" || ctx.orgRole === "supervisor";
+  let canRestrict = ctx.isAdmin || isOrgLeadership(ctx.orgRole);
   if (!canRestrict && doc.case_id) {
     const { data: acc } = await getSupabaseAdmin()
       .from("case_access")

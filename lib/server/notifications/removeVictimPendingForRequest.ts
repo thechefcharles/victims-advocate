@@ -3,7 +3,7 @@ import { logger } from "@/lib/server/logging";
 
 /**
  * Removes in-app `victim_connection_request_pending` rows for a resolved request
- * (accept/decline) so the survivor no longer sees them.
+ * (accept/decline) so the victim no longer sees them.
  */
 export async function removeVictimPendingConnectionNotificationsForRequest(
   victimUserId: string,

@@ -17,11 +17,25 @@ import {
   type VictimPersonalInfo,
 } from "@/lib/personalInfo";
 
+import { SIMPLE_ORG_ROLES, type SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+
 export type ProfileRole = "victim" | "advocate" | "organization";
 
-export type OrgRole = "staff" | "supervisor" | "org_admin" | null;
+/** Normalized org role from `/api/me` (owner | supervisor | advocate). */
+export type OrgRole = SimpleOrgRole | null;
 
 export type AccountStatus = "active" | "disabled" | "deleted";
+
+/** Latest org ownership claim for organization-role users without org membership (Phase 2). */
+export type OrgOwnershipClaim = {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  status: "pending" | "rejected";
+  submittedAt: string;
+  reviewedAt: string | null;
+  reviewerNote: string | null;
+};
 
 type AuthState = {
   loading: boolean;
@@ -47,6 +61,8 @@ type AuthState = {
   advocatePersonalInfo: AdvocatePersonalInfo | null;
   /** When advocate belongs to an org — display name from organizations.name. */
   organizationName: string | null;
+  /** Pending or most recent rejected platform ownership claim (no org membership). */
+  orgOwnershipClaim: OrgOwnershipClaim | null;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
   refetchMe: () => Promise<void>;
 };
@@ -71,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     null
   );
   const [organizationName, setOrganizationName] = useState<string | null>(null);
+  const [orgOwnershipClaim, setOrgOwnershipClaim] = useState<OrgOwnershipClaim | null>(null);
   /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
   const signupPreferredNameSyncedRef = useRef(false);
   /** Reset /api/me state only when user id changes — not on every token refresh (was clearing role and hiding victim UI). */
@@ -92,7 +109,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAdmin(d?.isAdmin === true);
     setOrgId(typeof d?.orgId === "string" ? d.orgId : null);
     const or = d?.orgRole;
-    setOrgRole(or === "staff" || or === "supervisor" || or === "org_admin" ? or : null);
+    setOrgRole(
+      typeof or === "string" && (SIMPLE_ORG_ROLES as readonly string[]).includes(or)
+        ? (or as SimpleOrgRole)
+        : null
+    );
     const aff = d?.affiliatedCatalogEntryId;
     setAffiliatedCatalogEntryId(
       typeof aff === "number" && Number.isFinite(aff) ? aff : null
@@ -101,6 +122,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOrganizationCatalogEntryId(
       typeof orgCat === "number" && Number.isFinite(orgCat) ? orgCat : null
     );
+
+    const rawClaim = d?.orgOwnershipClaim;
+    if (rawClaim && typeof rawClaim === "object") {
+      const c = rawClaim as Record<string, unknown>;
+      const id = typeof c.id === "string" ? c.id : null;
+      const organizationId = typeof c.organizationId === "string" ? c.organizationId : null;
+      const organizationNameClaim =
+        typeof c.organizationName === "string" ? c.organizationName : null;
+      const status = c.status === "pending" || c.status === "rejected" ? c.status : null;
+      const submittedAt = typeof c.submittedAt === "string" ? c.submittedAt : null;
+      if (id && organizationId && organizationNameClaim && status && submittedAt) {
+        setOrgOwnershipClaim({
+          id,
+          organizationId,
+          organizationName: organizationNameClaim,
+          status,
+          submittedAt,
+          reviewedAt: typeof c.reviewedAt === "string" ? c.reviewedAt : null,
+          reviewerNote: typeof c.reviewerNote === "string" ? c.reviewerNote : null,
+        });
+      } else {
+        setOrgOwnershipClaim(null);
+      }
+    } else {
+      setOrgOwnershipClaim(null);
+    }
 
     if (d?.role === "victim") {
       setPersonalInfo(parsePersonalInfo(d.personalInfo));
@@ -133,6 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setPersonalInfo(null);
     setAdvocatePersonalInfo(null);
     setOrganizationName(null);
+    setOrgOwnershipClaim(null);
   }, []);
 
   const refetchMe = useCallback(async () => {
@@ -254,6 +302,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAffiliatedCatalogEntryId(null);
         setOrganizationCatalogEntryId(null);
         setPersonalInfo(null);
+        setOrgOwnershipClaim(null);
       }
       setLoading(false);
     });
@@ -273,6 +322,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrganizationCatalogEntryId(null);
       setOrgId(null);
       setOrgRole(null);
+      setOrgOwnershipClaim(null);
     }
 
     setEmailVerified(!!sess?.user?.email_confirmed_at);
@@ -359,6 +409,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       personalInfo,
       advocatePersonalInfo,
       organizationName,
+      orgOwnershipClaim,
       refetchMe,
     };
   }, [
@@ -379,6 +430,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     personalInfo,
     advocatePersonalInfo,
     organizationName,
+    orgOwnershipClaim,
     refetchMe,
   ]);
 

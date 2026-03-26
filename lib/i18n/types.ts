@@ -37,6 +37,10 @@ export type I18nDict = {
     organization: string;
     /** Org settings / workspace (members, invites, profile). */
     orgSettings: string;
+    /** Org operational dashboard (`/organization/dashboard`) — distinct from org settings. */
+    organizationHome: string;
+    /** Nav CTA when profile role is organization but org membership is not complete yet. */
+    organizationSetupNav: string;
     adminHome: string;
   };
 
@@ -64,7 +68,7 @@ export type I18nDict = {
     previewHiddenTitle: string;
     /** Advocate inbox: incoming connection request */
     connectionRequestIncomingTitle: string;
-    /** Survivor: outbound request awaiting advocate response */
+    /** Victim: outbound request awaiting advocate response */
     connectionRequestPendingTitle: string;
     /** Organization inbox: advocate wants to join */
     orgJoinRequestIncomingTitle: string;
@@ -202,6 +206,14 @@ export type I18nDict = {
       updated: string;
       updateFailed: string;
       noOrgBody: string;
+      /** Referral handoff visibility (Phase 4) */
+      referralUpdatesTitle: string;
+      referralUpdatesIntro: string;
+      referralsLoadError: string;
+      referralStatusPending: string;
+      referralStatusAccepted: string;
+      referralStatusDeclined: string;
+      referralUpdatesEmpty: string;
     };
     /** Apply Now modal — first step: two choices only */
     applyPathConnect: string;
@@ -260,6 +272,11 @@ export type I18nDict = {
       noOrgs: string;
       loadError: string;
       privacyNote: string;
+      sendReferral: string;
+      sendReferralSending: string;
+      sendReferralDone: string;
+      sendReferralFailed: string;
+      sendReferralDuplicate: string;
     };
     /** Gamified 3-step strip + apply flow */
     progressTitle: string;

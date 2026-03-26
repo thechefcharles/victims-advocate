@@ -4,24 +4,25 @@
  */
 
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiOk, apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
-import { getCaseById } from "@/lib/server/data";
+import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
+import { getCaseById, appendCaseTimelineEvent } from "@/lib/server/data";
 import { sameUserId } from "@/lib/server/data/ids";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
+import { logEvent } from "@/lib/server/audit/logEvent";
+import {
+  applyCaseOrganizationTransfer,
+  resolveTargetOrganizationIdForOwnerPatch,
+} from "@/lib/server/cases/transfer";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-async function getLegacyOrgId(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string | null> {
-  const { data } = await supabase
-    .from("organizations")
-    .select("id")
-    .eq("name", "Legacy (pre-tenant)")
-    .limit(1)
-    .maybeSingle();
-  return (data?.id as string) ?? null;
+async function organizationDisplayName(organizationId: string): Promise<string> {
+  const supabase = getSupabaseAdmin();
+  const { data } = await supabase.from("organizations").select("name").eq("id", organizationId).maybeSingle();
+  return ((data?.name as string) ?? "").trim() || "Organization";
 }
 
 export async function PATCH(req: Request, context: RouteParams) {
@@ -34,7 +35,7 @@ export async function PATCH(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing case id", undefined, 400);
     }
 
-    const result = await getCaseById({ caseId, ctx });
+    const result = await getCaseById({ caseId, ctx, req });
     if (!result) {
       return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }
@@ -46,78 +47,64 @@ export async function PATCH(req: Request, context: RouteParams) {
 
     const body = await req.json().catch(() => ({}));
     const rawOrg = body?.organization_id;
-    const supabase = getSupabaseAdmin();
 
     let targetOrgId: string;
-
-    if (rawOrg === null || rawOrg === undefined || rawOrg === "") {
-      const legacy = await getLegacyOrgId(supabase);
-      if (!legacy) {
-        return apiFail("INTERNAL", "Legacy organization not configured", undefined, 500);
-      }
-      targetOrgId = legacy;
-    } else if (typeof rawOrg === "string" && rawOrg.trim()) {
-      const orgId = rawOrg.trim();
-      const { data: org, error: orgErr } = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("id", orgId)
-        .maybeSingle();
-      if (orgErr || !org) {
-        return apiFail("NOT_FOUND", "Organization not found", undefined, 404);
-      }
-      targetOrgId = orgId;
-    } else {
-      return apiFail("VALIDATION_ERROR", "organization_id must be a UUID string or null", undefined, 400);
+    try {
+      targetOrgId = await resolveTargetOrganizationIdForOwnerPatch(rawOrg);
+    } catch (e) {
+      const appErr = toAppError(e);
+      return apiFailFromError(appErr);
     }
 
-    const { error: caseUpdErr } = await supabase
-      .from("cases")
-      .update({
-        organization_id: targetOrgId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", caseId);
+    const previousOrgId = result.case.organization_id as string | null;
 
-    if (caseUpdErr) {
-      throw new AppError("INTERNAL", "Failed to update case organization", undefined, 500);
-    }
+    await applyCaseOrganizationTransfer({
+      caseId,
+      targetOrganizationId: targetOrgId,
+    });
 
-    const { error: accessUpdErr } = await supabase
-      .from("case_access")
-      .update({ organization_id: targetOrgId })
-      .eq("case_id", caseId);
+    const [prevName, nextName] = await Promise.all([
+      previousOrgId ? organizationDisplayName(previousOrgId) : Promise.resolve("Previous organization"),
+      organizationDisplayName(targetOrgId),
+    ]);
 
-    if (accessUpdErr) {
-      logger.warn("compensation.cases.organization.case_access_update", {
-        message: accessUpdErr.message,
+    try {
+      await appendCaseTimelineEvent({
         caseId,
+        organizationId: targetOrgId,
+        actor: { userId: ctx.userId, role: ctx.role },
+        eventType: "case.organization_transferred",
+        title: "Organization connection updated",
+        description:
+          previousOrgId && previousOrgId !== targetOrgId
+            ? `Your case moved from ${prevName} to ${nextName}.`
+            : `Your case is now connected to ${nextName}.`,
+        metadata: {
+          from_organization_id: previousOrgId,
+          to_organization_id: targetOrgId,
+          source: "owner_patch",
+        },
+      });
+    } catch (timelineErr) {
+      logger.warn("compensation.cases.organization.timeline_failed", {
+        caseId,
+        message: timelineErr instanceof Error ? timelineErr.message : String(timelineErr),
       });
     }
 
-    const { error: convErr } = await supabase
-      .from("case_conversations")
-      .update({ organization_id: targetOrgId })
-      .eq("case_id", caseId);
-
-    if (convErr) {
-      logger.warn("compensation.cases.organization.conversation_update", {
-        message: convErr.message,
-        caseId,
-      });
-    }
-
-    const { error: docErr } = await supabase
-      .from("documents")
-      .update({ organization_id: targetOrgId })
-      .eq("case_id", caseId);
-
-    if (docErr) {
-      logger.warn("compensation.cases.organization.documents_update", {
-        message: docErr.message,
-        caseId,
-      });
-    }
+    await logEvent({
+      ctx,
+      action: "case.organization_transferred",
+      resourceType: "case",
+      resourceId: caseId,
+      organizationId: targetOrgId,
+      metadata: {
+        from_organization_id: previousOrgId,
+        to_organization_id: targetOrgId,
+        source: "owner_patch",
+      },
+      req,
+    });
 
     logger.info("compensation.cases.organization.updated", {
       caseId,

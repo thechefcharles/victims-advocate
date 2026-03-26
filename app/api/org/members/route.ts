@@ -8,6 +8,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, ["org_admin", "supervisor"]);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);

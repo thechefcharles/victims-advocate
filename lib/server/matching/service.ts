@@ -14,11 +14,15 @@ import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/servi
 import { integrateDesignationIntoMatches } from "./integration";
 import type { DesignationIntegrationMeta } from "./integration";
 import type { OrganizationMatchRunRow } from "./types";
+import { isOrganizationMatchingEligible } from "@/lib/organizations/profileStage";
 
 function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
   return {
     id: String(row.id),
     name: String(row.name ?? ""),
+    status: String(row.status ?? ""),
+    lifecycle_status: String(row.lifecycle_status ?? ""),
+    public_profile_status: String(row.public_profile_status ?? ""),
     service_types: Array.isArray(row.service_types) ? (row.service_types as string[]) : [],
     languages: Array.isArray(row.languages) ? (row.languages as string[]) : [],
     coverage_area:
@@ -42,6 +46,7 @@ function rowToOrg(row: Record<string, unknown>): OrgRowForMatching {
       ? (row.accessibility_features as string[])
       : [],
     profile_status: String(row.profile_status ?? "draft"),
+    profile_stage: String(row.profile_stage ?? "created"),
     profile_last_updated_at:
       row.profile_last_updated_at != null ? String(row.profile_last_updated_at) : null,
   };
@@ -52,14 +57,22 @@ export async function loadActiveOrganizations(): Promise<OrgRowForMatching[]> {
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_last_updated_at"
+      "id,name,status,lifecycle_status,public_profile_status,service_types,languages,coverage_area,intake_methods,hours,accepting_clients,capacity_status,avg_response_time_hours,special_populations,accessibility_features,profile_status,profile_stage,profile_last_updated_at"
     )
-    .eq("profile_status", "active");
+    // Final Phase 6 rule: only product-visible orgs can be used as matching candidates.
+    // (Matching then still uses per-match hard filters below.)
+    .eq("status", "active")
+    .eq("lifecycle_status", "managed")
+    .eq("public_profile_status", "active")
+    .eq("profile_status", "active")
+    .in("profile_stage", ["searchable", "enriched"]);
 
   if (error) {
     throw new AppError("INTERNAL", "Failed to load organizations", undefined, 500);
   }
-  return (data ?? []).map((r) => rowToOrg(r as Record<string, unknown>));
+  const mapped = (data ?? []).map((r) => rowToOrg(r as Record<string, unknown>));
+  // Defensive: ensure DB query and helper stay aligned for future schema changes.
+  return mapped.filter((o) => isOrganizationMatchingEligible(o));
 }
 
 export async function runOrganizationMatchingWithOrgs(
@@ -171,6 +184,9 @@ export async function persistOrganizationMatchRun(params: {
           coverage_area: org.coverage_area,
           accepting_clients: org.accepting_clients,
           capacity_status: org.capacity_status,
+          // Display-only governance context for trust badges.
+          lifecycle_status: org.lifecycle_status,
+          public_profile_status: org.public_profile_status,
           accessibility_features: org.accessibility_features,
           special_populations: org.special_populations,
         }
@@ -198,6 +214,9 @@ export async function persistOrganizationMatchRun(params: {
         capacity_signal: m.capacity_signal,
         virtual_ok: m.virtual_ok,
         profile_completeness_score: m.profile_completeness_score,
+        score_breakdown: m.score_breakdown ?? null,
+        fit_match_score: m.fit_match_score,
+        final_match_score: m.match_score,
         designation_integration: params.designation_meta,
       },
       run_group_id: params.runGroupId,
@@ -233,7 +252,9 @@ export async function persistOrganizationMatchRun(params: {
       possible_match: false,
       limited_match: true,
       reasons: [],
-      flags: ["No organizations matched the current criteria — try updating the application or org profiles"],
+      flags: [
+        "No organizations matched the current criteria — make sure your case details are complete and that organizations meet visibility requirements.",
+      ],
       metadata: { empty_run: true, designation_integration: params.designation_meta },
       run_group_id: params.runGroupId,
       actor_user_id: params.actorUserId,

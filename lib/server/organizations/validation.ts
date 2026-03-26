@@ -3,6 +3,7 @@ import type {
   AccessibilityFeature,
   CapacityStatus,
   IntakeMethod,
+  OrgProfileStage,
   OrgProfileStatus,
   OrganizationProfile,
   ServiceType,
@@ -142,6 +143,22 @@ function coerceProfileStatus(v: unknown): OrgProfileStatus {
   return PROFILE_STATUS.includes(s as OrgProfileStatus) ? (s as OrgProfileStatus) : "draft";
 }
 
+const PROFILE_STAGES: OrgProfileStage[] = ["created", "searchable", "enriched"];
+
+function coerceProfileStage(v: unknown): OrgProfileStage {
+  if (typeof v === "number" && Number.isFinite(v)) {
+    if (v === 1) return "created";
+    if (v === 2 || v === 3) return "searchable";
+    if (v === 4) return "enriched";
+  }
+  const s = String(v ?? "created").trim().toLowerCase();
+  if (PROFILE_STAGES.includes(s as OrgProfileStage)) return s as OrgProfileStage;
+  if (s === "1") return "created";
+  if (s === "2" || s === "3") return "searchable";
+  if (s === "4") return "enriched";
+  return "created";
+}
+
 export function rowToOrganizationProfile(row: Record<string, unknown>): OrganizationProfile {
   const st = new Set(SERVICE_TYPES as unknown as string[]);
   const im = new Set(INTAKE_METHODS as unknown as string[]);
@@ -184,6 +201,7 @@ export function rowToOrganizationProfile(row: Record<string, unknown>): Organiza
     special_populations: spec,
     accessibility_features: acc,
     profile_status: coerceProfileStatus(row.profile_status),
+    profile_stage: coerceProfileStage(row.profile_stage),
     profile_last_updated_at:
       row.profile_last_updated_at != null ? String(row.profile_last_updated_at) : null,
   };

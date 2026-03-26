@@ -137,7 +137,7 @@ function scoreVictimExperience(inps: OrgScoringInputs): CategoryScoreDetail {
   s = clamp(s, 0, 100);
   const reasons = [
     `Secure messaging: ${inps.case_messages_total} total message(s)`,
-    `Last 30d — advocate-sent: ${inps.advocate_messages_30d}, survivor-sent: ${inps.victim_messages_30d}`,
+    `Last 30d — advocate-sent: ${inps.advocate_messages_30d}, victim-sent: ${inps.victim_messages_30d}`,
   ];
   let conf: ScoreConfidence = "low";
   if (inps.advocate_messages_30d >= 5 && inps.victim_messages_30d >= 2) conf = "high";

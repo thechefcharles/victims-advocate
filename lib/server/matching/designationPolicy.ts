@@ -8,6 +8,7 @@ import {
   BOOST_COMPREHENSIVE_MED_HIGH,
   BOOST_ESTABLISHED_MED_HIGH,
   BOOST_FOUNDATIONAL_MED_HIGH,
+  MATCHING_THRESHOLDS,
   BOOST_NEUTRAL,
   MAX_DESIGNATION_SCORE_BOOST,
 } from "./config";
@@ -33,8 +34,13 @@ function isMediumOrHigh(
  */
 export function computeDesignationMatchPolicy(
   designation: OrgDesignationRow | null,
-  _ev: MatchEvaluation
+  ev: MatchEvaluation
 ): DesignationPolicyResult {
+  // Only plausible matches can receive a trust boost.
+  if (ev.fit_match_score < MATCHING_THRESHOLDS.possible_min_score) {
+    return { boostPoints: BOOST_NEUTRAL, reason: null, scoreInfluenced: false };
+  }
+
   if (!designation) {
     return { boostPoints: BOOST_NEUTRAL, reason: null, scoreInfluenced: false };
   }

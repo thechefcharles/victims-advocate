@@ -10,6 +10,71 @@ import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { parseAdvocatePersonalInfo } from "@/lib/personalInfo";
 
+type OrgOwnershipClaimPayload = {
+  id: string;
+  organizationId: string;
+  organizationName: string;
+  status: "pending" | "rejected";
+  submittedAt: string;
+  reviewedAt: string | null;
+  reviewerNote: string | null;
+};
+
+async function fetchOrgOwnershipClaimForMe(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string
+): Promise<OrgOwnershipClaimPayload | null> {
+  const { data: pending, error: pendErr } = await supabase
+    .from("org_claim_requests")
+    .select("id, organization_id, submitted_at, reviewed_at, reviewer_note, organizations(name)")
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .order("submitted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (pendErr) throw new Error(pendErr.message);
+
+  if (pending) {
+    const o = pending.organizations as { name?: string } | null | undefined;
+    return {
+      id: pending.id as string,
+      organizationId: pending.organization_id as string,
+      organizationName: o?.name ?? "Organization",
+      status: "pending",
+      submittedAt: pending.submitted_at as string,
+      reviewedAt: (pending.reviewed_at as string | null) ?? null,
+      reviewerNote: (pending.reviewer_note as string | null) ?? null,
+    };
+  }
+
+  const { data: rejected, error: rejErr } = await supabase
+    .from("org_claim_requests")
+    .select("id, organization_id, submitted_at, reviewed_at, reviewer_note, organizations(name)")
+    .eq("user_id", userId)
+    .eq("status", "rejected")
+    .order("reviewed_at", { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (rejErr) throw new Error(rejErr.message);
+
+  if (rejected) {
+    const o = rejected.organizations as { name?: string } | null | undefined;
+    return {
+      id: rejected.id as string,
+      organizationId: rejected.organization_id as string,
+      organizationName: o?.name ?? "Organization",
+      status: "rejected",
+      submittedAt: rejected.submitted_at as string,
+      reviewedAt: (rejected.reviewed_at as string | null) ?? null,
+      reviewerNote: (rejected.reviewer_note as string | null) ?? null,
+    };
+  }
+
+  return null;
+}
+
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
@@ -20,6 +85,7 @@ export async function GET(req: Request) {
     let personalInfo = null;
     let advocatePersonalInfo = null;
     let organizationName: string | null = null;
+    let orgOwnershipClaim: OrgOwnershipClaimPayload | null = null;
 
     if (ctx.role === "victim") {
       try {
@@ -49,6 +115,16 @@ export async function GET(req: Request) {
       }
     }
 
+    // Onboarding: org-signup intent without membership — not org authorization
+    if ((ctx.role === "organization" || ctx.realRole === "organization") && !ctx.orgId) {
+      try {
+        const supabase = getSupabaseAdmin();
+        orgOwnershipClaim = await fetchOrgOwnershipClaimForMe(supabase, ctx.userId);
+      } catch (e) {
+        logger.warn("me.get.org_ownership_claim", { message: String(e) });
+      }
+    }
+
     return apiOk({
       userId: ctx.userId,
       email: ctx.user.email ?? null,
@@ -64,6 +140,7 @@ export async function GET(req: Request) {
       personalInfo,
       advocatePersonalInfo,
       organizationName,
+      orgOwnershipClaim,
     });
   } catch (err) {
     const appErr = toAppError(err);

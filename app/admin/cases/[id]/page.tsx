@@ -979,7 +979,7 @@ export default function CaseDetailPage() {
           </p>
           <p className="text-xs text-slate-500 max-w-3xl">
             Run evaluations to understand what this case still needs. Open messages to coordinate
-            with survivors in one place.
+            with victims in one place.
           </p>
           <p className="text-sm text-slate-300">
             Case ID:{" "}
@@ -2135,7 +2135,7 @@ export default function CaseDetailPage() {
       >
         <h2 className="text-sm font-semibold text-slate-50 mb-2">Secure messages</h2>
         <p className="text-[11px] text-slate-500 mb-3">
-          When there are no messages yet, survivors and advocates can start the thread here.
+          When there are no messages yet, victims and advocates can start the thread here.
         </p>
         <CaseMessagesPanel caseId={caseId} />
       </section>

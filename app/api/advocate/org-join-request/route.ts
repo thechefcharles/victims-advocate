@@ -15,6 +15,7 @@ import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
 import { getAdvocateDisplayForNotification } from "@/lib/server/notifications/advocateDisplay";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 
 function appBaseUrl(req: Request): string {
   return (
@@ -43,7 +44,7 @@ async function notifyOrgApprovers(params: {
     .select("user_id")
     .eq("organization_id", organizationId)
     .eq("status", "active")
-    .in("org_role", ["org_admin", "supervisor"]);
+    .in("org_role", [...ORG_LEADERSHIP_ROLES]);
 
   if (error) throw new Error(error.message);
 

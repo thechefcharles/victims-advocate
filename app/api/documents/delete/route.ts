@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const doc = await softDeleteDocument({ documentId: documentId.trim(), ctx });
+    const doc = await softDeleteDocument({ documentId: documentId.trim(), ctx, req });
 
     if (doc.case_id && doc.organization_id) {
       appendCaseTimelineEvent({

@@ -83,7 +83,7 @@ export const GRADING_CATEGORIES: Record<GradingCategoryKey, CategoryDefinition> 
     key: "victim_experience",
     weight: CATEGORY_WEIGHTS.victim_experience,
     description:
-      "Proxy for survivor-facing responsiveness via secure messaging activity (not surveys).",
+      "Proxy for victim-facing responsiveness via secure messaging activity (not surveys).",
     scoring_rules: [
       "Message volume and advocate-originated messages in recent window.",
       "Does not measure satisfaction — only platform engagement proxy.",

@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
-import { getDashboardPath, mapApiRoleToDashboard } from "@/lib/dashboardRoutes";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -91,13 +90,8 @@ export default function LoginForm() {
           router.push("/verify-email");
           return;
         }
-        const next = getDashboardPath({
-          isAdmin: data.isAdmin === true,
-          orgId: data.orgId ?? null,
-          orgRole: data.orgRole ?? null,
-          role: mapApiRoleToDashboard(data.role),
-        });
-        router.push(next);
+        // Route through /dashboard so email verification, consent, and org-intent routing stay consistent.
+        router.push("/dashboard");
         return;
       }
 
@@ -143,7 +137,7 @@ export default function LoginForm() {
         <Link className="underline" href="/signup">
           {t("loginForm.createAccount")}
         </Link>
-        <Link className="underline" href="/signup/advocate">
+        <Link className="underline" href="/signup?intent=advocate">
           {t("loginForm.createAdvocateAccount")}
         </Link>
         <Link className="underline" href="/forgot-password">

@@ -1,8 +1,13 @@
 /**
- * Authenticated user creates an organization and becomes org_admin.
- * Requires catalog_entry_id (select from Illinois directory). One org per catalog entry.
- * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use request-to-join flow.
+ * Creates an organization from an Illinois directory entry.
+ * Platform admins become org_owner immediately; organization leaders get a pending org_claim_requests row
+ * until an administrator approves ownership.
+ * Requires catalog_entry_id. One org per catalog entry.
+ * If the catalog entry already has an org, returns ORG_ALREADY_EXISTS — use POST /api/org/claim-request
+ * (no owners yet) or POST /api/org/request-to-join.
  * For orgs not in the directory, use POST /api/org/pending-proposal.
+ *
+ * Authorization: profile role organization or platform admin only (victim/advocate denied).
  */
 
 import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/auth";
@@ -16,6 +21,15 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireActiveAccount(ctx, req);
+
+    if (!ctx.isAdmin && ctx.realRole !== "organization") {
+      return apiFail(
+        "FORBIDDEN",
+        "Only organization representatives or administrators can register an organization from the Illinois directory. Victim and advocate accounts cannot use this action.",
+        undefined,
+        403
+      );
+    }
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -42,6 +56,7 @@ export async function POST(req: Request) {
       ctx,
       req,
       catalogEntryId,
+      assignOwnerImmediately: ctx.isAdmin,
     });
 
     if ("error" in result) {
@@ -60,8 +75,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const claimPending = result.claimPending === true;
     return apiOk(
-      { organization: result.organization, message: "Organization created. You are the org admin." },
+      {
+        organization: result.organization,
+        claimPending,
+        message: claimPending
+          ? "Your ownership request was submitted. A platform administrator will review it."
+          : "Organization created. You are the org admin.",
+      },
       undefined,
       201
     );

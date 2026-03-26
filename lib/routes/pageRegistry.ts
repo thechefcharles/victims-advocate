@@ -120,6 +120,14 @@ export const PAGE_REGISTRY: PageRegistryEntry[] = [
     audience: "role:organization",
   },
   {
+    id: "organization_settings",
+    path: "/organization/settings",
+    title: "Organization workspace (settings)",
+    audience: "mixed",
+    notes:
+      "Canonical org profile / members / trust workspace for leadership (owner|supervisor) and admins; not advocate-layout gated.",
+  },
+  {
     id: "admin_dashboard",
     path: "/admin/dashboard",
     title: "Platform admin",
@@ -167,8 +175,10 @@ export const ROUTES = {
   advocateMessages: "/advocate/messages",
   advocateConnectionRequests: "/advocate/connection-requests",
   advocateFindOrganizations: "/advocate/find-organizations",
+  advocateOrgSearch: "/advocate/org-search",
   advocateOrg: "/advocate/org",
   organizationDashboard: "/organization/dashboard",
+  organizationSettings: "/organization/settings",
   organizationSetup: "/organization/setup",
   adminDashboard: "/admin/dashboard",
   knowledgeCompensation: "/knowledge/compensation",

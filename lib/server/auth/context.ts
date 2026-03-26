@@ -1,19 +1,23 @@
 /**
  * Phase 0: Single source of truth for auth context (server-side).
- * API routes obtain consistent auth object via getAuthContext(req).
+ * Phase 5: `role` is profile/onboarding persona; org *power* is `orgId` + `orgRole` (membership), not `role === "organization"`.
  */
 
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { config } from "@/lib/config";
 import { AppError } from "@/lib/server/api";
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
-export type OrgRole = "staff" | "supervisor" | "org_admin";
-
 export type AccountStatus = "active" | "disabled" | "deleted";
 
+/**
+ * Server auth snapshot. Core access fields: `user`, `userId`, `role`, `orgId`, `orgRole`, `isAdmin`.
+ * `orgRole` is normalized owner | supervisor | advocate (see `mapDbOrgRoleToSimple`) — use for org authorization.
+ */
 export type AuthContext = {
   user: { id: string; email?: string };
   userId: string;
@@ -21,7 +25,8 @@ export type AuthContext = {
   /** For admins: underlying profile role when using "view as" override. */
   realRole?: ProfileRole;
   orgId: string | null;
-  orgRole: OrgRole | null;
+  /** Normalized org role for access checks; null if not in an org. */
+  orgRole: SimpleOrgRole | null;
   /** Illinois victim assistance directory program id (profile / advocate affiliation). */
   affiliatedCatalogEntryId: number | null;
   /** Directory row for the user's organization (`organizations.catalog_entry_id`). */
@@ -85,10 +90,9 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     .maybeSingle();
 
   const orgId = membership?.organization_id ?? null;
+  const rawOrgRole = membership?.org_role;
   const orgRole =
-    membership?.org_role && ["staff", "supervisor", "org_admin"].includes(membership.org_role)
-      ? (membership.org_role as OrgRole)
-      : null;
+    typeof rawOrgRole === "string" ? mapDbOrgRoleToSimple(rawOrgRole) : null;
 
   let organizationCatalogEntryId: number | null = null;
   if (orgId) {
@@ -139,7 +143,7 @@ function parseViewAsRoleCookie(req: Request): string | null {
 }
 
 /** Phase 2: Extract org context from auth (convenience helper). */
-export function getOrgContext(ctx: AuthContext): { orgId: string; orgRole: OrgRole } | null {
+export function getOrgContext(ctx: AuthContext): { orgId: string; orgRole: SimpleOrgRole } | null {
   if (!ctx.orgId || !ctx.orgRole) return null;
   return { orgId: ctx.orgId, orgRole: ctx.orgRole };
 }

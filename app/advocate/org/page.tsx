@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
@@ -24,6 +25,18 @@ import {
   designationTrustBadgeClassName,
   formatReviewStatusLabel,
 } from "@/lib/trustDisplay";
+import type { OrgRole } from "@/lib/server/auth/orgRoles";
+import {
+  ORG_SELF_SERVE_INVITE_ROLES,
+  labelStaffAssignableOrgRole,
+} from "@/lib/auth/staffAssignableOrgRoles";
+import { dbOrgRoleProductLabel, mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
+import {
+  listMissingForSearchable,
+  listOptionalEnrichedHints,
+} from "@/lib/organizations/profileStage";
+import type { OrganizationProfile } from "@/lib/server/organizations/types";
+import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
 
 type Member = {
   id: string;
@@ -47,6 +60,9 @@ type OrgProfile = {
   name: string;
   type: string;
   status: string;
+  lifecycle_status?: string;
+  public_profile_status?: string;
+  activation_submitted_at?: string | null;
   service_types: string[];
   languages: string[];
   coverage_area: Record<string, unknown>;
@@ -58,18 +74,22 @@ type OrgProfile = {
   special_populations: string[];
   accessibility_features: string[];
   profile_status: string;
+  profile_stage: string;
   profile_last_updated_at: string | null;
 };
 
 const QUICK_LANG = ["en", "es", "zh", "fr", "ar", "vi", "ko", "tl"] as const;
 
 export default function AdvocateOrgPage() {
+  const pathname = usePathname();
+  const isOrganizationSettingsRoute = pathname?.startsWith("/organization/settings") ?? false;
+
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"staff" | "supervisor" | "org_admin">("staff");
+  const [inviteRole, setInviteRole] = useState<OrgRole>("victim_advocate");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -78,6 +98,8 @@ export default function AdvocateOrgPage() {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<string | null>(null);
+  const [activationSubmitting, setActivationSubmitting] = useState(false);
+  const [activationMsg, setActivationMsg] = useState<string | null>(null);
 
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [intakeMethods, setIntakeMethods] = useState<string[]>([]);
@@ -102,9 +124,17 @@ export default function AdvocateOrgPage() {
     return orgId ? `?organization_id=${encodeURIComponent(orgId)}` : "";
   };
 
-  const canEditProfile =
-    myOrgRole === "org_admin" || myOrgRole === "supervisor";
-  const canViewDesignation = canEditProfile;
+  const canEditProfile = myOrgRole === "owner" || myOrgRole === "supervisor";
+  const canManageOrg = canEditProfile;
+  const canViewDesignation = true;
+  const canManageMemberships = myOrgRole === "owner";
+  const canManageReviews = canManageOrg;
+  const canSubmitPublicActivation =
+    myOrgRole === "owner" &&
+    profile?.lifecycle_status === "managed" &&
+    (profile?.public_profile_status === "draft" || profile?.public_profile_status === "paused") &&
+    profile &&
+    listMissingForSearchable(profile as OrganizationProfile).length === 0;
 
   const [designation, setDesignation] = useState<{
     designation_tier: string;
@@ -112,6 +142,8 @@ export default function AdvocateOrgPage() {
     public_summary: string | null;
   } | null>(null);
   const [designationMsg, setDesignationMsg] = useState<string | null>(null);
+  const [designationConfidenceNote, setDesignationConfidenceNote] = useState<string | null>(null);
+  const [designationHints, setDesignationHints] = useState<string[]>([]);
   const [designationExplain, setDesignationExplain] = useState<{
     headline: string;
     bullets: string[];
@@ -135,6 +167,10 @@ export default function AdvocateOrgPage() {
   const [reviewBody, setReviewBody] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMsg, setReviewMsg] = useState<string | null>(null);
+  const [orgSignals, setOrgSignals] = useState<{
+    profile: { lastProfileUpdate: string | null; profileStage: string | null };
+    cases: { active: number };
+  } | null>(null);
 
   type OrgWorkspaceTab =
     | "profile"
@@ -169,6 +205,8 @@ export default function AdvocateOrgPage() {
       if (!res.ok) return;
       const d = json.data?.designation ?? json.designation;
       const expl = json.data?.explanation;
+      setDesignationConfidenceNote(json.data?.confidence_note ?? null);
+      setDesignationHints(Array.isArray(json.data?.hints) ? (json.data.hints as string[]) : []);
       if (expl?.headline) {
         setDesignationExplain({ headline: expl.headline, bullets: expl.bullets ?? [] });
       }
@@ -186,6 +224,25 @@ export default function AdvocateOrgPage() {
     };
     run();
   }, [canViewDesignation, loading, profileLoading]);
+
+  useEffect(() => {
+    if (!canManageOrg || loading) return;
+    const run = async () => {
+      const token = await getToken();
+      if (!token) return;
+      const q = profileQuerySuffix();
+      const res = await fetch(`/api/org/signals${q}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setOrgSignals(null);
+        return;
+      }
+      setOrgSignals((json.data?.signals as { profile: { lastProfileUpdate: string | null; profileStage: string | null }; cases: { active: number } }) ?? null);
+    };
+    run();
+  }, [canManageOrg, loading, profileLoading]);
 
   const loadReviewRequests = async () => {
     const token = await getToken();
@@ -294,7 +351,7 @@ export default function AdvocateOrgPage() {
         setInvites(inv);
         if (uid) {
           const me = m.find((x) => x.user_id === uid);
-          setMyOrgRole(me?.org_role ?? null);
+          setMyOrgRole(mapDbOrgRoleToSimple(me?.org_role ?? null));
         }
         setErr(null);
       } catch (e) {
@@ -324,7 +381,13 @@ export default function AdvocateOrgPage() {
         }
         const p = json.data?.profile as OrgProfile | undefined;
         if (p) {
-          setProfile(p);
+          setProfile({
+            ...p,
+            profile_stage: p.profile_stage ?? "created",
+            lifecycle_status: p.lifecycle_status,
+            public_profile_status: p.public_profile_status,
+            activation_submitted_at: p.activation_submitted_at ?? null,
+          });
           setServiceTypes(p.service_types ?? []);
           setIntakeMethods(p.intake_methods ?? []);
           setSpecialPops(p.special_populations ?? []);
@@ -355,6 +418,44 @@ export default function AdvocateOrgPage() {
   const toggleInSet = (arr: string[], v: string, set: (x: string[]) => void) => {
     if (arr.includes(v)) set(arr.filter((x) => x !== v));
     else set([...arr, v]);
+  };
+
+  const handleSubmitForPublicActivation = async () => {
+    setActivationMsg(null);
+    setActivationSubmitting(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const res = await fetch("/api/org/submit-for-review", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setActivationMsg(getApiErrorMessage(json, "Could not submit for review"));
+        return;
+      }
+      const p = json.data?.profile as OrgProfile | undefined;
+      if (p) {
+        setProfile((prev) =>
+          prev
+            ? {
+                ...prev,
+                ...p,
+                public_profile_status: p.public_profile_status ?? "pending_review",
+                activation_submitted_at: p.activation_submitted_at ?? prev.activation_submitted_at,
+              }
+            : prev
+        );
+      } else {
+        setProfile((prev) =>
+          prev ? { ...prev, public_profile_status: "pending_review" } : prev
+        );
+      }
+      setActivationMsg(null);
+    } finally {
+      setActivationSubmitting(false);
+    }
   };
 
   const handleSaveProfile = async (e: FormEvent) => {
@@ -505,26 +606,107 @@ export default function AdvocateOrgPage() {
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
   };
 
-  const visibleTabs = orgTabs.filter(
-    (t) =>
-      (t.id !== "designation" && t.id !== "reviews") || canViewDesignation
-  );
+  const visibleTabs = orgTabs.filter((t) => {
+    if (t.id === "members" || t.id === "reviews") return canManageOrg;
+    if (t.id === "designation") return canViewDesignation;
+    return true;
+  });
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
-          contextLine="Advocate → Organization"
+          contextLine={isOrganizationSettingsRoute ? "Organization" : "Advocate → Organization"}
           eyebrow="Organization"
           title="Organization workspace"
-          subtitle="Manage your organization profile, capacity, members, and designation."
+          subtitle="Keep your organization profile current, review profile stage for matching, and track designation confidence."
           meta="This workspace is for your team’s structured profile and trust on NxtStps—not public reviews."
-          backLink={{ href: ROUTES.advocateHome, label: "← My Dashboard" }}
+          backLink={
+            isOrganizationSettingsRoute
+              ? { href: ROUTES.organizationDashboard, label: "← Organization dashboard" }
+              : { href: ROUTES.advocateHome, label: "← My Dashboard" }
+          }
         />
 
         {err && (
           <div className="rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-2 text-sm text-red-200">
             {err}
+          </div>
+        )}
+
+        {profile && !profileLoading ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <NxtStpsVerifiedBadge
+              org={{
+                lifecycle_status: profile.lifecycle_status ?? null,
+                public_profile_status: profile.public_profile_status ?? null,
+              }}
+            />
+          </div>
+        ) : null}
+
+        {profile && !profileLoading && profile.public_profile_status === "draft" && (
+          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300 space-y-2">
+            <p className="text-slate-200 font-medium">Public visibility</p>
+            <p>
+              Your organization is not yet public on NxtStps. After your profile meets the basics below,
+              you can submit it for platform review.
+            </p>
+            {canSubmitPublicActivation ? (
+              <button
+                type="button"
+                onClick={() => void handleSubmitForPublicActivation()}
+                disabled={activationSubmitting}
+                className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+              >
+                {activationSubmitting ? "Submitting…" : "Submit for Review"}
+              </button>
+            ) : myOrgRole === "owner" ? (
+              <p className="text-xs text-slate-500">
+                {profile.lifecycle_status !== "managed"
+                  ? "Ownership must be confirmed before you can request public activation."
+                  : "Complete services, languages, coverage area, and capacity to enable submit."}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500">
+                Only an organization owner can submit for public review.
+              </p>
+            )}
+            {activationMsg && (
+              <p className="text-xs text-amber-200/90">{activationMsg}</p>
+            )}
+          </div>
+        )}
+
+        {profile && !profileLoading && profile.public_profile_status === "pending_review" && (
+          <div className="rounded-xl border border-amber-500/35 bg-amber-950/20 px-4 py-3 text-sm text-amber-100/95">
+            <p className="font-medium text-amber-50">Your organization is under review</p>
+            <p className="mt-1 text-amber-100/85">
+              A platform administrator is reviewing your request for public visibility. You can keep updating
+              your team and profile unless you are asked to pause.
+            </p>
+          </div>
+        )}
+
+        {profile && !profileLoading && profile.public_profile_status === "paused" && (
+          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
+            <p className="font-medium text-slate-200">Your organization is currently not visible</p>
+            <p className="mt-1 text-slate-400">
+              Public listing is paused. Contact support or use org tools if you need this changed.
+            </p>
+            {canSubmitPublicActivation && (
+              <button
+                type="button"
+                onClick={() => void handleSubmitForPublicActivation()}
+                disabled={activationSubmitting}
+                className="mt-2 rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500 disabled:opacity-50"
+              >
+                {activationSubmitting ? "Submitting…" : "Submit for Review"}
+              </button>
+            )}
+            {activationMsg && (
+              <p className="mt-2 text-xs text-amber-200/90">{activationMsg}</p>
+            )}
           </div>
         )}
 
@@ -548,6 +730,94 @@ export default function AdvocateOrgPage() {
           ))}
         </nav>
 
+        {profile && !profileLoading && (
+          <section
+            className="rounded-2xl border border-slate-700/80 bg-slate-900/40 p-4 text-sm text-slate-200 space-y-2"
+            aria-label="Profile stage for matching"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Profile stage
+            </p>
+            {profile.profile_stage === "created" && (
+              <>
+                <p className="text-slate-300">
+                  <span className="font-semibold text-slate-100">Created.</span> Add the basics below
+                  so your organization can become searchable for support matching.
+                </p>
+                {listMissingForSearchable(profile as OrganizationProfile).length > 0 && (
+                  <ul className="list-disc list-inside text-xs text-slate-400 space-y-1">
+                    {listMissingForSearchable(profile as OrganizationProfile).map((m) => (
+                      <li key={m}>{m}</li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+            {profile.profile_stage === "searchable" && (
+              <>
+                <p className="text-slate-300">
+                  <span className="font-semibold text-slate-100">Searchable.</span> When your profile
+                  status is Active, your organization can appear in support matching.
+                </p>
+                {listOptionalEnrichedHints(profile as OrganizationProfile).length > 0 && (
+                  <p className="text-xs text-slate-500">
+                    You can add more detail any time:{" "}
+                    {listOptionalEnrichedHints(profile as OrganizationProfile).join(" · ")}
+                  </p>
+                )}
+              </>
+            )}
+            {profile.profile_stage === "enriched" && (
+              <p className="text-slate-300">
+                <span className="font-semibold text-slate-100">Enriched.</span> Your profile includes
+                extra information that helps build confidence over time.
+              </p>
+            )}
+            {!["created", "searchable", "enriched"].includes(profile.profile_stage) && (
+              <p className="text-xs text-slate-400">
+                Current stage: {profile.profile_stage}. Save your profile to refresh this label.
+              </p>
+            )}
+            <p className="text-[11px] text-slate-500">
+              Stages update when you save. Matching also requires profile status set to Active.
+            </p>
+          </section>
+        )}
+
+        {profile && !profileLoading && canManageOrg && (
+          <section className="rounded-2xl border border-slate-700/70 bg-slate-900/30 p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Org health snapshot
+            </p>
+            <p className="text-sm text-slate-300">
+              Stage: <span className="text-slate-100 font-medium">{profile.profile_stage}</span>
+              {" · "}
+              Last profile update:{" "}
+              <span className="text-slate-100 font-medium">
+                {formatDate(
+                  orgSignals?.profile.lastProfileUpdate ?? profile.profile_last_updated_at ?? undefined
+                )}
+              </span>
+              {orgSignals?.cases?.active != null ? (
+                <>
+                  {" · "}Active cases:{" "}
+                  <span className="text-slate-100 font-medium">{orgSignals.cases.active}</span>
+                </>
+              ) : null}
+            </p>
+            <p className="text-xs text-slate-400">
+              {!["searchable", "enriched"].includes(profile.profile_stage)
+                ? "Complete required profile fields to become searchable."
+                : designation?.designation_confidence === "low"
+                  ? "Keep profile details current and use core workflows consistently to improve signal reliability over time."
+                  : "Your organization profile is in good shape. Keep services and capacity current."}
+            </p>
+            {designationConfidenceNote && (
+              <p className="text-xs text-slate-500">{designationConfidenceNote}</p>
+            )}
+          </section>
+        )}
+
         {/* Profile form — tabs profile → accessibility */}
         <form id="org-profile-form" onSubmit={handleSaveProfile} className="space-y-0">
           {profileMsg && (
@@ -561,8 +831,14 @@ export default function AdvocateOrgPage() {
           )}
           {!canEditProfile && myOrgRole && (
             <p className="text-xs text-amber-200/90 mb-4">
-              Your role ({myOrgRole}) can view this profile. Only org admin or supervisor can
+              Your role ({myOrgRole}) can view this profile. Only an org owner or supervisor can
               edit.
+            </p>
+          )}
+          {canEditProfile && (
+            <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+              Some updates may be reviewed by NxtStps for trust and accuracy. Routine details (hours,
+              capacity, languages, and similar) save immediately.
             </p>
           )}
           {profileLoading ? (
@@ -623,7 +899,7 @@ export default function AdvocateOrgPage() {
                 <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
                   <h2 className="text-sm font-semibold text-slate-200">Services & languages</h2>
                   <p className="text-[11px] text-slate-500">
-                    Service types, languages, and how survivors reach you.
+                    Service types, languages, and how victims reach you.
                   </p>
               <div>
                 <p className="text-slate-400 mb-2">Service types</p>
@@ -833,7 +1109,7 @@ export default function AdvocateOrgPage() {
           )}
         </form>
 
-        {activeTab === "members" && (
+        {canManageOrg && activeTab === "members" && (
           <>
         {inviteUrl && (
           <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3 text-sm">
@@ -845,6 +1121,7 @@ export default function AdvocateOrgPage() {
           </div>
         )}
 
+        {canManageMemberships && (
         <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
           <h2 className="text-sm font-semibold text-slate-200 mb-3">
             Invite member
@@ -859,14 +1136,14 @@ export default function AdvocateOrgPage() {
             />
             <select
               value={inviteRole}
-              onChange={(e) =>
-                setInviteRole(e.target.value as "staff" | "supervisor" | "org_admin")
-              }
+              onChange={(e) => setInviteRole(e.target.value as OrgRole)}
               className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
             >
-              <option value="staff">Staff</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="org_admin">Org Admin</option>
+              {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {labelStaffAssignableOrgRole(r)}
+                </option>
+              ))}
             </select>
             <button
               type="submit"
@@ -877,6 +1154,7 @@ export default function AdvocateOrgPage() {
             </button>
           </form>
         </section>
+        )}
 
         {invites.length === 0 && !loading && (
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
@@ -904,16 +1182,20 @@ export default function AdvocateOrgPage() {
                 {invites.map((inv) => (
                   <tr key={inv.id} className="border-b border-slate-900">
                     <td className="py-2 text-slate-200">{inv.email}</td>
-                    <td className="py-2 text-slate-300">{inv.org_role}</td>
+                    <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(inv.org_role)}</td>
                     <td className="py-2 text-slate-400">{formatDate(inv.expires_at)}</td>
                     <td className="py-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRevokeInvite(inv.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        Revoke
-                      </button>
+                      {canManageMemberships ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeInvite(inv.id)}
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          Revoke
+                        </button>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -952,16 +1234,20 @@ export default function AdvocateOrgPage() {
                       <td className="py-2 text-slate-200">
                         {m.email || m.user_id.slice(0, 8) + "…"}
                       </td>
-                      <td className="py-2 text-slate-300">{m.org_role}</td>
+                      <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(m.org_role)}</td>
                       <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
                       <td className="py-2">
-                        <button
-                          type="button"
-                          onClick={() => handleRevokeMember(m.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          Revoke
-                        </button>
+                        {canManageMemberships ? (
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeMember(m.id)}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            Revoke
+                          </button>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1021,6 +1307,19 @@ export default function AdvocateOrgPage() {
                     {designation.public_summary}
                   </p>
                 )}
+                {designationConfidenceNote && (
+                  <p className="text-xs text-slate-400 mt-2">{designationConfidenceNote}</p>
+                )}
+                {designationHints.length > 0 && (
+                  <div className="mt-2 text-xs text-slate-400">
+                    <p className="font-medium text-slate-300">Improving reliability over time</p>
+                    <ul className="list-disc list-inside mt-1 space-y-0.5">
+                      {designationHints.slice(0, 4).map((h) => (
+                        <li key={h}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-sm text-slate-400 leading-relaxed">
@@ -1030,7 +1329,7 @@ export default function AdvocateOrgPage() {
           </section>
         )}
 
-        {canViewDesignation && activeTab === "reviews" && (
+        {canManageReviews && activeTab === "reviews" && (
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
             <h2 className="text-sm font-semibold text-slate-200">Designation review requests</h2>
             <p className="text-[11px] text-slate-500 leading-relaxed">

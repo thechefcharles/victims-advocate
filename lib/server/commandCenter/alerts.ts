@@ -19,7 +19,7 @@ export type AlertInputs = {
   restricted_document_count: number;
   assigned_advocate_id: string | null;
   last_activity_at: string | null;
-  unread_survivor_message_count?: number;
+  unread_victim_message_count?: number;
   missing_required_docs?: boolean;
   missing_required_fields?: boolean;
 };
@@ -68,7 +68,7 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
     restricted_document_count,
     assigned_advocate_id,
     last_activity_at,
-    unread_survivor_message_count,
+    unread_victim_message_count,
     missing_required_docs,
     missing_required_fields,
   } = input;
@@ -82,11 +82,11 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
         organization_id,
         "completeness_blocking_issues",
         "critical",
-        "Blocking completeness issues",
-        `${completeness_blocking_count} blocking issue(s) must be resolved.`,
+        "Case still needs follow-up",
+        `${completeness_blocking_count} follow-up item(s) still need to be resolved.`,
         ["completeness_blocking"],
         ["completeness"],
-        "Run completeness evaluation and resolve missing documents or information."
+        "Review this case and resolve missing documents or information."
       )
     );
   }
@@ -146,27 +146,27 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
         organization_id,
         "ocr_inconsistency",
         "high",
-        "OCR inconsistency",
-        "OCR extracted data that conflicts with intake or document type.",
+        "Uploaded documents may need review",
+        "Some uploaded document details may not match intake information.",
         ["ocr_inconsistency"],
         ["ocr"],
-        "Review OCR results and confirm or correct extracted fields."
+        "Review document checks and confirm or correct extracted details."
       )
     );
   }
 
-  if ((unread_survivor_message_count ?? 0) > 0 && isActive) {
+  if ((unread_victim_message_count ?? 0) > 0 && isActive) {
     alerts.push(
       makeAlert(
         case_id,
         organization_id,
-        "unread_survivor_message",
+        "unread_victim_message",
         "high",
-        "Unread survivor message",
-        `${unread_survivor_message_count} unread message(s) from the survivor.`,
-        ["unread_survivor_message"],
+        "Unread victim message",
+        `${unread_victim_message_count} unread message(s) from the victim.`,
+        ["unread_victim_message"],
         ["messaging"],
-        "Review the survivor message and respond."
+        "Review the victim message and respond."
       )
     );
   }
@@ -194,11 +194,11 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
         organization_id,
         "needs_program_routing",
         "medium",
-        "Program routing not run",
-        "Run program routing to see which programs may apply.",
+        "Support programs not reviewed",
+        "Support programs have not been reviewed for this case yet.",
         ["no_routing"],
         ["routing"],
-        "Open case and click Evaluate programs."
+        "Open the case and review support program options."
       )
     );
   }
@@ -210,11 +210,11 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
         organization_id,
         "needs_completeness_review",
         "medium",
-        "Completeness not evaluated",
-        "Routing was run but completeness has not been evaluated.",
+        "Case follow-up review not run",
+        "Program review exists, but follow-up completeness review has not been run.",
         ["no_completeness"],
         ["routing", "completeness"],
-        "Open case and click Evaluate completeness."
+        "Open the case and run follow-up review."
       )
     );
   }

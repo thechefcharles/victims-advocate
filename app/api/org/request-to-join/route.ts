@@ -16,6 +16,7 @@ import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
 import { getAdvocateDisplayForNotification } from "@/lib/server/notifications/advocateDisplay";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 
 function appBaseUrl(req: Request): string {
   return (
@@ -24,6 +25,12 @@ function appBaseUrl(req: Request): string {
     req.headers.get("origin") ||
     "http://localhost:3000"
   ).replace(/\/$/, "");
+}
+
+async function fetchPlatformAdminUserIds(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string[]> {
+  const { data, error } = await supabase.from("profiles").select("id").eq("is_admin", true);
+  if (error) throw new Error(error.message);
+  return [...new Set((data ?? []).map((r) => r.id as string))];
 }
 
 async function notifyOrgApprovers(params: {
@@ -44,16 +51,20 @@ async function notifyOrgApprovers(params: {
     .select("user_id")
     .eq("organization_id", organizationId)
     .eq("status", "active")
-    .in("org_role", ["org_admin", "supervisor"]);
+    .in("org_role", [...ORG_LEADERSHIP_ROLES]);
 
   if (error) throw new Error(error.message);
+
+  const adminIds = await fetchPlatformAdminUserIds(supabase);
 
   const base = appBaseUrl(req);
   const actionUrl = `${base}/notifications`;
   const identity = `${displayName}${email ? ` · ${email}` : ""}`;
-  const body = `${identity}\n\nRequested to join ${organizationName} as an organization representative. Review in Updates.`;
+  const body = `${identity}\n\nRequested to join ${organizationName} as an organization representative. Approve or decline in Updates, or ask a platform admin to review in Admin → Organizations.`;
 
-  const recipients = [...new Set((members ?? []).map((m) => m.user_id))];
+  const recipients = [
+    ...new Set([...(members ?? []).map((m) => m.user_id), ...adminIds]),
+  ];
   await Promise.all(
     recipients.map((memberUserId) =>
       createNotification(

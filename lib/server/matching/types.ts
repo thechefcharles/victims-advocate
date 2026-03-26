@@ -19,6 +19,12 @@ export type MatchingInput = {
 export type OrgRowForMatching = {
   id: string;
   name: string;
+  /** Operational status: only `active` orgs are eligible for product matching/discovery. */
+  status: string;
+  /** Phase 6: only `managed` orgs are eligible for product matching/discovery. */
+  lifecycle_status: string;
+  /** Phase 6: only `public_profile_status === "active"` orgs are eligible. */
+  public_profile_status: string;
   service_types: string[];
   languages: string[];
   coverage_area: Record<string, unknown>;
@@ -30,6 +36,7 @@ export type OrgRowForMatching = {
   special_populations: string[];
   accessibility_features: string[];
   profile_status: string;
+  profile_stage: string;
   profile_last_updated_at: string | null;
 };
 
@@ -62,6 +69,16 @@ export type MatchEvaluation = {
   designation_boost_points: number;
   /** Internal: tie-break ordering (omitted from API). */
   designation_tie_ordinal: number;
+  /** Internal: transparent component scoring for debugging rank order. */
+  score_breakdown?: {
+    service: number;
+    coverage: number;
+    availability: number;
+    language: number;
+    accessibility: number;
+    special_populations: number;
+    response_time: number;
+  };
 };
 
 export type OrganizationMatchRunRow = {

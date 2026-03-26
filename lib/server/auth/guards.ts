@@ -2,10 +2,16 @@
  * Phase 0/2: Authorization guards.
  * Throw AppError for standardized handling.
  * Phase 5: optional req for audit logging on access denial.
+ *
+ * Phase 2 direction: `requireRole` / profile `role` = coarse persona & onboarding.
+ * Org *features* should prefer `requireOrg` + `requireOrgRole` (membership + simple org role).
+ * Phase 3: DB org roles normalize via `mapDbOrgRoleToSimple`; use `requireOrg` + `requireOrgRole` for org tools.
  */
 
 import { AppError } from "@/lib/server/api";
-import type { AuthContext, OrgRole, ProfileRole } from "./context";
+import type { AuthContext, ProfileRole } from "./context";
+import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
+import { logAccessDenied } from "./simpleAccess";
 import { logEvent } from "@/lib/server/audit/logEvent";
 
 export function requireAuth(ctx: AuthContext | null): asserts ctx is AuthContext {
@@ -27,12 +33,29 @@ export function requireOrg(ctx: AuthContext): void {
   }
 }
 
-export function requireOrgRole(ctx: AuthContext, roles: OrgRole | OrgRole[]): void {
+export type RequireOrgRoleOptions = {
+  req?: Request | null;
+  resource?: string;
+  attemptedAction?: string;
+};
+
+export function requireOrgRole(
+  ctx: AuthContext,
+  roles: SimpleOrgRole | readonly SimpleOrgRole[],
+  options?: RequireOrgRoleOptions
+): void {
   if (!ctx.orgId) {
     throw new AppError("FORBIDDEN", "Organization membership required");
   }
-  const allowed = Array.isArray(roles) ? roles : [roles];
+  const allowed = (Array.isArray(roles) ? roles : [roles]) as SimpleOrgRole[];
   if (!ctx.orgRole || !allowed.includes(ctx.orgRole)) {
+    const { req, resource, attemptedAction } = options ?? {};
+    if (resource && attemptedAction) {
+      logAccessDenied(ctx, req ?? null, {
+        resource,
+        attemptedAction,
+      }).catch(() => {});
+    }
     throw new AppError("FORBIDDEN", "Insufficient organization role");
   }
 }

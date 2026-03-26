@@ -103,7 +103,7 @@ export default function AdvocateConnectionRequestsPage() {
           </Link>
           <h1 className="text-2xl font-bold">Connection requests</h1>
           <p className="text-sm text-slate-300 mt-2">
-            Survivors can request to connect with you as their advocate. Accept to add them as a
+            Victims can request to connect with you as their advocate. Accept to add them as a
             client. Once accepted, they can invite you to their cases.
           </p>
         </header>
@@ -120,7 +120,7 @@ export default function AdvocateConnectionRequestsPage() {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center">
             <p className="text-slate-300">No pending connection requests.</p>
             <p className="text-sm text-slate-500 mt-2">
-              When a survivor sends you a request, it will appear here.
+              When a victim sends you a request, it will appear here.
             </p>
           </div>
         )}

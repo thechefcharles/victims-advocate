@@ -49,7 +49,11 @@ function AcceptContent() {
         }
 
         setStatus("success");
-        setMessage(`You’ve joined the organization as ${json.data?.orgRole ?? "member"}.`);
+        const label =
+          typeof json.data?.orgRoleLabel === "string" && json.data.orgRoleLabel.trim()
+            ? json.data.orgRoleLabel.trim()
+            : "member";
+        setMessage(`You’ve joined the organization as ${label}.`);
       } catch (e) {
         setStatus("error");
         setMessage(e instanceof Error ? e.message : "Failed to accept invite");
@@ -77,12 +81,12 @@ function AcceptContent() {
         {status === "success" ? (
           <>
             <p className="text-emerald-300 font-medium">{message}</p>
-            <Link
-              href="/advocate"
+            <a
+              href="/dashboard"
               className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
             >
-              Go to dashboard
-            </Link>
+              Continue To Your Workspace
+            </a>
           </>
         ) : (
           <>

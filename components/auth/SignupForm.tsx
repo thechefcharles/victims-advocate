@@ -112,7 +112,7 @@ export default function SignupForm() {
           </p>
           <h1 className="text-2xl font-semibold">Create your account</h1>
           <p className="text-[11px] text-slate-400">
-            This account is for victims/survivors starting applications.
+            This account is for victims starting applications.
           </p>
         </header>
 
@@ -228,7 +228,7 @@ export default function SignupForm() {
           </Link>
 
           <Link
-            href="/signup/advocate"
+            href="/signup?intent=advocate"
             className="underline underline-offset-2 hover:text-slate-200"
           >
             I’m a victim advocate

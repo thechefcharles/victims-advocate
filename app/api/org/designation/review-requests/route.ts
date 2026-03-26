@@ -2,7 +2,13 @@
  * Phase E: List designation review requests for current org.
  */
 
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
+} from "@/lib/server/auth";
 import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listDesignationReviewRequestsForOrg } from "@/lib/server/designations/reviewRequests";
@@ -12,7 +18,7 @@ export async function GET(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, ["org_admin", "supervisor"]);
+    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
 
     const list = await listDesignationReviewRequestsForOrg({
       organizationId: ctx.orgId!,

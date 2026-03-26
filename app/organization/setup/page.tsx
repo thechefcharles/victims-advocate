@@ -5,23 +5,39 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
-import { getDashboardPath } from "@/lib/dashboardRoutes";
-import { OrganizationCreationSection } from "@/components/org/OrganizationCreationSection";
+import { OrganizationOnboarding } from "@/components/org/OrganizationOnboarding";
 
 /**
- * First-time setup for users who signed up as an organization representative.
- * Create org from directory (or request to join if exists) or submit new org for approval.
+ * Organization leader onboarding: directory find/join + pending proposal.
+ * Not available to victim or advocate accounts (except platform admins).
  */
 export default function OrganizationSetupPage() {
   const router = useRouter();
-  const { orgId, user, isAdmin, role, orgRole } = useAuth();
+  const { orgId, user, loading, role, realRole, isAdmin, orgOwnershipClaim } = useAuth();
   const { t } = useI18n();
   const [initialCatalogId, setInitialCatalogId] = useState<number | null>(null);
+  const [initialOrgNameHint, setInitialOrgNameHint] = useState<string | null>(null);
+  const [initialLeaderTitleHint, setInitialLeaderTitleHint] = useState<string | null>(null);
   const [prefilled, setPrefilled] = useState(false);
+
+  const profileRole = realRole ?? role;
 
   useEffect(() => {
     if (orgId) router.replace("/organization/dashboard");
   }, [orgId, router]);
+
+  useEffect(() => {
+    if (loading || !user) return;
+    if (isAdmin) return;
+    if (profileRole === "victim") {
+      router.replace("/victim/dashboard");
+      return;
+    }
+    if (profileRole === "advocate") {
+      router.replace("/advocate");
+      return;
+    }
+  }, [loading, user, profileRole, isAdmin, router]);
 
   useEffect(() => {
     if (!user || prefilled) return;
@@ -34,6 +50,17 @@ export default function OrganizationSetupPage() {
           ? parseInt(String(raw).trim(), 10)
           : null;
     if (pendingId != null) setInitialCatalogId(pendingId);
+
+    const hintRaw = meta?.org_onboarding_display_name_hint;
+    if (typeof hintRaw === "string" && hintRaw.trim()) {
+      setInitialOrgNameHint(hintRaw.trim());
+    }
+
+    const titleRaw = meta?.org_onboarding_leader_title;
+    if (typeof titleRaw === "string" && titleRaw.trim()) {
+      setInitialLeaderTitleHint(titleRaw.trim());
+    }
+
     setPrefilled(true);
   }, [user, prefilled]);
 
@@ -45,26 +72,43 @@ export default function OrganizationSetupPage() {
     );
   }
 
+  if (!loading && user && !isAdmin && (profileRole === "victim" || profileRole === "advocate")) {
+    return (
+      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
+        <p className="text-sm text-slate-400">Redirecting…</p>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
-      <div className="max-w-md mx-auto space-y-6">
-        <header>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">
-            Organization account
+      <div className="max-w-2xl mx-auto space-y-8">
+        <header className="space-y-2">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Organization onboarding</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Find Or Set Up Your Organization</h1>
+          <p className="text-sm text-slate-400">
+            Choose the option that best matches your organization.
           </p>
-          <h1 className="text-2xl font-semibold">Finish creating your organization</h1>
-          <p className="text-sm text-slate-400 mt-2">
-            Select your agency from the Illinois directory, or submit a new organization for admin
-            approval if it&apos;s not listed.
-          </p>
+          {orgOwnershipClaim?.status === "pending" && (
+            <p className="text-sm text-amber-200/90 rounded-lg border border-amber-500/35 bg-amber-950/25 px-3 py-2">
+              Your ownership request is under review by a platform administrator.
+            </p>
+          )}
+          {orgOwnershipClaim?.status === "rejected" && (
+            <p className="text-sm text-red-200/90 rounded-lg border border-red-500/35 bg-red-950/20 px-3 py-2">
+              Your last ownership request was not approved. You can submit a new one below.
+            </p>
+          )}
         </header>
 
-        <OrganizationCreationSection
+        <OrganizationOnboarding
           initialCatalogId={initialCatalogId}
+          initialOrgNameHint={initialOrgNameHint}
+          initialLeaderTitleHint={initialLeaderTitleHint}
           backLink={
             <Link
-              href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
-              className="text-sm text-slate-400 hover:text-slate-200"
+              href="/dashboard"
+              className="text-sm text-slate-400 hover:text-slate-200 inline-block"
             >
               {t("common.backToWorkspace")}
             </Link>

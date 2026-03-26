@@ -31,6 +31,8 @@ export type OrgSegmentRow = {
   languages: string[];
   capacity_status: string;
   accepting_clients: boolean;
+  profile_status: string;
+  profile_stage: string;
   designation_tier: string | null;
   designation_confidence: string | null;
   profile_completeness: "complete" | "partial" | "minimal";
@@ -39,6 +41,8 @@ export type OrgSegmentRow = {
   completeness_runs_in_window: number;
   messages_sent_in_window: number;
   match_rows_as_target_in_window: number;
+  /** One operational line from `buildOrgInternalFollowupCue` — not a score or ranking. */
+  internal_followup_cue: string;
 };
 
 export type EcosystemOverviewResponse = {

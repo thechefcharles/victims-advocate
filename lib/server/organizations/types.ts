@@ -4,9 +4,11 @@ import {
   SERVICE_TYPE_OPTIONS,
   SPECIAL_POPULATION_OPTIONS,
 } from "@/lib/organizations/profileOptions";
+import type { OrgLifecycleStatus, OrgPublicProfileStatus } from "@/lib/server/organizations/state";
 
 export type CapacityStatus = "open" | "limited" | "waitlist" | "closed" | "unknown";
 export type OrgProfileStatus = "draft" | "active" | "archived";
+export type OrgProfileStage = "created" | "searchable" | "enriched";
 
 export const SERVICE_TYPES = SERVICE_TYPE_OPTIONS;
 export type ServiceType = (typeof SERVICE_TYPES)[number];
@@ -32,6 +34,7 @@ export type OrganizationProfile = {
   special_populations: SpecialPopulation[];
   accessibility_features: AccessibilityFeature[];
   profile_status: OrgProfileStatus;
+  profile_stage: OrgProfileStage;
   profile_last_updated_at: string | null;
 };
 
@@ -39,6 +42,17 @@ export type OrganizationProfileRow = OrganizationProfile & {
   id: string;
   name: string;
   type: string;
+  /** Operational: active | suspended | archived */
   status: string;
+  /** Phase 1: seeded | managed | archived */
+  lifecycle_status?: OrgLifecycleStatus;
+  /** Phase 1: draft | pending_review | active | paused */
+  public_profile_status?: OrgPublicProfileStatus;
+  /** Phase 3: when org leader submitted for public activation review */
+  activation_submitted_at?: string | null;
+  /** Phase 5: future plan id (default free); not used for gating yet. */
+  billing_plan_key?: string;
+  /** Phase 5: future subscription state; not used for gating yet. */
+  billing_status?: string;
   metadata: Record<string, unknown>;
 };

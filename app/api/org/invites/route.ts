@@ -1,9 +1,19 @@
 /**
- * Phase 2: Org invites - create (org_admin), list (org_admin/supervisor).
+ * Org invites — create (simple-owner tier), list (leadership).
+ * Phase 4: POST body `org_role` limited to `ORG_SELF_SERVE_INVITE_ROLES` (staff only; owner-tier via claim/admin).
  */
 
 import { NextResponse } from "next/server";
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
+  ORG_SELF_SERVE_INVITE_ROLES,
+  normalizeOrgRoleInput,
+} from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -11,7 +21,6 @@ import { sha256Hex } from "@/lib/server/audit/hash";
 import { logger } from "@/lib/server/logging";
 import { randomBytes } from "crypto";
 
-const ORG_ROLES = ["staff", "supervisor", "org_admin"] as const;
 const DEFAULT_EXPIRY_DAYS = 7;
 
 function isValidEmail(s: string): boolean {
@@ -26,7 +35,7 @@ export async function GET(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, ["org_admin", "supervisor"]);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);
@@ -62,7 +71,7 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, "org_admin");
+    requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -70,10 +79,9 @@ export async function POST(req: Request) {
     }
 
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const orgRole =
-      typeof body.org_role === "string"
-        ? body.org_role.trim().toLowerCase()
-        : "staff";
+    const rawRole =
+      typeof body.org_role === "string" ? body.org_role.trim().toLowerCase() : "victim_advocate";
+    const orgRole = normalizeOrgRoleInput(rawRole) ?? "victim_advocate";
     const expiryDays =
       typeof body.expiry_days === "number" && body.expiry_days > 0
         ? Math.min(body.expiry_days, 30)
@@ -85,12 +93,12 @@ export async function POST(req: Request) {
     if (!isValidEmail(email)) {
       return apiFail("VALIDATION_ERROR", "Invalid email format", undefined, 422);
     }
-    if (!ORG_ROLES.includes(orgRole as (typeof ORG_ROLES)[number])) {
+    if (!(ORG_SELF_SERVE_INVITE_ROLES as readonly string[]).includes(orgRole)) {
       return apiFail(
-        "VALIDATION_ERROR",
-        `org_role must be one of: ${ORG_ROLES.join(", ")}`,
+        "FORBIDDEN",
+        `Self-serve invites may only use: ${ORG_SELF_SERVE_INVITE_ROLES.join(", ")}. Owner roles are assigned via claim or admin flows.`,
         undefined,
-        422
+        403
       );
     }
 
@@ -116,7 +124,7 @@ export async function POST(req: Request) {
 
     await logEvent({
       ctx,
-      action: "org.invite.create",
+      action: "member_invited",
       resourceType: "org_invite",
       resourceId: invite.id,
       organizationId: ctx.orgId!,

@@ -10,6 +10,7 @@ import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliation
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
 import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
 import { AdvocatePersonalInfoForm } from "@/components/account/AdvocatePersonalInfoForm";
+import { hasOrgBillingAuthoritySimpleRole } from "@/lib/billing/orgBillingReadiness";
 
 export default function AccountPage() {
   const {
@@ -48,6 +49,23 @@ export default function AccountPage() {
         <h1 className="text-2xl font-semibold text-slate-50 mb-6">
           {t("nav.accountPlaceholderTitle")}
         </h1>
+
+        {/* Onboarding intent: org-leader signup path without membership yet */}
+        {role === "organization" && !orgId && (
+          <div className="rounded-2xl border border-amber-500/35 bg-amber-950/25 px-5 py-4 space-y-2">
+            <p className="text-sm font-medium text-amber-100">Set Up Organization Access</p>
+            <p className="text-xs text-amber-100/80 leading-relaxed">
+              You don&apos;t belong to an organization workspace yet. Find your agency in the directory,
+              request to join, or submit details if you&apos;re not listed.
+            </p>
+            <Link
+              href="/organization/setup"
+              className="inline-block text-sm font-semibold text-amber-300 hover:text-amber-200 underline-offset-2"
+            >
+              Open organization onboarding →
+            </Link>
+          </div>
+        )}
 
         {isVictimProfile && (
           <VictimPersonalInfoForm
@@ -90,7 +108,7 @@ export default function AccountPage() {
           </Link>
         </div>
 
-        {role === "organization" && orgRole === "org_admin" && orgId && (
+        {orgId && hasOrgBillingAuthoritySimpleRole(orgRole) && (
           <OrganizationCatalogForm
             accessToken={accessToken}
             initialCatalogId={organizationCatalogEntryId}
@@ -110,9 +128,9 @@ export default function AccountPage() {
           />
         )}
 
-        {role === "organization" && orgRole !== "org_admin" && (
+        {orgId && !hasOrgBillingAuthoritySimpleRole(orgRole) && (
           <p className="text-xs text-slate-500">
-            Only an organization admin can change which directory program this agency uses.
+            Only an organization owner can change which directory program this agency uses.
           </p>
         )}
       </main>

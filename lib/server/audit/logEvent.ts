@@ -25,6 +25,10 @@ export type AuditAction =
   | "document.restricted"
   | "document.unrestricted"
   | "org.create"
+  | "org.claim_request.submitted"
+  | "org.activation.submitted"
+  | "org.activation.approved"
+  | "org.activation.rejected"
   | "org.update"
   | "org.invite.create"
   | "org.invite.revoke"
@@ -40,7 +44,14 @@ export type AuditAction =
   | "org.pending_proposal.created"
   | "admin.org_proposal.approved"
   | "admin.org_proposal.declined"
+  | "admin.org_claim_request.approved"
+  | "admin.org_claim_request.rejected"
+  | "admin.org.public_profile_paused"
+  | "admin.org.public_profile_resumed"
+  | "admin.org.archived"
+  | "admin.org.profile_flags_resolved"
   | "org.profile_updated"
+  | "org.profile.sensitive_update"
   | "org.profile_status_changed"
   | "policy.create"
   | "policy.activate"
@@ -65,6 +76,7 @@ export type AuditAction =
   | "case.intake_field_deferred"
   | "case.intake_field_skipped"
   | "case.intake_amended"
+  | "case.organization_transferred"
   | "intake.field_skipped"
   | "intake.field_deferred"
   | "intake.field_amended"
@@ -123,7 +135,16 @@ export type AuditAction =
   | "designation.review_submitted"
   | "designation.review_resolved"
   | "designation.review_withdrawn"
-  | "ecosystem.viewed";
+  | "ecosystem.viewed"
+  | "role_assigned"
+  | "role_changed"
+  | "member_invited"
+  | "member_suspended"
+  | "member_removed"
+  | "referral.created"
+  | "referral.accepted"
+  | "referral.declined"
+  | "org.permission_denied";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
@@ -133,6 +154,8 @@ export type LogEventParams = {
   resourceType?: string | null;
   resourceId?: string | null;
   organizationId?: string | null;
+  /** User affected by membership / role actions (ORG-1B audit_log.target_user_id). */
+  targetUserId?: string | null;
   severity?: AuditSeverity;
   metadata?: Record<string, unknown>;
   sensitivePayloadForHash?: string | null;
@@ -160,6 +183,7 @@ export async function logEvent(params: LogEventParams): Promise<void> {
       resourceType = null,
       resourceId = null,
       organizationId = null,
+      targetUserId = null,
       severity = "info",
       metadata = {},
       sensitivePayloadForHash = null,
@@ -193,6 +217,7 @@ export async function logEvent(params: LogEventParams): Promise<void> {
       actor_user_id: ctx?.userId ?? null,
       actor_role: ctx?.role ?? null,
       organization_id: asUuidOrNull(String(orgIdVal ?? "")),
+      target_user_id: asUuidOrNull(targetUserId ?? ""),
       action,
       resource_type: resourceType,
       resource_id: resourceId,

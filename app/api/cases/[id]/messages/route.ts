@@ -18,7 +18,7 @@ export async function GET(req: Request, context: RouteParams) {
     requireFullAccess(ctx, req);
 
     const { id: caseId } = await context.params;
-    const caseResult = await getCaseById({ caseId, ctx });
+    const caseResult = await getCaseById({ caseId, ctx, req });
     if (!caseResult) {
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
@@ -65,7 +65,7 @@ export async function POST(req: Request, context: RouteParams) {
     requireFullAccess(ctx, req);
 
     const { id: caseId } = await context.params;
-    const caseResult = await getCaseById({ caseId, ctx });
+    const caseResult = await getCaseById({ caseId, ctx, req });
     if (!caseResult) {
       return NextResponse.json({ error: "Case not found" }, { status: 404 });
     }
@@ -74,7 +74,7 @@ export async function POST(req: Request, context: RouteParams) {
     const message_text = (body?.message_text ?? "").toString();
 
     const conversation = await getOrCreateConversationForCase({ caseId, ctx });
-    const message = await sendMessage({ conversation, ctx, message_text });
+    const message = await sendMessage({ conversation, ctx, message_text, req });
 
     return NextResponse.json({ conversation, message });
   } catch (err) {

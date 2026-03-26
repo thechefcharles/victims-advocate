@@ -1,6 +1,6 @@
-// app/signup/advocate/page.tsx
-import AdvocateSignupForm from "@/components/auth/AdvocateSignupForm";
+import { redirect } from "next/navigation";
 
-export default function AdvocateSignupPage() {
-  return <AdvocateSignupForm />;
+/** Legacy URL: forwards to unified signup with Advocate selected. */
+export default function AdvocateSignupRedirectPage() {
+  redirect("/signup?intent=advocate");
 }

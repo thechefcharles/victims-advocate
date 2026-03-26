@@ -15,9 +15,9 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 const POP_LABELS: Record<string, string> = {
-  sexual_assault: "survivors of sexual assault",
-  domestic_violence: "domestic violence survivors",
-  homicide_survivors: "homicide survivors and families",
+  sexual_assault: "victims of sexual assault",
+  domestic_violence: "domestic violence victims",
+  homicide_survivors: "homicide victims and families",
   spanish_speaking: "Spanish-speaking clients",
   children: "children and families",
   immigrant_clients: "immigrant clients",
@@ -27,7 +27,7 @@ export function buildServiceReasons(overlap: string[]): string[] {
   const out: string[] = [];
   for (const s of overlap) {
     const label = SERVICE_LABELS[s] ?? s.replace(/_/g, " ");
-    out.push(`Likely able to help with ${label}`);
+    out.push(`Offers ${label}`);
   }
   return out;
 }
@@ -38,10 +38,10 @@ export function buildGeographyReason(params: {
   stateKnown: boolean;
 }): string[] {
   if (params.viaVirtual) {
-    return ["May serve you through virtual services (outside listed area)"];
+    return ["Offers virtual services"];
   }
   if (params.stateMatch && params.stateKnown) {
-    return ["Serves your state or region"];
+    return ["Serves your area"];
   }
   if (!params.stateKnown) {
     return [];
@@ -150,7 +150,7 @@ export function buildProfileIncompleteFlag(completeness: number): string | null 
 
 export function buildCoverageUnclearFlag(coverageDefined: boolean): string | null {
   if (!coverageDefined) {
-    return "Coverage area unclear — confirm service area directly";
+    return "Coverage details are limited";
   }
   return null;
 }

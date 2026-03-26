@@ -35,6 +35,8 @@ export const es: I18nDict = {
         clients: "Clientes",
         organization: "Organización",
         orgSettings: "Ajustes de org",
+        organizationHome: "Inicio de organización",
+        organizationSetupNav: "Configurar organización",
         adminHome: "Administración",
     },
 
@@ -68,7 +70,7 @@ export const es: I18nDict = {
         preferredNameLabel: "Nombre preferido",
         preferredNamePlaceholder: "p. ej. Alex o Alex Martínez",
         preferredNameHelp:
-            "Lo usamos para personalizar tu panel y mensajes. Puedes añadir el nombre legal y más en la cuenta después.",
+            "Usamos tu nombre para personalizar tu panel y mensajes. Puedes añadir más datos en la cuenta después.",
     },
 
     victimDashboard: {
@@ -197,6 +199,17 @@ export const es: I18nDict = {
             updated: "Organización actualizada.",
             updateFailed: "No se pudo actualizar. Inténtalo de nuevo.",
             noOrgBody: "Aún no hay organización de servicios a víctimas para este caso.",
+            referralUpdatesTitle: "Actualizaciones de referencia",
+            referralUpdatesIntro:
+                "Cada línea es una organización a la que escribiste. Si aceptan, tu caso queda conectado con ellos.",
+            referralsLoadError: "No pudimos cargar el estado de la referencia. Puedes intentar más tarde.",
+            referralStatusPending: "Esperando su respuesta",
+            referralStatusAccepted:
+                "Aceptada — tu caso ya está conectado a esta organización",
+            referralStatusDeclined:
+                "Rechazaron la solicitud — tu caso sigue con tu organización actual",
+            referralUpdatesEmpty:
+                "Aún no hay referencias. Cuando envíes una desde Organizaciones cerca de ti, verás actualizaciones aquí.",
         },
         applyPathConnect: "Conectar con un defensor",
         applyPathSelf: "Solicitar por mi cuenta",
@@ -258,6 +271,14 @@ export const es: I18nDict = {
             loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
             privacyNote:
                 "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
+            sendReferral: "Enviar referencia para revisión",
+            sendReferralSending: "Enviando…",
+            sendReferralDone:
+                "Referencia enviada. El equipo de la organización puede revisar tu caso.",
+            sendReferralFailed:
+                "No se pudo enviar la referencia. Inténtalo de nuevo u otra organización.",
+            sendReferralDuplicate:
+                "Ya tienes una referencia en curso con esta organización. Revisa Organización para este caso para ver el estado.",
         },
         caseActivityForCase: "Para este caso",
         caseDetailsHeading: "Detalles Del Caso",

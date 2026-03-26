@@ -1,6 +1,6 @@
 /**
- * DELETE: Advocate removes themselves from a survivor’s client list—drops case_access on that
- * survivor’s cases and clears advocate_connection_requests for this pair.
+ * DELETE: Advocate removes themselves from a victim’s client list—drops case_access on that
+ * victim’s cases and clears advocate_connection_requests for this pair.
  */
 
 import { NextResponse } from "next/server";

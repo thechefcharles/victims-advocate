@@ -10,6 +10,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
+import { getCurrentDesignationsForOrgIds } from "@/lib/server/designations/service";
 
 const ORG_TYPES = ["nonprofit", "hospital", "gov", "other"] as const;
 
@@ -24,12 +25,81 @@ export async function GET(req: Request) {
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from("organizations")
-      .select("id, created_at, name, type, status, created_by")
-      .order("created_at", { ascending: false });
+      .select(
+        "id, created_at, name, type, status, lifecycle_status, public_profile_status, activation_submitted_at, created_by, profile_status, profile_stage, accepting_clients, capacity_status, service_types, languages"
+      )
+      .order("name", { ascending: true });
 
     if (error) throw new Error(error.message);
 
-    return apiOk({ orgs: data ?? [] });
+    const rows = data ?? [];
+    const desMap = await getCurrentDesignationsForOrgIds(rows.map((r) => r.id));
+
+    const orgIds = rows.map((r) => r.id);
+    const ownerCountByOrg = new Map<string, number>();
+    if (orgIds.length > 0) {
+      const { data: ownerRows, error: ownErr } = await supabase
+        .from("org_memberships")
+        .select("organization_id")
+        .eq("status", "active")
+        .eq("org_role", "org_owner")
+        .in("organization_id", orgIds);
+      if (ownErr) throw new Error(ownErr.message);
+      for (const row of ownerRows ?? []) {
+        const oid = row.organization_id as string;
+        ownerCountByOrg.set(oid, (ownerCountByOrg.get(oid) ?? 0) + 1);
+      }
+    }
+
+    const sensitiveFlagByOrg = new Set<string>();
+    const pendingClaimByOrg = new Set<string>();
+    if (orgIds.length > 0) {
+      const { data: flagRows, error: flagErr } = await supabase
+        .from("organization_profile_flags")
+        .select("organization_id")
+        .eq("resolved", false)
+        .eq("flag_type", "sensitive_change")
+        .in("organization_id", orgIds);
+      if (flagErr) {
+        logger.warn("admin.orgs.profile_flags", { message: flagErr.message });
+      } else if (flagRows) {
+        for (const fr of flagRows) {
+          const oid = fr.organization_id as string;
+          if (oid) sensitiveFlagByOrg.add(oid);
+        }
+      }
+
+      const { data: claimRows, error: claimErr } = await supabase
+        .from("org_claim_requests")
+        .select("organization_id")
+        .eq("status", "pending")
+        .in("organization_id", orgIds);
+      if (claimErr) {
+        logger.warn("admin.orgs.pending_claims", { message: claimErr.message });
+      } else if (claimRows) {
+        for (const cr of claimRows) {
+          const oid = cr.organization_id as string;
+          if (oid) pendingClaimByOrg.add(oid);
+        }
+      }
+    }
+
+    const orgs = rows.map((r) => {
+      const d = desMap.get(r.id);
+      const org_owner_count = ownerCountByOrg.get(r.id) ?? 0;
+      const pub = String(r.public_profile_status ?? "");
+      return {
+        ...r,
+        org_owner_count,
+        designation_tier: d?.designation_tier ?? null,
+        designation_confidence: d?.designation_confidence ?? null,
+        has_sensitive_profile_flag: sensitiveFlagByOrg.has(r.id),
+        has_pending_ownership_claim: pendingClaimByOrg.has(r.id),
+        has_pending_activation: pub === "pending_review",
+      };
+    });
+
+    return apiOk({ orgs });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("admin.orgs.list.error", { code: appErr.code, message: appErr.message });

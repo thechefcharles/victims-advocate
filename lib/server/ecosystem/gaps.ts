@@ -56,7 +56,7 @@ export function computeEcosystemGaps(params: {
       "low_org_density",
       params.activeOrgs === 1 ? "high" : "medium",
       "Few active provider organizations in view",
-      "The filtered region shows a small number of organizations with active profiles. Coverage may be thin for survivors seeking in-network options.",
+      "The filtered region shows a small number of organizations with active profiles. Coverage may be thin for victims seeking in-network options.",
       { active_organizations: params.activeOrgs },
       "Consider outreach to expand participating organizations in this geography."
     );

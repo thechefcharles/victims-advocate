@@ -216,7 +216,7 @@ export default function AdvocateSignupForm() {
           </Link>
 
           <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
-            I’m a victim/survivor
+            I’m a victim
           </Link>
         </div>
 

@@ -1,5 +1,6 @@
 /**
- * Phase 2: Accept org invite (authenticated user, email must match).
+ * Accept org invite (authenticated user, email must match).
+ * Phase 4: response includes `orgRoleLabel` for product-facing success copy; DB role stored on membership.
  */
 
 import { NextResponse } from "next/server";
@@ -9,6 +10,8 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { sha256Hex } from "@/lib/server/audit/hash";
 import { logger } from "@/lib/server/logging";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
+import { dbOrgRoleProductLabel } from "@/lib/auth/simpleOrgRole";
 
 export async function POST(req: Request) {
   try {
@@ -97,6 +100,10 @@ export async function POST(req: Request) {
 
     if (membershipErr) throw new Error(membershipErr.message);
 
+    if (invite.org_role === "org_owner") {
+      await syncOrganizationLifecycleFromOwnership(supabase, invite.organization_id);
+    }
+
     const { error: updateErr } = await supabase
       .from("org_invites")
       .update({
@@ -109,17 +116,19 @@ export async function POST(req: Request) {
 
     await logEvent({
       ctx,
-      action: "org.invite.accept",
+      action: "role_assigned",
       resourceType: "org_invite",
       resourceId: invite.id,
       organizationId: invite.organization_id,
-      metadata: { email: invite.email, org_role: invite.org_role },
+      targetUserId: ctx.userId,
+      metadata: { email: invite.email, org_role: invite.org_role, via: "invite_accept" },
       req,
     });
 
     return apiOk({
       orgId: membership.organization_id,
       orgRole: membership.org_role,
+      orgRoleLabel: dbOrgRoleProductLabel(membership.org_role),
     });
   } catch (err) {
     const appErr = toAppError(err);

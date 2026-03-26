@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ORG_DESIGNATION_VERSION } from "@/lib/designations/version";
@@ -27,7 +28,15 @@ type DesignationRow = {
   is_current: boolean;
 };
 
+type DesignationPresentation = {
+  confidence_note: string;
+  hints: string[];
+  signal_flags: string[];
+  internal_explanation: { headline: string; bullets: string[] };
+};
+
 export default function AdminDesignationsPage() {
+  const searchParams = useSearchParams();
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [orgId, setOrgId] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -35,6 +44,7 @@ export default function AdminDesignationsPage() {
   const [running, setRunning] = useState(false);
   const [current, setCurrent] = useState<DesignationRow | null>(null);
   const [history, setHistory] = useState<DesignationRow[]>([]);
+  const [presentation, setPresentation] = useState<DesignationPresentation | null>(null);
 
   const loadOrgs = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
@@ -52,7 +62,6 @@ export default function AdminDesignationsPage() {
     const json = await res.json();
     const list = (json.data?.orgs ?? []) as Org[];
     setOrgs(list);
-    if (list.length && !orgId) setOrgId(list[0].id);
   };
 
   const loadDesignation = async (id: string) => {
@@ -72,6 +81,7 @@ export default function AdminDesignationsPage() {
     const d = json.data ?? json;
     setCurrent((d.current as DesignationRow) ?? null);
     setHistory((d.history as DesignationRow[]) ?? []);
+    setPresentation((d.presentation as DesignationPresentation | null) ?? null);
   };
 
   useEffect(() => {
@@ -81,6 +91,16 @@ export default function AdminDesignationsPage() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (orgs.length === 0) return;
+    const fromUrl = searchParams.get("org")?.trim();
+    if (fromUrl && orgs.some((o) => o.id === fromUrl)) {
+      setOrgId(fromUrl);
+      return;
+    }
+    setOrgId((prev) => prev || orgs[0]!.id);
+  }, [orgs, searchParams]);
 
   useEffect(() => {
     if (orgId) loadDesignation(orgId);
@@ -135,10 +155,10 @@ export default function AdminDesignationsPage() {
           </div>
           <div className="flex gap-3 text-sm">
             <Link href="/admin/grading" className="text-slate-400 hover:text-slate-200">
-              Grading
+              Review grading
             </Link>
             <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
-              Orgs
+              Organizations
             </Link>
             <Link href="/admin/designation-reviews" className="text-amber-400 hover:text-amber-200">
               Review requests
@@ -234,6 +254,31 @@ export default function AdminDesignationsPage() {
                 </ul>
               </div>
             )}
+            {presentation?.confidence_note && (
+              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3 text-xs text-slate-300">
+                {presentation.confidence_note}
+              </div>
+            )}
+            {presentation?.internal_explanation && (
+              <div className="text-xs text-slate-400 border-t border-slate-800 pt-3">
+                <p className="font-medium text-slate-300">{presentation.internal_explanation.headline}</p>
+                <ul className="list-disc list-inside mt-1 space-y-0.5">
+                  {presentation.internal_explanation.bullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {presentation?.hints?.length ? (
+              <div>
+                <p className="text-[11px] text-slate-500 uppercase mb-1">Reliability improvement hints</p>
+                <ul className="list-disc list-inside text-xs text-slate-400 space-y-0.5">
+                  {presentation.hints.map((h) => (
+                    <li key={h}>{h}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
         )}
 

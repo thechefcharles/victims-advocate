@@ -1,5 +1,8 @@
 /**
  * Phase B: Hard filters — exclude orgs that clearly do not fit.
+ *
+ * Note: final Phase 6 visibility eligibility (status + lifecycle + public + profile +
+ * searchable/enriched stage) is enforced in the candidate loader.
  */
 
 import type { MatchingInput, OrgRowForMatching } from "./types";
@@ -35,6 +38,10 @@ export function applyHardFilters(
 ): HardFilterResult {
   if (org.profile_status !== "active") {
     return { ok: false, code: "profile_not_active" };
+  }
+
+  if (org.profile_stage !== "searchable" && org.profile_stage !== "enriched") {
+    return { ok: false, code: "profile_not_searchable" };
   }
 
   if (!org.accepting_clients && org.capacity_status === "closed") {

@@ -8,6 +8,7 @@ export {
   getCurrentOrgDesignation,
   getOrgDesignationHistory,
   computeAndPersistDesignation,
+  getDesignationPresentation,
   toPublicDesignationPayload,
 } from "./service";
 export { evaluateDesignationFromGrading, finalizeDesignationEvaluation } from "./evaluate";

@@ -7,6 +7,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  SIMPLE_ORG_CASE_STAFF_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
@@ -25,7 +26,7 @@ export async function GET(
     const isAdmin = authCtx.isAdmin;
     if (!isAdmin) {
       requireOrg(authCtx);
-      requireOrgRole(authCtx, ["org_admin", "supervisor", "staff"]);
+      requireOrgRole(authCtx, SIMPLE_ORG_CASE_STAFF_ROLES);
     }
 
     const { clientId } = await ctx.params;

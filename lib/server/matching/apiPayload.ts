@@ -25,6 +25,9 @@ export type OrganizationMatchApiPayload = {
   designation_summary: string | null;
   designation_influenced_match: boolean;
   designation_reason: string | null;
+  /** Display-only governance trust context (for badges). */
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
 };
 
 export function matchEvaluationToApi(m: MatchEvaluation): OrganizationMatchApiPayload {
@@ -73,5 +76,7 @@ export function matchRunRowToApi(m: OrganizationMatchRunRow): OrganizationMatchA
     designation_summary: m.designation_summary,
     designation_influenced_match: m.designation_influenced_match,
     designation_reason: m.designation_reason,
+    lifecycle_status: (m.organization_profile_snapshot as any)?.lifecycle_status ?? null,
+    public_profile_status: (m.organization_profile_snapshot as any)?.public_profile_status ?? null,
   };
 }

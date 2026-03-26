@@ -46,7 +46,7 @@ export function deriveCasePriority(input: PriorityInput): {
   }
 
   if (hasCritical || (completeness_blocking_count > 0 && completeness_status)) {
-    if (completeness_blocking_count > 0) reasons.push("Blocking completeness issues");
+    if (completeness_blocking_count > 0) reasons.push("Case still needs follow-up");
     if (hasCritical) reasons.push("Critical alert");
     return { priority: "critical", reasons: reasons.length ? reasons : ["Blocking issues"] };
   }
@@ -65,8 +65,8 @@ export function deriveCasePriority(input: PriorityInput): {
   }
 
   if (hasMedium || !has_routing || (has_routing && !has_completeness)) {
-    if (!has_routing) reasons.push("Routing not run");
-    if (has_routing && !has_completeness) reasons.push("Completeness not run");
+    if (!has_routing) reasons.push("Support programs have not been reviewed yet");
+    if (has_routing && !has_completeness) reasons.push("Case follow-up review has not been run yet");
     if (hasMedium) reasons.push("Medium-priority alert");
     return { priority: "medium", reasons: reasons.length ? reasons : ["In progress"] };
   }

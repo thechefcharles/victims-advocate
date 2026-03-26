@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
 
 /**
- * Display strings for in-app notifications when a survivor initiates contact (e.g. advocate connection).
+ * Display strings for in-app notifications when a victim initiates contact (e.g. advocate connection).
  */
 export async function getVictimDisplayForNotification(victimUserId: string): Promise<{
   displayName: string;
@@ -25,7 +25,7 @@ export async function getVictimDisplayForNotification(victimUserId: string): Pro
   const email = u?.user?.email ?? null;
 
   const displayName =
-    nameFromProfile || (email ? (email.split("@")[0] ?? "").trim() : "") || "Survivor";
+    nameFromProfile || (email ? (email.split("@")[0] ?? "").trim() : "") || "Victim";
 
   return { displayName, email };
 }

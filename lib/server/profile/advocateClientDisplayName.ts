@@ -30,7 +30,7 @@ export function nameFromCaseApplication(application: unknown): string | null {
 }
 
 /**
- * Survivor label for advocate client lists: account preferred/legal name first,
+ * Victim label for advocate client lists: account preferred/legal name first,
  * then intake names on the latest shared case, then email local part.
  */
 export function buildAdvocateClientDisplayName(params: {

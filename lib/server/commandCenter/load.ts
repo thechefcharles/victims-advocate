@@ -4,7 +4,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { AuthContext } from "@/lib/server/auth";
-import { listCasesForUser, listCasesForOrganization } from "@/lib/server/data";
+import { listCasesForUser, listCasesForOrgRoleContext } from "@/lib/server/data";
 import type { CaseRow, CaseListItem } from "@/lib/server/data";
 import { aggregateAlertsForCase, type AlertInputs } from "./alerts";
 import { deriveCasePriority } from "./priority";
@@ -65,18 +65,9 @@ export async function loadCommandCenterData(params: {
   const { ctx, filters = {}, sort = "priority" } = params;
   const supabase = getSupabaseAdmin();
 
-  const canSeeOrgWide =
-    ctx.isAdmin ||
-    ctx.orgRole === "org_admin" ||
-    ctx.orgRole === "supervisor";
-
   let caseList: CaseListItem[];
-  if (canSeeOrgWide && ctx.orgId) {
-    const rows = await listCasesForOrganization({ organizationId: ctx.orgId });
-    caseList = rows.map((c) => ({
-      ...c,
-      access: { role: "advocate", can_view: true, can_edit: true },
-    })) as CaseListItem[];
+  if (ctx.orgId) {
+    caseList = await listCasesForOrgRoleContext({ ctx });
   } else {
     caseList = await listCasesForUser({ ctx, filters: { role: "advocate" } });
   }
@@ -105,7 +96,7 @@ export async function loadCommandCenterData(params: {
     timelineRows,
     docCounts,
     advocateAccess,
-    unreadSurvivorByCase,
+    unreadVictimByCase,
   ] =
     await Promise.all([
       supabase
@@ -175,10 +166,10 @@ export async function loadCommandCenterData(params: {
             status: string;
           }>;
 
-          const survivorMsgs = msgs.filter((m) => (m.sender_role ?? "").toLowerCase() === "victim");
-          if (survivorMsgs.length === 0) return new Map<string, number>();
+          const victimMsgs = msgs.filter((m) => (m.sender_role ?? "").toLowerCase() === "victim");
+          if (victimMsgs.length === 0) return new Map<string, number>();
 
-          const ids = survivorMsgs.map((m) => m.id);
+          const ids = victimMsgs.map((m) => m.id);
           const { data: reads } = await supabase
             .from("message_reads")
             .select("message_id")
@@ -187,7 +178,7 @@ export async function loadCommandCenterData(params: {
           const readSet = new Set((reads ?? []).map((x: any) => x.message_id as string));
 
           const byCase = new Map<string, number>();
-          for (const m of survivorMsgs) {
+          for (const m of victimMsgs) {
             if (readSet.has(m.id)) continue;
             byCase.set(m.case_id, (byCase.get(m.case_id) ?? 0) + 1);
           }
@@ -227,7 +218,7 @@ export async function loadCommandCenterData(params: {
     const docInfo = docCounts.get(caseId) ?? { total: 0, restricted: 0 };
     const assignedAdvocateId = advocateAccess.get(caseId) ?? null;
     const ocrWarning = ocrWarningByCase.has(caseId);
-    const unreadSurvivorCount = unreadSurvivorByCase.get(caseId) ?? 0;
+    const unreadVictimCount = unreadVictimByCase.get(caseId) ?? 0;
 
     const alertInputs: AlertInputs = {
       case_id: caseId,
@@ -244,7 +235,7 @@ export async function loadCommandCenterData(params: {
       restricted_document_count: docInfo.restricted,
       assigned_advocate_id: assignedAdvocateId,
       last_activity_at: lastActivity,
-      unread_survivor_message_count: unreadSurvivorCount,
+      unread_victim_message_count: unreadVictimCount,
       missing_required_docs:
         compResult?.missing_items?.some(
           (i) => i.severity === "blocking" && i.type === "missing_document"

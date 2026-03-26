@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { confidenceChipText, designationTierBadgeText } from "@/lib/trustDisplay";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/lib/routes/pageRegistry";
 
 const US_STATES = [
   "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA",
@@ -33,7 +34,25 @@ type Overview = {
   region_flags: string[];
 };
 
-type OrgRow = Record<string, unknown>;
+type EcosystemOrgRow = {
+  organization_id: string;
+  organization_name: string;
+  region_label: string;
+  service_types: string[];
+  capacity_status: string;
+  accepting_clients: boolean;
+  profile_status: string;
+  profile_stage: string;
+  designation_tier: string | null;
+  designation_confidence: string | null;
+  profile_completeness: string;
+  virtual_services: boolean;
+  routing_runs_in_window: number;
+  completeness_runs_in_window: number;
+  messages_sent_in_window: number;
+  match_rows_as_target_in_window: number;
+  internal_followup_cue: string;
+};
 
 export default function AdminEcosystemPage() {
   const [state, setState] = useState("");
@@ -42,7 +61,7 @@ export default function AdminEcosystemPage() {
   const [serviceType, setServiceType] = useState("");
   const [language, setLanguage] = useState("");
   const [overview, setOverview] = useState<Overview | null>(null);
-  const [orgs, setOrgs] = useState<OrgRow[]>([]);
+  const [orgs, setOrgs] = useState<EcosystemOrgRow[]>([]);
   const [orgTotal, setOrgTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -86,7 +105,9 @@ export default function AdminEcosystemPage() {
       if (orgRes.ok) {
         const orgJson = await orgRes.json();
         const d = orgJson.data ?? orgJson;
-        setOrgs(Array.isArray(d.organizations) ? d.organizations : []);
+        setOrgs(
+          Array.isArray(d.organizations) ? (d.organizations as EcosystemOrgRow[]) : []
+        );
         setOrgTotal(typeof d.total === "number" ? d.total : 0);
       } else {
         setOrgs([]);
@@ -132,7 +153,8 @@ export default function AdminEcosystemPage() {
           title="Ecosystem"
           subtitle={
             <>
-              Overview of platform coverage, gaps, and organization distribution.{" "}
+              Internal landscape: coverage, gaps, and organization readiness (not a public directory or
+              leaderboard).{" "}
               <a href="/help/how-matching-works" className="text-teal-400 hover:underline">
                 How matching works
               </a>
@@ -157,7 +179,7 @@ export default function AdminEcosystemPage() {
         />
 
         <p className="text-xs text-slate-500 border-l-2 border-slate-700 pl-3 py-1 max-w-3xl">
-          This is an internal aggregated view. No survivor-identifying data is shown.
+          This is an internal aggregated view. No victim-identifying data is shown.
         </p>
 
         {overview && s && (
@@ -266,9 +288,16 @@ export default function AdminEcosystemPage() {
         {overview && s && (
           <>
             <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h2 className="text-sm font-semibold text-slate-200 mb-3">Demand–supply gaps</h2>
+              <h2 className="text-sm font-semibold text-slate-200 mb-2">Demand–supply gaps</h2>
+              <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                These are operational hints where demand signals and partner capacity may be misaligned — use
+                them to prioritize outreach or profile follow-up, not to rank organizations.
+              </p>
               {gaps.length === 0 ? (
-                <p className="text-xs text-slate-500">No gap signals for current filters.</p>
+                <p className="text-xs text-slate-500">
+                  No gap signals for current filters. Try another state, service, or time window if you expect
+                  activity.
+                </p>
               ) : (
                 <ul className="space-y-4">
                   {gaps.map((g, i) => (
@@ -376,63 +405,125 @@ export default function AdminEcosystemPage() {
             </section>
 
             <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 overflow-x-auto">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-semibold text-slate-200">
-                  Organizations ({orgTotal} in view)
-                </h2>
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-200">
+                    Organizations ({orgTotal} in view)
+                  </h2>
+                  <p className="text-[11px] text-slate-500 mt-1 max-w-2xl">
+                    Listed partners are active with searchable or enriched profile stages (same bar as
+                    matching). Readiness and designation are context — not a scoreboard.
+                  </p>
+                </div>
+                <Link
+                  href="/admin/orgs"
+                  className="text-xs text-teal-400/90 hover:text-teal-300 shrink-0"
+                >
+                  Open org directory →
+                </Link>
               </div>
-              <table className="w-full text-left text-[11px] text-slate-300 min-w-[800px]">
-                <thead>
-                  <tr className="border-b border-slate-700 text-slate-500">
-                    <th className="py-2 pr-2">Name</th>
-                    <th className="py-2 pr-2">Region</th>
-                    <th className="py-2 pr-2">Services</th>
-                    <th className="py-2 pr-2">Capacity</th>
-                    <th className="py-2 pr-2">Designation</th>
-                    <th className="py-2 pr-2">Profile</th>
-                    <th className="py-2 pr-2 text-right">Workflow</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orgs.map((o) => (
-                    <tr key={String(o.organization_id)} className="border-b border-slate-800/80">
-                      <td className="py-2 pr-2 text-slate-200 max-w-[140px] truncate">
-                        {String(o.organization_name)}
-                      </td>
-                      <td className="py-2 pr-2 max-w-[100px] truncate">{String(o.region_label)}</td>
-                      <td className="py-2 pr-2 max-w-[160px] truncate">
-                        {(o.service_types as string[])?.join(", ") || "—"}
-                      </td>
-                      <td className="py-2 pr-2">
-                        {String(o.capacity_status)}
-                        {o.accepting_clients ? " · open intake" : ""}
-                      </td>
-                      <td className="py-2 pr-2 text-[11px] max-w-[140px]">
-                        {o.designation_tier ? (
-                          <div className="space-y-0.5">
-                            <div className="text-slate-200 font-medium">
-                              {designationTierBadgeText(String(o.designation_tier)) ??
-                                String(o.designation_tier).replace(/_/g, " ")}
-                            </div>
-                            {o.designation_confidence ? (
-                              <div className="text-slate-500 text-[10px] leading-tight">
-                                {confidenceChipText(String(o.designation_confidence))}
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="py-2 pr-2">{String(o.profile_completeness)}</td>
-                      <td className="py-2 pr-2 text-right text-slate-500 whitespace-nowrap">
-                        R{Number(o.routing_runs_in_window)} C{Number(o.completeness_runs_in_window)} M
-                        {Number(o.messages_sent_in_window)}
-                      </td>
+              {orgs.length === 0 ? (
+                <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-5 text-sm text-slate-400">
+                  <p className="font-medium text-slate-300">No organizations in this view.</p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    No active, searchable organizations match the current filters. Try clearing state,
+                    service, or language filters, or confirm partners have completed profile requirements.
+                  </p>
+                </div>
+              ) : (
+                <table className="w-full text-left text-[11px] text-slate-300 min-w-[960px]">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-slate-500">
+                      <th className="py-2 pr-2">Name</th>
+                      <th className="py-2 pr-2">Stage</th>
+                      <th className="py-2 pr-2">Profile</th>
+                      <th className="py-2 pr-2">Region</th>
+                      <th className="py-2 pr-2">Services</th>
+                      <th className="py-2 pr-2">Availability</th>
+                      <th className="py-2 pr-2">Designation</th>
+                      <th className="py-2 pr-2">Completeness</th>
+                      <th className="py-2 pr-2">Follow-up</th>
+                      <th className="py-2 pr-2 text-right">Activity</th>
+                      <th className="py-2 pr-2 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {orgs.map((o) => (
+                      <tr key={o.organization_id} className="border-b border-slate-800/80 align-top">
+                        <td className="py-2 pr-2 text-slate-200 max-w-[120px]">
+                          <span className="font-medium block truncate" title={o.organization_name}>
+                            {o.organization_name}
+                          </span>
+                        </td>
+                        <td className="py-2 pr-2 whitespace-nowrap text-slate-400">{o.profile_stage}</td>
+                        <td className="py-2 pr-2 text-slate-500">{o.profile_status || "—"}</td>
+                        <td className="py-2 pr-2 max-w-[100px] truncate">{o.region_label}</td>
+                        <td className="py-2 pr-2 max-w-[140px] truncate">
+                          {o.service_types?.join(", ") || "—"}
+                        </td>
+                        <td className="py-2 pr-2">
+                          {o.capacity_status}
+                          {o.accepting_clients ? " · accepting" : ""}
+                          {o.virtual_services ? " · virtual" : ""}
+                        </td>
+                        <td className="py-2 pr-2 text-[11px] max-w-[120px]">
+                          {o.designation_tier ? (
+                            <div className="space-y-0.5">
+                              <div className="text-slate-300">
+                                {designationTierBadgeText(o.designation_tier) ??
+                                  o.designation_tier.replace(/_/g, " ")}
+                              </div>
+                              {o.designation_confidence ? (
+                                <div className="text-slate-500 text-[10px] leading-tight">
+                                  {confidenceChipText(o.designation_confidence)}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : (
+                            <span className="text-slate-500">No designation yet</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-2 text-slate-400">{o.profile_completeness}</td>
+                        <td className="py-2 pr-2 max-w-[200px] text-slate-500 leading-snug">
+                          {o.internal_followup_cue}
+                        </td>
+                        <td className="py-2 pr-2 text-right text-slate-500 whitespace-nowrap">
+                          R{o.routing_runs_in_window} C{o.completeness_runs_in_window} M
+                          {o.messages_sent_in_window}
+                        </td>
+                        <td className="py-2 pr-2 text-right">
+                          <div className="flex flex-col items-end gap-0.5">
+                            <Link
+                              href={`${ROUTES.organizationSettings}?organization_id=${o.organization_id}`}
+                              className="text-teal-400/90 hover:text-teal-300"
+                            >
+                              View
+                            </Link>
+                            <Link
+                              href={`/admin/designations?org=${o.organization_id}`}
+                              className="text-slate-500 hover:text-slate-300"
+                            >
+                              Review designation
+                            </Link>
+                            <Link
+                              href={`/admin/grading?org=${o.organization_id}`}
+                              className="text-slate-500 hover:text-slate-300"
+                            >
+                              Review grading
+                            </Link>
+                            <Link
+                              href={`/admin/grading?org=${o.organization_id}#org-signals-snapshot`}
+                              className="text-slate-500 hover:text-slate-300"
+                            >
+                              Review signals
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </section>
           </>
         )}

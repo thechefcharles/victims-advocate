@@ -244,7 +244,7 @@ export function advocateHasDisplayName(info: AdvocatePersonalInfo | null): boole
 }
 
 /**
- * Name + work phone + (org membership OR work city) so survivors and staff can reach you.
+ * Name + work phone + (org membership OR work city) so victims and staff can reach you.
  */
 export function advocateProfileCompleteEnough(
   info: AdvocatePersonalInfo | null,

@@ -3,7 +3,13 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAuthContext, requireFullAccess, requireOrg, requireOrgRole } from "@/lib/server/auth";
+import {
+  getAuthContext,
+  requireFullAccess,
+  requireOrg,
+  requireOrgRole,
+  SIMPLE_ORG_MANAGEMENT_ROLES,
+} from "@/lib/server/auth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -18,7 +24,7 @@ export async function POST(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, "org_admin");
+      requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
     }
 
     const body = await req.json().catch(() => null);

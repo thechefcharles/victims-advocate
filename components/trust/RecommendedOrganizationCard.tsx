@@ -11,6 +11,7 @@ import {
   designationTrustBadgeClassName,
   matchFitBadge,
 } from "@/lib/trustDisplay";
+import { NxtStpsVerifiedBadge } from "@/components/trust/NxtStpsVerifiedBadge";
 
 export type RecommendedOrgMatchRow = {
   organization_id: string;
@@ -30,6 +31,8 @@ export type RecommendedOrgMatchRow = {
   designation_summary?: string | null;
   designation_influenced_match?: boolean;
   designation_reason?: string | null;
+  lifecycle_status?: string | null;
+  public_profile_status?: string | null;
 };
 
 export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOrgMatchRow }) {
@@ -48,6 +51,12 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-medium text-slate-100">{m.organization_name}</span>
         {fit && <span className={fit.className}>{fit.label}</span>}
+        <NxtStpsVerifiedBadge
+          org={{
+            lifecycle_status: m.lifecycle_status,
+            public_profile_status: m.public_profile_status,
+          }}
+        />
       </div>
 
       {m.service_overlap.length > 0 && (

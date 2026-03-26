@@ -9,6 +9,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { ORG_TYPES } from "@/lib/server/org/createOrganizationForUser";
+import { normalizeOrganizationWebsite } from "@/lib/utils/organizationWebsite";
 
 export async function POST(req: Request) {
   try {
@@ -44,7 +45,8 @@ export async function POST(req: Request) {
     const type = typeof body.type === "string" ? body.type.trim().toLowerCase() : "";
     const address = typeof body.address === "string" ? body.address.trim() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-    const website = typeof body.website === "string" ? body.website.trim() || null : null;
+    const website =
+      typeof body.website === "string" ? normalizeOrganizationWebsite(body.website) : null;
     const programType = typeof body.program_type === "string" ? body.program_type.trim() || null : null;
     const notes = typeof body.notes === "string" ? body.notes.trim() || null : null;
 

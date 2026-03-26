@@ -8,6 +8,7 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -32,8 +33,12 @@ export async function POST(
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireFullAccess(ctx, req);
-    requireOrg(ctx);
-    requireOrgRole(ctx, ["org_admin", "supervisor"]);
+
+    const isPlatformAdmin = ctx.isAdmin === true;
+    if (!isPlatformAdmin) {
+      requireOrg(ctx);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+    }
 
     const { id: requestId } = await params;
     const rid = requestId?.trim();
@@ -56,7 +61,7 @@ export async function POST(
     if (row.status !== "pending") {
       return apiFail("VALIDATION_ERROR", "This request is no longer pending", undefined, 409);
     }
-    if (row.organization_id !== ctx.orgId) {
+    if (!isPlatformAdmin && row.organization_id !== ctx.orgId) {
       return apiFail("FORBIDDEN", "This request belongs to another organization", undefined, 403);
     }
 

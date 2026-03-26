@@ -8,12 +8,14 @@ import {
   requireFullAccess,
   requireOrg,
   requireOrgRole,
+  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { syncOrganizationLifecycleFromOwnership } from "@/lib/server/organizations/state";
 
 function appBaseUrl(req: Request): string {
   return (
@@ -32,8 +34,12 @@ export async function POST(
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireFullAccess(ctx, req);
-    requireOrg(ctx);
-    requireOrgRole(ctx, ["org_admin", "supervisor"]);
+
+    const isPlatformAdmin = ctx.isAdmin === true;
+    if (!isPlatformAdmin) {
+      requireOrg(ctx);
+      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+    }
 
     const { id: requestId } = await params;
     const rid = requestId?.trim();
@@ -56,7 +62,7 @@ export async function POST(
     if (row.status !== "pending") {
       return apiFail("VALIDATION_ERROR", "This request is no longer pending", undefined, 409);
     }
-    if (row.organization_id !== ctx.orgId) {
+    if (!isPlatformAdmin && row.organization_id !== ctx.orgId) {
       return apiFail("FORBIDDEN", "This request belongs to another organization", undefined, 403);
     }
 
@@ -88,7 +94,7 @@ export async function POST(
     const { error: memErr } = await supabase.from("org_memberships").insert({
       user_id: row.user_id,
       organization_id: row.organization_id,
-      org_role: "org_admin",
+      org_role: "org_owner",
       status: "active",
       created_by: ctx.userId,
     });
@@ -99,6 +105,8 @@ export async function POST(
       }
       throw new Error(memErr.message);
     }
+
+    await syncOrganizationLifecycleFromOwnership(supabase, row.organization_id);
 
     const now = new Date().toISOString();
     const { error: updErr } = await supabase
