@@ -263,7 +263,7 @@ export const en: I18nDict = {
       notAccepting: "Not accepting new clients",
       capacity: "Capacity",
       noOrgs:
-        "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
+        "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
       loadError: "We couldn’t load organizations. Please try again.",
       privacyNote:
         "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
@@ -389,7 +389,7 @@ export const en: I18nDict = {
     notAccepting: "Not accepting new clients",
     capacity: "Capacity",
     noOrgs:
-      "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
+      "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
     noOrgsInState:
       "No organizations match this state filter right now. Organizations must be publicly active and matching-ready. Try “All states” or pick another state.",
     loadError: "We couldn’t load organizations. Please try again.",
@@ -440,6 +440,43 @@ export const en: I18nDict = {
     nonVictimRoleHint:
       "Advocate connections are for victim accounts—Get help now opens Help for other roles.",
     openAdvocateDashboard: "Open Case Dashboard",
+  },
+
+  compensationConnectAdvocate: {
+    title: "Connect with an advocate",
+    subtitle:
+      "Find programs near you, or send a request if you already know your advocate’s email. Organizations come from our directory (verified profiles with service areas and contact paths).",
+    caseRequiredHint:
+      "Connection requests are tied to a specific case. Open My Dashboard, select your case, then choose Connect with an advocate again.",
+    caseLinkedNote:
+      "Case selected: referrals and requests apply to this application only.",
+    addressStepTitle: "Where are you located?",
+    addressStepBody:
+      "Enter your home street address, city, state, and ZIP code. We use this only to show nearby organizations on a map (via OpenStreetMap). We don’t store this address on the map step unless you save it elsewhere in your application.",
+    directoryNote:
+      "Map listings are active organization records in NxtStps (often from our resource directory), including partners still drafting a public profile. Pins use saved coordinates or the state they serve.",
+    homeAddressLabel: "Street address",
+    homeAddressPlaceholder: "e.g. 123 Main St",
+    cityLabel: "City",
+    cityPlaceholder: "e.g. Chicago",
+    stateLabel: "State",
+    zipLabel: "ZIP code",
+    zipPlaceholder: "5-digit ZIP",
+    findOrganizationsButton: "Show organizations near me",
+    geocoding: "Looking up address…",
+    geocodeFailed: "We couldn’t place that address on the map. Check the street and ZIP and try again.",
+    changeAddress: "Change address",
+    mapSectionTitle: "Organizations near you",
+    emailInsteadTitle: "Already have an advocate’s email?",
+    emailInsteadBody:
+      "Enter their email and we’ll send one notification to connect on this case.",
+    advocateEmailLabel: "Advocate’s email",
+    sendRequest: "Send connection request",
+    sending: "Sending…",
+    homePinLabel: "Your home",
+    findOrgsFooterPrefix: "You can also browse organizations from",
+    findOrgsLink: "Find organizations",
+    findOrgsFooterSuffix: "anytime after signing in.",
   },
 
   /* =========================

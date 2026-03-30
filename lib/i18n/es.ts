@@ -267,7 +267,7 @@ export const es: I18nDict = {
             notAccepting: "No acepta nuevos clientes",
             capacity: "Capacidad",
             noOrgs:
-                "Aún no hay organizaciones en el directorio. Se añaden socios nuevos con el tiempo—vuelve a intentarlo más tarde.",
+                "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
             loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
             privacyNote:
                 "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
@@ -396,7 +396,7 @@ export const es: I18nDict = {
         notAccepting: "No acepta nuevos clientes",
         capacity: "Capacidad",
         noOrgs:
-            "Aún no hay organizaciones en el directorio. Se añaden socios con el tiempo—vuelve a intentar más tarde.",
+            "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
         noOrgsInState:
             "Ninguna organización coincide con este estado. Prueba “Todos los estados” u otro estado.",
         loadError: "No se pudieron cargar las organizaciones. Inténtalo de nuevo.",
@@ -450,6 +450,44 @@ export const es: I18nDict = {
         nonVictimRoleHint:
             "Las conexiones con defensores son para cuentas de sobrevivientes—Obtener ayuda ahora abre Ayuda para otros roles.",
         openAdvocateDashboard: "Abrir panel de casos",
+    },
+
+    compensationConnectAdvocate: {
+        title: "Conectar con un/a defensor/a",
+        subtitle:
+            "Encuentra programas cerca de ti o envía una solicitud si ya conoces el correo de tu defensor/a. Las organizaciones provienen de nuestro directorio (perfiles verificados con zonas de servicio y formas de contacto).",
+        caseRequiredHint:
+            "Las solicitudes de conexión están ligadas a un caso específico. Abre Mi panel, selecciona tu caso y vuelve a elegir Conectar con un/a defensor/a.",
+        caseLinkedNote:
+            "Caso seleccionado: las derivaciones y solicitudes aplican solo a esta solicitud.",
+        addressStepTitle: "¿Dónde te encuentras?",
+        addressStepBody:
+            "Ingresa la dirección de tu domicilio, ciudad, estado y código postal. Solo lo usamos para mostrar organizaciones cercanas en un mapa (OpenStreetMap). No guardamos esta dirección en este paso del mapa a menos que la guardes en otra parte de tu solicitud.",
+        directoryNote:
+            "Los puntos del mapa son registros de organizaciones activas en NxtStps (a menudo del directorio de recursos), incluidos socios que aún preparan su perfil público. Los pins usan coordenadas guardadas o el estado donde atienden.",
+        homeAddressLabel: "Dirección",
+        homeAddressPlaceholder: "p. ej. Calle Principal 123",
+        cityLabel: "Ciudad",
+        cityPlaceholder: "p. ej. Chicago",
+        stateLabel: "Estado",
+        zipLabel: "Código postal",
+        zipPlaceholder: "5 dígitos",
+        findOrganizationsButton: "Mostrar organizaciones cerca de mí",
+        geocoding: "Buscando dirección…",
+        geocodeFailed:
+            "No pudimos ubicar esa dirección en el mapa. Revisa la calle y el código postal e intenta de nuevo.",
+        changeAddress: "Cambiar dirección",
+        mapSectionTitle: "Organizaciones cerca de ti",
+        emailInsteadTitle: "¿Ya tienes el correo de tu defensor/a?",
+        emailInsteadBody:
+            "Ingresa su correo y enviaremos una notificación para conectar en este caso.",
+        advocateEmailLabel: "Correo del defensor/a",
+        sendRequest: "Enviar solicitud de conexión",
+        sending: "Enviando…",
+        homePinLabel: "Tu domicilio",
+        findOrgsFooterPrefix: "También puedes explorar organizaciones en",
+        findOrgsLink: "Buscar organizaciones",
+        findOrgsFooterSuffix: "en cualquier momento después de iniciar sesión.",
     },
 
     /* =========================

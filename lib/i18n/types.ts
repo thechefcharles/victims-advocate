@@ -443,6 +443,38 @@ export type I18nDict = {
     openAdvocateDashboard: string;
   };
 
+  /** /compensation/connect-advocate */
+  compensationConnectAdvocate: {
+    title: string;
+    subtitle: string;
+    caseRequiredHint: string;
+    caseLinkedNote: string;
+    addressStepTitle: string;
+    addressStepBody: string;
+    directoryNote: string;
+    homeAddressLabel: string;
+    homeAddressPlaceholder: string;
+    cityLabel: string;
+    cityPlaceholder: string;
+    stateLabel: string;
+    zipLabel: string;
+    zipPlaceholder: string;
+    findOrganizationsButton: string;
+    geocoding: string;
+    geocodeFailed: string;
+    changeAddress: string;
+    mapSectionTitle: string;
+    emailInsteadTitle: string;
+    emailInsteadBody: string;
+    advocateEmailLabel: string;
+    sendRequest: string;
+    sending: string;
+    homePinLabel: string;
+    findOrgsFooterPrefix: string;
+    findOrgsLink: string;
+    findOrgsFooterSuffix: string;
+  };
+
   eligibility: {
     introQualify: string;
     purposeText: string;
