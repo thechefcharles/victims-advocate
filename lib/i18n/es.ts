@@ -1052,12 +1052,66 @@ export const es: I18nDict = {
         },
 
         validation: {
+            applicantRequired:
+                "Por favor completa las preguntas del solicitante y de contacto en este paso antes de continuar (incluido el idioma y los datos del defensor si trabajas con alguien).",
             victimRequired:
                 "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",
+            completeApplicantFirst:
+                "Completa primero el paso Solicitante. Después podrás avanzar por el resto del formulario.",
+            completeVictimBeforeOther:
+                "Completa el paso Víctima antes de abrir Delito e incidente o secciones posteriores.",
             crimeMinimumRequired:
                 "Por favor proporciona al menos la fecha del delito, dónde ocurrió y a qué departamento de policía se reportó.",
             certificationRequired:
                 "Antes de guardar esto como un caso, revisa la sección de certificación y agrega tu nombre, fecha y confirmaciones.",
+        },
+
+        requiredBeforeContinue: {
+            modalTitle: "Aún falta esto antes de continuar",
+            close: "Cerrar",
+            viewRequiredItems: "¿Qué falta?",
+            reviewApplication: "Revisar solicitud",
+            reviewModeBanner:
+                "Modo revisión: avanza en orden con Continuar. Las pestañas están bloqueadas hasta terminar.",
+            ackLossesNone: "Confirmo que no tengo categorías de pérdida que reclamar en este paso",
+            ackEmploymentNoEmployer:
+                "Confirmo que no tengo un empleador que agregar (o lo agregaré arriba antes de continuar)",
+            ackFuneralContinue:
+                "Continuaré sin datos funerarios por ahora (o los agregaré arriba)",
+            contactPreferredLanguage: "Idioma preferido (cuando no usas inglés)",
+            advocateName: "Nombre del defensor u organización (indicaste que trabajas con alguien)",
+            advocatePhone: "Teléfono del defensor",
+            applicantFirstName: "Nombre del solicitante",
+            applicantLastName: "Apellido del solicitante",
+            applicantDateOfBirth: "Fecha de nacimiento del solicitante",
+            applicantRelationship: "Relación con la víctima",
+            applicantStreet: "Dirección del solicitante",
+            applicantCity: "Ciudad del solicitante",
+            applicantState: "Estado del solicitante",
+            applicantZip: "Código postal del solicitante",
+            applicantLast4Ssn: "Últimos 4 dígitos del SSN del solicitante (Indiana)",
+            applicantSeekingOwnExpenses: "Si buscas tus propios gastos (sí o no)",
+            victimFirstName: "Nombre de la víctima",
+            victimLastName: "Apellido de la víctima",
+            victimDateOfBirth: "Fecha de nacimiento de la víctima",
+            victimStreet: "Dirección de la víctima",
+            victimCity: "Ciudad de la víctima",
+            victimZip: "Código postal de la víctima",
+            victimState: "Estado de la víctima",
+            victimLast4Ssn: "Últimos 4 dígitos del SSN de la víctima (Indiana)",
+            whoIsSubmitting: "Quién presenta la solicitud (Indiana)",
+            crimeDate: "Fecha del delito",
+            crimeAddress: "Lugar / dirección donde ocurrió el delito",
+            crimeCity: "Ciudad donde ocurrió el delito",
+            reportingAgency: "Agencia a la que se reportó el delito",
+            selectLossCategory:
+                "Selecciona al menos una categoría de pérdida, o confirma abajo que no aplica ninguna",
+            medicalProviderName:
+                "Nombre del proveedor médico o de consejería (para las pérdidas que seleccionaste)",
+            employmentEmployerOrConfirm:
+                "Al menos un nombre de empleador por pérdida de ingresos, o confirma abajo",
+            funeralDetailsOrConfirm:
+                "Funeraria o monto de la factura por pérdidas funerarias, o confirma abajo",
         },
 
         confirm: {
@@ -1359,10 +1413,10 @@ export const es: I18nDict = {
             description: "Esta es la persona que solicita la compensación.",
             isVictimAlsoApplicantLabel: "¿La víctima también es el solicitante?",
             sameAsVictimNote:
-                "Por ahora usaremos la información de la víctima como los datos del solicitante.",
+                "En el siguiente paso ingresarás los datos de la víctima; los copiaremos al solicitante al continuar a Delito e incidente.",
 
             options: {
-                victim: "Soy la víctima (mi información es la misma que arriba)",
+                victim: "Soy la víctima (igualaremos los datos del solicitante después de la víctima)",
                 proxy:
                     "Estoy solicitando en nombre de la víctima (padre/madre, cónyuge, otro)",
             }, // <-- IMPORTANT COMMA HERE

@@ -855,9 +855,54 @@ export type I18nDict = {
     };
 
     validation: {
+      applicantRequired: string;
       victimRequired: string;
       crimeMinimumRequired: string;
       certificationRequired: string;
+      completeApplicantFirst: string;
+      completeVictimBeforeOther: string;
+    };
+
+    /** Bullet list + modal copy for “Continue” gating (keys referenced from lib/intake/intakeStepContinueGate). */
+    requiredBeforeContinue: {
+      modalTitle: string;
+      close: string;
+      viewRequiredItems: string;
+      reviewApplication: string;
+      reviewModeBanner: string;
+      ackLossesNone: string;
+      ackEmploymentNoEmployer: string;
+      ackFuneralContinue: string;
+      contactPreferredLanguage: string;
+      advocateName: string;
+      advocatePhone: string;
+      applicantFirstName: string;
+      applicantLastName: string;
+      applicantDateOfBirth: string;
+      applicantRelationship: string;
+      applicantStreet: string;
+      applicantCity: string;
+      applicantState: string;
+      applicantZip: string;
+      applicantLast4Ssn: string;
+      applicantSeekingOwnExpenses: string;
+      victimFirstName: string;
+      victimLastName: string;
+      victimDateOfBirth: string;
+      victimStreet: string;
+      victimCity: string;
+      victimZip: string;
+      victimState: string;
+      victimLast4Ssn: string;
+      whoIsSubmitting: string;
+      crimeDate: string;
+      crimeAddress: string;
+      crimeCity: string;
+      reportingAgency: string;
+      selectLossCategory: string;
+      medicalProviderName: string;
+      employmentEmployerOrConfirm: string;
+      funeralDetailsOrConfirm: string;
     };
 
     confirm: {

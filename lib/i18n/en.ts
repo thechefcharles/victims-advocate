@@ -1035,12 +1035,65 @@ intake: {
   },
 
   validation: {
+    applicantRequired:
+      "Please finish the applicant and contact questions on this step before continuing (including language preference, and advocate details if you are working with someone).",
     victimRequired:
       "Please fill in the victim's name, date of birth, and address before continuing.",
+    completeApplicantFirst:
+      "Complete the Applicant step first. After that, you can move through the rest of the form.",
+    completeVictimBeforeOther:
+      "Complete the Victim step before opening Crime & incident or later sections.",
     crimeMinimumRequired:
       "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
     certificationRequired:
       "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
+  },
+
+  requiredBeforeContinue: {
+    modalTitle: "Still required before you can continue",
+    close: "Close",
+    viewRequiredItems: "What’s still required?",
+    reviewApplication: "Review application",
+    reviewModeBanner:
+      "Review mode: go through each step in order with Continue. Step tabs are locked until you finish.",
+    ackLossesNone: "I confirm I have no loss categories to claim on this step",
+    ackEmploymentNoEmployer:
+      "I confirm I have no employer to add (or I’ll add one above before continuing)",
+    ackFuneralContinue:
+      "I’ll continue without funeral details for now (or I’ll add them above)",
+    contactPreferredLanguage: "Preferred language (when not using English)",
+    advocateName: "Advocate or organization name (you indicated you’re working with someone)",
+    advocatePhone: "Advocate phone number",
+    applicantFirstName: "Applicant first name",
+    applicantLastName: "Applicant last name",
+    applicantDateOfBirth: "Applicant date of birth",
+    applicantRelationship: "Relationship to victim",
+    applicantStreet: "Applicant street address",
+    applicantCity: "Applicant city",
+    applicantState: "Applicant state",
+    applicantZip: "Applicant ZIP code",
+    applicantLast4Ssn: "Applicant last 4 digits of SSN (Indiana)",
+    applicantSeekingOwnExpenses: "Whether you’re seeking your own expenses (yes or no)",
+    victimFirstName: "Victim first name",
+    victimLastName: "Victim last name",
+    victimDateOfBirth: "Victim date of birth",
+    victimStreet: "Victim street address",
+    victimCity: "Victim city",
+    victimZip: "Victim ZIP code",
+    victimState: "Victim state",
+    victimLast4Ssn: "Victim last 4 digits of SSN (Indiana)",
+    whoIsSubmitting: "Who is submitting the application (Indiana)",
+    crimeDate: "Date of crime",
+    crimeAddress: "Location / address where the crime occurred",
+    crimeCity: "City where the crime occurred",
+    reportingAgency: "Agency the crime was reported to",
+    selectLossCategory:
+      "Select at least one loss category, or confirm below that none apply",
+    medicalProviderName: "Medical or counseling provider name (for the losses you selected)",
+    employmentEmployerOrConfirm:
+      "At least one employer name for lost earnings, or confirm below",
+    funeralDetailsOrConfirm:
+      "Funeral home or bill amount for funeral-related losses, or confirm below",
   },
 
   confirm: {
@@ -1340,11 +1393,11 @@ applicant: {
   description: "This is the person applying for compensation.",
   isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
   sameAsVictimNote:
-    "We’ll use the victim’s information as the applicant details for now.",
+    "On the next step you’ll enter the victim’s details; we’ll copy them into the applicant section when you continue to Crime & incident.",
 
   // NEW — add this
   options: {
-    victim: "I am the victim (my information is the same as above)",
+    victim: "I am the victim (we’ll match applicant details after you enter victim info)",
     proxy: "I am applying on behalf of the victim (parent, spouse, other)",
   },
 
