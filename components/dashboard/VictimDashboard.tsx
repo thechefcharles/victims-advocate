@@ -482,13 +482,27 @@ export default function VictimDashboard({
           },
           body: JSON.stringify({ state_code: programState }),
         });
-        if (!res.ok) throw new Error("Update failed");
+        if (!res.ok) {
+          const text = await res.text();
+          let msg = t("victimDashboard.loadError");
+          try {
+            const parsed = JSON.parse(text) as { error?: { message?: string }; message?: string };
+            const m = parsed?.error?.message ?? parsed?.message;
+            if (typeof m === "string" && m.trim()) msg = m.trim();
+          } catch {
+            /* keep generic */
+          }
+          if (process.env.NODE_ENV === "development") {
+            console.error("[VictimDashboard] PATCH case failed", res.status, text.slice(0, 500));
+          }
+          throw new Error(msg);
+        }
         setGlobalStateCode(programState);
         await refetch();
         router.push(`/compensation/eligibility/${encodeURIComponent(focusCaseId)}`);
       } catch (e) {
         console.error(e);
-        setErr(t("victimDashboard.loadError"));
+        setErr(e instanceof Error && e.message ? e.message : t("victimDashboard.loadError"));
       } finally {
         setCreatingCase(false);
       }

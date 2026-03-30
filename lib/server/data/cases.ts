@@ -16,8 +16,9 @@ import {
 } from "@/lib/server/auth/simpleAccess";
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { AppError } from "@/lib/server/api";
+import { logger } from "@/lib/server/logging";
 import { listCaseDocuments } from "./documents";
-import { sameUserId } from "./ids";
+import { isUuidString, normalizeCaseIdParam, sameUserId } from "./ids";
 
 export type CaseAccess = {
   role: string;
@@ -42,12 +43,25 @@ function isOrgStaff(ctx: AuthContext, orgMatches: boolean): boolean {
   );
 }
 
+/** Scope case_access list to the user's org for org *staff* only — victims may have membership but own cases under other org ids. */
+function scopeCaseListToActiveOrg(ctx: AuthContext): boolean {
+  return (
+    !ctx.isAdmin &&
+    Boolean(ctx.orgId) &&
+    (ctx.role === "advocate" || ctx.role === "organization")
+  );
+}
+
 export async function getCaseById(params: {
   caseId: string;
   ctx: AuthContext;
   req?: Request | null;
 }): Promise<GetCaseByIdResult | null> {
-  const { caseId, ctx, req } = params;
+  const { caseId: rawId, ctx, req } = params;
+  const caseId = normalizeCaseIdParam(rawId);
+  if (!isUuidString(caseId)) {
+    return null;
+  }
   const supabaseAdmin = getSupabaseAdmin();
 
   const { data: caseRow, error: caseError } = await supabaseAdmin
@@ -57,6 +71,18 @@ export async function getCaseById(params: {
     .maybeSingle();
 
   if (caseError) {
+    const msg = (caseError.message ?? "").toLowerCase();
+    const invalidUuid =
+      msg.includes("invalid input syntax for type uuid") ||
+      msg.includes("invalid uuid");
+    logger.error("cases.lookup_failed", {
+      caseId,
+      message: String(caseError.message ?? ""),
+      code: String((caseError as { code?: string }).code ?? ""),
+    });
+    if (invalidUuid) {
+      return null;
+    }
     throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
   }
 
@@ -113,7 +139,12 @@ export async function getCaseById(params: {
       can_edit: canEdit,
     };
   } else if (accessRow?.can_view) {
-    access = accessRow as CaseAccess;
+    const base = accessRow as CaseAccess;
+    // Owner ACL row must allow edits (schema default can_edit=false; some legacy rows never flipped).
+    access =
+      base.role === "owner"
+        ? { role: "owner", can_view: true, can_edit: true }
+        : base;
   } else {
     return null;
   }
@@ -124,6 +155,7 @@ export async function getCaseById(params: {
     ctx,
     includeRestricted,
     req,
+    preloadedCaseRow: minimal,
   });
 
   return {
@@ -169,7 +201,7 @@ export async function listCasesForUser(params: {
     .eq("user_id", ctx.userId)
     .eq("can_view", true);
 
-  if (!ctx.isAdmin && ctx.orgId) {
+  if (scopeCaseListToActiveOrg(ctx)) {
     query = query.eq("organization_id", ctx.orgId);
   }
 
@@ -188,7 +220,7 @@ export async function listCasesForUser(params: {
 
   let rows = (data ?? []).filter((r: { cases?: unknown }) => r?.cases);
 
-  if (!ctx.isAdmin && ctx.orgId) {
+  if (scopeCaseListToActiveOrg(ctx)) {
     rows = rows.filter(
       (r) => (r as { cases?: { organization_id?: string } }).cases?.organization_id === ctx.orgId
     );

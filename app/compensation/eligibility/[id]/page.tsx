@@ -71,8 +71,19 @@ export default function EligibilityCheckPage() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) {
-        if (res.status === 401) {
+        const text = await res.text();
+        let errCode: string | undefined;
+        try {
+          errCode = (JSON.parse(text) as { error?: { code?: string } })?.error?.code;
+        } catch {
+          /* non-JSON */
+        }
+        if (res.status === 401 || errCode === "AUTH_REQUIRED") {
           setLoadErr("Your session expired. Please sign in again.");
+        } else if (errCode === "EMAIL_VERIFICATION_REQUIRED") {
+          setLoadErr("Please verify your email address to continue.");
+        } else if (errCode === "ACCOUNT_DISABLED" || errCode === "ACCOUNT_DELETED") {
+          setLoadErr("This account cannot access cases. Please contact support if this is unexpected.");
         } else {
           setLoadErr("Case not found or access denied");
         }
