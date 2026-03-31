@@ -155,15 +155,20 @@ export const es: I18nDict = {
         resumeApplication: "Reanudar solicitud",
         applyResumeCardAria: "Iniciar o reanudar tu solicitud",
         supportTeamTitle: "Mi Equipo De Apoyo",
+        supportTeamNoCaseHint:
+            "No necesitas un caso para ver el estado de conexión. Cuando inicies una solicitud, los detalles de organización y defensor/a también pueden aparecer para ese caso.",
+        supportTeamPendingOrgConnectsTitle: "Solicitud de organización pendiente",
+        supportTeamAdvocateMorePending: "Solicitud(es) adicional(es) de defensor/a pendiente(s)",
         supportTeamOrg: "Organización",
         supportTeamAdvocates: "Defensor/a",
-        supportTeamNoOrg: "Aún no hay organización vinculada a este caso.",
+        supportTeamNoOrg:
+            "Aún no hay organización vinculada. En la siguiente pantalla puedes añadir tu ubicación para ver organizaciones cerca de ti.",
         supportTeamNoAdvocates: "Aún no hay defensor/a conectado/a.",
         supportTeamLoading: "Cargando…",
         supportTeamConnectCta: "Conectar con un/a defensor/a",
         supportTeamAdvocateRequestPending:
             "Solicitud de conexión pendiente — te avisaremos cuando responda tu defensor/a.",
-        supportTeamAddOrgCta: "Buscar una organización",
+        supportTeamAddOrgCta: "Organizaciones cerca de mí",
         supportTeamEditOrgTitle: "Gestionar la organización para este caso",
         supportTeamEditAdvocateTitle: "Gestionar defensores para este caso",
         supportTeamSendMessage: "Enviar mensaje",
@@ -234,7 +239,7 @@ export const es: I18nDict = {
         getHelp: {
             title: "Obtener ayuda",
             connectAdvocate: "Conectar con un/a defensor/a",
-            findOrganizations: "Organizaciones cerca de ti",
+            findOrganizations: "Organizaciones cerca de mí",
             hintAdvocate: "Mensajes seguros y solicitudes en pocos pasos.",
             hintOrganizations: "Mapa y orden por distancia si compartes ubicación.",
         },
@@ -267,7 +272,7 @@ export const es: I18nDict = {
             notAccepting: "No acepta nuevos clientes",
             capacity: "Capacidad",
             noOrgs:
-                "Aún no hay organizaciones en el directorio. Se añaden socios nuevos con el tiempo—vuelve a intentarlo más tarde.",
+                "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
             loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
             privacyNote:
                 "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
@@ -279,6 +284,76 @@ export const es: I18nDict = {
                 "No se pudo enviar la referencia. Inténtalo de nuevo u otra organización.",
             sendReferralDuplicate:
                 "Ya tienes una referencia en curso con esta organización. Revisa Organización para este caso para ver el estado.",
+            learnMoreTitle: "Respuesta y accesibilidad",
+            learnMoreDialogTitle: "Cómo mostramos la calidad de la organización",
+            learnMoreDialogSubtitle:
+                "Áreas ponderadas y datos que los socios pueden completar con el tiempo. Las puntuaciones y niveles resumen señales de confianza: no son asesoramiento clínico ni legal.",
+            learnMore: "Más información",
+            learnMoreClose: "Cerrar",
+            organizationProfile: "Perfil de la Organización",
+            visitWebsite: "Visitar sitio web",
+            connectWithOrg: "Conectar con la organización",
+            connectSending: "Enviando…",
+            connectDone: "Se notificó al equipo de la organización.",
+            connectFailed: "No se pudo enviar tu solicitud. Inténtalo de nuevo.",
+            connectDuplicate: "Ya enviaste una solicitud de conexión a esta organización.",
+            externalDirectoryNote:
+                "Este socio aparece en nuestro directorio de recursos. La información detallada de respuesta y accesibilidad se mostrará cuando completen un perfil completo en NxtStps.",
+            profileUnavailableExternal: "No hay enlace de perfil",
+            connectUnavailableExternal: "La conexión está disponible para organizaciones en NxtStps.",
+            connectHelpNeedsBack: "← Volver al mapa",
+            connectHelpNeedsTitle: "¿Con qué necesitas ayuda?",
+            connectHelpNeedsSubtitle:
+                "Selecciona todo lo que aplique. La organización usará esto para saber cómo apoyarte y a quién asignarte.",
+            connectHelpNeedsOrgLabel: "Conectando con",
+            connectHelpNeedsSelectHint: "Selecciona todo lo que corresponda",
+            needGeneralSupport: "Apoyo general",
+            needPoliceReport: "Reporte policial",
+            needMedicalBills: "Gastos médicos",
+            needEmployment: "Empleo",
+            needFuneral: "Funeral",
+            connectHelpNeedsSubmit: "Enviar solicitud de conexión",
+            connectHelpNeedsSubmitting: "Enviando…",
+            connectHelpNeedsPickOne: "Elige al menos una opción para continuar.",
+            connectHelpNeedsInvalidLink:
+                "Falta una organización válida en este enlace. Vuelve al mapa y usa Conectar otra vez.",
+            connectHelpNeedsLoadOrgError: "No pudimos cargar esa organización. Inténtalo desde el mapa.",
+            connectHelpNeedsSuccess:
+                "Se envió tu solicitud. El equipo de la organización verá lo que seleccionaste y se pondrá en contacto cuando pueda.",
+            connectSuccessModalTitle: "Solicitud enviada",
+            connectSuccessModalBody:
+                "Se notificó a la organización. Espera una respuesta en un plazo de 48 horas por parte de tu defensor/a.",
+            connectSuccessModalCrisisLead: "Si estás en peligro inmediato, llama al",
+            connectSuccessModalCrisisOr: "o llama o envía un mensaje de texto al",
+            connectSuccessModalCrisisTail: "(línea de prevención del suicidio y crisis).",
+            connectSuccessModalReturnDashboard: "Volver al panel",
+            connectHelpNeedsContinueBrowse: "Volver al mapa de organizaciones",
+            orgProfileBack: "← Volver al mapa de organizaciones",
+            orgProfileSubtitle: "Información del perfil público de la organización.",
+            orgProfileLoading: "Cargando organización…",
+            orgProfileInvalid: "Enlace de organización no válido.",
+            orgProfileServices: "Servicios",
+            orgProfileContact: "Contacto",
+            orgProfilePopulations: "Enfoque",
+            orgProfileFooter:
+                "Los datos los reporta la organización. Si algo no coincide, puedes contactarla con los datos del listado del mapa.",
+            directoryProgramType: "Tipo de programa",
+            directoryAddress: "Dirección",
+            directoryPhone: "Teléfono",
+            directoryWebsite: "Sitio web",
+            fieldPendingExternal: "Pendiente — la organización lo añade en su perfil de NxtStps.",
+            fieldPendingFallback: "Aún no especificado",
+            frameworkFieldPending:
+                "Aún no especificado — la organización puede añadirlo en su perfil.",
+            directoryContactHeading: "Contacto del directorio",
+            tier1Title: "Nivel 1 — Integral",
+            tier1Desc: "Puntuación 85+ · Hospital / CBO principal",
+            tier2Title: "Nivel 2 — Establecida",
+            tier2Desc: "Puntuación 65–84 · Sin fines de lucro con personal / clínica",
+            tier3Title: "Nivel 3 — Básica",
+            tier3Desc: "Puntuación <65 · Comunitaria / informal",
+            sourceSelfHint: "Reportado por la organización",
+            sourcePlatformHint: "Señal medida por la plataforma",
         },
         caseActivityForCase: "Para este caso",
         caseDetailsHeading: "Detalles Del Caso",
@@ -396,7 +471,7 @@ export const es: I18nDict = {
         notAccepting: "No acepta nuevos clientes",
         capacity: "Capacidad",
         noOrgs:
-            "Aún no hay organizaciones en el directorio. Se añaden socios con el tiempo—vuelve a intentar más tarde.",
+            "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
         noOrgsInState:
             "Ninguna organización coincide con este estado. Prueba “Todos los estados” u otro estado.",
         loadError: "No se pudieron cargar las organizaciones. Inténtalo de nuevo.",
@@ -450,6 +525,44 @@ export const es: I18nDict = {
         nonVictimRoleHint:
             "Las conexiones con defensores son para cuentas de sobrevivientes—Obtener ayuda ahora abre Ayuda para otros roles.",
         openAdvocateDashboard: "Abrir panel de casos",
+    },
+
+    compensationConnectAdvocate: {
+        title: "Conectar con un/a defensor/a",
+        subtitle:
+            "Encuentra programas cerca de ti o envía una solicitud si ya conoces el correo de tu defensor/a. Las organizaciones provienen de nuestro directorio (perfiles verificados con zonas de servicio y formas de contacto).",
+        caseRequiredHint:
+            "Las solicitudes de conexión están ligadas a un caso específico. Abre Mi panel, selecciona tu caso y vuelve a elegir Conectar con un/a defensor/a.",
+        caseLinkedNote:
+            "Caso seleccionado: las derivaciones y solicitudes aplican solo a esta solicitud.",
+        addressStepTitle: "¿Dónde te encuentras?",
+        addressStepBody:
+            "Ingresa la dirección de tu domicilio, ciudad, estado y código postal. Solo lo usamos para mostrar organizaciones cercanas en un mapa (OpenStreetMap). No guardamos esta dirección en este paso del mapa a menos que la guardes en otra parte de tu solicitud.",
+        directoryNote:
+            "Los puntos del mapa son registros de organizaciones activas en NxtStps (a menudo del directorio de recursos), incluidos socios que aún preparan su perfil público. Los pins usan coordenadas guardadas o el estado donde atienden.",
+        homeAddressLabel: "Dirección",
+        homeAddressPlaceholder: "p. ej. Calle Principal 123",
+        cityLabel: "Ciudad",
+        cityPlaceholder: "p. ej. Chicago",
+        stateLabel: "Estado",
+        zipLabel: "Código postal",
+        zipPlaceholder: "5 dígitos",
+        findOrganizationsButton: "Mostrar organizaciones cerca de mí",
+        geocoding: "Buscando dirección…",
+        geocodeFailed:
+            "No pudimos ubicar esa dirección en el mapa. Revisa la calle y el código postal e intenta de nuevo.",
+        changeAddress: "Cambiar dirección",
+        mapSectionTitle: "Organizaciones cerca de ti",
+        emailInsteadTitle: "¿Ya tienes el correo de tu defensor/a?",
+        emailInsteadBody:
+            "Ingresa su correo y enviaremos una notificación para conectar en este caso.",
+        advocateEmailLabel: "Correo del defensor/a",
+        sendRequest: "Enviar solicitud de conexión",
+        sending: "Enviando…",
+        homePinLabel: "Tu domicilio",
+        findOrgsFooterPrefix: "También puedes explorar organizaciones en",
+        findOrgsLink: "Buscar organizaciones",
+        findOrgsFooterSuffix: "en cualquier momento después de iniciar sesión.",
     },
 
     /* =========================
@@ -1052,12 +1165,66 @@ export const es: I18nDict = {
         },
 
         validation: {
+            applicantRequired:
+                "Por favor completa las preguntas del solicitante y de contacto en este paso antes de continuar (incluido el idioma y los datos del defensor si trabajas con alguien).",
             victimRequired:
                 "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",
+            completeApplicantFirst:
+                "Completa primero el paso Solicitante. Después podrás avanzar por el resto del formulario.",
+            completeVictimBeforeOther:
+                "Completa el paso Víctima antes de abrir Delito e incidente o secciones posteriores.",
             crimeMinimumRequired:
                 "Por favor proporciona al menos la fecha del delito, dónde ocurrió y a qué departamento de policía se reportó.",
             certificationRequired:
                 "Antes de guardar esto como un caso, revisa la sección de certificación y agrega tu nombre, fecha y confirmaciones.",
+        },
+
+        requiredBeforeContinue: {
+            modalTitle: "Aún falta esto antes de continuar",
+            close: "Cerrar",
+            viewRequiredItems: "¿Qué falta?",
+            reviewApplication: "Revisar solicitud",
+            reviewModeBanner:
+                "Modo revisión: avanza en orden con Continuar. Las pestañas están bloqueadas hasta terminar.",
+            ackLossesNone: "Confirmo que no tengo categorías de pérdida que reclamar en este paso",
+            ackEmploymentNoEmployer:
+                "Confirmo que no tengo un empleador que agregar (o lo agregaré arriba antes de continuar)",
+            ackFuneralContinue:
+                "Continuaré sin datos funerarios por ahora (o los agregaré arriba)",
+            contactPreferredLanguage: "Idioma preferido (cuando no usas inglés)",
+            advocateName: "Nombre del defensor u organización (indicaste que trabajas con alguien)",
+            advocatePhone: "Teléfono del defensor",
+            applicantFirstName: "Nombre del solicitante",
+            applicantLastName: "Apellido del solicitante",
+            applicantDateOfBirth: "Fecha de nacimiento del solicitante",
+            applicantRelationship: "Relación con la víctima",
+            applicantStreet: "Dirección del solicitante",
+            applicantCity: "Ciudad del solicitante",
+            applicantState: "Estado del solicitante",
+            applicantZip: "Código postal del solicitante",
+            applicantLast4Ssn: "Últimos 4 dígitos del SSN del solicitante (Indiana)",
+            applicantSeekingOwnExpenses: "Si buscas tus propios gastos (sí o no)",
+            victimFirstName: "Nombre de la víctima",
+            victimLastName: "Apellido de la víctima",
+            victimDateOfBirth: "Fecha de nacimiento de la víctima",
+            victimStreet: "Dirección de la víctima",
+            victimCity: "Ciudad de la víctima",
+            victimZip: "Código postal de la víctima",
+            victimState: "Estado de la víctima",
+            victimLast4Ssn: "Últimos 4 dígitos del SSN de la víctima (Indiana)",
+            whoIsSubmitting: "Quién presenta la solicitud (Indiana)",
+            crimeDate: "Fecha del delito",
+            crimeAddress: "Lugar / dirección donde ocurrió el delito",
+            crimeCity: "Ciudad donde ocurrió el delito",
+            reportingAgency: "Agencia a la que se reportó el delito",
+            selectLossCategory:
+                "Selecciona al menos una categoría de pérdida, o confirma abajo que no aplica ninguna",
+            medicalProviderName:
+                "Nombre del proveedor médico o de consejería (para las pérdidas que seleccionaste)",
+            employmentEmployerOrConfirm:
+                "Al menos un nombre de empleador por pérdida de ingresos, o confirma abajo",
+            funeralDetailsOrConfirm:
+                "Funeraria o monto de la factura por pérdidas funerarias, o confirma abajo",
         },
 
         confirm: {
@@ -1359,10 +1526,10 @@ export const es: I18nDict = {
             description: "Esta es la persona que solicita la compensación.",
             isVictimAlsoApplicantLabel: "¿La víctima también es el solicitante?",
             sameAsVictimNote:
-                "Por ahora usaremos la información de la víctima como los datos del solicitante.",
+                "En el siguiente paso ingresarás los datos de la víctima; los copiaremos al solicitante al continuar a Delito e incidente.",
 
             options: {
-                victim: "Soy la víctima (mi información es la misma que arriba)",
+                victim: "Soy la víctima (igualaremos los datos del solicitante después de la víctima)",
                 proxy:
                     "Estoy solicitando en nombre de la víctima (padre/madre, cónyuge, otro)",
             }, // <-- IMPORTANT COMMA HERE

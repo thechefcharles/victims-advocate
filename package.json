@@ -11,7 +11,8 @@
     "directory:parse-pdf": "node scripts/extract-nxtsteps-pdf.mjs",
     "directory:parse-text": "node scripts/parse-nxtsteps-directory.mjs",
     "directory:parse-structured": "node scripts/parse-nxtsteps-structured.mjs data/il-nxtsteps-directory-structured.txt > data/il-nxtsteps-directory.json",
-    "directory:seed": "node scripts/seed-il-directory.mjs"
+    "directory:seed": "node scripts/seed-il-directory.mjs",
+    "directory:cbo-va": "node scripts/build-il-cbo-va-directory.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -36,6 +37,7 @@
     "eslint-config-next": "16.0.7",
     "pdf-parse": "^1.1.1",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "xlsx": "^0.18.5"
   }
 }

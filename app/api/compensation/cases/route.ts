@@ -109,8 +109,11 @@ export async function POST(req: Request) {
         ? (body as any).name.trim() || null
         : null;
 
-    let orgId: string | null = ctx.orgId ?? null;
-    if (!orgId) {
+    // Victim-owned cases start with no organization until they connect one (Find organizations),
+    // even if this user has an org_memberships row (e.g. former advocate signup or shared account).
+    let orgId: string | null =
+      ctx.role === "victim" ? null : (ctx.orgId ?? null);
+    if (!orgId && ctx.role !== "victim") {
       const { data: legacyOrg } = await supabaseAdmin
         .from("organizations")
         .select("id")
@@ -119,7 +122,7 @@ export async function POST(req: Request) {
         .maybeSingle();
       orgId = legacyOrg?.id ?? null;
     }
-    if (!orgId) {
+    if (!orgId && ctx.role !== "victim") {
       return apiFail(
         "FORBIDDEN",
         "Organization membership or legacy org required to create a case",
@@ -190,7 +193,7 @@ export async function POST(req: Request) {
       action: "intake.completed",
       resourceType: "case",
       resourceId: newCase.id,
-      metadata: { case_id: newCase.id, org_id: orgId },
+      metadata: { case_id: newCase.id, org_id: orgId ?? null },
       req,
     }).catch(() => {});
 

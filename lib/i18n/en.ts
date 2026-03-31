@@ -155,14 +155,19 @@ export const en: I18nDict = {
     resumeApplication: "Resume Application",
     applyResumeCardAria: "Start or resume your application",
     supportTeamTitle: "My Support Team",
+    supportTeamNoCaseHint:
+      "You don’t need a case to see connection status. When you start an application, organization and advocate details can also appear for that case.",
+    supportTeamPendingOrgConnectsTitle: "Organization request pending",
+    supportTeamAdvocateMorePending: "Additional advocate request(s) pending",
     supportTeamOrg: "Organization",
     supportTeamAdvocates: "Advocate",
-    supportTeamNoOrg: "No organization linked to this case yet.",
+    supportTeamNoOrg:
+      "No organization linked yet. Add your location on the next screen to see organizations near you.",
     supportTeamNoAdvocates: "No advocate connected yet.",
     supportTeamLoading: "Loading…",
     supportTeamConnectCta: "Connect With An Advocate",
     supportTeamAdvocateRequestPending: "Connection request pending — we’ll notify you when your advocate responds.",
-    supportTeamAddOrgCta: "Find An Organization",
+    supportTeamAddOrgCta: "Find Organizations Near Me",
     supportTeamEditOrgTitle: "Manage organization for this case",
     supportTeamEditAdvocateTitle: "Manage advocates for this case",
     supportTeamSendMessage: "Send Message",
@@ -230,7 +235,7 @@ export const en: I18nDict = {
     getHelp: {
       title: "Get Help",
       connectAdvocate: "Connect With An Advocate",
-      findOrganizations: "Find Organizations Near You",
+      findOrganizations: "Find Organizations Near Me",
       hintAdvocate: "Secure messaging and requests in a few steps.",
       hintOrganizations: "Map and distance sorting when you share location.",
     },
@@ -263,7 +268,7 @@ export const en: I18nDict = {
       notAccepting: "Not accepting new clients",
       capacity: "Capacity",
       noOrgs:
-        "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
+        "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
       loadError: "We couldn’t load organizations. Please try again.",
       privacyNote:
         "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
@@ -273,6 +278,73 @@ export const en: I18nDict = {
       sendReferralFailed: "Could not send referral. Try again or pick another organization.",
       sendReferralDuplicate:
         "You already have a referral in progress to this organization. Check Organization for this case for status.",
+      learnMoreTitle: "Response & Accessibility",
+      learnMoreDialogTitle: "How we show organization quality",
+      learnMoreDialogSubtitle:
+        "Weighted areas and data points partners can complete over time. Scores and tiers summarize trust signals—not clinical or legal advice.",
+      learnMore: "Learn more",
+      learnMoreClose: "Close",
+      organizationProfile: "Organization Profile",
+      visitWebsite: "Visit website",
+      connectWithOrg: "Connect with organization",
+      connectSending: "Sending…",
+      connectDone: "The organization’s team has been notified.",
+      connectFailed: "Could not send your request. Try again.",
+      connectDuplicate: "You already sent a connect request to this organization.",
+      externalDirectoryNote:
+        "This partner is listed in our resource directory. Detailed response and accessibility information appears when they complete a full profile on NxtStps.",
+      profileUnavailableExternal: "No profile link available",
+      connectUnavailableExternal: "Connect is available for organizations on NxtStps.",
+      connectHelpNeedsBack: "← Back to map",
+      connectHelpNeedsTitle: "What do you need help with?",
+      connectHelpNeedsSubtitle:
+        "Select everything that applies. Your organization will use this to understand how to support you and who to assign.",
+      connectHelpNeedsOrgLabel: "Connecting with",
+      connectHelpNeedsSelectHint: "Select all that apply",
+      needGeneralSupport: "General support",
+      needPoliceReport: "Police report",
+      needMedicalBills: "Medical bills",
+      needEmployment: "Employment",
+      needFuneral: "Funeral",
+      connectHelpNeedsSubmit: "Send connection request",
+      connectHelpNeedsSubmitting: "Sending…",
+      connectHelpNeedsPickOne: "Choose at least one option to continue.",
+      connectHelpNeedsInvalidLink: "This link is missing a valid organization. Go back to the map and try Connect again.",
+      connectHelpNeedsLoadOrgError: "We couldn’t load that organization. Try again from the map.",
+      connectHelpNeedsSuccess: "Your request was sent. The organization’s team can see what you selected and will follow up when they can.",
+      connectSuccessModalTitle: "Request sent",
+      connectSuccessModalBody:
+        "The organization has been notified. Expect a response within 48 hours from your advocate.",
+      connectSuccessModalCrisisLead: "If you are in immediate danger, call",
+      connectSuccessModalCrisisOr: "or call or text",
+      connectSuccessModalCrisisTail: "(Suicide & Crisis Lifeline).",
+      connectSuccessModalReturnDashboard: "Return to dashboard",
+      connectHelpNeedsContinueBrowse: "Back to organizations map",
+      orgProfileBack: "← Back to organizations map",
+      orgProfileSubtitle: "Information from this organization’s public profile.",
+      orgProfileLoading: "Loading organization…",
+      orgProfileInvalid: "Invalid organization link.",
+      orgProfileServices: "Services",
+      orgProfileContact: "Contact",
+      orgProfilePopulations: "Focus",
+      orgProfileFooter:
+        "Details are self-reported by the organization. If something looks wrong, you can still reach them using the contact options on the map list.",
+      directoryProgramType: "Program type",
+      directoryAddress: "Address",
+      directoryPhone: "Phone",
+      directoryWebsite: "Website",
+      fieldPendingExternal: "Pending — the organization adds this in their NxtStps profile.",
+      fieldPendingFallback: "Not specified yet",
+      frameworkFieldPending: "Not specified yet — the organization can add this in their profile.",
+      directoryContactHeading: "Directory contact",
+      tier1Title: "Tier 1 — Comprehensive",
+      tier1Desc: "Score 85+ · Hospital / major CBO level",
+      tier2Title: "Tier 2 — Established",
+      tier2Desc: "Score 65–84 · Staffed nonprofit / clinic",
+      tier3Title: "Tier 3 — Foundational",
+      tier3Desc: "Score <65 · Grassroots / informal org",
+      sourceSelfHint: "Self-reported by the organization",
+      sourcePlatformHint: "Platform-measured signal",
     },
     caseActivityForCase: "For this case",
     caseDetailsHeading: "Case Details",
@@ -389,7 +461,7 @@ export const en: I18nDict = {
     notAccepting: "Not accepting new clients",
     capacity: "Capacity",
     noOrgs:
-      "There aren’t any publicly active organizations in the directory yet. New partners are added over time—please check back later.",
+      "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
     noOrgsInState:
       "No organizations match this state filter right now. Organizations must be publicly active and matching-ready. Try “All states” or pick another state.",
     loadError: "We couldn’t load organizations. Please try again.",
@@ -440,6 +512,43 @@ export const en: I18nDict = {
     nonVictimRoleHint:
       "Advocate connections are for victim accounts—Get help now opens Help for other roles.",
     openAdvocateDashboard: "Open Case Dashboard",
+  },
+
+  compensationConnectAdvocate: {
+    title: "Connect with an advocate",
+    subtitle:
+      "Find programs near you, or send a request if you already know your advocate’s email. Organizations come from our directory (verified profiles with service areas and contact paths).",
+    caseRequiredHint:
+      "Connection requests are tied to a specific case. Open My Dashboard, select your case, then choose Connect with an advocate again.",
+    caseLinkedNote:
+      "Case selected: referrals and requests apply to this application only.",
+    addressStepTitle: "Where are you located?",
+    addressStepBody:
+      "Enter your home street address, city, state, and ZIP code. We use this only to show nearby organizations on a map (via OpenStreetMap). We don’t store this address on the map step unless you save it elsewhere in your application.",
+    directoryNote:
+      "Map listings are active organization records in NxtStps (often from our resource directory), including partners still drafting a public profile. Pins use saved coordinates or the state they serve.",
+    homeAddressLabel: "Street address",
+    homeAddressPlaceholder: "e.g. 123 Main St",
+    cityLabel: "City",
+    cityPlaceholder: "e.g. Chicago",
+    stateLabel: "State",
+    zipLabel: "ZIP code",
+    zipPlaceholder: "5-digit ZIP",
+    findOrganizationsButton: "Show organizations near me",
+    geocoding: "Looking up address…",
+    geocodeFailed: "We couldn’t place that address on the map. Check the street and ZIP and try again.",
+    changeAddress: "Change address",
+    mapSectionTitle: "Organizations near you",
+    emailInsteadTitle: "Already have an advocate’s email?",
+    emailInsteadBody:
+      "Enter their email and we’ll send one notification to connect on this case.",
+    advocateEmailLabel: "Advocate’s email",
+    sendRequest: "Send connection request",
+    sending: "Sending…",
+    homePinLabel: "Your home",
+    findOrgsFooterPrefix: "You can also browse organizations from",
+    findOrgsLink: "Find organizations",
+    findOrgsFooterSuffix: "anytime after signing in.",
   },
 
   /* =========================
@@ -1035,12 +1144,65 @@ intake: {
   },
 
   validation: {
+    applicantRequired:
+      "Please finish the applicant and contact questions on this step before continuing (including language preference, and advocate details if you are working with someone).",
     victimRequired:
       "Please fill in the victim's name, date of birth, and address before continuing.",
+    completeApplicantFirst:
+      "Complete the Applicant step first. After that, you can move through the rest of the form.",
+    completeVictimBeforeOther:
+      "Complete the Victim step before opening Crime & incident or later sections.",
     crimeMinimumRequired:
       "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
     certificationRequired:
       "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
+  },
+
+  requiredBeforeContinue: {
+    modalTitle: "Still required before you can continue",
+    close: "Close",
+    viewRequiredItems: "What’s still required?",
+    reviewApplication: "Review application",
+    reviewModeBanner:
+      "Review mode: go through each step in order with Continue. Step tabs are locked until you finish.",
+    ackLossesNone: "I confirm I have no loss categories to claim on this step",
+    ackEmploymentNoEmployer:
+      "I confirm I have no employer to add (or I’ll add one above before continuing)",
+    ackFuneralContinue:
+      "I’ll continue without funeral details for now (or I’ll add them above)",
+    contactPreferredLanguage: "Preferred language (when not using English)",
+    advocateName: "Advocate or organization name (you indicated you’re working with someone)",
+    advocatePhone: "Advocate phone number",
+    applicantFirstName: "Applicant first name",
+    applicantLastName: "Applicant last name",
+    applicantDateOfBirth: "Applicant date of birth",
+    applicantRelationship: "Relationship to victim",
+    applicantStreet: "Applicant street address",
+    applicantCity: "Applicant city",
+    applicantState: "Applicant state",
+    applicantZip: "Applicant ZIP code",
+    applicantLast4Ssn: "Applicant last 4 digits of SSN (Indiana)",
+    applicantSeekingOwnExpenses: "Whether you’re seeking your own expenses (yes or no)",
+    victimFirstName: "Victim first name",
+    victimLastName: "Victim last name",
+    victimDateOfBirth: "Victim date of birth",
+    victimStreet: "Victim street address",
+    victimCity: "Victim city",
+    victimZip: "Victim ZIP code",
+    victimState: "Victim state",
+    victimLast4Ssn: "Victim last 4 digits of SSN (Indiana)",
+    whoIsSubmitting: "Who is submitting the application (Indiana)",
+    crimeDate: "Date of crime",
+    crimeAddress: "Location / address where the crime occurred",
+    crimeCity: "City where the crime occurred",
+    reportingAgency: "Agency the crime was reported to",
+    selectLossCategory:
+      "Select at least one loss category, or confirm below that none apply",
+    medicalProviderName: "Medical or counseling provider name (for the losses you selected)",
+    employmentEmployerOrConfirm:
+      "At least one employer name for lost earnings, or confirm below",
+    funeralDetailsOrConfirm:
+      "Funeral home or bill amount for funeral-related losses, or confirm below",
   },
 
   confirm: {
@@ -1340,11 +1502,11 @@ applicant: {
   description: "This is the person applying for compensation.",
   isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
   sameAsVictimNote:
-    "We’ll use the victim’s information as the applicant details for now.",
+    "On the next step you’ll enter the victim’s details; we’ll copy them into the applicant section when you continue to Crime & incident.",
 
   // NEW — add this
   options: {
-    victim: "I am the victim (my information is the same as above)",
+    victim: "I am the victim (we’ll match applicant details after you enter victim info)",
     proxy: "I am applying on behalf of the victim (parent, spouse, other)",
   },
 

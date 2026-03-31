@@ -161,10 +161,13 @@ export type I18nDict = {
     resumeApplication: string;
     /** Accessible label for the primary apply / resume card region */
     applyResumeCardAria: string;
-    supportTeamTitle: string;
-    supportTeamOrg: string;
-    supportTeamAdvocates: string;
-    supportTeamNoOrg: string;
+      supportTeamTitle: string;
+      supportTeamNoCaseHint: string;
+      supportTeamPendingOrgConnectsTitle: string;
+      supportTeamAdvocateMorePending: string;
+      supportTeamOrg: string;
+      supportTeamAdvocates: string;
+      supportTeamNoOrg: string;
     supportTeamNoAdvocates: string;
     supportTeamLoading: string;
     supportTeamConnectCta: string;
@@ -277,6 +280,69 @@ export type I18nDict = {
       sendReferralDone: string;
       sendReferralFailed: string;
       sendReferralDuplicate: string;
+      /** Section title on full org profile page (Response & accessibility). */
+      learnMoreTitle: string;
+      learnMoreDialogTitle: string;
+      learnMoreDialogSubtitle: string;
+      learnMore: string;
+      learnMoreClose: string;
+      organizationProfile: string;
+      visitWebsite: string;
+      connectWithOrg: string;
+      connectSending: string;
+      connectDone: string;
+      connectFailed: string;
+      connectDuplicate: string;
+      externalDirectoryNote: string;
+      profileUnavailableExternal: string;
+      connectUnavailableExternal: string;
+      connectHelpNeedsBack: string;
+      connectHelpNeedsTitle: string;
+      connectHelpNeedsSubtitle: string;
+      connectHelpNeedsOrgLabel: string;
+      connectHelpNeedsSelectHint: string;
+      needGeneralSupport: string;
+      needPoliceReport: string;
+      needMedicalBills: string;
+      needEmployment: string;
+      needFuneral: string;
+      connectHelpNeedsSubmit: string;
+      connectHelpNeedsSubmitting: string;
+      connectHelpNeedsPickOne: string;
+      connectHelpNeedsInvalidLink: string;
+      connectHelpNeedsLoadOrgError: string;
+      connectHelpNeedsSuccess: string;
+      connectSuccessModalTitle: string;
+      connectSuccessModalBody: string;
+      connectSuccessModalCrisisLead: string;
+      connectSuccessModalCrisisOr: string;
+      connectSuccessModalCrisisTail: string;
+      connectSuccessModalReturnDashboard: string;
+      connectHelpNeedsContinueBrowse: string;
+      orgProfileBack: string;
+      orgProfileSubtitle: string;
+      orgProfileLoading: string;
+      orgProfileInvalid: string;
+      orgProfileServices: string;
+      orgProfileContact: string;
+      orgProfilePopulations: string;
+      orgProfileFooter: string;
+      directoryProgramType: string;
+      directoryAddress: string;
+      directoryPhone: string;
+      directoryWebsite: string;
+      fieldPendingExternal: string;
+      fieldPendingFallback: string;
+      frameworkFieldPending: string;
+      directoryContactHeading: string;
+      tier1Title: string;
+      tier1Desc: string;
+      tier2Title: string;
+      tier2Desc: string;
+      tier3Title: string;
+      tier3Desc: string;
+      sourceSelfHint: string;
+      sourcePlatformHint: string;
     };
     /** Gamified 3-step strip + apply flow */
     progressTitle: string;
@@ -441,6 +507,38 @@ export type I18nDict = {
     guestConnectHint: string;
     nonVictimRoleHint: string;
     openAdvocateDashboard: string;
+  };
+
+  /** /compensation/connect-advocate */
+  compensationConnectAdvocate: {
+    title: string;
+    subtitle: string;
+    caseRequiredHint: string;
+    caseLinkedNote: string;
+    addressStepTitle: string;
+    addressStepBody: string;
+    directoryNote: string;
+    homeAddressLabel: string;
+    homeAddressPlaceholder: string;
+    cityLabel: string;
+    cityPlaceholder: string;
+    stateLabel: string;
+    zipLabel: string;
+    zipPlaceholder: string;
+    findOrganizationsButton: string;
+    geocoding: string;
+    geocodeFailed: string;
+    changeAddress: string;
+    mapSectionTitle: string;
+    emailInsteadTitle: string;
+    emailInsteadBody: string;
+    advocateEmailLabel: string;
+    sendRequest: string;
+    sending: string;
+    homePinLabel: string;
+    findOrgsFooterPrefix: string;
+    findOrgsLink: string;
+    findOrgsFooterSuffix: string;
   };
 
   eligibility: {
@@ -855,9 +953,54 @@ export type I18nDict = {
     };
 
     validation: {
+      applicantRequired: string;
       victimRequired: string;
       crimeMinimumRequired: string;
       certificationRequired: string;
+      completeApplicantFirst: string;
+      completeVictimBeforeOther: string;
+    };
+
+    /** Bullet list + modal copy for “Continue” gating (keys referenced from lib/intake/intakeStepContinueGate). */
+    requiredBeforeContinue: {
+      modalTitle: string;
+      close: string;
+      viewRequiredItems: string;
+      reviewApplication: string;
+      reviewModeBanner: string;
+      ackLossesNone: string;
+      ackEmploymentNoEmployer: string;
+      ackFuneralContinue: string;
+      contactPreferredLanguage: string;
+      advocateName: string;
+      advocatePhone: string;
+      applicantFirstName: string;
+      applicantLastName: string;
+      applicantDateOfBirth: string;
+      applicantRelationship: string;
+      applicantStreet: string;
+      applicantCity: string;
+      applicantState: string;
+      applicantZip: string;
+      applicantLast4Ssn: string;
+      applicantSeekingOwnExpenses: string;
+      victimFirstName: string;
+      victimLastName: string;
+      victimDateOfBirth: string;
+      victimStreet: string;
+      victimCity: string;
+      victimZip: string;
+      victimState: string;
+      victimLast4Ssn: string;
+      whoIsSubmitting: string;
+      crimeDate: string;
+      crimeAddress: string;
+      crimeCity: string;
+      reportingAgency: string;
+      selectLossCategory: string;
+      medicalProviderName: string;
+      employmentEmployerOrConfirm: string;
+      funeralDetailsOrConfirm: string;
     };
 
     confirm: {

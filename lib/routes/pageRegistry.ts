@@ -94,6 +94,13 @@ export const PAGE_REGISTRY: PageRegistryEntry[] = [
     notes: "Placeholder for map / geo / org scores; linked from victim dashboard.",
   },
   {
+    id: "victim_connect_organization_help",
+    path: "/victim/find-organizations/connect",
+    title: "Connect — what do you need help with?",
+    audience: "role:victim",
+    notes: "Multi-select needs before POST /api/victim/organization-connect-request; query: organization, optional case.",
+  },
+  {
     id: "advocate_dashboard",
     path: "/advocate",
     title: "Advocate dashboard (My Dashboard)",
@@ -170,6 +177,11 @@ export const ROUTES = {
   victimDashboard: "/victim/dashboard",
   victimMessages: "/victim/messages",
   victimFindOrganizations: "/victim/find-organizations",
+  /** Before POST connect: victim selects what they need help with. */
+  victimConnectOrganizationHelp: "/victim/find-organizations/connect",
+  /** Victim-facing read-only organization profile (UUID). */
+  victimOrganization: (organizationId: string) =>
+    `/victim/organizations/${encodeURIComponent(organizationId)}`,
   advocateDashboard: "/advocate",
   advocateHome: "/advocate",
   advocateMessages: "/advocate/messages",
@@ -196,6 +208,18 @@ export const victimCasePaths = {
 /** Deep-link to the dedicated secure messages tool for a case (victim). */
 export function victimCaseMessagesUrl(caseId: string): string {
   return `${ROUTES.victimMessages}?case=${encodeURIComponent(caseId)}`;
+}
+
+/** Victim connect flow: choose help areas, then submit connect for this org. */
+export function victimConnectOrganizationHelpUrl(params: {
+  organizationId: string;
+  caseId?: string;
+}): string {
+  const q = new URLSearchParams();
+  q.set("organization", params.organizationId.trim());
+  const c = params.caseId?.trim();
+  if (c) q.set("case", c);
+  return `${ROUTES.victimConnectOrganizationHelp}?${q.toString()}`;
 }
 
 /** @deprecated Use victimCaseMessagesUrl — messages are no longer embedded in intake. */

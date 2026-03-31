@@ -10,6 +10,10 @@ export type MapOrgMarker = {
   lng: number;
   distanceMiles?: number;
   approximate?: boolean;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  program_type?: string | null;
 };
 
 type Props = {
@@ -74,14 +78,8 @@ export function OrganizationsMap({ userLat, userLng, orgs, userLabel, orgPopupSu
       );
 
       for (const o of orgs) {
-        const dist =
-          o.distanceMiles != null ? ` · ${o.distanceMiles.toFixed(1)} mi` : "";
-        const approx =
-          o.approximate && orgPopupSuffix ? ` · ${orgPopupSuffix}` : "";
         const m = L.marker([o.lat, o.lng]).addTo(map);
-        m.bindPopup(
-          `<strong>${escapeHtml(o.name)}</strong>${escapeHtml(dist)}${escapeHtml(approx)}`
-        );
+        m.bindPopup(orgPopupHtml(o, orgPopupSuffix));
         bounds.extend([o.lat, o.lng]);
       }
 
@@ -102,7 +100,7 @@ export function OrganizationsMap({ userLat, userLng, orgs, userLabel, orgPopupSu
   return (
     <div
       ref={containerRef}
-      className="h-[min(420px,55vh)] min-h-[280px] w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900"
+      className="relative z-0 isolate h-[min(420px,55vh)] min-h-[280px] w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900"
       aria-hidden
     />
   );
@@ -114,4 +112,49 @@ function escapeHtml(s: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function safeHttpUrl(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
+
+function orgPopupHtml(o: MapOrgMarker, orgPopupSuffix: string | undefined): string {
+  const dist =
+    o.distanceMiles != null ? ` · ${o.distanceMiles.toFixed(1)} mi` : "";
+  const approx =
+    o.approximate && orgPopupSuffix ? ` · ${orgPopupSuffix}` : "";
+  const lines: string[] = [
+    `<strong>${escapeHtml(o.name)}</strong>${escapeHtml(dist)}${escapeHtml(approx)}`,
+  ];
+  if (o.program_type?.trim()) {
+    lines.push(`<div style="margin-top:6px;font-size:12px;opacity:0.9">${escapeHtml(o.program_type.trim())}</div>`);
+  }
+  if (o.address?.trim()) {
+    lines.push(`<div style="margin-top:6px;font-size:12px">${escapeHtml(o.address.trim())}</div>`);
+  }
+  if (o.phone?.trim()) {
+    const display = escapeHtml(o.phone.trim());
+    const telHref = o.phone.replace(/[^\d+]/g, "");
+    if (telHref.replace(/\D/g, "").length >= 7) {
+      lines.push(
+        `<div style="margin-top:6px;font-size:12px"><a href="tel:${escapeHtml(telHref)}">${display}</a></div>`
+      );
+    } else {
+      lines.push(`<div style="margin-top:6px;font-size:12px">${display}</div>`);
+    }
+  }
+  const web = safeHttpUrl(o.website ?? undefined);
+  if (web) {
+    lines.push(
+      `<div style="margin-top:6px;font-size:12px"><a href="${escapeHtml(web)}" target="_blank" rel="noopener noreferrer">Website</a></div>`
+    );
+  }
+  return lines.join("");
 }

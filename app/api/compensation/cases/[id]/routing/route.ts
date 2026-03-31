@@ -100,15 +100,18 @@ export async function POST(req: Request, context: RouteParams) {
         req,
       }).catch(() => {});
 
-      await appendCaseTimelineEvent({
-        caseId: id,
-        organizationId: caseResult.case.organization_id as string,
-        actor: { userId: ctx.userId, role: caseResult.access.role },
-        eventType: "case.routing_evaluated",
-        title: "Program routing evaluated",
-        description: `${runResult.programs.length} program(s) evaluated.`,
-        metadata: {},
-      });
+      const caseOrgId = caseResult.case.organization_id as string | null;
+      if (caseOrgId) {
+        await appendCaseTimelineEvent({
+          caseId: id,
+          organizationId: caseOrgId,
+          actor: { userId: ctx.userId, role: caseResult.access.role },
+          eventType: "case.routing_evaluated",
+          title: "Program routing evaluated",
+          description: `${runResult.programs.length} program(s) evaluated.`,
+          metadata: {},
+        });
+      }
     }
 
     logger.info("compensation.cases.routing.run", {

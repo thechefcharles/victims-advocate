@@ -1,7 +1,7 @@
 // app/compensation/intake/page.tsx
 "use client";
 
-import { useState, useEffect, Suspense, useRef, useMemo } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { RecommendedOrganizationCard } from "@/components/trust/RecommendedOrganizationCard";
@@ -44,10 +44,19 @@ import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
 import { ROUTES, victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
+import {
+  applicantSectionComplete,
+  victimSectionComplete,
+  intakeTabDisplayComplete,
+} from "@/lib/intake/stepCompleteness";
+import {
+  getIntakeStepMissingKeys,
+  canContinueFromIntakeStep,
+} from "@/lib/intake/intakeStepContinueGate";
 
 type IntakeStep =
-  | "victim"
   | "applicant"
+  | "victim"
   | "crime"
   | "losses"
   | "medical"
@@ -57,8 +66,8 @@ type IntakeStep =
   | "summary";
 
 const INTAKE_STEP_ORDER: IntakeStep[] = [
-  "victim",
   "applicant",
+  "victim",
   "crime",
   "losses",
   "medical",
@@ -71,6 +80,11 @@ const INTAKE_STEP_ORDER: IntakeStep[] = [
 const STORAGE_KEY_PREFIX = "nxtstps_compensation_intake_v1";
 const ACTIVE_CASE_KEY_PREFIX = "nxtstps_active_case_";
 const PROGRESS_KEY_PREFIX = "nxtstps_intake_progress_";
+const INTAKE_STEPS_CONTINUED_PREFIX = "nxtstps_intake_steps_continued_";
+
+function isIntakeStepId(v: string): v is IntakeStep {
+  return (INTAKE_STEP_ORDER as string[]).includes(v);
+}
 
 const emptyVictim: VictimInfo = {
   firstName: "",
@@ -224,8 +238,19 @@ const { t, tf, lang } = useI18n();
     })();
   }, [caseId, router]);
 
-  const [step, setStep] = useState<IntakeStep>("victim");
+  const [step, setStep] = useState<IntakeStep>("applicant");
   const [maxStepIndex, setMaxStepIndex] = useState(0);
+  /** User used Continue on a step with no required fields (badges: documents; medical/employment/funeral when no related loss). */
+  const [stepsContinuedFrom, setStepsContinuedFrom] = useState<Set<IntakeStep>>(() => new Set());
+  const [lossesNoneAck, setLossesNoneAck] = useState(false);
+  const [employmentNoEmployerAck, setEmploymentNoEmployerAck] = useState(false);
+  const [funeralIncompleteAck, setFuneralIncompleteAck] = useState(false);
+  const [requiredFieldsModalOpen, setRequiredFieldsModalOpen] = useState(false);
+  /** Linear re-review from summary; tab bar disabled until finished. */
+  const [reviewWalkthroughActive, setReviewWalkthroughActive] = useState(false);
+  const [reviewWalkthroughVerified, setReviewWalkthroughVerified] = useState<Set<IntakeStep>>(
+    () => new Set()
+  );
   const [app, setApp] = useState<CompensationApplication>(
     makeEmptyApplication()
   );
@@ -340,13 +365,33 @@ useEffect(() => {
 
       setApp(loadedApp);
       setFieldStateLocal(initialFieldState);
-      setStep("victim");
+      setStep("applicant");
       setMaxStepIndex(0);
       setLoadedFromStorage(true);
 
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData.user?.id;
       if (uid) localStorage.setItem(`${ACTIVE_CASE_KEY_PREFIX}${uid}`, caseId);
+      if (uid) {
+        try {
+          const ack = localStorage.getItem(`${INTAKE_STEPS_CONTINUED_PREFIX}${uid}_${caseId}`);
+          if (ack) {
+            const arr = JSON.parse(ack) as unknown;
+            if (Array.isArray(arr)) {
+              const valid = arr.filter((x): x is IntakeStep => typeof x === "string" && isIntakeStepId(x));
+              setStepsContinuedFrom(new Set(valid));
+            } else {
+              setStepsContinuedFrom(new Set());
+            }
+          } else {
+            setStepsContinuedFrom(new Set());
+          }
+        } catch {
+          setStepsContinuedFrom(new Set());
+        }
+      } else {
+        setStepsContinuedFrom(new Set());
+      }
     } catch (err) {
       console.error("Unexpected error loading case from API:", err);
       alert(t("intake.loadCase.unexpected"));
@@ -377,6 +422,7 @@ useEffect(() => {
         app?: CompensationApplication & { _fieldState?: FieldStateMap };
         step?: IntakeStep;
         maxStepIndex?: number;
+        stepsContinuedFrom?: string[];
       };
 
       if (parsed.app) {
@@ -387,11 +433,18 @@ useEffect(() => {
       }
       if (parsed.step) setStep(parsed.step);
       if (typeof parsed.maxStepIndex === "number") setMaxStepIndex(parsed.maxStepIndex);
+      if (Array.isArray(parsed.stepsContinuedFrom)) {
+        const valid = parsed.stepsContinuedFrom.filter((x): x is IntakeStep => isIntakeStepId(x));
+        setStepsContinuedFrom(new Set(valid));
+      } else {
+        setStepsContinuedFrom(new Set());
+      }
     } else {
       // ✅ no saved draft for THIS user → start fresh
       setApp(makeEmptyApplication());
-      setStep("victim");
+      setStep("applicant");
       setMaxStepIndex(0);
+      setStepsContinuedFrom(new Set());
     }
   } catch (err) {
     console.error("Failed to load saved intake from localStorage", err);
@@ -481,19 +534,19 @@ useEffect(() => {
 }, [userId, caseId, step, maxStepIndex]);
 
 useEffect(() => {
-  const order: IntakeStep[] = [
-    "victim",
-    "applicant",
-    "crime",
-    "losses",
-    "medical",
-    "employment",
-    "funeral",
-    "documents",
-    "summary",
-  ];
+  if (!userId || !caseId) return;
+  try {
+    localStorage.setItem(
+      `${INTAKE_STEPS_CONTINUED_PREFIX}${userId}_${caseId}`,
+      JSON.stringify([...stepsContinuedFrom])
+    );
+  } catch (e) {
+    console.warn("Failed to persist intake step acknowledgements", e);
+  }
+}, [userId, caseId, stepsContinuedFrom]);
 
-  const idx = Math.max(0, order.indexOf(step));
+useEffect(() => {
+  const idx = Math.max(0, INTAKE_STEP_ORDER.indexOf(step));
   setMaxStepIndex((prev) => Math.max(prev, idx));
 }, [step]);
 
@@ -509,12 +562,17 @@ useEffect(() => {
       Object.keys(fieldState).length > 0
         ? mergeFieldState(app as unknown as Record<string, unknown>, fieldState)
         : app;
-    const payload = { app: appToStore, step, maxStepIndex };
+    const payload = {
+      app: appToStore,
+      step,
+      maxStepIndex,
+      stepsContinuedFrom: [...stepsContinuedFrom],
+    };
     localStorage.setItem(storageKey, JSON.stringify(payload));
   } catch (err) {
     console.error("Failed to save compensation intake to localStorage", err);
   }
-}, [caseId, loadedFromStorage, storageKey, app, fieldState, step, maxStepIndex]);
+}, [caseId, loadedFromStorage, storageKey, app, fieldState, step, maxStepIndex, stepsContinuedFrom]);
 
 // ✅ Case-mode autosave: when ?case=... exists, save edits to Supabase via PATCH
 useEffect(() => {
@@ -578,6 +636,143 @@ const intakeReview = useMemo(() => {
 const intakeStepIndex = INTAKE_STEP_ORDER.indexOf(step);
 const intakeStepCurrent = intakeStepIndex >= 0 ? intakeStepIndex + 1 : 1;
 const intakeStepTotal = INTAKE_STEP_ORDER.length;
+
+  const applicantGateComplete = useMemo(
+    () => applicantSectionComplete(applicant, contact, stateCode),
+    [applicant, contact, stateCode]
+  );
+  const victimGateComplete = useMemo(
+    () => victimSectionComplete(victim, contact, stateCode),
+    [victim, contact, stateCode]
+  );
+
+  const continueAcks = useMemo(
+    () => ({
+      lossesNone: lossesNoneAck,
+      employmentNoEmployer: employmentNoEmployerAck,
+      funeralIncomplete: funeralIncompleteAck,
+    }),
+    [lossesNoneAck, employmentNoEmployerAck, funeralIncompleteAck]
+  );
+
+  const canContinueCurrent = useMemo(() => {
+    if (isReadOnly) return true;
+    if (step === "summary") return true;
+    return canContinueFromIntakeStep(step, app, stateCode, continueAcks);
+  }, [isReadOnly, step, app, stateCode, continueAcks]);
+
+  const missingKeysForCurrentStep = useMemo(() => {
+    if (step === "summary") return [];
+    return getIntakeStepMissingKeys(step, app, stateCode, continueAcks);
+  }, [step, app, stateCode, continueAcks]);
+
+  const continuePrimaryEnabled = isReadOnly || canContinueCurrent;
+  const continueButtonClass = `text-xs rounded-lg px-4 py-2 font-semibold transition ${
+    continuePrimaryEnabled
+      ? "bg-blue-600 text-white hover:bg-blue-500"
+      : "bg-slate-600 text-slate-400 cursor-not-allowed"
+  }`;
+
+  const lossCategoryMissingKey = "intake.requiredBeforeContinue.selectLossCategory";
+  const employmentMissingKey = "intake.requiredBeforeContinue.employmentEmployerOrConfirm";
+  const funeralMissingKey = "intake.requiredBeforeContinue.funeralDetailsOrConfirm";
+
+  useEffect(() => {
+    const anySel = Object.entries(losses).some(
+      ([k, v]) => k !== "otherExpensesDescription" && v === true
+    );
+    if (anySel) setLossesNoneAck(false);
+  }, [losses]);
+
+  useEffect(() => {
+    if (!losses.lossOfEarnings) setEmploymentNoEmployerAck(false);
+    const hasEmployer = employment.employmentHistory?.some((e) => e.employerName?.trim());
+    if (hasEmployer) setEmploymentNoEmployerAck(false);
+  }, [losses.lossOfEarnings, employment.employmentHistory]);
+
+  useEffect(() => {
+    const funeralSelected = losses.funeralBurial || losses.headstone;
+    if (!funeralSelected) setFuneralIncompleteAck(false);
+    const hasData = !!(
+      funeral.funeralHomeName?.trim() ||
+      funeral.funeralBillTotal ||
+      (funeral.payments && funeral.payments.length > 0)
+    );
+    if (hasData) setFuneralIncompleteAck(false);
+  }, [losses.funeralBurial, losses.headstone, funeral.funeralHomeName, funeral.funeralBillTotal, funeral.payments]);
+
+  useEffect(() => {
+    if (!loadedFromStorage || isReadOnly || reviewWalkthroughActive) return;
+    if (!applicantGateComplete) {
+      if (step !== "applicant") setStep("applicant");
+      return;
+    }
+    if (!victimGateComplete) {
+      if (step !== "applicant" && step !== "victim") setStep("victim");
+    }
+  }, [
+    loadedFromStorage,
+    isReadOnly,
+    applicantGateComplete,
+    victimGateComplete,
+    step,
+    reviewWalkthroughActive,
+  ]);
+
+  const markStepContinued = useCallback((s: IntakeStep) => {
+    setStepsContinuedFrom((prev) => {
+      if (prev.has(s)) return prev;
+      const next = new Set(prev);
+      next.add(s);
+      return next;
+    });
+  }, []);
+
+  const markReviewStepPassed = useCallback((s: IntakeStep) => {
+    setReviewWalkthroughVerified((prev) => {
+      const next = new Set(prev);
+      next.add(s);
+      return next;
+    });
+  }, []);
+
+  const startApplicationReviewWalkthrough = useCallback(() => {
+    setReviewWalkthroughVerified(new Set());
+    setReviewWalkthroughActive(true);
+    setStep("applicant");
+  }, []);
+
+  const tryNavigateToIntakeStep = useCallback(
+    (target: IntakeStep): boolean => {
+      if (isReadOnly) {
+        setStep(target);
+        return true;
+      }
+      if (!applicantSectionComplete(applicant, contact, stateCode)) {
+        if (target !== "applicant") {
+          alert(t("intake.validation.completeApplicantFirst"));
+          return false;
+        }
+      }
+      if (
+        applicantSectionComplete(applicant, contact, stateCode) &&
+        !victimSectionComplete(victim, contact, stateCode) &&
+        target !== "applicant" &&
+        target !== "victim"
+      ) {
+        alert(t("intake.validation.completeVictimBeforeOther"));
+        setStep("victim");
+        return false;
+      }
+      setStep(target);
+      return true;
+    },
+    [isReadOnly, applicant, contact, stateCode, victim, t]
+  );
+
+  const handleStepNav = (target: IntakeStep) => {
+    void tryNavigateToIntakeStep(target);
+  };
 
 const guardPatch =
   <T,>(fn: (patch: Partial<T>) => void) =>
@@ -712,19 +907,34 @@ setSaveToast(t("intake.save.failed"));
 };
   
   const handleNextFromVictim = () => {
-    if (
-      !victim.firstName.trim() ||
-      !victim.lastName.trim() ||
-      !victim.dateOfBirth ||
-      !victim.streetAddress.trim() ||
-      !victim.city.trim() ||
-      !victim.zip.trim()
-    ) {
-alert(t("intake.validation.victimRequired"));
-      return;
+    if (!isReadOnly && !canContinueFromIntakeStep("victim", app, stateCode, continueAcks)) return;
+    if (!isReadOnly && !victimSectionComplete(victim, contact, stateCode)) return;
+    if (!isReadOnly && applicant.isSameAsVictim) {
+      setApp((prev) => ({
+        ...prev,
+        applicant: {
+          ...prev.applicant,
+          firstName: prev.victim.firstName,
+          lastName: prev.victim.lastName,
+          dateOfBirth: prev.victim.dateOfBirth,
+          streetAddress: prev.victim.streetAddress,
+          apt: prev.victim.apt,
+          city: prev.victim.city,
+          state: prev.victim.state,
+          zip: prev.victim.zip,
+          email: prev.victim.email,
+          cellPhone: prev.victim.cellPhone,
+          alternatePhone: prev.victim.alternatePhone,
+          workPhone: prev.victim.workPhone,
+          ...(stateCode === "IN" && prev.victim.last4SSN
+            ? { last4SSN: prev.victim.last4SSN }
+            : {}),
+        },
+      }));
     }
-    setStep("applicant");
-    setMaxStepIndex((prev) => Math.max(prev, 1));
+    if (reviewWalkthroughActive) markReviewStepPassed("victim");
+    markStepContinued("victim");
+    setStep("crime");
   };
 
   const handleDownloadOfficialIlPdf = async () => {
@@ -919,94 +1129,67 @@ content: t("nxtGuide.errors.technicalProblem")
   };
 
   const handleNextFromApplicant = () => {
-if (!isReadOnly && applicant.isSameAsVictim) {
-        setApp((prev) => ({
-        ...prev,
-        applicant: {
-          ...prev.applicant,
-          firstName: prev.victim.firstName,
-          lastName: prev.victim.lastName,
-          dateOfBirth: prev.victim.dateOfBirth,
-          streetAddress: prev.victim.streetAddress,
-          apt: prev.victim.apt,
-          city: prev.victim.city,
-          state: prev.victim.state,
-          zip: prev.victim.zip,
-          email: prev.victim.email,
-          cellPhone: prev.victim.cellPhone,
-          alternatePhone: prev.victim.alternatePhone,
-          workPhone: prev.victim.workPhone,
-        },
-      }));
-    }
-    setStep("crime");
-    setMaxStepIndex((prev) => Math.max(prev, 2));
+    if (!isReadOnly && !canContinueFromIntakeStep("applicant", app, stateCode, continueAcks)) return;
+    if (!isReadOnly && !applicantSectionComplete(applicant, contact, stateCode)) return;
+    if (reviewWalkthroughActive) markReviewStepPassed("applicant");
+    markStepContinued("applicant");
+    setStep("victim");
   };
 
   const handleNextFromCrime = () => {
+    if (!isReadOnly && !canContinueFromIntakeStep("crime", app, stateCode, continueAcks)) return;
     if (
       !crime.dateOfCrime ||
       !crime.crimeAddress.trim() ||
       !crime.crimeCity.trim() ||
       !crime.reportingAgency.trim()
     ) {
-    
-alert(t("intake.validation.crimeMinimumRequired"));
       return;
     }
+    if (reviewWalkthroughActive) markReviewStepPassed("crime");
+    markStepContinued("crime");
     setStep("losses");
-    setMaxStepIndex((prev) => Math.max(prev, 3));
   };
 
   const handleNextFromLosses = () => {
-    const anySelected = Object.values(losses).some(Boolean);
-    if (!anySelected) {
-      const ok = window.confirm(t("intake.confirm.noLossesSelected"))
-
-      if (!ok) return;
-    }
+    if (!isReadOnly && !canContinueFromIntakeStep("losses", app, stateCode, continueAcks)) return;
+    if (reviewWalkthroughActive) markReviewStepPassed("losses");
+    markStepContinued("losses");
     setStep("medical");
-    setMaxStepIndex((prev) => Math.max(prev, 4));
   };
 
 const handleNextFromMedical = () => {
-  // For now we don't force them to enter medical details; they might not have medical costs.
+  if (!isReadOnly && !canContinueFromIntakeStep("medical", app, stateCode, continueAcks)) return;
+  if (reviewWalkthroughActive) markReviewStepPassed("medical");
+  markStepContinued("medical");
   setStep("employment");
-  setMaxStepIndex((prev) => Math.max(prev, 5));
 };
 
 const handleNextFromEmployment = () => {
-  if (losses.lossOfEarnings && !employment.employmentHistory.length) {
-    const ok = window.confirm(t("intake.confirm.lossOfEarningsNoEmployer"))
-
-    if (!ok) return;
-  }
+  if (!isReadOnly && !canContinueFromIntakeStep("employment", app, stateCode, continueAcks)) return;
+  if (reviewWalkthroughActive) markReviewStepPassed("employment");
+  markStepContinued("employment");
   setStep("funeral");
-  setMaxStepIndex((prev) => Math.max(prev, 6));
 };
 
 const handleNextFromFuneral = () => {
-  // If they selected funeral-related losses but left everything blank, soft-warning only.
-  const funeralSelected = losses.funeralBurial || losses.headstone;
-  const noFuneralData =
-    !funeral.funeralHomeName &&
-    !funeral.funeralBillTotal &&
-    (!funeral.payments || funeral.payments.length === 0);
-
-  if (funeralSelected && noFuneralData) {
-    const ok = window.confirm(t("intake.confirm.funeralSelectedNoData"));
-    if (!ok) return;
-  }
-
-  // ✅ Correct next step
+  if (!isReadOnly && !canContinueFromIntakeStep("funeral", app, stateCode, continueAcks)) return;
+  if (reviewWalkthroughActive) markReviewStepPassed("funeral");
+  markStepContinued("funeral");
   setStep("documents");
-  setMaxStepIndex((prev) => Math.max(prev, 7));
 };
 
 
 const handleBack = () => {
-  if (step === "applicant") setStep("victim");
-  else if (step === "crime") setStep("applicant");
+  if (reviewWalkthroughActive && step === "applicant") {
+    setReviewWalkthroughActive(false);
+    setReviewWalkthroughVerified(new Set());
+    setStep("summary");
+    return;
+  }
+  if (step === "applicant") return;
+  else if (step === "victim") setStep("applicant");
+  else if (step === "crime") setStep("victim");
   else if (step === "losses") setStep("crime");
   else if (step === "medical") setStep("losses");
   else if (step === "employment") setStep("medical");
@@ -1050,29 +1233,97 @@ const handleBack = () => {
   {tf("intake.stepOf", { current: String(intakeStepCurrent), total: String(intakeStepTotal) })}
 </p>
 <div className="flex flex-wrap gap-2 text-xs text-slate-300">
-<StepBadge label={t("intake.steps.victim")} active={step === "victim"} onClick={() => setStep("victim")} />
-<StepBadge label={t("intake.steps.applicant")} active={step === "applicant"} onClick={() => setStep("applicant")} />
-<StepBadge label={t("intake.steps.crime")} active={step === "crime"} onClick={() => setStep("crime")} />
-<StepBadge label={t("intake.steps.losses")} active={step === "losses"} onClick={() => setStep("losses")} />
-<StepBadge label={t("intake.steps.medical")} active={step === "medical"} onClick={() => setStep("medical")} />
-<StepBadge label={t("intake.steps.employment")} active={step === "employment"} onClick={() => setStep("employment")} />
-<StepBadge label={t("intake.steps.funeral")} active={step === "funeral"} onClick={() => setStep("funeral")} />
-<StepBadge label={t("intake.steps.documents")} active={step === "documents"} onClick={() => setStep("documents")} />
-<StepBadge label={t("intake.steps.summary")} active={step === "summary"} onClick={() => setStep("summary")} />
+            <StepBadge
+              label={t("intake.steps.applicant")}
+              active={step === "applicant"}
+              complete={intakeTabDisplayComplete("applicant", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("applicant")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("applicant")}
+            />
+            <StepBadge
+              label={t("intake.steps.victim")}
+              active={step === "victim"}
+              complete={intakeTabDisplayComplete("victim", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("victim")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("victim")}
+            />
+            <StepBadge
+              label={t("intake.steps.crime")}
+              active={step === "crime"}
+              complete={intakeTabDisplayComplete("crime", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("crime")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("crime")}
+            />
+            <StepBadge
+              label={t("intake.steps.losses")}
+              active={step === "losses"}
+              complete={intakeTabDisplayComplete("losses", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("losses")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("losses")}
+            />
+            <StepBadge
+              label={t("intake.steps.medical")}
+              active={step === "medical"}
+              complete={intakeTabDisplayComplete("medical", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("medical")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("medical")}
+            />
+            <StepBadge
+              label={t("intake.steps.employment")}
+              active={step === "employment"}
+              complete={intakeTabDisplayComplete("employment", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("employment")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("employment")}
+            />
+            <StepBadge
+              label={t("intake.steps.funeral")}
+              active={step === "funeral"}
+              complete={intakeTabDisplayComplete("funeral", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("funeral")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("funeral")}
+            />
+            <StepBadge
+              label={t("intake.steps.documents")}
+              active={step === "documents"}
+              complete={intakeTabDisplayComplete("documents", app, stateCode, stepsContinuedFrom)}
+              reviewed={reviewWalkthroughVerified.has("documents")}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("documents")}
+            />
+            <StepBadge
+              label={t("intake.steps.summary")}
+              active={step === "summary"}
+              complete={intakeTabDisplayComplete("summary", app, stateCode, stepsContinuedFrom)}
+              reviewed={false}
+              disabled={reviewWalkthroughActive}
+              onClick={() => handleStepNav("summary")}
+            />
 </div>
+{reviewWalkthroughActive && (
+  <p className="text-[11px] text-emerald-200/90 rounded-lg border border-emerald-500/35 bg-emerald-950/35 px-3 py-2">
+    {t("intake.requiredBeforeContinue.reviewModeBanner")}
+  </p>
+)}
 </div>
 
         {/* Step content */}
 <div className="space-y-10">
-{step === "victim" && (
-<VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
-)}
-
 {step === "applicant" && (
   <>
     <ApplicantForm applicant={applicant} onChange={updateApplicant} stateCode={stateCode} isReadOnly={isReadOnly} />
     <ContactForm contact={contact} onChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
   </>
+)}
+
+{step === "victim" && (
+<VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
 )}
 
 {step === "crime" && (
@@ -1171,12 +1422,13 @@ const handleBack = () => {
     onSaveCase={handleSaveCase}
     fieldState={fieldState}
     app={app}
-    onGoToStep={setStep}
+    onGoToStep={handleStepNav}
     maxStepIndex={maxStepIndex}
     canRunMatch={canEdit && !isReadOnly}
     caseEligibilityResult={loadedCaseEligibility}
     caseStatus={loadedCaseStatus}
     assignedAdvocateId={loadedAssignedAdvocateId}
+    onReviewApplication={!isReadOnly && canEdit ? startApplicationReviewWalkthrough : undefined}
   />
 )}
 </div>
@@ -1188,7 +1440,7 @@ const handleBack = () => {
   <button
     type="button"
     onClick={handleBack}
-    disabled={step === "victim"}
+    disabled={step === "applicant" && !reviewWalkthroughActive}
     className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
   >
 {t("intake.actions.back")}
@@ -1230,22 +1482,34 @@ title={
 </div>
 
   {/* Right side: step-specific primary button */}
-  <div className="flex items-center justify-end">
-    {step === "victim" && (
+  <div className="flex flex-col items-end gap-1.5">
+    {step !== "summary" && !isReadOnly && !continuePrimaryEnabled && (
       <button
         type="button"
-        onClick={handleNextFromVictim}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        onClick={() => setRequiredFieldsModalOpen(true)}
+        className="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2"
+      >
+        {t("intake.requiredBeforeContinue.viewRequiredItems")}
+      </button>
+    )}
+    <div className="flex items-center justify-end">
+    {step === "applicant" && (
+      <button
+        type="button"
+        onClick={handleNextFromApplicant}
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
     )}
 
-    {step === "applicant" && (
+    {step === "victim" && (
       <button
         type="button"
-        onClick={handleNextFromApplicant}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        onClick={handleNextFromVictim}
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1255,7 +1519,8 @@ title={
       <button
         type="button"
         onClick={handleNextFromCrime}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1265,7 +1530,8 @@ title={
       <button
         type="button"
         onClick={handleNextFromLosses}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1275,7 +1541,8 @@ title={
       <button
         type="button"
         onClick={handleNextFromMedical}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1285,7 +1552,8 @@ title={
       <button
         type="button"
         onClick={handleNextFromEmployment}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1295,7 +1563,8 @@ title={
       <button
         type="button"
         onClick={handleNextFromFuneral}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1304,8 +1573,18 @@ title={
     {step === "documents" && (
       <button
         type="button"
-        onClick={() => setStep("summary")}
-        className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+        disabled={!continuePrimaryEnabled}
+        className={continueButtonClass}
+        onClick={() => {
+          if (!continuePrimaryEnabled) return;
+          if (tryNavigateToIntakeStep("summary")) {
+            markStepContinued("documents");
+            if (reviewWalkthroughActive) {
+              markReviewStepPassed("documents");
+              setReviewWalkthroughActive(false);
+            }
+          }
+        }}
       >
 {t("intake.actions.continue")}
       </button>
@@ -1315,7 +1594,7 @@ title={
       (intakeReview.missing.length > 0 ? (
         <button
           type="button"
-          onClick={() => setStep(intakeReview.missing[0].stepHint as IntakeStep)}
+          onClick={() => handleStepNav(intakeReview.missing[0].stepHint as IntakeStep)}
           className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
         >
           {t("intake.actions.continue")}
@@ -1329,6 +1608,7 @@ title={
           {t("intake.actions.reviewSubmit")}
         </button>
       ))}
+    </div>
   </div>
 </div>
 
@@ -1412,6 +1692,80 @@ placeholder={t("nxtGuide.placeholders.ask")}
           </button>
         )}
       </div>
+      {requiredFieldsModalOpen && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="intake-required-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setRequiredFieldsModalOpen(false);
+          }}
+        >
+          <div className="bg-slate-900 border border-slate-600 rounded-xl max-w-md w-full p-5 shadow-xl space-y-4">
+            <h3 id="intake-required-modal-title" className="text-sm font-semibold text-slate-50">
+              {t("intake.requiredBeforeContinue.modalTitle")}
+            </h3>
+            {missingKeysForCurrentStep.length > 0 ? (
+              <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
+                {missingKeysForCurrentStep.map((key) => (
+                  <li key={key}>{t(key)}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-slate-400">{t("intake.requiredBeforeContinue.close")}</p>
+            )}
+            <div className="flex flex-col gap-2 pt-1">
+              {missingKeysForCurrentStep.includes(lossCategoryMissingKey) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLossesNoneAck(true);
+                    setRequiredFieldsModalOpen(false);
+                  }}
+                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                >
+                  {t("intake.requiredBeforeContinue.ackLossesNone")}
+                </button>
+              )}
+              {missingKeysForCurrentStep.includes(employmentMissingKey) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmploymentNoEmployerAck(true);
+                    setRequiredFieldsModalOpen(false);
+                  }}
+                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                >
+                  {t("intake.requiredBeforeContinue.ackEmploymentNoEmployer")}
+                </button>
+              )}
+              {missingKeysForCurrentStep.includes(funeralMissingKey) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFuneralIncompleteAck(true);
+                    setRequiredFieldsModalOpen(false);
+                  }}
+                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                >
+                  {t("intake.requiredBeforeContinue.ackFuneralContinue")}
+                </button>
+              )}
+            </div>
+            <div className="flex justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setRequiredFieldsModalOpen(false)}
+                className="text-xs rounded-lg bg-slate-700 px-4 py-2 font-medium text-white hover:bg-slate-600 transition"
+              >
+                {t("intake.requiredBeforeContinue.close")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {saveToast && (
   <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full border border-slate-700 bg-slate-950/90 px-4 py-2 text-xs text-slate-100 shadow-lg">
     {saveToast}
@@ -1425,21 +1779,39 @@ placeholder={t("nxtGuide.placeholders.ask")}
 function StepBadge({
   label,
   active,
+  complete,
+  reviewed,
   disabled,
   onClick,
 }: {
   label: string;
   active: boolean;
+  /** Required fields for this section are satisfied (amber highlight). */
+  complete?: boolean;
+  /** User completed this step in “Review application” walkthrough (green). */
+  reviewed?: boolean;
   disabled?: boolean;
   onClick?: () => void;
 }) {
   const baseClasses =
     "px-2 py-1 rounded-full border text-[11px] transition";
-  const stateClasses = disabled
-    ? "border-slate-800 bg-slate-900 text-slate-500 cursor-not-allowed opacity-60"
-    : active
-    ? "border-blue-500 bg-blue-900/30 text-slate-200 cursor-pointer"
-    : "border-slate-700 bg-slate-900 text-slate-400 hover:border-blue-500 hover:text-slate-200 cursor-pointer";
+  let stateClasses: string;
+  if (disabled) {
+    stateClasses =
+      "border-slate-800 bg-slate-900 text-slate-500 cursor-not-allowed opacity-60";
+  } else if (active) {
+    stateClasses =
+      "border-blue-500 bg-blue-900/30 text-slate-200 cursor-pointer ring-1 ring-blue-500/40";
+  } else if (reviewed) {
+    stateClasses =
+      "border-emerald-500/80 bg-emerald-500/15 text-emerald-100 hover:border-emerald-400 hover:bg-emerald-500/20 cursor-pointer";
+  } else if (complete) {
+    stateClasses =
+      "border-amber-500/70 bg-amber-500/15 text-amber-100 hover:border-amber-400 hover:bg-amber-500/20 cursor-pointer";
+  } else {
+    stateClasses =
+      "border-slate-700 bg-slate-900 text-slate-400 hover:border-blue-500 hover:text-slate-200 cursor-pointer";
+  }
 
   return (
     <button
@@ -4160,6 +4532,7 @@ function SummaryView({
   caseEligibilityResult = null,
   caseStatus = "draft",
   assignedAdvocateId = null,
+  onReviewApplication,
 }: {
   caseId: string | null;
   stateCode: "IL" | "IN";
@@ -4185,6 +4558,8 @@ function SummaryView({
   caseEligibilityResult?: EligibilityResult | null;
   caseStatus?: string;
   assignedAdvocateId?: string | null;
+  /** Linear walkthrough from step 1; tab bar locked until finished. */
+  onReviewApplication?: () => void;
 }) {
   const router = useRouter();
   const { t, tf } = useI18n();
@@ -4363,6 +4738,18 @@ setInviteResult(
       )}
 
       <p className="text-xs text-slate-300">{t("forms.summary.description")}</p>
+
+      {onReviewApplication && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={onReviewApplication}
+            className="text-xs rounded-lg border border-emerald-500/50 bg-emerald-950/40 px-4 py-2 font-semibold text-emerald-100 hover:bg-emerald-900/50 transition"
+          >
+            {t("intake.requiredBeforeContinue.reviewApplication")}
+          </button>
+        </div>
+      )}
 
       <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">

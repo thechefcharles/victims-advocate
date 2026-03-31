@@ -298,6 +298,28 @@ Always answer in the same language the user is using.
 function buildMissingSummary(step: string, app: CompensationApplication): string {
   const missing: string[] = [];
 
+  if (step === "applicant") {
+    if (!app.applicant.isSameAsVictim) {
+      if (!app.applicant.firstName?.trim()) missing.push("- Applicant first name");
+      if (!app.applicant.lastName?.trim()) missing.push("- Applicant last name");
+      if (!app.applicant.dateOfBirth) missing.push("- Applicant date of birth");
+      if (!app.applicant.relationshipToVictim?.trim()) missing.push("- Relationship to victim");
+      if (!app.applicant.streetAddress?.trim()) missing.push("- Applicant street address");
+      if (!app.applicant.city?.trim()) missing.push("- Applicant city");
+      if (!app.applicant.state?.trim()) missing.push("- Applicant state");
+      if (!app.applicant.zip?.trim()) missing.push("- Applicant ZIP");
+    }
+    if (app.contact.prefersEnglish === false && !app.contact.preferredLanguage?.trim()) {
+      missing.push("- Preferred language");
+    }
+    if (
+      app.contact.workingWithAdvocate &&
+      (!app.contact.advocateName?.trim() || !app.contact.advocatePhone?.trim())
+    ) {
+      missing.push("- Advocate name and phone");
+    }
+  }
+
   if (step === "victim") {
     if (!app.victim.firstName?.trim()) missing.push("- Victim first name");
     if (!app.victim.lastName?.trim()) missing.push("- Victim last name");

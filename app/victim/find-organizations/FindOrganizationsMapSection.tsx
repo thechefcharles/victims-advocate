@@ -1,11 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
+import { OrganizationLearnMoreModal } from "@/components/victim/OrganizationLearnMoreModal";
+import { ROUTES, victimConnectOrganizationHelpUrl } from "@/lib/routes/pageRegistry";
+import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 const OrganizationsMap = dynamic(
   () =>
@@ -30,6 +34,12 @@ export type OrgFromApi = {
   region_label: string;
   /** USPS state codes from org coverage (empty = unspecified geography). */
   states: string[];
+  external?: boolean;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  program_type?: string | null;
+  response_accessibility?: ResponseAccessibilityPublic | null;
 };
 
 type Copy = {
@@ -57,6 +67,21 @@ type Copy = {
   sendReferralDone: string;
   sendReferralFailed: string;
   sendReferralDuplicate: string;
+  learnMoreTitle: string;
+  learnMore: string;
+  learnMoreClose: string;
+  organizationProfile: string;
+  connectWithOrg: string;
+  externalDirectoryNote: string;
+  profileUnavailableExternal: string;
+  connectUnavailableExternal: string;
+  directoryProgramType: string;
+  directoryAddress: string;
+  directoryPhone: string;
+  directoryWebsite: string;
+  fieldPendingExternal: string;
+  fieldPendingFallback: string;
+  directoryContactHeading: string;
 };
 
 function referralPostErrorMessage(
@@ -76,6 +101,38 @@ function referralPostErrorMessage(
   return getApiErrorMessage(json, copy.sendReferralFailed);
 }
 
+function externalDirectoryPills(o: OrgFromApi, copy: Copy): { label: string; value: string }[] {
+  const pills: { label: string; value: string }[] = [];
+  if (o.program_type?.trim()) {
+    pills.push({ label: copy.directoryProgramType, value: o.program_type.trim() });
+  }
+  if (o.address?.trim()) {
+    pills.push({ label: copy.directoryAddress, value: o.address.trim() });
+  }
+  if (o.phone?.trim()) {
+    pills.push({ label: copy.directoryPhone, value: o.phone.trim() });
+  }
+  const web = safeHttpUrl(o.website);
+  if (web && o.website?.trim()) {
+    pills.push({
+      label: copy.directoryWebsite,
+      value: o.website!.replace(/^https?:\/\//i, ""),
+    });
+  }
+  return pills;
+}
+
+function safeHttpUrl(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
+
 function geoErrorMessage(
   err: GeolocationPositionError,
   copy: Pick<Copy, "locationTimeout" | "positionUnavailable" | "locationUnavailable">
@@ -88,10 +145,16 @@ function geoErrorMessage(
 export function FindOrganizationsMapSection({
   copy,
   referCaseId,
+  presetUserPosition,
+  mapUserLabel,
 }: {
   copy: Copy;
   /** When set (e.g. from `?case=`), show “Send referral” for each listed org. */
   referCaseId?: string;
+  /** When set, skip browser geolocation and center the map on this point (e.g. geocoded home address). */
+  presetUserPosition?: { lat: number; lng: number } | null;
+  /** Label for the user marker on the map (defaults to copy.yourLocation). */
+  mapUserLabel?: string;
 }) {
   const [raw, setRaw] = useState<OrgFromApi[] | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
@@ -99,10 +162,15 @@ export function FindOrganizationsMapSection({
     "idle"
   );
   const [geoErr, setGeoErr] = useState<string | null>(null);
-  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoUserPos, setGeoUserPos] = useState<{ lat: number; lng: number } | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const [referBusyId, setReferBusyId] = useState<string | null>(null);
   const [referFeedback, setReferFeedback] = useState<{ orgId: string; text: string } | null>(null);
+  const [learnMoreOrg, setLearnMoreOrg] = useState<OrgFromApi | null>(null);
+
+  const userLabelOnMap = mapUserLabel ?? copy.yourLocation;
+  const usePresetLocation = presetUserPosition != null;
+  const mapCenterPos = presetUserPosition ?? geoUserPos;
 
   useEffect(() => {
     let cancelled = false;
@@ -148,7 +216,7 @@ export function FindOrganizationsMapSection({
     setGeoErr(null);
 
     const onSuccess = (pos: GeolocationPosition) => {
-      setUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setGeoUserPos({ lat: pos.coords.latitude, lng: pos.coords.longitude });
       setGeoStatus("granted");
     };
 
@@ -181,14 +249,14 @@ export function FindOrganizationsMapSection({
   }, [copy]);
 
   const sorted = useMemo(() => {
-    if (!raw || !userPos) return null;
+    if (!raw || !mapCenterPos) return null;
     const withDist = raw.map((o) => ({
       ...o,
-      distanceMiles: distanceMiles(userPos.lat, userPos.lng, o.lat, o.lng),
+      distanceMiles: distanceMiles(mapCenterPos.lat, mapCenterPos.lng, o.lat, o.lng),
     }));
     withDist.sort((a, b) => a.distanceMiles - b.distanceMiles);
     return withDist;
-  }, [raw, userPos]);
+  }, [raw, mapCenterPos]);
 
   const mapOrgs: MapOrgMarker[] = useMemo(() => {
     if (!sorted) return [];
@@ -199,6 +267,10 @@ export function FindOrganizationsMapSection({
       lng: o.lng,
       distanceMiles: o.distanceMiles,
       approximate: o.approximate,
+      address: o.address,
+      phone: o.phone,
+      website: o.website,
+      program_type: o.program_type,
     }));
   }, [sorted]);
 
@@ -252,7 +324,8 @@ export function FindOrganizationsMapSection({
       <p className="text-sm text-slate-300 leading-relaxed">{copy.mapIntro}</p>
       <p className="text-xs text-slate-500 leading-relaxed">{copy.privacyNote}</p>
 
-      {geoStatus === "idle" || geoStatus === "denied" || geoStatus === "error" ? (
+      {!usePresetLocation &&
+      (geoStatus === "idle" || geoStatus === "denied" || geoStatus === "error") ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <button
             type="button"
@@ -270,21 +343,21 @@ export function FindOrganizationsMapSection({
         </div>
       ) : null}
 
-      {geoStatus === "requesting" ? (
+      {!usePresetLocation && geoStatus === "requesting" ? (
         <div className="space-y-2">
           <p className="text-sm text-slate-400">{copy.sharing}</p>
           <MapSkeleton />
         </div>
       ) : null}
 
-      {userPos && sorted && sorted.length > 0 ? (
+      {mapCenterPos && sorted && sorted.length > 0 ? (
         <>
           <OrganizationsMap
-            key={mapOrgsKey + `${userPos.lat}:${userPos.lng}`}
-            userLat={userPos.lat}
-            userLng={userPos.lng}
+            key={mapOrgsKey + `${mapCenterPos.lat}:${mapCenterPos.lng}`}
+            userLat={mapCenterPos.lat}
+            userLng={mapCenterPos.lng}
             orgs={mapOrgs}
-            userLabel={copy.yourLocation}
+            userLabel={userLabelOnMap}
             orgPopupSuffix={copy.approximateNote}
           />
           <ul className="space-y-2 text-sm">
@@ -294,23 +367,103 @@ export function FindOrganizationsMapSection({
                 className="rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-slate-200"
               >
                 <div className="font-medium text-white">{o.name}</div>
+                {o.program_type ? (
+                  <div className="mt-0.5 text-xs text-slate-400">{o.program_type}</div>
+                ) : null}
                 <div className="mt-1 text-xs text-slate-400">
                   {o.distanceMiles.toFixed(1)} {copy.milesAway}
                   {o.approximate ? ` · ${copy.approximateNote}` : ""}
                 </div>
                 <div className="mt-1 text-xs text-slate-500">{o.region_label}</div>
+                {o.address ? (
+                  <div className="mt-1 text-xs text-slate-400 leading-snug">{o.address}</div>
+                ) : null}
+                {o.phone ? (
+                  <div className="mt-1 text-xs">
+                    {o.phone.replace(/\D/g, "").length >= 7 ? (
+                      <a
+                        href={`tel:${o.phone.replace(/[^\d+]/g, "")}`}
+                        className="text-blue-300 hover:underline"
+                      >
+                        {o.phone}
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">{o.phone}</span>
+                    )}
+                  </div>
+                ) : null}
+                {safeHttpUrl(o.website) ? (
+                  <div className="mt-1 text-xs truncate">
+                    <a
+                      href={safeHttpUrl(o.website)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-300 hover:underline"
+                    >
+                      {o.website!.replace(/^https?:\/\//i, "")}
+                    </a>
+                  </div>
+                ) : null}
                 <div className="mt-1 text-xs">
-                  {o.accepting_clients ? (
+                  {o.external ? (
+                    <span className="text-slate-500">Directory listing</span>
+                  ) : o.accepting_clients ? (
                     <span className="text-emerald-400/90">{copy.accepting}</span>
                   ) : (
                     <span className="text-slate-500">{copy.notAccepting}</span>
                   )}
-                  <span className="text-slate-600"> · </span>
-                  <span className="text-slate-500">
-                    {copy.capacity}: {o.capacity_status}
-                  </span>
+                  {!o.external ? (
+                    <>
+                      <span className="text-slate-600"> · </span>
+                      <span className="text-slate-500">
+                        {copy.capacity}: {o.capacity_status}
+                      </span>
+                    </>
+                  ) : null}
                 </div>
-                {referCaseId ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLearnMoreOrg(o)}
+                    className="rounded-lg border border-slate-600 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                  >
+                    {copy.learnMore}
+                  </button>
+                  {!o.external ? (
+                    <Link
+                      href={ROUTES.victimOrganization(o.id)}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-500 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                    >
+                      {copy.organizationProfile}
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      title={copy.profileUnavailableExternal}
+                    >
+                      {copy.organizationProfile}
+                    </span>
+                  )}
+                  {!o.external ? (
+                    <Link
+                      href={victimConnectOrganizationHelpUrl({
+                        organizationId: o.id,
+                        caseId: referCaseId,
+                      })}
+                      className="inline-flex items-center justify-center rounded-lg bg-teal-600/90 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-500"
+                    >
+                      {copy.connectWithOrg}
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      title={copy.connectUnavailableExternal}
+                    >
+                      {copy.connectWithOrg}
+                    </span>
+                  )}
+                </div>
+                {referCaseId && !o.external ? (
                   <div className="mt-2">
                     {referFeedback?.orgId === o.id ? (
                       <p
@@ -370,6 +523,24 @@ export function FindOrganizationsMapSection({
               </li>
             ))}
           </ul>
+          <OrganizationLearnMoreModal
+            open={learnMoreOrg !== null}
+            onClose={() => setLearnMoreOrg(null)}
+            orgName={learnMoreOrg?.name ?? ""}
+            external={Boolean(learnMoreOrg?.external)}
+            directoryContactPills={
+              learnMoreOrg?.external ? externalDirectoryPills(learnMoreOrg, copy) : undefined
+            }
+            responseAccessibility={learnMoreOrg?.response_accessibility ?? null}
+            copy={{
+              title: copy.learnMoreTitle,
+              close: copy.learnMoreClose,
+              externalDirectoryNote: copy.externalDirectoryNote,
+              fieldPendingExternal: copy.fieldPendingExternal,
+              fieldPendingFallback: copy.fieldPendingFallback,
+              directoryContactHeading: copy.directoryContactHeading,
+            }}
+          />
         </>
       ) : null}
 

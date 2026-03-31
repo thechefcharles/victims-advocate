@@ -29,6 +29,11 @@ export type OrgFromApi = {
   capacity_status: string;
   region_label: string;
   states: string[];
+  external?: boolean;
+  address?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  program_type?: string | null;
 };
 
 type Copy = {
@@ -62,6 +67,17 @@ type Copy = {
   orgSearchNoMatches: string;
   orgSelectedTitle: string;
 };
+
+function safeHttpUrl(raw: string | null | undefined): string | null {
+  if (!raw?.trim()) return null;
+  try {
+    const u = new URL(raw.trim());
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
 
 function geoErrorMessage(
   err: GeolocationPositionError,
@@ -212,6 +228,10 @@ export function AdvocateConnectOrganizationsSection({
       lng: o.lng,
       distanceMiles: o.distanceMiles,
       approximate: o.approximate,
+      address: o.address,
+      phone: o.phone,
+      website: o.website,
+      program_type: o.program_type,
     }));
   }, [sorted]);
 
@@ -248,7 +268,10 @@ export function AdvocateConnectOrganizationsSection({
       (o) =>
         o.name.toLowerCase().includes(q) ||
         o.region_label.toLowerCase().includes(q) ||
-        o.capacity_status.toLowerCase().includes(q)
+        o.capacity_status.toLowerCase().includes(q) ||
+        (o.address?.toLowerCase().includes(q) ?? false) ||
+        (o.phone?.toLowerCase().includes(q) ?? false) ||
+        (o.program_type?.toLowerCase().includes(q) ?? false)
     );
   }, [displayOrgs, orgSearchQuery]);
 
@@ -479,6 +502,9 @@ export function AdvocateConnectOrganizationsSection({
                 {copy.orgSelectedTitle}
               </p>
               <div className="font-medium text-white">{selectedOrg.name}</div>
+              {selectedOrg.program_type ? (
+                <div className="mt-0.5 text-xs text-slate-400">{selectedOrg.program_type}</div>
+              ) : null}
               {typeof selectedOrg.distanceMiles === "number" ? (
                 <div className="mt-1 text-xs text-slate-400">
                   {selectedOrg.distanceMiles.toFixed(1)} {copy.milesAway}
@@ -486,25 +512,62 @@ export function AdvocateConnectOrganizationsSection({
                 </div>
               ) : null}
               <div className="mt-1 text-xs text-slate-500">{selectedOrg.region_label}</div>
+              {selectedOrg.address ? (
+                <div className="mt-1 text-xs text-slate-400 leading-snug">{selectedOrg.address}</div>
+              ) : null}
+              {selectedOrg.phone ? (
+                <div className="mt-1 text-xs">
+                  {selectedOrg.phone.replace(/\D/g, "").length >= 7 ? (
+                    <a
+                      href={`tel:${selectedOrg.phone.replace(/[^\d+]/g, "")}`}
+                      className="text-blue-300 hover:underline"
+                    >
+                      {selectedOrg.phone}
+                    </a>
+                  ) : (
+                    <span className="text-slate-400">{selectedOrg.phone}</span>
+                  )}
+                </div>
+              ) : null}
+              {safeHttpUrl(selectedOrg.website) ? (
+                <div className="mt-1 text-xs truncate">
+                  <a
+                    href={safeHttpUrl(selectedOrg.website)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-300 hover:underline"
+                  >
+                    {selectedOrg.website!.replace(/^https?:\/\//i, "")}
+                  </a>
+                </div>
+              ) : null}
               <div className="mt-2 text-xs">
-                {selectedOrg.accepting_clients ? (
+                {selectedOrg.external ? (
+                  <span className="text-slate-500">Directory listing (not on NxtStps)</span>
+                ) : selectedOrg.accepting_clients ? (
                   <span className="text-emerald-400/90">{copy.accepting}</span>
                 ) : (
                   <span className="text-slate-500">{copy.notAccepting}</span>
                 )}
-                <span className="text-slate-600"> · </span>
-                <span className="text-slate-500">
-                  {copy.capacity}: {selectedOrg.capacity_status}
-                </span>
+                {!selectedOrg.external ? (
+                  <>
+                    <span className="text-slate-600"> · </span>
+                    <span className="text-slate-500">
+                      {copy.capacity}: {selectedOrg.capacity_status}
+                    </span>
+                  </>
+                ) : null}
               </div>
-              <button
-                type="button"
-                onClick={() => void submitJoinRequest(selectedOrg.id)}
-                disabled={requestingId === selectedOrg.id || Boolean(requestMsg)}
-                className="mt-4 w-full rounded-lg bg-teal-600/90 px-3 py-2.5 text-xs font-semibold text-white hover:bg-teal-500 disabled:opacity-50 sm:w-auto"
-              >
-                {requestingId === selectedOrg.id ? copy.requestBusy : copy.requestJoin}
-              </button>
+              {!selectedOrg.external ? (
+                <button
+                  type="button"
+                  onClick={() => void submitJoinRequest(selectedOrg.id)}
+                  disabled={requestingId === selectedOrg.id || Boolean(requestMsg)}
+                  className="mt-4 w-full rounded-lg bg-teal-600/90 px-3 py-2.5 text-xs font-semibold text-white hover:bg-teal-500 disabled:opacity-50 sm:w-auto"
+                >
+                  {requestingId === selectedOrg.id ? copy.requestBusy : copy.requestJoin}
+                </button>
+              ) : null}
             </div>
           ) : null}
         </div>

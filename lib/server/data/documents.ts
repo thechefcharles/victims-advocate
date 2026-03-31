@@ -14,7 +14,8 @@ import {
 } from "@/lib/server/auth/simpleAccess";
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { AppError } from "@/lib/server/api";
-import { sameUserId } from "./ids";
+import { logger } from "@/lib/server/logging";
+import { normalizeCaseIdParam, sameUserId } from "./ids";
 
 export type DocumentRow = {
   id: string;
@@ -171,19 +172,35 @@ export async function listCaseDocuments(params: {
   ctx: AuthContext;
   includeRestricted?: boolean;
   req?: Request | null;
+  /** When set, skips a second `cases` fetch — avoids redundant PostgREST calls that were erroring after a successful `select(*)`. */
+  preloadedCaseRow?: CaseRowMinimal | null;
 }): Promise<DocumentRow[]> {
-  const { caseId, ctx, includeRestricted = false, req: _req } = params;
+  const { caseId: rawCaseId, ctx, includeRestricted = false, req: _req, preloadedCaseRow } = params;
   void _req;
+  const caseId = normalizeCaseIdParam(rawCaseId);
   const supabase = getSupabaseAdmin();
 
-  const { data: caseRow, error: caseErr } = await supabase
-    .from("cases")
-    .select("id, organization_id, owner_user_id, assigned_advocate_id")
-    .eq("id", caseId)
-    .maybeSingle();
+  let caseRow: CaseRowMinimal;
+  if (preloadedCaseRow) {
+    caseRow = preloadedCaseRow;
+  } else {
+    const { data: fetched, error: caseErr } = await supabase
+      .from("cases")
+      .select("id, organization_id, owner_user_id, assigned_advocate_id")
+      .eq("id", caseId)
+      .maybeSingle();
 
-  if (caseErr) throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
-  if (!caseRow) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+    if (caseErr) {
+      logger.error("documents.list_case_lookup_failed", {
+        caseId,
+        message: String(caseErr.message ?? ""),
+        code: String((caseErr as { code?: string }).code ?? ""),
+      });
+      throw new AppError("INTERNAL", "Case lookup failed", undefined, 500);
+    }
+    if (!fetched) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
+    caseRow = fetched as CaseRowMinimal;
+  }
 
   const { data: accessRow, error: accessError } = await supabase
     .from("case_access")
