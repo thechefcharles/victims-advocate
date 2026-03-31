@@ -73,9 +73,14 @@ export async function POST(req: Request, context: RouteParams) {
       return apiFail("FORBIDDEN", "Edit access required to run matching", undefined, 403);
     }
 
-    const scopeOrgId = caseResult.case.organization_id as string;
+    const scopeOrgId = caseResult.case.organization_id as string | null;
     if (!scopeOrgId) {
-      return apiFail("INTERNAL", "Case organization missing", undefined, 500);
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Link an organization to this case before running organization matching.",
+        undefined,
+        422
+      );
     }
 
     await logEvent({

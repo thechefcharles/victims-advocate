@@ -1,11 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
+import { OrganizationLearnMoreModal } from "@/components/victim/OrganizationLearnMoreModal";
+import { ROUTES, victimConnectOrganizationHelpUrl } from "@/lib/routes/pageRegistry";
+import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 const OrganizationsMap = dynamic(
   () =>
@@ -35,6 +39,7 @@ export type OrgFromApi = {
   phone?: string | null;
   website?: string | null;
   program_type?: string | null;
+  response_accessibility?: ResponseAccessibilityPublic | null;
 };
 
 type Copy = {
@@ -62,6 +67,21 @@ type Copy = {
   sendReferralDone: string;
   sendReferralFailed: string;
   sendReferralDuplicate: string;
+  learnMoreTitle: string;
+  learnMore: string;
+  learnMoreClose: string;
+  organizationProfile: string;
+  connectWithOrg: string;
+  externalDirectoryNote: string;
+  profileUnavailableExternal: string;
+  connectUnavailableExternal: string;
+  directoryProgramType: string;
+  directoryAddress: string;
+  directoryPhone: string;
+  directoryWebsite: string;
+  fieldPendingExternal: string;
+  fieldPendingFallback: string;
+  directoryContactHeading: string;
 };
 
 function referralPostErrorMessage(
@@ -79,6 +99,27 @@ function referralPostErrorMessage(
     }
   }
   return getApiErrorMessage(json, copy.sendReferralFailed);
+}
+
+function externalDirectoryPills(o: OrgFromApi, copy: Copy): { label: string; value: string }[] {
+  const pills: { label: string; value: string }[] = [];
+  if (o.program_type?.trim()) {
+    pills.push({ label: copy.directoryProgramType, value: o.program_type.trim() });
+  }
+  if (o.address?.trim()) {
+    pills.push({ label: copy.directoryAddress, value: o.address.trim() });
+  }
+  if (o.phone?.trim()) {
+    pills.push({ label: copy.directoryPhone, value: o.phone.trim() });
+  }
+  const web = safeHttpUrl(o.website);
+  if (web && o.website?.trim()) {
+    pills.push({
+      label: copy.directoryWebsite,
+      value: o.website!.replace(/^https?:\/\//i, ""),
+    });
+  }
+  return pills;
 }
 
 function safeHttpUrl(raw: string | null | undefined): string | null {
@@ -125,6 +166,7 @@ export function FindOrganizationsMapSection({
   const [retryKey, setRetryKey] = useState(0);
   const [referBusyId, setReferBusyId] = useState<string | null>(null);
   const [referFeedback, setReferFeedback] = useState<{ orgId: string; text: string } | null>(null);
+  const [learnMoreOrg, setLearnMoreOrg] = useState<OrgFromApi | null>(null);
 
   const userLabelOnMap = mapUserLabel ?? copy.yourLocation;
   const usePresetLocation = presetUserPosition != null;
@@ -379,6 +421,48 @@ export function FindOrganizationsMapSection({
                     </>
                   ) : null}
                 </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLearnMoreOrg(o)}
+                    className="rounded-lg border border-slate-600 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                  >
+                    {copy.learnMore}
+                  </button>
+                  {!o.external ? (
+                    <Link
+                      href={ROUTES.victimOrganization(o.id)}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-500 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                    >
+                      {copy.organizationProfile}
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      title={copy.profileUnavailableExternal}
+                    >
+                      {copy.organizationProfile}
+                    </span>
+                  )}
+                  {!o.external ? (
+                    <Link
+                      href={victimConnectOrganizationHelpUrl({
+                        organizationId: o.id,
+                        caseId: referCaseId,
+                      })}
+                      className="inline-flex items-center justify-center rounded-lg bg-teal-600/90 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-teal-500"
+                    >
+                      {copy.connectWithOrg}
+                    </Link>
+                  ) : (
+                    <span
+                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      title={copy.connectUnavailableExternal}
+                    >
+                      {copy.connectWithOrg}
+                    </span>
+                  )}
+                </div>
                 {referCaseId && !o.external ? (
                   <div className="mt-2">
                     {referFeedback?.orgId === o.id ? (
@@ -439,6 +523,24 @@ export function FindOrganizationsMapSection({
               </li>
             ))}
           </ul>
+          <OrganizationLearnMoreModal
+            open={learnMoreOrg !== null}
+            onClose={() => setLearnMoreOrg(null)}
+            orgName={learnMoreOrg?.name ?? ""}
+            external={Boolean(learnMoreOrg?.external)}
+            directoryContactPills={
+              learnMoreOrg?.external ? externalDirectoryPills(learnMoreOrg, copy) : undefined
+            }
+            responseAccessibility={learnMoreOrg?.response_accessibility ?? null}
+            copy={{
+              title: copy.learnMoreTitle,
+              close: copy.learnMoreClose,
+              externalDirectoryNote: copy.externalDirectoryNote,
+              fieldPendingExternal: copy.fieldPendingExternal,
+              fieldPendingFallback: copy.fieldPendingFallback,
+              directoryContactHeading: copy.directoryContactHeading,
+            }}
+          />
         </>
       ) : null}
 

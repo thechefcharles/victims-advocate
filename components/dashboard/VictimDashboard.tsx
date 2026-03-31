@@ -975,11 +975,13 @@ export default function VictimDashboard({
                           </div>
                         </div>
                       ) : (
-                        <div className="mt-1.5 space-y-1.5">
-                          <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoOrg")}</p>
+                        <div className="mt-1.5 space-y-2">
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            {t("victimDashboard.supportTeamNoOrg")}
+                          </p>
                           <Link
                             href={findOrgHref}
-                            className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                            className="inline-flex w-full sm:w-auto min-h-[2.5rem] items-center justify-center rounded-full border border-slate-600/80 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-slate-200 shadow-sm transition hover:border-slate-500 hover:bg-slate-800/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
                           >
                             {t("victimDashboard.supportTeamAddOrgCta")}
                           </Link>

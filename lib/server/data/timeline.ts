@@ -11,7 +11,7 @@ export type TimelineEventRow = {
   id: string;
   created_at: string;
   case_id: string;
-  organization_id: string;
+  organization_id: string | null;
   actor_user_id: string | null;
   actor_role: string | null;
   event_type: string;
@@ -22,7 +22,7 @@ export type TimelineEventRow = {
 
 export type AppendTimelineParams = {
   caseId: string;
-  organizationId: string;
+  organizationId: string | null;
   actor: { userId: string; role?: string } | null;
   eventType: string;
   title: string;

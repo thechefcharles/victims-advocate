@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     let orgId: string | null = ctx.orgId ?? null;
-    if (!orgId) {
+    if (!orgId && ctx.role !== "victim") {
       const { data: legacyOrg } = await supabaseAdmin
         .from("organizations")
         .select("id")
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
         .maybeSingle();
       orgId = legacyOrg?.id ?? null;
     }
-    if (!orgId) {
+    if (!orgId && ctx.role !== "victim") {
       return apiFail(
         "FORBIDDEN",
         "Organization membership or legacy org required to upload documents",

@@ -38,6 +38,7 @@ export type AuditAction =
   | "org.join_request.created"
   | "org.join_request.approved"
   | "org.join_request.declined"
+  | "org.victim_connect_request.created"
   | "org.rep_join_request.created"
   | "org.rep_join_request.approved"
   | "org.rep_join_request.declined"

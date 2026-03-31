@@ -12,7 +12,15 @@ export async function getOrCreateConversationForCase(params: {
   const caseResult = await getCaseById({ caseId, ctx });
   if (!caseResult) throw new AppError("NOT_FOUND", "Case not found", undefined, 404);
 
-  const orgId = caseResult.case.organization_id as string;
+  const orgId = caseResult.case.organization_id as string | null;
+  if (!orgId) {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Connect your case to an organization before using secure messaging. Use Find organizations near you to choose one.",
+      undefined,
+      422
+    );
+  }
   const supabase = getSupabaseAdmin();
 
   const { data: existing, error: selErr } = await supabase

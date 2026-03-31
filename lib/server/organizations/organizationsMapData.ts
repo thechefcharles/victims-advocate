@@ -18,6 +18,8 @@ import {
   statesFromCoverage,
 } from "@/lib/server/ecosystem/regions";
 import { computeOrgMapPoint } from "@/lib/server/organizations/mapCoordinates";
+import { buildResponseAccessibilitySnapshot } from "@/lib/server/organizations/responseAccessibilitySnapshot";
+import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 export type OrganizationMapRow = {
   id: string;
@@ -35,6 +37,8 @@ export type OrganizationMapRow = {
   phone?: string | null;
   website?: string | null;
   program_type?: string | null;
+  /** Populated for NxtStps organizations; null for external directory rows. */
+  response_accessibility?: ResponseAccessibilityPublic | null;
 };
 
 type CboVaFile = {
@@ -104,12 +108,13 @@ function loadCboVaMapRows(): OrganizationMapRow[] {
       phone: cleanDirectoryPhone(e.phone ?? null),
       website: e.website?.trim() || null,
       program_type: e.program_type?.trim() || null,
+      response_accessibility: null,
     });
   }
   return out;
 }
 
-function isOrganizationMapListable(row: {
+export function isOrganizationMapListable(row: {
   status?: string | null;
   lifecycle_status?: string | null;
   public_profile_status?: string | null;
@@ -131,7 +136,7 @@ export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> 
   const { data, error } = await supabase
     .from("organizations")
     .select(
-      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status,lifecycle_status,public_profile_status"
+      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status,lifecycle_status,public_profile_status,languages,intake_methods,hours,avg_response_time_hours,accessibility_features"
     )
     .eq("status", "active")
     .in("lifecycle_status", ["managed", "seeded"])
@@ -152,6 +157,19 @@ export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> 
       coverage_area: cov,
       metadata: row.metadata,
     });
+    const meta = row.metadata as Record<string, unknown> | null | undefined;
+    const listingAddress =
+      typeof meta?.listing_address === "string" && meta.listing_address.trim()
+        ? meta.listing_address.trim()
+        : null;
+    const listingPhone = cleanDirectoryPhone(
+      typeof meta?.listing_phone === "string" ? meta.listing_phone : null
+    );
+    const listingWebsite =
+      typeof meta?.listing_website === "string" && meta.listing_website.trim()
+        ? meta.listing_website.trim()
+        : null;
+
     return {
       id: row.id,
       name: row.name,
@@ -162,6 +180,16 @@ export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> 
       capacity_status: row.capacity_status ?? "unknown",
       region_label: regionLabelForOrg(states, counties),
       states,
+      address: listingAddress,
+      phone: listingPhone,
+      website: listingWebsite,
+      response_accessibility: buildResponseAccessibilitySnapshot({
+        languages: row.languages,
+        intake_methods: row.intake_methods,
+        hours: row.hours,
+        avg_response_time_hours: row.avg_response_time_hours,
+        accessibility_features: row.accessibility_features,
+      }),
     };
   });
 

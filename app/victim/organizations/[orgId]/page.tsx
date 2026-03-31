@@ -1,0 +1,276 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { ROUTES } from "@/lib/routes/pageRegistry";
+import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
+import { supabase } from "@/lib/supabaseClient";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
+import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
+import { useI18n } from "@/components/i18n/i18nProvider";
+import { OrganizationTransparencyFramework } from "@/components/victim/OrganizationTransparencyFramework";
+
+type OrgPayload = {
+  id: string;
+  name: string;
+  service_types: string[];
+  special_populations: string[];
+  accepting_clients: boolean;
+  capacity_status: string;
+  region_label: string;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  response_accessibility: ResponseAccessibilityPublic;
+};
+
+function formatServiceKey(k: string): string {
+  return k
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+export default function VictimOrganizationPublicProfilePage() {
+  const { t } = useI18n();
+  const params = useParams();
+  const orgId = typeof params?.orgId === "string" ? params.orgId : "";
+
+  const [org, setOrg] = useState<OrgPayload | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const frameworkCopy = useMemo(
+    () => ({
+      learnMoreDialogTitle: t("victimDashboard.findOrganizationsPage.learnMoreDialogTitle"),
+      learnMoreDialogSubtitle: t("victimDashboard.findOrganizationsPage.learnMoreDialogSubtitle"),
+      frameworkFieldPending: t("victimDashboard.findOrganizationsPage.frameworkFieldPending"),
+      fieldPendingExternal: t("victimDashboard.findOrganizationsPage.fieldPendingExternal"),
+      fieldPendingFallback: t("victimDashboard.findOrganizationsPage.fieldPendingFallback"),
+      tier1Title: t("victimDashboard.findOrganizationsPage.tier1Title"),
+      tier1Desc: t("victimDashboard.findOrganizationsPage.tier1Desc"),
+      tier2Title: t("victimDashboard.findOrganizationsPage.tier2Title"),
+      tier2Desc: t("victimDashboard.findOrganizationsPage.tier2Desc"),
+      tier3Title: t("victimDashboard.findOrganizationsPage.tier3Title"),
+      tier3Desc: t("victimDashboard.findOrganizationsPage.tier3Desc"),
+      sourceSelfHint: t("victimDashboard.findOrganizationsPage.sourceSelfHint"),
+      sourcePlatformHint: t("victimDashboard.findOrganizationsPage.sourcePlatformHint"),
+    }),
+    [t]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      setOrg(null);
+      if (!orgId) {
+        setErr(t("victimDashboard.findOrganizationsPage.orgProfileInvalid"));
+        setLoading(false);
+        return;
+      }
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        if (!cancelled) {
+          setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+          setLoading(false);
+        }
+        return;
+      }
+      try {
+        const res = await fetch(`/api/victim/organizations/${encodeURIComponent(orgId)}/public`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (!cancelled) {
+            setErr(getApiErrorMessage(json, t("victimDashboard.findOrganizationsPage.loadError")));
+          }
+          return;
+        }
+        const o = json?.data?.organization as Partial<OrgPayload> | undefined;
+        if (!cancelled) {
+          if (o?.id) {
+            setOrg({
+              id: o.id,
+              name: o.name ?? "",
+              service_types: Array.isArray(o.service_types) ? o.service_types : [],
+              special_populations: Array.isArray(o.special_populations) ? o.special_populations : [],
+              accepting_clients: Boolean(o.accepting_clients),
+              capacity_status: o.capacity_status ?? "unknown",
+              region_label: o.region_label ?? "",
+              address: o.address ?? null,
+              phone: o.phone ?? null,
+              website: o.website ?? null,
+              response_accessibility: o.response_accessibility as ResponseAccessibilityPublic,
+            });
+          } else setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+        }
+      } catch {
+        if (!cancelled) setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, t]);
+
+  return (
+    <main className={APP_PAGE_MAIN}>
+      <div className="relative max-w-3xl mx-auto space-y-6">
+        <PageHeader
+          title={
+            org?.name ??
+            (loading ? t("victimDashboard.findOrganizationsPage.orgProfileLoading") : "Organization")
+          }
+          subtitle={t("victimDashboard.findOrganizationsPage.orgProfileSubtitle")}
+          backLink={{
+            href: ROUTES.victimFindOrganizations,
+            label: t("victimDashboard.findOrganizationsPage.orgProfileBack"),
+          }}
+          className={APP_CARD}
+        />
+
+        {loading ? (
+          <div className={`${APP_CARD} text-sm text-slate-400 animate-pulse`}>
+            {t("victimDashboard.findOrganizationsPage.orgProfileLoading")}
+          </div>
+        ) : null}
+
+        {err && !loading ? (
+          <div className={`${APP_CARD} rounded-xl border border-red-900/40 bg-red-950/25 px-4 py-3 text-sm text-red-200`}>
+            {err}
+          </div>
+        ) : null}
+
+        {org && !loading ? (
+          <div className={`${APP_CARD} space-y-6`}>
+            <div className="text-sm text-slate-400">
+              <span className="text-slate-500">{org.region_label}</span>
+              <span className="text-slate-600"> · </span>
+              {org.accepting_clients ? (
+                <span className="text-emerald-400/90">
+                  {t("victimDashboard.findOrganizationsPage.accepting")}
+                </span>
+              ) : (
+                <span className="text-slate-500">
+                  {t("victimDashboard.findOrganizationsPage.notAccepting")}
+                </span>
+              )}
+              <span className="text-slate-600"> · </span>
+              <span className="text-slate-500">
+                {t("victimDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
+              </span>
+            </div>
+
+            {(org.address || org.phone || org.website) ? (
+              <div className="space-y-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t("victimDashboard.findOrganizationsPage.orgProfileContact")}
+                </h2>
+                <dl className="grid gap-2 text-sm text-slate-300">
+                  {org.address ? (
+                    <div>
+                      <dt className="text-xs text-slate-500">
+                        {t("victimDashboard.findOrganizationsPage.directoryAddress")}
+                      </dt>
+                      <dd>{org.address}</dd>
+                    </div>
+                  ) : null}
+                  {org.phone ? (
+                    <div>
+                      <dt className="text-xs text-slate-500">
+                        {t("victimDashboard.findOrganizationsPage.directoryPhone")}
+                      </dt>
+                      <dd>
+                        <a href={`tel:${org.phone.replace(/\D/g, "")}`} className="text-blue-400 hover:text-blue-300 underline">
+                          {org.phone}
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                  {org.website ? (
+                    <div>
+                      <dt className="text-xs text-slate-500">
+                        {t("victimDashboard.findOrganizationsPage.directoryWebsite")}
+                      </dt>
+                      <dd>
+                        <a
+                          href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 underline"
+                        >
+                          {org.website}
+                        </a>
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            ) : null}
+
+            {org.special_populations?.length ? (
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                  {t("victimDashboard.findOrganizationsPage.orgProfilePopulations")}
+                </h2>
+                <ul className="flex flex-wrap gap-2">
+                  {org.special_populations.map((s) => (
+                    <li
+                      key={s}
+                      className="rounded-full border border-slate-600 bg-slate-900/80 px-3 py-1 text-xs text-slate-200"
+                    >
+                      {formatServiceKey(s)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {org.service_types.length > 0 ? (
+              <div>
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                  {t("victimDashboard.findOrganizationsPage.orgProfileServices")}
+                </h2>
+                <ul className="flex flex-wrap gap-2">
+                  {org.service_types.map((s) => (
+                    <li
+                      key={s}
+                      className="rounded-full border border-slate-600 bg-slate-900/80 px-3 py-1 text-xs text-slate-200"
+                    >
+                      {formatServiceKey(s)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            <OrganizationTransparencyFramework
+              external={false}
+              responseAccessibility={org.response_accessibility}
+              copy={frameworkCopy}
+            />
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              {t("victimDashboard.findOrganizationsPage.orgProfileFooter")}
+            </p>
+
+            <Link
+              href={ROUTES.victimFindOrganizations}
+              className="inline-flex text-sm text-blue-400 hover:text-blue-300 underline"
+            >
+              {t("victimDashboard.findOrganizationsPage.orgProfileBack")}
+            </Link>
+          </div>
+        ) : null}
+      </div>
+    </main>
+  );
+}
