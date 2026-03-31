@@ -155,10 +155,14 @@ export const es: I18nDict = {
         resumeApplication: "Reanudar solicitud",
         applyResumeCardAria: "Iniciar o reanudar tu solicitud",
         supportTeamTitle: "Mi Equipo De Apoyo",
+        supportTeamNoCaseHint:
+            "No necesitas un caso para ver el estado de conexión. Cuando inicies una solicitud, los detalles de organización y defensor/a también pueden aparecer para ese caso.",
+        supportTeamPendingOrgConnectsTitle: "Solicitud de organización pendiente",
+        supportTeamAdvocateMorePending: "Solicitud(es) adicional(es) de defensor/a pendiente(s)",
         supportTeamOrg: "Organización",
         supportTeamAdvocates: "Defensor/a",
         supportTeamNoOrg:
-            "Aún no hay organización vinculada a este caso. En la siguiente pantalla puedes añadir tu ubicación para ver organizaciones cerca de ti.",
+            "Aún no hay organización vinculada. En la siguiente pantalla puedes añadir tu ubicación para ver organizaciones cerca de ti.",
         supportTeamNoAdvocates: "Aún no hay defensor/a conectado/a.",
         supportTeamLoading: "Cargando…",
         supportTeamConnectCta: "Conectar con un/a defensor/a",

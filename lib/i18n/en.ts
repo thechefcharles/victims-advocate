@@ -155,10 +155,14 @@ export const en: I18nDict = {
     resumeApplication: "Resume Application",
     applyResumeCardAria: "Start or resume your application",
     supportTeamTitle: "My Support Team",
+    supportTeamNoCaseHint:
+      "You don’t need a case to see connection status. When you start an application, organization and advocate details can also appear for that case.",
+    supportTeamPendingOrgConnectsTitle: "Organization request pending",
+    supportTeamAdvocateMorePending: "Additional advocate request(s) pending",
     supportTeamOrg: "Organization",
     supportTeamAdvocates: "Advocate",
     supportTeamNoOrg:
-      "No organization linked to this case yet. Add your location on the next screen to see organizations near you.",
+      "No organization linked yet. Add your location on the next screen to see organizations near you.",
     supportTeamNoAdvocates: "No advocate connected yet.",
     supportTeamLoading: "Loading…",
     supportTeamConnectCta: "Connect With An Advocate",

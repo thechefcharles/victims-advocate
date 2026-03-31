@@ -59,6 +59,12 @@ type SupportTeamPayload = {
   advocateConnectionPending?: boolean;
 };
 
+type SupportOverviewPayload = {
+  pending_org_connects: { id: string; organization_id: string; organization_name: string }[];
+  advocate_connection_pending: boolean;
+  pending_advocate_requests: { id: string; advocate_label: string }[];
+};
+
 function getCaseDisplayName(c: CaseRow): string {
   if (c.name?.trim()) return c.name.trim();
   const app = c.application;
@@ -157,6 +163,8 @@ export default function VictimDashboard({
   const { setStateCode: setGlobalStateCode } = useStateSelection();
   const [supportTeam, setSupportTeam] = useState<SupportTeamPayload | null>(null);
   const [supportTeamLoading, setSupportTeamLoading] = useState(false);
+  const [supportOverview, setSupportOverview] = useState<SupportOverviewPayload | null>(null);
+  const [supportOverviewLoading, setSupportOverviewLoading] = useState(false);
 
   const [messagesUnread, setMessagesUnread] = useState(0);
   const [messagesTotal, setMessagesTotal] = useState(0);
@@ -386,6 +394,47 @@ export default function VictimDashboard({
       cancelled = true;
     };
   }, [token, focusCaseId]);
+
+  useEffect(() => {
+    if (!token) {
+      setSupportOverview(null);
+      setSupportOverviewLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSupportOverviewLoading(true);
+    void (async () => {
+      try {
+        const res = await fetch("/api/victim/support-overview", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (!cancelled) setSupportOverview(null);
+          return;
+        }
+        const d = (json?.data ?? json) as Record<string, unknown>;
+        if (!cancelled) {
+          setSupportOverview({
+            pending_org_connects: Array.isArray(d?.pending_org_connects)
+              ? (d.pending_org_connects as SupportOverviewPayload["pending_org_connects"])
+              : [],
+            advocate_connection_pending: Boolean(d?.advocate_connection_pending),
+            pending_advocate_requests: Array.isArray(d?.pending_advocate_requests)
+              ? (d.pending_advocate_requests as SupportOverviewPayload["pending_advocate_requests"])
+              : [],
+          });
+        }
+      } catch {
+        if (!cancelled) setSupportOverview(null);
+      } finally {
+        if (!cancelled) setSupportOverviewLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, cases.length]);
 
   const closeApplyModal = useCallback(() => {
     setApplyModalOpen(false);
@@ -671,17 +720,26 @@ export default function VictimDashboard({
   const noCasesYet = cases.length === 0;
   const hasSupportAdvocates = Boolean(supportTeam?.advocates && supportTeam.advocates.length > 0);
   const advocateConnectionPending = Boolean(supportTeam?.advocateConnectionPending);
+  const advocatePendingFromOverview = Boolean(supportOverview?.advocate_connection_pending);
+  const advocatePendingEffective = advocateConnectionPending || advocatePendingFromOverview;
 
   const hasSupportOrg = Boolean(supportTeam?.organization?.name);
+  const pendingOrgConnects = supportOverview?.pending_org_connects ?? [];
+  const hasPendingOrgConnects = pendingOrgConnects.length > 0;
+  const pendingAdvocateRequests = supportOverview?.pending_advocate_requests ?? [];
+  const hasPendingAdvocateDetail = pendingAdvocateRequests.length > 0;
+  const caseLinkedOrgName = focusCaseId ? supportTeam?.organization?.name : undefined;
+  const supportSectionLoading =
+    supportOverviewLoading || (Boolean(focusCaseId) && supportTeamLoading);
   const caseContextForSupport = Boolean(focusCaseId && focusCase && !noCasesYet);
   /** Once this case has an org or an advocate, hide both next-step shortcuts; use the support team block to manage. */
   const hideBothNextStepHelp =
     caseContextForSupport && !supportTeamLoading && (hasSupportOrg || hasSupportAdvocates);
   const showNextStepConnectAdvocate =
-    Boolean(focusCaseId) &&
+    (Boolean(focusCaseId) || noCasesYet) &&
     !hideBothNextStepHelp &&
     (!caseContextForSupport || (!supportTeamLoading && !hasSupportAdvocates)) &&
-    !advocateConnectionPending;
+    !advocatePendingEffective;
   const showNextStepFindOrganizations =
     !hideBothNextStepHelp && (!caseContextForSupport || (!supportTeamLoading && !hasSupportOrg));
 
@@ -689,7 +747,7 @@ export default function VictimDashboard({
     () =>
       focusCaseId
         ? `${ROUTES.compensationConnectAdvocate}?case=${encodeURIComponent(focusCaseId)}`
-        : ROUTES.victimDashboard,
+        : ROUTES.compensationConnectAdvocate,
     [focusCaseId]
   );
 
@@ -936,34 +994,39 @@ export default function VictimDashboard({
             />
             </div>
 
-            {/* Organization + advocates for selected case */}
-            {focusCaseId && focusCase && !noCasesYet && (
-              <section
-                className="rounded-xl border border-slate-800/40 bg-slate-950/25 px-3 py-3 sm:px-4"
-                aria-labelledby="victim-support-team-heading"
+            {/* Organization + advocates — visible without a case; case-specific rows when a case is selected */}
+            <section
+              className="rounded-xl border border-slate-800/40 bg-slate-950/25 px-3 py-3 sm:px-4"
+              aria-labelledby="victim-support-team-heading"
+            >
+              <h2
+                id="victim-support-team-heading"
+                className="text-base sm:text-lg font-semibold text-slate-50 tracking-tight"
               >
-                <h2
-                  id="victim-support-team-heading"
-                  className="text-base sm:text-lg font-semibold text-slate-50 tracking-tight"
-                >
-                  {t("victimDashboard.supportTeamTitle")}
-                </h2>
-                {supportTeamLoading ? (
-                  <p className="mt-2 text-[11px] text-slate-600">{t("victimDashboard.supportTeamLoading")}</p>
-                ) : (
-                  <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamOrg")}</p>
-                      {supportTeam?.organization?.name ? (
-                        <div className="mt-1.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                {t("victimDashboard.supportTeamTitle")}
+              </h2>
+              {noCasesYet ? (
+                <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
+                  {t("victimDashboard.supportTeamNoCaseHint")}
+                </p>
+              ) : null}
+              {supportSectionLoading ? (
+                <p className="mt-2 text-[11px] text-slate-600">{t("victimDashboard.supportTeamLoading")}</p>
+              ) : (
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamOrg")}</p>
+                    <div className="mt-1.5 space-y-3">
+                      {caseLinkedOrgName ? (
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                           <Link
                             href={manageOrgPath}
                             title={t("victimDashboard.supportTeamEditOrgTitle")}
                             className="inline-block text-left text-xs font-medium text-emerald-400/95 underline decoration-emerald-500/45 underline-offset-2 hover:text-emerald-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40 rounded-sm"
                           >
-                            {supportTeam.organization.name === LEGACY_ORG_DISPLAY_NAME
+                            {caseLinkedOrgName === LEGACY_ORG_DISPLAY_NAME
                               ? t("victimDashboard.caseOrgManage.legacyLabel")
-                              : supportTeam.organization.name}
+                              : caseLinkedOrgName}
                           </Link>
                           <div className="flex flex-wrap items-center gap-2">
                             <Link
@@ -974,8 +1037,21 @@ export default function VictimDashboard({
                             </Link>
                           </div>
                         </div>
-                      ) : (
-                        <div className="mt-1.5 space-y-2">
+                      ) : null}
+                      {hasPendingOrgConnects ? (
+                        <div className="rounded-lg border border-amber-500/25 bg-amber-950/15 px-3 py-2">
+                          <p className="text-[11px] font-medium text-amber-200/95">
+                            {t("victimDashboard.supportTeamPendingOrgConnectsTitle")}
+                          </p>
+                          <ul className="mt-1 list-none space-y-0.5 text-[11px] text-slate-300">
+                            {pendingOrgConnects.map((p) => (
+                              <li key={p.id}>{p.organization_name}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                      {!caseLinkedOrgName && !hasPendingOrgConnects ? (
+                        <div className="space-y-2">
                           <p className="text-[11px] text-slate-500 leading-relaxed">
                             {t("victimDashboard.supportTeamNoOrg")}
                           </p>
@@ -986,12 +1062,14 @@ export default function VictimDashboard({
                             {t("victimDashboard.supportTeamAddOrgCta")}
                           </Link>
                         </div>
-                      )}
+                      ) : null}
                     </div>
-                    <div>
-                      <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamAdvocates")}</p>
-                      {supportTeam?.advocates && supportTeam.advocates.length > 0 ? (
-                        <ul className="mt-0.5 list-none space-y-2 text-xs">
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamAdvocates")}</p>
+                    {focusCaseId && supportTeam?.advocates && supportTeam.advocates.length > 0 ? (
+                      <div className="mt-0.5 space-y-2">
+                        <ul className="list-none space-y-2 text-xs">
                           {supportTeam.advocates.map((a) => (
                             <li key={a.id}>
                               <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -1014,26 +1092,47 @@ export default function VictimDashboard({
                             </li>
                           ))}
                         </ul>
-                      ) : advocateConnectionPending ? (
-                        <p className="mt-1.5 text-[11px] font-medium text-amber-200/90">
+                        {advocatePendingEffective && hasPendingAdvocateDetail ? (
+                          <div className="rounded-lg border border-amber-500/25 bg-amber-950/15 px-3 py-2">
+                            <p className="text-[11px] font-medium text-amber-200/95">
+                              {t("victimDashboard.supportTeamAdvocateMorePending")}
+                            </p>
+                            <ul className="mt-1 list-none space-y-0.5 text-[11px] text-slate-300">
+                              {pendingAdvocateRequests.map((r) => (
+                                <li key={r.id}>{r.advocate_label}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : advocatePendingEffective ? (
+                      <div className="mt-1.5 space-y-2">
+                        <p className="text-[11px] font-medium text-amber-200/90">
                           {t("victimDashboard.supportTeamAdvocateRequestPending")}
                         </p>
-                      ) : (
-                        <div className="mt-1.5 space-y-1.5">
-                          <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoAdvocates")}</p>
-                          <Link
-                            href={connectAdvocateHref}
-                            className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
-                          >
-                            {t("victimDashboard.supportTeamConnectCta")}
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                        {hasPendingAdvocateDetail ? (
+                          <ul className="list-none space-y-0.5 text-[11px] text-slate-400">
+                            {pendingAdvocateRequests.map((r) => (
+                              <li key={r.id}>{r.advocate_label}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="mt-1.5 space-y-1.5">
+                        <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoAdvocates")}</p>
+                        <Link
+                          href={connectAdvocateHref}
+                          className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                        >
+                          {t("victimDashboard.supportTeamConnectCta")}
+                        </Link>
+                      </div>
+                    )}
                   </div>
-                )}
-              </section>
-            )}
+                </div>
+              )}
+            </section>
 
             {/* Case activity — tied to selected case */}
             {!noCasesYet && focusCaseId && focusCase && (
@@ -1098,7 +1197,7 @@ export default function VictimDashboard({
                     {t("victimDashboard.applyPathAria")}
                   </h2>
                   <div className="grid grid-cols-1 gap-3">
-                    {!advocateConnectionPending && focusCaseId ? (
+                    {!advocatePendingEffective && (focusCaseId || noCasesYet) ? (
                       <button
                         type="button"
                         disabled={creatingCase}

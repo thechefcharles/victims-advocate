@@ -100,18 +100,15 @@ export async function POST(req: Request, context: RouteParams) {
         req,
       }).catch(() => {});
 
-      const orgId = caseResult.case.organization_id as string | null;
-      if (orgId) {
-        await appendCaseTimelineEvent({
-          caseId: id,
-          organizationId: orgId,
-          actor: { userId: ctx.userId, role: caseResult.access.role },
-          eventType: "case.completeness_evaluated",
-          title: "Documentation completeness evaluated",
-          description: `Status: ${runResult.overall_status}. ${runResult.summary_counts.blocking_count} blocking, ${runResult.summary_counts.warning_count} warnings.`,
-          metadata: {},
-        });
-      }
+      await appendCaseTimelineEvent({
+        caseId: id,
+        organizationId: caseResult.case.organization_id as string,
+        actor: { userId: ctx.userId, role: caseResult.access.role },
+        eventType: "case.completeness_evaluated",
+        title: "Documentation completeness evaluated",
+        description: `Status: ${runResult.overall_status}. ${runResult.summary_counts.blocking_count} blocking, ${runResult.summary_counts.warning_count} warnings.`,
+        metadata: {},
+      });
     }
 
     logger.info("compensation.cases.completeness.run", {

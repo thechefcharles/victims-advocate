@@ -161,10 +161,13 @@ export type I18nDict = {
     resumeApplication: string;
     /** Accessible label for the primary apply / resume card region */
     applyResumeCardAria: string;
-    supportTeamTitle: string;
-    supportTeamOrg: string;
-    supportTeamAdvocates: string;
-    supportTeamNoOrg: string;
+      supportTeamTitle: string;
+      supportTeamNoCaseHint: string;
+      supportTeamPendingOrgConnectsTitle: string;
+      supportTeamAdvocateMorePending: string;
+      supportTeamOrg: string;
+      supportTeamAdvocates: string;
+      supportTeamNoOrg: string;
     supportTeamNoAdvocates: string;
     supportTeamLoading: string;
     supportTeamConnectCta: string;

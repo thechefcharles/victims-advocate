@@ -4,8 +4,6 @@ import { getCaseById } from "@/lib/server/data";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 
-const LEGACY_ORG_DISPLAY_NAME = "Legacy (pre-tenant)";
-
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
@@ -35,9 +33,8 @@ export async function GET(req: Request, context: RouteParams) {
         .select("id, name")
         .eq("id", orgId)
         .maybeSingle();
-      const name = ((org?.name as string) ?? "").trim();
-      if (org?.id && name && name !== LEGACY_ORG_DISPLAY_NAME) {
-        organization = { id: org.id as string, name };
+      if (org?.id && org?.name) {
+        organization = { id: org.id as string, name: org.name as string };
       }
     }
 
