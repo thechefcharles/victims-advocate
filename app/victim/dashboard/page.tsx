@@ -5,8 +5,13 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
 
 export default function VictimDashboardPage() {
-  const { user, accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, "/victim/dashboard");
+  const { user, accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    "/victim/dashboard",
+    authLoading,
+    legalConsentNextPath
+  );
 
   if (!consentReady) {
     return (

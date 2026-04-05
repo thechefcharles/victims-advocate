@@ -158,6 +158,11 @@ export default function TopNav() {
     return null;
   }
 
+  /** Signup legal consent uses in-flow chrome (progress + Exit Safely). */
+  if (pathname.startsWith("/signup/consent")) {
+    return null;
+  }
+
   const languageSelect = (
     <label className="flex items-center gap-2 rounded-md border border-[var(--color-border)] px-2 py-1">
       <span className="text-[11px] text-[var(--color-slate)]">{t("nav.language")}</span>

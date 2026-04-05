@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { MarketingHomePage } from "@/components/marketing/MarketingHomePage";
+import { TermsDeclinedBanner } from "@/components/marketing/TermsDeclinedBanner";
 
 export const metadata: Metadata = {
   title: "NxtStps — Illinois Crime Victims Compensation",
@@ -8,5 +10,12 @@ export const metadata: Metadata = {
 };
 
 export default function MarketingLandingPage() {
-  return <MarketingHomePage />;
+  return (
+    <>
+      <Suspense fallback={null}>
+        <TermsDeclinedBanner />
+      </Suspense>
+      <MarketingHomePage />
+    </>
+  );
 }

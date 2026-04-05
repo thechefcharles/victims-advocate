@@ -29,8 +29,13 @@ type OrgResult = {
 };
 
 export default function AdvocateOrgSearchPage() {
-  const { accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, ROUTES.advocateOrgSearch);
+  const { accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    ROUTES.advocateOrgSearch,
+    authLoading,
+    legalConsentNextPath
+  );
   const searchParams = useSearchParams();
   const [query, setQuery] = useState("");
   const [service, setService] = useState("");

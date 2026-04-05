@@ -63,6 +63,8 @@ type AuthState = {
   organizationName: string | null;
   /** Pending or most recent rejected platform ownership claim (no org membership). */
   orgOwnershipClaim: OrgOwnershipClaim | null;
+  /** Next signup legal consent path when onboarding is incomplete (null if complete or unknown). */
+  legalConsentNextPath: string | null;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
   refetchMe: () => Promise<void>;
 };
@@ -88,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [orgOwnershipClaim, setOrgOwnershipClaim] = useState<OrgOwnershipClaim | null>(null);
+  const [legalConsentNextPath, setLegalConsentNextPath] = useState<string | null>(null);
   /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
   const signupPreferredNameSyncedRef = useRef(false);
   /** Reset /api/me state only when user id changes — not on every token refresh (was clearing role and hiding victim UI). */
@@ -165,6 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAdvocatePersonalInfo(null);
       setOrganizationName(null);
     }
+
+    const nextLegal =
+      typeof d?.legalConsentNextPath === "string" && d.legalConsentNextPath.startsWith("/")
+        ? d.legalConsentNextPath
+        : null;
+    setLegalConsentNextPath(nextLegal);
   }, []);
 
   const role = roleFromApi ?? roleFromMetadata;
@@ -181,6 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAdvocatePersonalInfo(null);
     setOrganizationName(null);
     setOrgOwnershipClaim(null);
+    setLegalConsentNextPath(null);
   }, []);
 
   const refetchMe = useCallback(async () => {
@@ -303,6 +313,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganizationCatalogEntryId(null);
         setPersonalInfo(null);
         setOrgOwnershipClaim(null);
+        setLegalConsentNextPath(null);
       }
       setLoading(false);
     });
@@ -323,6 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrgId(null);
       setOrgRole(null);
       setOrgOwnershipClaim(null);
+      setLegalConsentNextPath(null);
     }
 
     setEmailVerified(!!sess?.user?.email_confirmed_at);
@@ -410,6 +422,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       advocatePersonalInfo,
       organizationName,
       orgOwnershipClaim,
+      legalConsentNextPath,
       refetchMe,
     };
   }, [
@@ -431,6 +444,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     advocatePersonalInfo,
     organizationName,
     orgOwnershipClaim,
+    legalConsentNextPath,
     refetchMe,
   ]);
 

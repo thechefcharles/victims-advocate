@@ -18,6 +18,7 @@ export default function DashboardRouterPage() {
     role,
     orgId,
     orgRole,
+    legalConsentNextPath,
   } = useAuth();
   const [consentChecked, setConsentChecked] = useState(false);
 
@@ -39,6 +40,7 @@ export default function DashboardRouterPage() {
 
   useEffect(() => {
     if (loading || !user || !accessToken || consentChecked) return;
+    if (legalConsentNextPath) return;
 
     const check = async () => {
       const res = await fetch("/api/policies/active", {
@@ -60,15 +62,36 @@ export default function DashboardRouterPage() {
     };
 
     check();
-  }, [loading, user, accessToken, consentChecked, router]);
+  }, [loading, user, accessToken, consentChecked, legalConsentNextPath, router]);
 
   useEffect(() => {
-    if (loading || !user || !consentChecked || !emailVerified || accountStatus !== "active") return;
+    if (loading || !user || !emailVerified || accountStatus !== "active") return;
+    if (!legalConsentNextPath) return;
+    router.replace(
+      `${legalConsentNextPath}?redirect=${encodeURIComponent("/dashboard")}`
+    );
+  }, [loading, user, emailVerified, accountStatus, legalConsentNextPath, router]);
+
+  useEffect(() => {
+    if (loading || !user || !consentChecked || legalConsentNextPath || !emailVerified || accountStatus !== "active")
+      return;
     const path = getDashboardPath({ isAdmin, orgId, orgRole, role });
     if (path !== "/dashboard") {
       router.replace(path);
     }
-  }, [loading, user, consentChecked, emailVerified, accountStatus, isAdmin, orgId, orgRole, role, router]);
+  }, [
+    loading,
+    user,
+    consentChecked,
+    legalConsentNextPath,
+    emailVerified,
+    accountStatus,
+    isAdmin,
+    orgId,
+    orgRole,
+    role,
+    router,
+  ]);
 
   if (loading || !consentChecked) {
     return (
