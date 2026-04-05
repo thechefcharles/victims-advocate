@@ -68,13 +68,13 @@ export function ProgramCatalogSelect({
     return <p className="text-sm text-red-300">{loadErr}</p>;
   }
   if (!programs) {
-    return <p className="text-sm text-slate-500">Loading program directory…</p>;
+    return <p className="text-sm text-[var(--color-muted)]">Loading program directory…</p>;
   }
 
   return (
     <div className="space-y-2">
       <label htmlFor={id} className="block space-y-1">
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] text-[var(--color-muted)]">
           {label}
           {required ? " *" : ""}
         </span>
@@ -89,18 +89,18 @@ export function ProgramCatalogSelect({
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]"
         />
       </label>
 
       {selected && (
-        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-slate-200 space-y-1">
+        <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-[var(--color-charcoal)] space-y-1">
           <p className="font-medium text-emerald-200">
             #{selected.id} · {selected.organization}
           </p>
-          <p className="text-slate-400">{selected.programType}</p>
-          <p className="text-slate-400">{selected.address}</p>
-          <p className="text-slate-400">
+          <p className="text-[var(--color-muted)]">{selected.programType}</p>
+          <p className="text-[var(--color-muted)]">{selected.address}</p>
+          <p className="text-[var(--color-muted)]">
             {selected.phone}
             {selected.website && (
               <>
@@ -127,13 +127,13 @@ export function ProgramCatalogSelect({
       )}
 
       {open && (
-        <div className="max-h-52 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 shadow-lg">
+        <div className="max-h-52 overflow-y-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] shadow-lg">
           {filtered.slice(0, 80).map((p) => (
             <button
               key={p.id}
               type="button"
-              className={`w-full text-left px-3 py-2 text-xs border-b border-slate-800 hover:bg-slate-900 ${
-                value === p.id ? "bg-slate-900" : ""
+              className={`w-full text-left px-3 py-2 text-xs border-b border-[var(--color-border-light)] hover:bg-white ${
+                value === p.id ? "bg-white" : ""
               }`}
               onClick={() => {
                 onChange(p.id, p);
@@ -141,16 +141,16 @@ export function ProgramCatalogSelect({
                 setQuery("");
               }}
             >
-              <span className="text-slate-500 font-mono mr-2">#{p.id}</span>
-              <span className="text-slate-200">{p.organization}</span>
-              <span className="text-slate-500"> — {p.programType}</span>
+              <span className="text-[var(--color-muted)] font-mono mr-2">#{p.id}</span>
+              <span className="text-[var(--color-charcoal)]">{p.organization}</span>
+              <span className="text-[var(--color-muted)]"> — {p.programType}</span>
             </button>
           ))}
           {filtered.length > 80 && (
-            <p className="px-3 py-2 text-[11px] text-slate-500">Refine search to see more matches…</p>
+            <p className="px-3 py-2 text-[11px] text-[var(--color-muted)]">Refine search to see more matches…</p>
           )}
           {filtered.length === 0 && (
-            <p className="px-3 py-2 text-xs text-slate-500">No matches. Try another search.</p>
+            <p className="px-3 py-2 text-xs text-[var(--color-muted)]">No matches. Try another search.</p>
           )}
         </div>
       )}

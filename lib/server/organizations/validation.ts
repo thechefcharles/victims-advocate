@@ -56,7 +56,12 @@ function parseJsonObject(input: unknown, field: string): Record<string, unknown>
         return parsed as Record<string, unknown>;
       }
     } catch {
-      throw new AppError("VALIDATION_ERROR", `Invalid JSON for ${field}`, undefined, 422);
+      throw new AppError(
+        "VALIDATION_ERROR",
+        `We couldn't read ${field}. Check the format and try again.`,
+        undefined,
+        422,
+      );
     }
   }
   throw new AppError("VALIDATION_ERROR", `${field} must be a JSON object`, undefined, 422);
@@ -73,7 +78,7 @@ export function parseCapacityStatus(v: unknown): CapacityStatus {
 export function parseProfileStatus(v: unknown): OrgProfileStatus {
   const s = String(v ?? "draft").trim().toLowerCase();
   if (!PROFILE_STATUS.includes(s as OrgProfileStatus)) {
-    throw new AppError("VALIDATION_ERROR", "Invalid profile_status", undefined, 422);
+    throw new AppError("VALIDATION_ERROR", "That profile status isn't recognized. Choose a status from the list.", undefined, 422);
   }
   return s as OrgProfileStatus;
 }

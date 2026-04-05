@@ -6,25 +6,25 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-8">
-        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-          <Link href="/" className="hover:text-slate-200">← Home</Link>
-          <Link href="/privacy" className="hover:text-slate-200">Privacy</Link>
-          <Link href="/waiver" className="hover:text-slate-200">Liability Waiver</Link>
+        <div className="flex flex-wrap gap-4 text-sm text-[var(--color-muted)]">
+          <Link href="/" className="hover:text-[var(--color-charcoal)]">← Home</Link>
+          <Link href="/privacy" className="hover:text-[var(--color-charcoal)]">Privacy</Link>
+          <Link href="/waiver" className="hover:text-[var(--color-charcoal)]">Liability Waiver</Link>
         </div>
         <header className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">
             Legal
           </p>
           <h1 className="text-3xl font-bold">NXTSTPS – TERMS OF USE</h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             Effective Date: January 2025 · Last Updated: January 2025
           </p>
         </header>
 
-        <section className="prose prose-invert prose-sm max-w-none space-y-6 text-slate-200">
-          <p className="font-semibold text-slate-100">
+        <section className="prose prose-invert prose-sm max-w-none space-y-6 text-[var(--color-charcoal)]">
+          <p className="font-semibold text-[var(--color-navy)]">
             PLEASE READ THESE TERMS CAREFULLY. YOUR ACCESS TO OR USE OF THE NXTSTPS
             PLATFORM CONSTITUTES YOUR AFFIRMATIVE ACKNOWLEDGMENT, ACCEPTANCE, AND
             AGREEMENT TO BE FULLY BOUND BY THESE TERMS OF USE (“TERMS”). IF YOU DO
@@ -37,10 +37,10 @@ export default function TermsPage() {
             affiliates (“NxtStps,” “Company,” “we,” “us,” or “our”).
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 1 – PURPOSE OF PLATFORM; NO LEGAL, MEDICAL, OR PROFESSIONAL SERVICES
           </h2>
-          <h3 className="text-base font-medium text-slate-200">1.1 Purpose</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.1 Purpose</h3>
           <p>
             The Platform provides administrative, clerical, and informational
             tools designed to support Users in gathering documentation,
@@ -50,7 +50,7 @@ export default function TermsPage() {
             AI-assisted systems, operates exclusively as non-advisory,
             non-interpretive informational support.
           </p>
-          <h3 className="text-base font-medium text-slate-200">1.2 No Legal Advice or Legal Representation</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.2 No Legal Advice or Legal Representation</h3>
           <p>
             NxtStps is not a law firm, and no content, feature, tool,
             automation, or output of the Platform shall be construed as: (a)
@@ -60,13 +60,13 @@ export default function TermsPage() {
             guidance. No attorney–client relationship is created through use of
             the Platform.
           </p>
-          <h3 className="text-base font-medium text-slate-200">1.3 No Medical, Clinical, or Therapeutic Advice</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.3 No Medical, Clinical, or Therapeutic Advice</h3>
           <p>
             NxtStps does not provide medical, mental health, psychological,
             crisis-intervention, or therapeutic services. Users who require such
             support must seek qualified professional assistance.
           </p>
-          <h3 className="text-base font-medium text-slate-200">1.4 No Guarantee of Outcomes or Eligibility</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.4 No Guarantee of Outcomes or Eligibility</h3>
           <p>
             NxtStps does not guarantee, warrant, predict, or represent that any
             User will: (a) qualify for any program; (b) receive any benefit,
@@ -76,7 +76,7 @@ export default function TermsPage() {
             agency receiving the submission.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 2 – CONSPICUOUS ACKNOWLEDGMENT OF MATERIAL TERMS
           </h2>
           <p>
@@ -92,7 +92,7 @@ export default function TermsPage() {
             Platform available.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 3 – USER REPRESENTATIONS, RESPONSIBILITIES & VERIFICATION DUTIES
           </h2>
           <p>
@@ -109,7 +109,7 @@ export default function TermsPage() {
             legal, or administrative harm.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 4 – PROHIBITION AGAINST UNAUTHORIZED PRACTICE OF LAW (UPL DEFENSE)
           </h2>
           <p>
@@ -121,7 +121,7 @@ export default function TermsPage() {
             actions remain solely with the User.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 5 – ARTIFICIAL INTELLIGENCE DISCLOSURES
           </h2>
           <p>
@@ -132,7 +132,7 @@ export default function TermsPage() {
             all liability for reliance on AI-generated content.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 6 – NO DUTY OF CARE; ANTI-NEGLIGENCE PROVISIONS
           </h2>
           <p>
@@ -144,7 +144,7 @@ export default function TermsPage() {
             reflect legal or regulatory changes.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 7 – PRIVACY & DATA SECURITY DISCLAIMERS
           </h2>
           <p>
@@ -154,7 +154,7 @@ export default function TermsPage() {
             recipients.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 8 – EMOTIONAL DISTRESS LIABILITY SHIELD
           </h2>
           <p>
@@ -164,7 +164,7 @@ export default function TermsPage() {
             psychological, or crisis-related impacts arising from Platform use.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 9 – PRODUCT FUNCTIONALITY & SERVICE LIMITATIONS
           </h2>
           <p>
@@ -173,10 +173,10 @@ export default function TermsPage() {
             shall maintain copies of all documents and information.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 10 – LIMITATION OF LIABILITY
           </h2>
-          <p className="font-semibold text-slate-100">
+          <p className="font-semibold text-[var(--color-navy)]">
             TO THE MAXIMUM EXTENT PERMITTED BY LAW, NXTSTPS SHALL NOT BE LIABLE
             FOR ANY INDIRECT, INCIDENTAL, CONSEQUENTIAL, SPECIAL, EXEMPLARY, OR
             PUNITIVE DAMAGES, INCLUDING BUT NOT LIMITED TO LOSS OF DATA,
@@ -186,7 +186,7 @@ export default function TermsPage() {
             HUNDRED DOLLARS ($100).
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 11 – INDEMNIFICATION
           </h2>
           <p>
@@ -197,7 +197,7 @@ export default function TermsPage() {
             handling by User or third parties.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 12 – FTC COMPLIANCE; NO REPRESENTATIONS
           </h2>
           <p>
@@ -205,7 +205,7 @@ export default function TermsPage() {
             guarantee, promise, assurance, or prediction of outcomes.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 13 – MANDATORY ARBITRATION & CLASS ACTION WAIVER
           </h2>
           <p>
@@ -218,7 +218,7 @@ export default function TermsPage() {
             notice.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 14 – SEVERABILITY, ENTIRE AGREEMENT, AND AMENDMENTS
           </h2>
           <p>
@@ -226,7 +226,7 @@ export default function TermsPage() {
             shall remain in effect to the fullest extent permitted by law.
           </p>
 
-          <p className="text-[11px] text-slate-400 pt-6">
+          <p className="text-[11px] text-[var(--color-muted)] pt-6">
             If you’re in immediate danger, call 911. If you need support now,
             call or text 988.
           </p>

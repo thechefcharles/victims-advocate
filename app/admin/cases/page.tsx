@@ -88,16 +88,16 @@ const res = await fetch("/api/compensation/cases", {
           subtitle="Cases load from your database. Each row includes the full application and attached documents."
           rightActions={
             <>
-              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/audit" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Audit
               </Link>
-              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/orgs" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Organizations
               </Link>
-              <Link href="/admin/policies" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/policies" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Policies
               </Link>
-              <Link href="/admin/users" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/users" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Users
               </Link>
               <Link href="/admin/ecosystem" className="text-sm text-teal-400 hover:text-teal-200">
@@ -105,7 +105,7 @@ const res = await fetch("/api/compensation/cases", {
               </Link>
               <Link
                 href="/admin/grading"
-                className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
+                className="inline-flex items-center rounded-md bg-[var(--color-teal-deep)] px-2.5 py-1 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
               >
                 Review
               </Link>
@@ -115,8 +115,8 @@ const res = await fetch("/api/compensation/cases", {
 
         {cases.length === 0 ? (
           <div className={APP_EMPTY_STATE}>
-            <p className="font-medium text-slate-300">No cases yet.</p>
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="font-medium text-[var(--color-slate)]">No cases yet.</p>
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
               Complete an intake and use Save on the summary step to create a case record.
             </p>
           </div>
@@ -142,12 +142,12 @@ const res = await fetch("/api/compensation/cases", {
                     <tr key={c.id} className={APP_TABLE_ROW}>
                       <td className={APP_TABLE_CELL}>
                         <div className="space-y-0.5">
-                          <span className="font-semibold text-slate-100">
+                          <span className="font-semibold text-[var(--color-navy)]">
                             {(v.firstName || "") +
                               (v.firstName || v.lastName ? " " : "") +
                               (v.lastName || "") || "Unknown victim"}
                           </span>
-                          <div className="text-[11px] text-slate-500">
+                          <div className="text-[11px] text-[var(--color-muted)]">
                             DOB: {v.dateOfBirth || "—"}
                           </div>
                         </div>
@@ -165,7 +165,7 @@ const res = await fetch("/api/compensation/cases", {
                           className={`inline-flex items-center rounded-full px-2 py-0.5 ${
                             c.status === "ready_for_review"
                               ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
-                              : "bg-slate-800 text-slate-300 border border-slate-600"
+                              : "bg-[var(--color-light-sand)] text-[var(--color-slate)] border border-[var(--color-border)]"
                           }`}
                         >
                           {c.status}
@@ -187,7 +187,7 @@ const res = await fetch("/api/compensation/cases", {
           </section>
         )}
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-[var(--color-muted)]">
           This view reads from your Supabase backend. In a production version,
           advocates would see only the cases they are authorized to access,
           governed by role-based permissions and RLS.

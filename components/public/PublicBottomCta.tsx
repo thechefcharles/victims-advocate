@@ -20,7 +20,7 @@ export function PublicBottomCta() {
     return (
       <section
         aria-hidden
-        className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-center text-sm text-slate-500"
+        className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-5 text-center text-sm text-[var(--color-muted)]"
       >
         …
       </section>
@@ -29,20 +29,20 @@ export function PublicBottomCta() {
 
   if (user) {
     return (
-      <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 sm:p-6 text-center space-y-4">
-        <p className="text-sm text-slate-400">
+      <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-5 sm:p-6 text-center space-y-4">
+        <p className="text-sm text-[var(--color-muted)]">
           You&apos;re signed in — continue in your workspace, or open compensation help anytime.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center flex-wrap">
           <Link
             href={getDashboardPath(me)}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition"
+            className="inline-flex items-center justify-center rounded-xl bg-[var(--color-teal-deep)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] transition"
           >
             {getWorkspaceCtaLabel(me)}
           </Link>
           <Link
             href={ROUTES.compensationHub}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
+            className="inline-flex items-center justify-center rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/75 transition"
           >
             Compensation Help
           </Link>
@@ -52,18 +52,18 @@ export function PublicBottomCta() {
   }
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 sm:p-6 text-center space-y-4">
-      <p className="text-sm text-slate-400">Take the next step when you&apos;re ready.</p>
+    <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-5 sm:p-6 text-center space-y-4">
+      <p className="text-sm text-[var(--color-muted)]">Take the next step when you&apos;re ready.</p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center items-center flex-wrap">
         <Link
           href={ROUTES.compensationHub}
-          className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 transition"
+          className="inline-flex items-center justify-center rounded-xl bg-[var(--color-teal-deep)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] transition"
         >
           Get Help Now
         </Link>
         <Link
           href="/signup"
-          className="inline-flex items-center justify-center rounded-xl border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800/60 transition"
+          className="inline-flex items-center justify-center rounded-xl border border-[var(--color-border)] px-5 py-2.5 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/75 transition"
         >
           Start My Application
         </Link>

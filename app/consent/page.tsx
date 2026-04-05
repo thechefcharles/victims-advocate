@@ -71,7 +71,12 @@ function ConsentContent() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to record acceptance"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't save your consent choice. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       router.replace(searchParams.get("redirect") || "/dashboard");
@@ -94,8 +99,8 @@ function ConsentContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p className="text-slate-400">Loading…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+        <p className="text-[var(--color-muted)]">Loading…</p>
       </main>
     );
   }
@@ -103,18 +108,18 @@ function ConsentContent() {
   if (missing.length === 0) {
     router.replace(searchParams.get("redirect") || "/dashboard");
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p className="text-slate-400">Redirecting…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+        <p className="text-[var(--color-muted)]">Redirecting…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-10">
       <div className="max-w-2xl mx-auto space-y-6">
         <header>
-          <h1 className="text-2xl font-semibold text-slate-100">Required agreements</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Required agreements</h1>
+          <p className="text-sm text-[var(--color-muted)] mt-1">
             Please read and accept the following to continue.
           </p>
         </header>
@@ -129,7 +134,7 @@ function ConsentContent() {
           {missing.map((p) => (
             <div
               key={p.id}
-              className="rounded-xl border border-slate-800 bg-slate-950/70 p-4 space-y-3"
+              className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 space-y-3"
             >
               <div className="flex items-start gap-3">
                 <input
@@ -137,14 +142,14 @@ function ConsentContent() {
                   id={p.id}
                   checked={accepted.has(p.id)}
                   onChange={() => toggleAccept(p.id)}
-                  className="mt-1 rounded border-slate-600 bg-slate-900 text-emerald-500"
+                  className="mt-1 rounded border-[var(--color-border)] bg-white text-emerald-500"
                 />
                 <div className="flex-1 min-w-0">
-                  <label htmlFor={p.id} className="font-medium text-slate-200 cursor-pointer">
+                  <label htmlFor={p.id} className="font-medium text-[var(--color-charcoal)] cursor-pointer">
                     {p.title}
                   </label>
-                  <p className="text-xs text-slate-500 mt-0.5">Version {p.version}</p>
-                  <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-300 whitespace-pre-wrap">
+                  <p className="text-xs text-[var(--color-muted)] mt-0.5">Version {p.version}</p>
+                  <div className="mt-2 max-h-40 overflow-y-auto rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-3 text-xs text-[var(--color-slate)] whitespace-pre-wrap">
                     {p.content || "No content."}
                   </div>
                 </div>
@@ -158,13 +163,13 @@ function ConsentContent() {
             type="button"
             onClick={handleAcceptAll}
             disabled={!allAccepted || submitting}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+            className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           >
             {submitting ? "Saving…" : "I accept and continue"}
           </button>
           <Link
             href="/login"
-            className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:text-slate-100 text-center"
+            className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-slate)] hover:text-[var(--color-navy)] text-center"
           >
             Sign out
           </Link>
@@ -178,8 +183,8 @@ export default function ConsentPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-          <p className="text-slate-400">Loading…</p>
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+          <p className="text-[var(--color-muted)]">Loading…</p>
         </main>
       }
     >

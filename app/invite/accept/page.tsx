@@ -44,7 +44,12 @@ function AcceptContent() {
 
         if (!res.ok) {
           setStatus("error");
-          setMessage(getApiErrorMessage(json, "Failed to accept invite"));
+          setMessage(
+            getApiErrorMessage(
+              json,
+              "We couldn't accept that invite — it may have expired. Ask your organization to send a new one.",
+            ),
+          );
           return;
         }
 
@@ -56,7 +61,11 @@ function AcceptContent() {
         setMessage(`You’ve joined the organization as ${label}.`);
       } catch (e) {
         setStatus("error");
-        setMessage(e instanceof Error ? e.message : "Failed to accept invite");
+        setMessage(
+          e instanceof Error
+            ? e.message
+            : "We couldn't accept that invite — check your connection and try again.",
+        );
       }
     };
 
@@ -65,9 +74,9 @@ function AcceptContent() {
 
   if (status === "idle" || status === "loading") {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-slate-400">
+          <p className="text-[var(--color-muted)]">
             {status === "loading" ? "Accepting invite…" : "Loading…"}
           </p>
         </div>
@@ -76,14 +85,14 @@ function AcceptContent() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-center space-y-4">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
+      <div className="max-w-md w-full rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-6 text-center space-y-4">
         {status === "success" ? (
           <>
             <p className="text-emerald-300 font-medium">{message}</p>
             <a
               href="/dashboard"
-              className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500"
+              className="inline-block rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
             >
               Continue To Your Workspace
             </a>
@@ -94,13 +103,13 @@ function AcceptContent() {
             <div className="flex gap-3 justify-center">
               <Link
                 href="/login"
-                className="text-sm text-slate-400 hover:text-slate-200"
+                className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
               >
                 Log in
               </Link>
               <Link
                 href="/"
-                className="text-sm text-slate-400 hover:text-slate-200"
+                className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
               >
                 Home
               </Link>
@@ -116,8 +125,8 @@ export default function InviteAcceptPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-          <p className="text-slate-400">Loading…</p>
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+          <p className="text-[var(--color-muted)]">Loading…</p>
         </main>
       }
     >

@@ -25,8 +25,8 @@ export default function RequirePlatformAdmin({ children }: { children: React.Rea
 
   if (loading || !user || !isAdmin) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p className="text-sm text-slate-400">Loading…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+        <p className="text-sm text-[var(--color-muted)]">Loading…</p>
       </main>
     );
   }

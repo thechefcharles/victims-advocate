@@ -54,7 +54,7 @@ export function designationTierBadgeText(tier: string | null | undefined): strin
 
 /** Subtle chip styling for designation tier (trust context — distinct from match-fit badges). */
 export function designationTrustBadgeClassName(): string {
-  return "text-[10px] font-medium text-slate-400 border border-slate-600/90 rounded px-1.5 py-0.5 bg-slate-950/50";
+  return "text-[10px] font-medium text-[var(--color-muted)] border border-[var(--color-border)] rounded px-1.5 py-0.5 bg-[var(--color-warm-cream)]/75";
 }
 
 /** Match fit / recommendation tier — visually distinct from designation. */

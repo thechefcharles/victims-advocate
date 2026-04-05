@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
 
     const rawCatalog = (body as { catalog_entry_id?: unknown }).catalog_entry_id;

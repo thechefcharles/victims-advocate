@@ -66,27 +66,27 @@ export default function OrganizationSetupPage() {
 
   if (orgId) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-        <p className="text-sm text-slate-400">Redirecting…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
+        <p className="text-sm text-[var(--color-muted)]">Redirecting…</p>
       </main>
     );
   }
 
   if (!loading && user && !isAdmin && (profileRole === "victim" || profileRole === "advocate")) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-        <p className="text-sm text-slate-400">Redirecting…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
+        <p className="text-sm text-[var(--color-muted)]">Redirecting…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-12">
       <div className="max-w-2xl mx-auto space-y-8">
         <header className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Organization onboarding</p>
-          <h1 className="text-2xl font-semibold text-slate-50">Find Or Set Up Your Organization</h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-muted)]">Organization onboarding</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Find Or Set Up Your Organization</h1>
+          <p className="text-sm text-[var(--color-muted)]">
             Choose the option that best matches your organization.
           </p>
           {orgOwnershipClaim?.status === "pending" && (
@@ -108,7 +108,7 @@ export default function OrganizationSetupPage() {
           backLink={
             <Link
               href="/dashboard"
-              className="text-sm text-slate-400 hover:text-slate-200 inline-block"
+              className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)] inline-block"
             >
               {t("common.backToWorkspace")}
             </Link>

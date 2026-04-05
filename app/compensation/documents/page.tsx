@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 type DocumentType =
   | "police_report"
@@ -25,6 +26,7 @@ interface UploadedDoc {
 const DOCS_STORAGE_KEY = "nxtstps_docs_v1";
 
 export default function DocumentsPage() {
+  const { t } = useI18n();
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [selectedType, setSelectedType] = useState<DocumentType>("police_report");
   const [description, setDescription] = useState("");
@@ -56,7 +58,7 @@ const handleFiles = async (files: FileList | null) => {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) {
-    alert("Please log in to upload documents.");
+    alert(t("compensationDocumentsPage.loginToUpload"));
     return;
   }
 
@@ -88,7 +90,10 @@ const handleFiles = async (files: FileList | null) => {
       .then(async (res) => {
         const json = await res.json().catch(() => ({}));
         if (!res.ok) {
-          const msg = json?.error?.message ?? json?.message ?? "Upload failed";
+          const msg =
+            json?.error?.message ??
+            json?.message ??
+            t("compensationDocumentsPage.uploadFailedGeneric");
           alert(msg);
           return;
         }
@@ -99,7 +104,7 @@ const handleFiles = async (files: FileList | null) => {
       })
       .catch((err) => {
         console.error("Error uploading document", err);
-        alert("Network error. Please try again.");
+        alert(t("compensationDocumentsPage.networkError"));
       });
   });
 
@@ -135,16 +140,16 @@ const handleFiles = async (files: FileList | null) => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+          <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
             Documents · Optional but Recommended
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">
             Upload supporting documents for your claim
           </h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             You can upload copies of police reports, medical bills, funeral
             bills, wage proof, or other documents that support your Crime
             Victims Compensation application. You do not need everything to move
@@ -153,20 +158,20 @@ const handleFiles = async (files: FileList | null) => {
           </p>
         </header>
 
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-50">
+        <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">
             Add documents
           </h2>
 
           <div className="grid gap-3 sm:grid-cols-2 text-xs">
-            <label className="block space-y-1 text-slate-200">
+            <label className="block space-y-1 text-[var(--color-charcoal)]">
               <span>Document type</span>
               <select
                 value={selectedType}
                 onChange={(e) =>
                   setSelectedType(e.target.value as DocumentType)
                 }
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
               >
                 <option value="police_report">Police report</option>
                 <option value="medical_bill">Medical bill</option>
@@ -178,65 +183,65 @@ const handleFiles = async (files: FileList | null) => {
               </select>
             </label>
 
-            <label className="block space-y-1 text-slate-200">
+            <label className="block space-y-1 text-[var(--color-charcoal)]">
               <span>Short description (optional)</span>
               <input
                 type="text"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g. ER bill from 1/12/2025"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
               />
             </label>
           </div>
 
           <div className="space-y-2 text-xs">
-            <label className="block space-y-1 text-slate-200">
+            <label className="block space-y-1 text-[var(--color-charcoal)]">
               <span>Select file(s)</span>
               <input
                 type="file"
                 multiple
                 onChange={(e) => handleFiles(e.target.files)}
-                className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-blue-500"
+                className="block w-full text-[11px] text-[var(--color-slate)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-teal-deep)] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-[var(--color-teal)]"
               />
             </label>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-[var(--color-muted)]">
               Allowed: PDF, JPG, PNG (max 15 MB). Files are stored securely and
               can be attached to your case when you save.
             </p>
           </div>
         </section>
 
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-50">
+        <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">
             Documents added in this session
           </h2>
           {docs.length === 0 ? (
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--color-muted)]">
               No documents added yet. When you select files above, they will be
               listed here with their type and description.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-800 text-xs">
+            <ul className="divide-y divide-[var(--color-border-light)] text-xs">
               {docs.map((doc) => (
                 <li
                   key={doc.id}
                   className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
                   <div className="space-y-0.5">
-                    <p className="font-semibold text-slate-100">
+                    <p className="font-semibold text-[var(--color-navy)]">
                       {humanTypeLabel(doc.type)}
                     </p>
-                    <p className="text-slate-300">
+                    <p className="text-[var(--color-slate)]">
                       {doc.fileName} · {formatSize(doc.fileSize)}
                     </p>
                     {doc.description && (
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[var(--color-muted)]">
                         {doc.description}
                       </p>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     Added:{" "}
                     {new Date(doc.lastModified).toLocaleDateString("en-US")}
                   </p>
@@ -246,7 +251,7 @@ const handleFiles = async (files: FileList | null) => {
           )}
         </section>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-[var(--color-muted)]">
           In a future version, NxtStps will securely upload, classify, and
           analyze these documents (police reports, bills, etc.) to check for
           missing information and match them to your application.

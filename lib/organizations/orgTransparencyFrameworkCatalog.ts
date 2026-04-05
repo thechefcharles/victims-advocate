@@ -212,9 +212,9 @@ export const FRAMEWORK_THEME_STYLES: Record<
   { border: string; headerBg: string; badge: string }
 > = {
   blue: {
-    border: "border-blue-500/35",
+    border: "border-[var(--color-teal)]/35",
     headerBg: "bg-blue-950/35",
-    badge: "bg-blue-600/35 text-blue-100",
+    badge: "bg-[var(--color-teal-deep)]/35 text-blue-100",
   },
   purple: {
     border: "border-purple-500/35",
@@ -232,9 +232,9 @@ export const FRAMEWORK_THEME_STYLES: Record<
     badge: "bg-amber-600/35 text-amber-100",
   },
   gray: {
-    border: "border-slate-500/40",
-    headerBg: "bg-slate-800/50",
-    badge: "bg-slate-600/40 text-slate-200",
+    border: "border-[var(--color-muted)]/40",
+    headerBg: "bg-[var(--color-light-sand)]/70",
+    badge: "bg-[var(--color-light-sand)]/40 text-[var(--color-charcoal)]",
   },
   red: {
     border: "border-red-600/35",

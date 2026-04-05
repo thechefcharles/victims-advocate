@@ -52,10 +52,10 @@ export function ProgramAffiliationForm({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+    <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4">
       <div>
-        <h2 className="text-sm font-medium text-slate-100">Illinois program directory</h2>
-        <p className="text-xs text-slate-500 mt-1">
+        <h2 className="text-sm font-medium text-[var(--color-navy)]">Illinois program directory</h2>
+        <p className="text-xs text-[var(--color-muted)] mt-1">
           Link your account to a listed Crime Victim Assistance program (name, program type, address,
           phone, and website come from the official directory when you pick a row).
         </p>
@@ -70,7 +70,7 @@ export function ProgramAffiliationForm({
         type="button"
         disabled={saving || !accessToken}
         onClick={save}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save affiliation"}
       </button>

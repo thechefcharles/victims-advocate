@@ -57,10 +57,10 @@ export function OrganizationCatalogForm({
   };
 
   return (
-    <div className="space-y-4 rounded-xl border border-slate-700 bg-slate-900/40 p-4">
+    <div className="space-y-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4">
       <div>
-        <h2 className="text-sm font-medium text-slate-100">Your organization in the directory</h2>
-        <p className="text-xs text-slate-500 mt-1">
+        <h2 className="text-sm font-medium text-[var(--color-navy)]">Your organization in the directory</h2>
+        <p className="text-xs text-[var(--color-muted)] mt-1">
           Choose the Illinois Crime Victim Assistance program row that matches this account. Your
           agency name and type update from the official listing.
         </p>
@@ -76,7 +76,7 @@ export function OrganizationCatalogForm({
         type="button"
         disabled={saving || !accessToken || catalogId == null}
         onClick={save}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+        className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
       >
         {saving ? "Saving…" : "Save organization directory link"}
       </button>

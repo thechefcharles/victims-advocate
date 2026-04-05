@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: RouteCtx) {
     const { id } = await params;
     const orgId = id?.trim();
     if (!orgId) {
-      return apiFail("VALIDATION_ERROR", "Invalid organization id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
     }
 
     const profile = await getOrganizationProfileForContext({ ctx, organizationId: orgId });
@@ -48,14 +48,14 @@ export async function POST(req: Request, { params }: RouteCtx) {
     const { id } = await params;
     const orgId = id?.trim();
     if (!orgId) {
-      return apiFail("VALIDATION_ERROR", "Invalid organization id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
     }
 
     let body: Record<string, unknown> = {};
     try {
       body = (await req.json()) as Record<string, unknown>;
     } catch {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
 
     const result = await updateOrganizationProfile({ ctx, body, organizationId: orgId, req });

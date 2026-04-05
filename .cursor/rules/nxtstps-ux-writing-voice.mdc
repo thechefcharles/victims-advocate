@@ -1,0 +1,49 @@
+---
+description: NxtStps Phase 2 — UX writing, tone, trauma-informed copy (applicant pathway Grade 7)
+alwaysApply: true
+---
+
+# NxtStps — UX writing and voice (Phase 2)
+
+Good UX writing is **invisible**: it matches what the user needs at that moment. For NxtStps, copy either **reduces burden** or adds it — aim for the former.
+
+## Tone
+
+**Calm, direct, respectful, trauma-informed, non-judgmental, warm (genuine, not corporate).** The product does not panic when something fails.
+
+## Always
+
+1. **Active voice** in instructions (passive OK for completion focus, e.g. “Your application has been submitted”).
+2. **Plain language** — applicant pathway **≤ Grade 7** (Hemingway); ~**15–20 words** per sentence; one idea per sentence. Prefer short words: use/help/need/show/end, not utilize/assist/require/display/terminate.
+3. **Front-load** the most important phrase (what to do or what happened first).
+4. **Buttons: action + outcome** — e.g. “Save and continue”, “Upload document”, “Submit application”, not “Next” / “Submit” alone. **“Back”** is fine. **Never** “Click here” or bare “Learn more” — links describe the destination.
+5. **Errors (3 parts):** what went wrong (specific) → why (brief) → what to do next (concrete). Avoid raw codes (“Error 422”) as the only message.
+6. **Validation:** guide, don’t shame — no “Invalid”, “Incorrect”, “You forgot…”. Say what to enter and give an example if helpful.
+7. **Empty states:** why it’s empty + **clear next step** (and primary action when applicable).
+
+## Never
+
+Legal jargon without a **plain-language** line or tooltip; passive instructions; blame (“You didn’t…”, “Invalid entry”); fake urgency (“Act now”, timers); clinical openers (“Please be advised…”, “In order to…”, “Pursuant to…”); long apology stacks; default **gendered** copy (use **they/them** when unknown); addressing the user as **“victim”** — use **“you”** or **“the person you’re applying for.”**; calling a process **“simple”** or **“easy.”**
+
+## Sensitive content
+
+Frame around **what happened**, not judging the user (“Tell us about the incident” vs “your crime”). Put **why we’re asking** **before** the sensitive field. Offer **skip + return** language where allowed. After first specific mention, prefer **“the incident”** over repeating crime-type labels. Define required legal/program terms in plain language immediately.
+
+## Screen order (applicant pathway)
+
+1. **Where you are** (plain title, not “Step 4: …”)  
+2. **Context** (1–2 sentences: why, from “we”)  
+3. **The task**  
+4. **Help** on demand  
+5. **One primary action** (label = outcome)
+
+## Notifications
+
+- **Success:** what completed + what happens next.  
+- **Warning / error / info:** what’s wrong or what to know + how to address or why it matters.
+
+## Email
+
+**Specific subject lines.** One main message; most important first. **Close with a concrete next step** — not “don’t hesitate to contact us.”
+
+When adding or changing user-visible strings, prefer **`lib/i18n/en.ts`** (and **`es.ts`** for parity) over scattered literals.

@@ -79,7 +79,7 @@ export async function POST(req: Request) {
     const lat = hit.lat != null ? Number.parseFloat(String(hit.lat)) : NaN;
     const lng = hit.lon != null ? Number.parseFloat(String(hit.lon)) : NaN;
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-      return apiFail("INTERNAL", "Invalid geocode response.", undefined, 502);
+      return apiFail("INTERNAL", "Address lookup returned an unexpected response. Try again in a moment.", undefined, 502);
     }
 
     return apiOk({

@@ -98,11 +98,11 @@ function safeRemoveItem(key: string) {
 function PrimaryActionSkeleton() {
   return (
     <div
-      className={`${APP_CARD} animate-pulse rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-7 space-y-4`}
+      className={`${APP_CARD} animate-pulse rounded-2xl border border-[var(--color-border)] bg-white p-6 sm:p-7 space-y-4`}
       aria-hidden
     >
-      <div className="h-3 w-40 rounded bg-slate-700/80" />
-      <div className="h-4 w-full max-w-md rounded bg-slate-700/60" />
+      <div className="h-3 w-40 rounded bg-[var(--color-border-light)]" />
+      <div className="h-4 w-full max-w-md rounded bg-[var(--color-border-light)]/85" />
       <div className="h-10 w-44 rounded-full bg-emerald-900/40" />
     </div>
   );
@@ -111,12 +111,12 @@ function PrimaryActionSkeleton() {
 function CaseActivitySkeleton() {
   return (
     <div className={`${APP_CARD} space-y-3 animate-pulse`} aria-hidden>
-      <div className="h-3 w-56 rounded bg-slate-700/70" />
-      <div className="h-3 w-full rounded bg-slate-800/80" />
+      <div className="h-3 w-56 rounded bg-[var(--color-border-light)]/90" />
+      <div className="h-3 w-full rounded bg-[var(--color-light-sand)]/85" />
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="flex items-center justify-between gap-3 border-b border-slate-800/80 py-3 last:border-0">
-          <div className="h-4 w-28 rounded bg-slate-700/60" />
-          <div className="h-3 w-24 rounded bg-slate-800/80" />
+        <div key={i} className="flex items-center justify-between gap-3 border-b border-[var(--color-border-light)] py-3 last:border-0">
+          <div className="h-4 w-28 rounded bg-[var(--color-border-light)]/85" />
+          <div className="h-3 w-24 rounded bg-[var(--color-light-sand)]/85" />
         </div>
       ))}
     </div>
@@ -804,7 +804,7 @@ export default function VictimDashboard({
           ? t("victimDashboard.supportMatchOne")
           : tf("victimDashboard.supportMatchMany", { count: matchCount });
 
-  const primaryCtaClass = `inline-flex min-h-[3rem] items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-base font-bold text-white shadow-md shadow-blue-950/30 hover:bg-blue-500 disabled:opacity-50`;
+  const primaryCtaClass = `inline-flex min-h-[3rem] items-center justify-center rounded-full bg-[var(--color-teal-deep)] px-8 py-3 text-base font-bold text-white shadow-md shadow-blue-950/30 hover:bg-[var(--color-teal)] disabled:opacity-50`;
 
   const eligibilitySkipped = Boolean(
     focusCase && getEligibilitySkippedFromApplication(focusCase.application)
@@ -842,22 +842,22 @@ export default function VictimDashboard({
           <>
             <PageHeader
               title={dashboardHeaderTitle}
-              titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
-              className="rounded-2xl border border-slate-800/50 bg-slate-950/30 px-4 py-4 sm:px-6"
+              titleClassName="text-xl sm:text-2xl font-semibold text-[var(--color-navy)] tracking-tight"
+              className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-white)]/30 px-4 py-4 sm:px-6"
             />
-            <div className="rounded-lg border border-slate-800/50 bg-slate-950/40 px-3 py-3 animate-pulse">
-              <div className="h-1 w-full rounded-full bg-slate-800/80" />
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-3 py-3 animate-pulse">
+              <div className="h-1 w-full rounded-full bg-[var(--color-light-sand)]/85" />
               <div className="mt-2 grid grid-cols-3 gap-2">
-                <div className="h-8 rounded bg-slate-800/60" />
-                <div className="h-8 rounded bg-slate-800/60" />
-                <div className="h-8 rounded bg-slate-800/60" />
+                <div className="h-8 rounded bg-[var(--color-light-sand)]/75" />
+                <div className="h-8 rounded bg-[var(--color-light-sand)]/75" />
+                <div className="h-8 rounded bg-[var(--color-light-sand)]/75" />
               </div>
             </div>
             <PrimaryActionSkeleton />
             <CaseActivitySkeleton />
             <section className={`${APP_CARD} space-y-3`}>
-              <div className="h-4 w-40 animate-pulse rounded bg-slate-700/70" />
-              <div className="h-3 w-full max-w-md animate-pulse rounded bg-slate-800/80" />
+              <div className="h-4 w-40 animate-pulse rounded bg-[var(--color-border-light)]/90" />
+              <div className="h-3 w-full max-w-md animate-pulse rounded bg-[var(--color-light-sand)]/85" />
             </section>
           </>
         ) : (
@@ -866,15 +866,15 @@ export default function VictimDashboard({
             <div id="your-cases" className="scroll-mt-24 space-y-3">
               <PageHeader
                 title={dashboardHeaderTitle}
-                titleClassName="text-xl sm:text-2xl font-semibold text-slate-100 tracking-tight"
-                className="rounded-2xl border border-slate-800/40 bg-slate-950/25 px-4 py-4 sm:px-5"
+                titleClassName="text-xl sm:text-2xl font-semibold text-[var(--color-navy)] tracking-tight"
+                className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/55 px-4 py-4 sm:px-5"
                 rightActions={
                   cases.length > 0 && focusCase ? (
                     <div className="flex flex-wrap items-center gap-2 justify-end">
                       <div className="flex items-center gap-2">
                         <span
                           id="victim-case-select-label"
-                          className="text-[10px] font-medium uppercase tracking-wide text-slate-500 whitespace-nowrap"
+                          className="text-[10px] font-medium uppercase tracking-wide text-[var(--color-muted)] whitespace-nowrap"
                         >
                           {t("victimDashboard.myCasesSectionLabel")}
                         </span>
@@ -883,7 +883,7 @@ export default function VictimDashboard({
                           value={focusCaseId ?? ""}
                           onChange={(e) => selectCase(e.target.value)}
                           aria-labelledby="victim-case-select-label"
-                          className="max-w-[min(100%,15rem)] rounded-md border border-slate-700/40 bg-slate-950/50 py-1.5 pl-2 pr-7 text-xs text-slate-200 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500/35"
+                          className="max-w-[min(100%,15rem)] rounded-md border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 py-1.5 pl-2 pr-7 text-xs text-[var(--color-charcoal)] shadow-sm focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]/35"
                         >
                           {cases.map((c) => (
                             <option key={c.id} value={c.id}>
@@ -893,13 +893,13 @@ export default function VictimDashboard({
                         </select>
                       </div>
                       <details className="relative shrink-0">
-                        <summary className="cursor-pointer list-none rounded-md border border-slate-600/60 bg-slate-900/50 px-2.5 py-1.5 text-[11px] font-medium text-slate-300 hover:bg-slate-900 [&::-webkit-details-marker]:hidden">
+                        <summary className="cursor-pointer list-none rounded-md border border-[var(--color-border)]/60 bg-[var(--color-warm-cream)]/80 px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-slate)] hover:bg-white [&::-webkit-details-marker]:hidden">
                           {t("victimDashboard.caseEdit")}
                         </summary>
-                        <div className="absolute right-0 z-30 mt-1 min-w-[9rem] rounded-lg border border-slate-700 bg-slate-950 py-1 shadow-xl">
+                        <div className="absolute right-0 z-30 mt-1 min-w-[9rem] rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] py-1 shadow-xl">
                           <button
                             type="button"
-                            className="block w-full px-3 py-2 text-left text-xs text-slate-200 hover:bg-slate-900"
+                            className="block w-full px-3 py-2 text-left text-xs text-[var(--color-charcoal)] hover:bg-white"
                             onClick={() => {
                               setEditNameValue(focusCase.name?.trim() ?? "");
                               setRenameModalOpen(true);
@@ -909,7 +909,7 @@ export default function VictimDashboard({
                           </button>
                           <button
                             type="button"
-                            className="block w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-slate-900"
+                            className="block w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-white"
                             onClick={() =>
                               setDeleteTarget({
                                 id: focusCase.id,
@@ -927,7 +927,7 @@ export default function VictimDashboard({
                         type="button"
                         onClick={() => void handleCreateBlankCaseOnDashboard()}
                         disabled={creatingCase}
-                        className="shrink-0 rounded-md bg-slate-700 px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm hover:bg-slate-600 disabled:opacity-50"
+                        className="shrink-0 rounded-md bg-[var(--color-teal-deep)] px-2.5 py-1.5 text-[11px] font-semibold text-white shadow-sm hover:bg-[var(--color-teal)] disabled:opacity-50"
                       >
                         {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.newCaseButton")}
                       </button>
@@ -943,7 +943,7 @@ export default function VictimDashboard({
               className={`rounded-xl px-3 py-3 sm:px-4 ${
                 eligibilitySkipped
                   ? "border border-red-500/35 bg-red-950/20 shadow-[0_0_24px_-6px_rgba(239,68,68,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]"
-                  : "border border-slate-700 bg-slate-900 shadow-sm shadow-black/20"
+                  : "border border-[var(--color-border)] bg-white shadow-sm shadow-black/20"
               }`}
             >
               <VictimFunnelStepper
@@ -974,7 +974,7 @@ export default function VictimDashboard({
                       {showNextStepConnectAdvocate ? (
                         <Link
                           href={connectAdvocateHref}
-                          className="inline-flex items-center justify-center rounded-full bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
+                          className="inline-flex items-center justify-center rounded-full bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-[var(--color-teal)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-teal)]/40"
                         >
                           {t("victimDashboard.getHelp.connectAdvocate")}
                         </Link>
@@ -982,7 +982,7 @@ export default function VictimDashboard({
                       {showNextStepFindOrganizations ? (
                         <Link
                           href={findOrgHref}
-                          className="inline-flex items-center justify-center rounded-full border border-slate-600/80 bg-slate-900/60 px-3 py-1.5 text-[11px] font-semibold text-slate-300 transition hover:border-slate-500 hover:bg-slate-800/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-slate)] transition hover:border-[var(--color-muted)] hover:bg-[var(--color-light-sand)]/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-teal)]/40"
                         >
                           {t("victimDashboard.getHelp.findOrganizations")}
                         </Link>
@@ -996,26 +996,26 @@ export default function VictimDashboard({
 
             {/* Organization + advocates — visible without a case; case-specific rows when a case is selected */}
             <section
-              className="rounded-xl border border-slate-800/40 bg-slate-950/25 px-3 py-3 sm:px-4"
+              className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/55 px-3 py-3 sm:px-4"
               aria-labelledby="victim-support-team-heading"
             >
               <h2
                 id="victim-support-team-heading"
-                className="text-base sm:text-lg font-semibold text-slate-50 tracking-tight"
+                className="text-base sm:text-lg font-semibold text-[var(--color-navy)] tracking-tight"
               >
                 {t("victimDashboard.supportTeamTitle")}
               </h2>
               {noCasesYet ? (
-                <p className="mt-1 text-[11px] text-slate-500 leading-relaxed">
+                <p className="mt-1 text-[11px] text-[var(--color-muted)] leading-relaxed">
                   {t("victimDashboard.supportTeamNoCaseHint")}
                 </p>
               ) : null}
               {supportSectionLoading ? (
-                <p className="mt-2 text-[11px] text-slate-600">{t("victimDashboard.supportTeamLoading")}</p>
+                <p className="mt-2 text-[11px] text-[var(--color-slate)]">{t("victimDashboard.supportTeamLoading")}</p>
               ) : (
                 <div className="mt-2 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamOrg")}</p>
+                    <p className="text-xs font-medium text-[var(--color-slate)]">{t("victimDashboard.supportTeamOrg")}</p>
                     <div className="mt-1.5 space-y-3">
                       {caseLinkedOrgName ? (
                         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -1031,7 +1031,7 @@ export default function VictimDashboard({
                           <div className="flex flex-wrap items-center gap-2">
                             <Link
                               href={secureMessagesHref}
-                              className="inline-flex items-center justify-center rounded-full border border-slate-600/90 bg-slate-900/50 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80"
+                              className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-2.5 py-1 text-[10px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/85"
                             >
                               {t("victimDashboard.supportTeamContactOrg")}
                             </Link>
@@ -1043,7 +1043,7 @@ export default function VictimDashboard({
                           <p className="text-[11px] font-medium text-amber-200/95">
                             {t("victimDashboard.supportTeamPendingOrgConnectsTitle")}
                           </p>
-                          <ul className="mt-1 list-none space-y-0.5 text-[11px] text-slate-300">
+                          <ul className="mt-1 list-none space-y-0.5 text-[11px] text-[var(--color-slate)]">
                             {pendingOrgConnects.map((p) => (
                               <li key={p.id}>{p.organization_name}</li>
                             ))}
@@ -1052,12 +1052,12 @@ export default function VictimDashboard({
                       ) : null}
                       {!caseLinkedOrgName && !hasPendingOrgConnects ? (
                         <div className="space-y-2">
-                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                          <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
                             {t("victimDashboard.supportTeamNoOrg")}
                           </p>
                           <Link
                             href={findOrgHref}
-                            className="inline-flex w-full sm:w-auto min-h-[2.5rem] items-center justify-center rounded-full border border-slate-600/80 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-slate-200 shadow-sm transition hover:border-slate-500 hover:bg-slate-800/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
+                            className="inline-flex w-full sm:w-auto min-h-[2.5rem] items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 px-4 py-2 text-xs font-semibold text-[var(--color-charcoal)] shadow-sm transition hover:border-[var(--color-muted)] hover:bg-[var(--color-light-sand)]/85 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-teal)]/40"
                           >
                             {t("victimDashboard.supportTeamAddOrgCta")}
                           </Link>
@@ -1066,7 +1066,7 @@ export default function VictimDashboard({
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-slate-300">{t("victimDashboard.supportTeamAdvocates")}</p>
+                    <p className="text-xs font-medium text-[var(--color-slate)]">{t("victimDashboard.supportTeamAdvocates")}</p>
                     {focusCaseId && supportTeam?.advocates && supportTeam.advocates.length > 0 ? (
                       <div className="mt-0.5 space-y-2">
                         <ul className="list-none space-y-2 text-xs">
@@ -1076,14 +1076,14 @@ export default function VictimDashboard({
                                 <Link
                                   href={manageAdvocatePath}
                                   title={t("victimDashboard.supportTeamEditAdvocateTitle")}
-                                  className="font-medium text-blue-400 underline decoration-blue-500/45 underline-offset-2 hover:text-blue-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 rounded-sm"
+                                  className="font-medium text-[var(--color-teal)] underline decoration-blue-500/45 underline-offset-2 hover:text-[var(--color-teal-deep)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-teal)]/40 rounded-sm"
                                 >
                                   {a.label}
                                 </Link>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <Link
                                     href={secureMessagesHref}
-                                    className="inline-flex items-center justify-center rounded-full border border-slate-600/90 bg-slate-900/50 px-2.5 py-1 text-[10px] font-semibold text-slate-200 hover:bg-slate-800/80"
+                                    className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-2.5 py-1 text-[10px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/85"
                                   >
                                     {t("victimDashboard.supportTeamSendMessage")}
                                   </Link>
@@ -1097,7 +1097,7 @@ export default function VictimDashboard({
                             <p className="text-[11px] font-medium text-amber-200/95">
                               {t("victimDashboard.supportTeamAdvocateMorePending")}
                             </p>
-                            <ul className="mt-1 list-none space-y-0.5 text-[11px] text-slate-300">
+                            <ul className="mt-1 list-none space-y-0.5 text-[11px] text-[var(--color-slate)]">
                               {pendingAdvocateRequests.map((r) => (
                                 <li key={r.id}>{r.advocate_label}</li>
                               ))}
@@ -1111,7 +1111,7 @@ export default function VictimDashboard({
                           {t("victimDashboard.supportTeamAdvocateRequestPending")}
                         </p>
                         {hasPendingAdvocateDetail ? (
-                          <ul className="list-none space-y-0.5 text-[11px] text-slate-400">
+                          <ul className="list-none space-y-0.5 text-[11px] text-[var(--color-muted)]">
                             {pendingAdvocateRequests.map((r) => (
                               <li key={r.id}>{r.advocate_label}</li>
                             ))}
@@ -1120,10 +1120,10 @@ export default function VictimDashboard({
                       </div>
                     ) : (
                       <div className="mt-1.5 space-y-1.5">
-                        <p className="text-[11px] text-slate-600">{t("victimDashboard.supportTeamNoAdvocates")}</p>
+                        <p className="text-[11px] text-[var(--color-slate)]">{t("victimDashboard.supportTeamNoAdvocates")}</p>
                         <Link
                           href={connectAdvocateHref}
-                          className="inline-flex text-[11px] font-medium text-slate-500 underline decoration-slate-600 underline-offset-2 hover:text-slate-300"
+                          className="inline-flex text-[11px] font-medium text-[var(--color-muted)] underline decoration-[var(--color-border)] underline-offset-2 hover:text-[var(--color-slate)]"
                         >
                           {t("victimDashboard.supportTeamConnectCta")}
                         </Link>
@@ -1136,38 +1136,38 @@ export default function VictimDashboard({
 
             {/* Case activity — tied to selected case */}
             {!noCasesYet && focusCaseId && focusCase && (
-              <section className={`${APP_CARD} border-slate-800/60 bg-slate-950/35 space-y-1`}>
-                <h2 className="text-sm font-semibold text-slate-100 pb-2">
+              <section className={`${APP_CARD} border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/65 space-y-1`}>
+                <h2 className="text-sm font-semibold text-[var(--color-navy)] pb-2">
                   {t("victimDashboard.caseDetailsHeading")}
                 </h2>
-                <div className="divide-y divide-slate-800/90 rounded-xl border border-slate-800/80 overflow-hidden">
+                <div className="divide-y divide-[var(--color-border-light)] rounded-xl border border-[var(--color-border-light)] overflow-hidden">
                   <Link
                     href={intakeHref}
-                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/80 transition-colors"
                   >
-                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityMessages")}</span>
-                    <span className="text-xs text-slate-400 text-right">{messagesRowStatus}</span>
+                    <span className="font-medium text-[var(--color-navy)]">{t("victimDashboard.caseActivityMessages")}</span>
+                    <span className="text-xs text-[var(--color-muted)] text-right">{messagesRowStatus}</span>
                   </Link>
                   <Link
                     href={intakeHref}
-                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/80 transition-colors"
                   >
-                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityDocuments")}</span>
-                    <span className="text-xs text-slate-400 text-right">{documentsRowStatus}</span>
+                    <span className="font-medium text-[var(--color-navy)]">{t("victimDashboard.caseActivityDocuments")}</span>
+                    <span className="text-xs text-[var(--color-muted)] text-right">{documentsRowStatus}</span>
                   </Link>
                   <Link
                     href={intakeHref}
-                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/80 transition-colors"
                   >
-                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivityAppointments")}</span>
-                    <span className="text-xs text-slate-400 text-right">{appointmentsRowStatus}</span>
+                    <span className="font-medium text-[var(--color-navy)]">{t("victimDashboard.caseActivityAppointments")}</span>
+                    <span className="text-xs text-[var(--color-muted)] text-right">{appointmentsRowStatus}</span>
                   </Link>
                   <Link
                     href={intakeHref}
-                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-slate-200 hover:bg-slate-900/50 transition-colors"
+                    className="flex items-center justify-between gap-3 px-3 py-3 text-sm text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/80 transition-colors"
                   >
-                    <span className="font-medium text-slate-100">{t("victimDashboard.caseActivitySupport")}</span>
-                    <span className="text-xs text-slate-400 text-right">{supportRowStatus}</span>
+                    <span className="font-medium text-[var(--color-navy)]">{t("victimDashboard.caseActivitySupport")}</span>
+                    <span className="text-xs text-[var(--color-muted)] text-right">{supportRowStatus}</span>
                   </Link>
                 </div>
               </section>
@@ -1183,7 +1183,7 @@ export default function VictimDashboard({
             role="presentation"
           >
             <div
-              className={`rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl ${
+              className={`rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] p-6 shadow-xl ${
                 applyModalStep === "path" ? "max-w-sm w-full space-y-4" : "max-w-md space-y-4"
               }`}
               onClick={(e) => e.stopPropagation()}
@@ -1202,7 +1202,7 @@ export default function VictimDashboard({
                         type="button"
                         disabled={creatingCase}
                         onClick={() => void goConnectAdvocateFromApply()}
-                        className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-teal-500/50 hover:bg-slate-900 disabled:opacity-50"
+                        className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-4 text-center text-sm font-semibold text-[var(--color-navy)] transition hover:border-teal-500/50 hover:bg-white disabled:opacity-50"
                       >
                         {t("victimDashboard.applyPathConnect")}
                       </button>
@@ -1211,7 +1211,7 @@ export default function VictimDashboard({
                       type="button"
                       disabled={creatingCase}
                       onClick={() => setApplyModalStep("state")}
-                      className="rounded-xl border border-blue-500/35 bg-blue-950/40 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-400/60 hover:bg-blue-950/55 disabled:opacity-50"
+                      className="rounded-xl border border-[var(--color-teal)]/35 bg-blue-950/40 px-4 py-4 text-center text-sm font-semibold text-[var(--color-navy)] transition hover:border-blue-400/60 hover:bg-blue-950/55 disabled:opacity-50"
                     >
                       {t("victimDashboard.applyPathSelf")}
                     </button>
@@ -1220,23 +1220,23 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => closeApplyModal()}
-                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                    className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                   >
                     {t("victimDashboard.cancel")}
                   </button>
                 </>
               ) : applyModalStep === "state" ? (
                 <>
-                  <h3 id="apply-modal-title" className="text-base font-semibold text-slate-100">
+                  <h3 id="apply-modal-title" className="text-base font-semibold text-[var(--color-navy)]">
                     {t("victimDashboard.stateModalTitle")}
                   </h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{t("victimDashboard.stateModalSubtitle")}</p>
+                  <p className="text-sm leading-relaxed text-[var(--color-muted)]">{t("victimDashboard.stateModalSubtitle")}</p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <button
                       type="button"
                       disabled={creatingCase}
                       onClick={() => pickProgramState("IL")}
-                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-500/60 hover:bg-slate-900 disabled:opacity-50"
+                      className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-4 text-center text-sm font-semibold text-[var(--color-navy)] transition hover:border-[var(--color-teal)]/60 hover:bg-white disabled:opacity-50"
                     >
                       {t("victimDashboard.stateIL")}
                     </button>
@@ -1244,7 +1244,7 @@ export default function VictimDashboard({
                       type="button"
                       disabled={creatingCase}
                       onClick={() => pickProgramState("IN")}
-                      className="rounded-xl border border-slate-600 bg-slate-900/80 px-4 py-4 text-center text-sm font-semibold text-slate-100 transition hover:border-blue-500/60 hover:bg-slate-900 disabled:opacity-50"
+                      className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-4 text-center text-sm font-semibold text-[var(--color-navy)] transition hover:border-[var(--color-teal)]/60 hover:bg-white disabled:opacity-50"
                     >
                       {t("victimDashboard.stateIN")}
                     </button>
@@ -1253,7 +1253,7 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => setApplyModalStep("path")}
-                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                    className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                   >
                     ← {t("victimDashboard.applyPathBack")}
                   </button>
@@ -1261,17 +1261,17 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => closeApplyModal()}
-                    className="w-full text-center text-xs text-slate-600 hover:text-slate-400"
+                    className="w-full text-center text-xs text-[var(--color-slate)] hover:text-[var(--color-muted)]"
                   >
                     {t("victimDashboard.cancel")}
                   </button>
                 </>
               ) : (
                 <>
-                  <h3 id="apply-modal-title" className="text-base font-semibold text-slate-100">
+                  <h3 id="apply-modal-title" className="text-base font-semibold text-[var(--color-navy)]">
                     {t("victimDashboard.stateModalTitle")}
                   </h3>
-                  <p className="text-sm leading-relaxed text-slate-300">
+                  <p className="text-sm leading-relaxed text-[var(--color-slate)]">
                     {tf("victimDashboard.eligibleReviewIntro", {
                       state: pendingState === "IN" ? t("victimDashboard.stateIN") : t("victimDashboard.stateIL"),
                     })}
@@ -1280,7 +1280,7 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => void handleStartNew(false)}
-                    className="w-full rounded-full bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                    className="w-full rounded-full bg-[var(--color-teal-deep)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
                   >
                     {creatingCase ? t("victimDashboard.creating") : t("victimDashboard.continueToEligibility")}
                   </button>
@@ -1288,7 +1288,7 @@ export default function VictimDashboard({
                     type="button"
                     disabled={creatingCase}
                     onClick={() => setApplyModalStep("state")}
-                    className="w-full text-center text-xs text-slate-500 hover:text-slate-300"
+                    className="w-full text-center text-xs text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                   >
                     ← {t("victimDashboard.stateModalTitle")}
                   </button>
@@ -1306,13 +1306,13 @@ export default function VictimDashboard({
             role="presentation"
           >
             <div
-              className="w-full max-w-md space-y-4 rounded-2xl border border-slate-700 bg-slate-950 p-6 shadow-xl"
+              className="w-full max-w-md space-y-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="rename-case-title"
             >
-              <h3 id="rename-case-title" className="text-sm font-semibold text-slate-100">
+              <h3 id="rename-case-title" className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("victimDashboard.editNameTitle")}
               </h3>
               <form
@@ -1327,20 +1327,20 @@ export default function VictimDashboard({
                   value={editNameValue}
                   onChange={(e) => setEditNameValue(e.target.value)}
                   placeholder={t("victimDashboard.caseNamePlaceholder")}
-                  className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40"
                   autoFocus
                 />
                 <div className="flex flex-wrap justify-end gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setRenameModalOpen(false)}
-                    className="rounded-full border border-slate-600 px-4 py-2 text-xs text-slate-300 hover:bg-slate-900/60"
+                    className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs text-[var(--color-slate)] hover:bg-[var(--color-warm-cream)]/85"
                   >
                     {t("victimDashboard.cancel")}
                   </button>
                   <button
                     type="submit"
-                    className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+                    className="rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]"
                   >
                     {t("victimDashboard.save")}
                   </button>
@@ -1357,16 +1357,16 @@ export default function VictimDashboard({
             onClick={() => !deleteBusy && setDeleteTarget(null)}
           >
             <div
-              className="rounded-2xl border border-slate-700 bg-slate-950 p-6 max-w-md space-y-4"
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] p-6 max-w-md space-y-4"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
               aria-labelledby="delete-app-title"
             >
-              <h3 id="delete-app-title" className="text-sm font-semibold text-slate-100">
+              <h3 id="delete-app-title" className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("victimDashboard.deleteModalTitle")}
               </h3>
-              <div className="text-xs text-slate-300 space-y-2">
+              <div className="text-xs text-[var(--color-slate)] space-y-2">
                 <p>{t("victimDashboard.deleteModalBodyLine1")}</p>
                 <p>{t("victimDashboard.deleteModalBodyLine2")}</p>
               </div>
@@ -1379,7 +1379,7 @@ export default function VictimDashboard({
                     setDeleteErr(null);
                     setDeleteTarget(null);
                   }}
-                  className="rounded-full border border-slate-600 px-4 py-2 text-xs hover:bg-slate-900/60 disabled:opacity-50"
+                  className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs hover:bg-[var(--color-warm-cream)]/85 disabled:opacity-50"
                 >
                   {t("victimDashboard.deleteModalCancel")}
                 </button>
@@ -1396,14 +1396,14 @@ export default function VictimDashboard({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-slate-400">
-          <Link href={ROUTES.marketingLanding} className="hover:text-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-[11px] text-[var(--color-muted)]">
+          <Link href={ROUTES.marketingLanding} className="hover:text-[var(--color-charcoal)]">
             {t("common.backToHome")}
           </Link>
           <button
             type="button"
             onClick={handleLogout}
-            className="hover:text-slate-200 text-left sm:text-right"
+            className="hover:text-[var(--color-charcoal)] text-left sm:text-right"
           >
             {t("nav.logout")}
           </button>

@@ -44,7 +44,12 @@ export default function AuditLogPage() {
 
         if (!res.ok) {
           const json = await res.json().catch(() => null);
-          setErr(getApiErrorMessage(json, "Failed to load audit logs"));
+          setErr(
+            getApiErrorMessage(
+              json,
+              "We couldn't load audit logs. Refresh the page and try again.",
+            ),
+          );
           setLogs([]);
           return;
         }
@@ -53,7 +58,9 @@ export default function AuditLogPage() {
         setLogs(json.logs ?? []);
         setErr(null);
       } catch (e) {
-        setErr("Failed to load audit logs");
+        setErr(
+          "We couldn't load audit logs — the request was interrupted. Check your connection and try again.",
+        );
         setLogs([]);
       } finally {
         setLoading(false);
@@ -71,18 +78,18 @@ export default function AuditLogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+            <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
               Admin · Audit Log
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold">Audit logs</h1>
           </div>
           <Link
             href="/admin/cases"
-            className="text-sm text-slate-400 hover:text-slate-200"
+            className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
           >
             ← Back to cases
           </Link>
@@ -94,14 +101,14 @@ export default function AuditLogPage() {
             placeholder="Filter by action (e.g. auth.login)"
             value={filterAction}
             onChange={(e) => setFilterAction(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 max-w-xs"
+            className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] max-w-xs"
           />
           <input
             type="text"
             placeholder="Filter by actor user ID"
             value={filterActor}
             onChange={(e) => setFilterActor(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 max-w-xs"
+            className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] max-w-xs"
           />
         </div>
 
@@ -110,38 +117,38 @@ export default function AuditLogPage() {
         )}
 
         {loading ? (
-          <p className="text-sm text-slate-400">Loading…</p>
+          <p className="text-sm text-[var(--color-muted)]">Loading…</p>
         ) : (
-          <div className="rounded-2xl border border-slate-800 overflow-hidden">
+          <div className="rounded-2xl border border-[var(--color-border-light)] overflow-hidden">
             <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
               <table className="w-full text-left text-xs">
-                <thead className="sticky top-0 bg-slate-900 border-b border-slate-700">
+                <thead className="sticky top-0 bg-white border-b border-[var(--color-border)]">
                   <tr>
-                    <th className="px-4 py-3 font-semibold text-slate-300">Time</th>
-                    <th className="px-4 py-3 font-semibold text-slate-300">Action</th>
-                    <th className="px-4 py-3 font-semibold text-slate-300">Actor</th>
-                    <th className="px-4 py-3 font-semibold text-slate-300">Resource</th>
-                    <th className="px-4 py-3 font-semibold text-slate-300">Severity</th>
+                    <th className="px-4 py-3 font-semibold text-[var(--color-slate)]">Time</th>
+                    <th className="px-4 py-3 font-semibold text-[var(--color-slate)]">Action</th>
+                    <th className="px-4 py-3 font-semibold text-[var(--color-slate)]">Actor</th>
+                    <th className="px-4 py-3 font-semibold text-[var(--color-slate)]">Resource</th>
+                    <th className="px-4 py-3 font-semibold text-[var(--color-slate)]">Severity</th>
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((row) => (
                     <tr
                       key={row.id}
-                      className="border-b border-slate-800/50 hover:bg-slate-900/50"
+                      className="border-b border-[var(--color-border-light)] hover:bg-[var(--color-warm-cream)]/80"
                     >
-                      <td className="px-4 py-2 text-slate-400 whitespace-nowrap">
+                      <td className="px-4 py-2 text-[var(--color-muted)] whitespace-nowrap">
                         {formatDate(row.created_at)}
                       </td>
-                      <td className="px-4 py-2 font-mono text-slate-200">
+                      <td className="px-4 py-2 font-mono text-[var(--color-charcoal)]">
                         {row.action}
                       </td>
-                      <td className="px-4 py-2 text-slate-400">
+                      <td className="px-4 py-2 text-[var(--color-muted)]">
                         {row.actor_user_id
                           ? `${row.actor_user_id.slice(0, 8)}… (${row.actor_role ?? "—"})`
                           : "—"}
                       </td>
-                      <td className="px-4 py-2 text-slate-400">
+                      <td className="px-4 py-2 text-[var(--color-muted)]">
                         {row.resource_type && row.resource_id
                           ? `${row.resource_type}:${String(row.resource_id).slice(0, 8)}…`
                           : "—"}
@@ -153,7 +160,7 @@ export default function AuditLogPage() {
                               ? "text-amber-400"
                               : row.severity === "warning"
                                 ? "text-yellow-400"
-                                : "text-slate-500"
+                                : "text-[var(--color-muted)]"
                           }
                         >
                           {row.severity}
@@ -165,7 +172,7 @@ export default function AuditLogPage() {
               </table>
             </div>
             {logs.length === 0 && !loading && (
-              <p className="px-4 py-8 text-center text-slate-500">
+              <p className="px-4 py-8 text-center text-[var(--color-muted)]">
                 No audit logs found. Run the migration and generate some activity.
               </p>
             )}

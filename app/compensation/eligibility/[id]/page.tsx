@@ -172,9 +172,11 @@ export default function EligibilityCheckPage() {
 
   if (!caseId) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-red-300">Invalid case</div>
-        <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-[var(--color-error)]">
+          We couldn&apos;t open a case from that link. Go back to your dashboard and choose a case from your list.
+        </div>
+        <Link href="/dashboard" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mt-4 inline-block">
           ← Back to dashboard
         </Link>
       </main>
@@ -183,15 +185,15 @@ export default function EligibilityCheckPage() {
 
   if (!authLoading && !accessToken) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
-          <p className="text-slate-300">Please sign in to continue the eligibility check for this case.</p>
+          <p className="text-[var(--color-slate)]">Please sign in to continue the eligibility check for this case.</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm font-medium">
               Sign in
             </Link>
-            <span className="text-slate-600">·</span>
-            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+            <span className="text-[var(--color-slate)]">·</span>
+            <Link href="/dashboard" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-sm">
               ← Back to dashboard
             </Link>
           </div>
@@ -202,9 +204,9 @@ export default function EligibilityCheckPage() {
 
   if (authLoading || (stateCode === null && !loadErr)) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-slate-400">Loading…</div>
-        <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 mt-4 inline-block">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-[var(--color-muted)]">Loading…</div>
+        <Link href="/dashboard" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mt-4 inline-block">
           ← Back to dashboard
         </Link>
       </main>
@@ -213,15 +215,15 @@ export default function EligibilityCheckPage() {
 
   if (loadErr && !result) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
         <div className="max-w-xl mx-auto space-y-4">
           <p className="text-red-300">{loadErr}</p>
           <div className="flex flex-wrap gap-3">
             <Link href="/login" className="text-emerald-400 hover:text-emerald-300 text-sm">
               Sign in
             </Link>
-            <span className="text-slate-600">·</span>
-            <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm">
+            <span className="text-[var(--color-slate)]">·</span>
+            <Link href="/dashboard" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-sm">
               ← Back to dashboard
             </Link>
           </div>
@@ -235,11 +237,11 @@ export default function EligibilityCheckPage() {
     const intakeHref = `/compensation/intake?case=${caseId}`;
 
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
         <div className="max-w-xl mx-auto space-y-6">
           <Link
             href="/dashboard"
-            className="text-[11px] text-slate-400 hover:text-slate-200"
+            className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
           >
             ← Back to dashboard
           </Link>
@@ -249,15 +251,15 @@ export default function EligibilityCheckPage() {
               <h1 className="text-xl font-semibold text-emerald-100">
                 {t(`${prefix}.resultEligible.headline`)}
               </h1>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-[var(--color-slate)]">
                 {t(`${prefix}.resultEligible.body`)}
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--color-muted)]">
                 {t(`${prefix}.resultEligible.secondary`)}
               </p>
               <Link
                 href={intakeHref}
-                className="inline-block rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+                className="inline-block rounded-full bg-[var(--color-teal-deep)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)]"
               >
                 {t(`${prefix}.resultEligible.cta`)}
               </Link>
@@ -270,10 +272,10 @@ export default function EligibilityCheckPage() {
               <h1 className="text-xl font-semibold text-amber-100">
                 {t(`${prefix}.resultNeedsAttention.headline`)}
               </h1>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-[var(--color-slate)]">
                 {t(`${prefix}.resultNeedsAttention.body`)}
               </p>
-              <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
+              <ul className="list-disc list-inside text-sm text-[var(--color-slate)] space-y-1">
                 {[0, 1, 2, 3].map((i) => (
                   <li key={i}>
                     {t(`${prefix}.resultNeedsAttention.checklist.${i}`)}
@@ -283,13 +285,13 @@ export default function EligibilityCheckPage() {
               <div className="flex flex-wrap gap-2">
                 <Link
                   href={intakeHref}
-                  className="rounded-full bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+                  className="rounded-full bg-[var(--color-teal-deep)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)]"
                 >
                   {t(`${prefix}.resultNeedsAttention.ctaReady`)}
                 </Link>
                 <Link
                   href="/help"
-                  className="rounded-full border border-slate-600 px-6 py-2.5 text-sm hover:bg-slate-900/60"
+                  className="rounded-full border border-[var(--color-border)] px-6 py-2.5 text-sm hover:bg-[var(--color-warm-cream)]/85"
                 >
                   {t(`${prefix}.resultNeedsAttention.ctaHelp`)}
                 </Link>
@@ -298,21 +300,21 @@ export default function EligibilityCheckPage() {
           ) : null}
 
           {result.result === "not_eligible" && (
-            <div className="rounded-2xl border border-slate-700 bg-slate-950/70 p-6 space-y-4">
-              <h1 className="text-xl font-semibold text-slate-100">
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 p-6 space-y-4">
+              <h1 className="text-xl font-semibold text-[var(--color-navy)]">
                 {t(`${prefix}.resultNotEligible.headline`)}
               </h1>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-[var(--color-slate)]">
                 {t(`${prefix}.resultNotEligible.body`)}
               </p>
-              <ul className="list-disc list-inside text-sm text-slate-300 space-y-1">
+              <ul className="list-disc list-inside text-sm text-[var(--color-slate)] space-y-1">
                 {[0, 1].map((i) => (
                   <li key={i}>
                     {t(`${prefix}.resultNotEligible.nextSteps.${i}`)}
                   </li>
                 ))}
               </ul>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--color-muted)]">
                 You can still continue to the intake form if you believe you qualify. Your answers do not affect your eligibility.
               </p>
               <div className="flex flex-wrap gap-2">
@@ -324,7 +326,7 @@ export default function EligibilityCheckPage() {
                 </Link>
                 <Link
                   href="/help"
-                  className="rounded-full border border-slate-600 px-6 py-2.5 text-sm hover:bg-slate-900/60"
+                  className="rounded-full border border-[var(--color-border)] px-6 py-2.5 text-sm hover:bg-[var(--color-warm-cream)]/85"
                 >
                   {t(`${prefix}.resultNotEligible.cta`)}
                 </Link>
@@ -342,38 +344,38 @@ export default function EligibilityCheckPage() {
   const totalNum = QUESTIONS.length;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
       <div className="max-w-xl mx-auto space-y-6">
         <Link
           href="/dashboard"
-          className="text-[11px] text-slate-400 hover:text-slate-200"
+          className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
         >
           ← Back to dashboard
         </Link>
 
         {step === 0 && (
           <div className="space-y-2">
-            <p className="text-sm text-slate-100">{t(`${prefix}.introQualify`)}</p>
-            <p className="text-sm text-slate-300">{t(`${prefix}.purposeText`)}</p>
+            <p className="text-sm text-[var(--color-navy)]">{t(`${prefix}.introQualify`)}</p>
+            <p className="text-sm text-[var(--color-slate)]">{t(`${prefix}.purposeText`)}</p>
           </div>
         )}
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-6">
-          <p className="text-[11px] uppercase tracking-wider text-slate-400">
+        <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 space-y-6">
+          <p className="text-[11px] uppercase tracking-wider text-[var(--color-muted)]">
             {tf(`${prefix}.questionOf`, { current: String(stepNum), total: String(totalNum) })}
           </p>
 
           {q === "q1" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q1.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q1.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q1.question")}</p>
               <div className="space-y-2">
                 {(["victim_18plus_own", "parent_minor", "parent_disabled", "paid_expenses", "none"] as ApplicantType[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -403,21 +405,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q1.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q1.helper")}</p>
             </>
           )}
 
           {q === "q1" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q1.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q1.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q1.question")}</p>
               <div className="space-y-2">
                 {(["victim", "surviving_spouse", "dependent_child", "none"] as INApplicantType[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -435,21 +437,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q1.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q1.helper")}</p>
             </>
           )}
 
           {q === "q2" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q2.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q2.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q2.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as VictimStatusAnswer[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -467,21 +469,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q2.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q2.helper")}</p>
             </>
           )}
 
           {q === "q2" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q2.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q2.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q2.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -496,21 +498,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q2.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q2.helper")}</p>
             </>
           )}
 
           {q === "q3" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q3.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q3.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q3.question")}</p>
               <div className="space-y-2">
                 {(["applicant", "guardian", "not_sure"] as SignerAnswer[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -528,21 +530,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q3.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q3.helper")}</p>
             </>
           )}
 
           {q === "q3" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q3.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q3.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q3.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -557,21 +559,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q3.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q3.helper")}</p>
             </>
           )}
 
           {q === "q4" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q4.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q4.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q4.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as PoliceReportAnswer[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -589,21 +591,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q4.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q4.helper")}</p>
             </>
           )}
 
           {q === "q4" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q4.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q4.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q4.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -618,21 +620,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q4.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q4.helper")}</p>
             </>
           )}
 
           {q === "q5" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q5.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q5.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q5.question")}</p>
               <div className="space-y-2">
                 {(["have_number", "have_agency", "dont_have"] as PoliceReportDetailsAnswer[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -653,21 +655,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q5.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q5.helper")}</p>
             </>
           )}
 
           {q === "q5" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q5.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q5.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q5.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -682,21 +684,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q5.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q5.helper")}</p>
             </>
           )}
 
           {q === "q6" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q6.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q6.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q6.question")}</p>
               <div className="space-y-2">
                 {(["medical_hospital", "funeral_burial", "counseling", "not_sure"] as ExpenseType[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-start gap-2 p-3 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-start gap-2 p-3 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -710,21 +712,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q6.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q6.helper")}</p>
             </>
           )}
 
           {q === "q6" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q6.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q6.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q6.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure"] as INYesNoNotSure[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -739,21 +741,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q6.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q6.helper")}</p>
             </>
           )}
 
           {q === "q7" && !isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibility.q7.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibility.q7.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibility.q7.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "not_sure", "no"] as ContactReliabilityAnswer[]).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -771,21 +773,21 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibility.q7.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibility.q7.helper")}</p>
             </>
           )}
 
           {q === "q7" && isIN && (
             <>
-              <h2 className="text-sm font-semibold text-slate-100">
+              <h2 className="text-sm font-semibold text-[var(--color-navy)]">
                 {t("eligibilityIN.q7.title")}
               </h2>
-              <p className="text-sm text-slate-300">{t("eligibilityIN.q7.question")}</p>
+              <p className="text-sm text-[var(--color-slate)]">{t("eligibilityIN.q7.question")}</p>
               <div className="flex flex-wrap gap-2">
                 {(["yes", "no", "not_sure", "na"] as const).map((v) => (
                   <label
                     key={v}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-700 hover:border-slate-600 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--color-border)] hover:border-[var(--color-border)] cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -800,7 +802,7 @@ export default function EligibilityCheckPage() {
                   </label>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{t("eligibilityIN.q7.helper")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("eligibilityIN.q7.helper")}</p>
             </>
           )}
 
@@ -809,7 +811,7 @@ export default function EligibilityCheckPage() {
               type="button"
               onClick={handleBack}
               disabled={step === 0}
-              className="text-sm text-slate-400 hover:text-slate-200 disabled:opacity-40"
+              className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)] disabled:opacity-40"
             >
               Back
             </button>
@@ -817,7 +819,7 @@ export default function EligibilityCheckPage() {
               type="button"
               onClick={handleNext}
               disabled={!canProceed() || saving}
-              className="rounded-full bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              className="rounded-full bg-[var(--color-teal-deep)] px-6 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {saving ? "Saving…" : step < QUESTIONS.length - 1 ? "Next" : "See results"}
             </button>

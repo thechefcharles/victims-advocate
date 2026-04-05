@@ -32,12 +32,12 @@ const HUB_LINKS = [
 
 export default function HelpPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-10">
         <header className="space-y-2 text-center sm:text-left">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Support</p>
-          <h1 className="text-3xl font-bold text-slate-50">Help</h1>
-          <p className="text-sm text-slate-400 max-w-xl">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">Support</p>
+          <h1 className="text-3xl font-bold text-[var(--color-navy)]">Help</h1>
+          <p className="text-sm text-[var(--color-muted)] max-w-xl">
             Find compensation help, crisis resources, and plain-language explanations of how
             NxtStps handles matching and trust.
           </p>
@@ -52,10 +52,10 @@ export default function HelpPage() {
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className="block h-full rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 hover:border-emerald-500/30 hover:bg-slate-900/50 transition"
+                  className="block h-full rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 sm:p-5 hover:border-emerald-500/30 hover:bg-[var(--color-warm-cream)]/80 transition"
                 >
-                  <span className="text-sm font-semibold text-slate-100">{item.title}</span>
-                  <span className="mt-1 block text-xs text-slate-400 leading-relaxed">
+                  <span className="text-sm font-semibold text-[var(--color-navy)]">{item.title}</span>
+                  <span className="mt-1 block text-xs text-[var(--color-muted)] leading-relaxed">
                     {item.description}
                   </span>
                 </Link>
@@ -64,17 +64,17 @@ export default function HelpPage() {
           </ul>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 sm:p-6 space-y-3 text-sm text-slate-300">
-          <h2 className="text-base font-semibold text-slate-100">Crisis &amp; emergency</h2>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 sm:p-6 space-y-3 text-sm text-[var(--color-slate)]">
+          <h2 className="text-base font-semibold text-[var(--color-navy)]">Crisis &amp; emergency</h2>
           <p>
-            <strong className="text-slate-200">Immediate danger:</strong> call{" "}
+            <strong className="text-[var(--color-charcoal)]">Immediate danger:</strong> call{" "}
             <a href="tel:911" className="text-teal-400 hover:underline">
               911
             </a>
             .
           </p>
           <p>
-            <strong className="text-slate-200">Need to talk now:</strong> call or text{" "}
+            <strong className="text-[var(--color-charcoal)]">Need to talk now:</strong> call or text{" "}
             <a href="tel:988" className="text-[#FF9B9B] font-medium hover:underline">
               988
             </a>{" "}
@@ -82,8 +82,8 @@ export default function HelpPage() {
           </p>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-sm text-slate-400 space-y-2">
-          <h2 className="text-base font-semibold text-slate-200">Account &amp; basics</h2>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-5 text-sm text-[var(--color-muted)] space-y-2">
+          <h2 className="text-base font-semibold text-[var(--color-charcoal)]">Account &amp; basics</h2>
           <p>
             Use{" "}
             <Link href="/login" className="text-teal-400 hover:underline">

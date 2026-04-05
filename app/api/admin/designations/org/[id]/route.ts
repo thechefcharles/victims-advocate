@@ -24,7 +24,7 @@ export async function GET(req: Request, { params }: RouteCtx) {
     const { id } = await params;
     const organizationId = id?.trim();
     if (!organizationId) {
-      return apiFail("VALIDATION_ERROR", "Invalid organization id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
     }
 
     const current = await getCurrentOrgDesignation(organizationId);

@@ -140,48 +140,48 @@ export default function AuthPanel() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5">
-        <div className="text-[11px] text-slate-400">{t("common.loading")}</div>
+      <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 sm:p-5">
+        <div className="text-[11px] text-[var(--color-muted)]">{t("common.loading")}</div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 sm:p-5 space-y-3">
+    <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 sm:p-5 space-y-3">
       {user ? (
         role === "advocate" ? (
           <>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[11px] text-[var(--color-muted)]">
               {t("authPanel.signedInAsAdvocate")}
             </div>
-            <div className="text-sm font-semibold text-slate-100">{email}</div>
+            <div className="text-sm font-semibold text-[var(--color-navy)]">{email}</div>
 
             <div className="flex flex-wrap gap-2 pt-3">
               <Link
                 href="/dashboard"
-                className="rounded-full px-4 py-2 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500"
+                className="rounded-full px-4 py-2 text-xs font-semibold bg-[var(--color-teal-deep)] text-white hover:bg-[var(--color-teal)]"
               >
                 {t("authPanel.goToMyClients")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
-                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
+                className="rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]"
               >
                 {t("authPanel.learnHowItWorks")}
               </Link>
             </div>
 
-            <p className="text-[11px] text-slate-500">{t("authPanel.advocatesNote")}</p>
+            <p className="text-[11px] text-[var(--color-muted)]">{t("authPanel.advocatesNote")}</p>
           </>
         ) : (
           <>
-            <div className="text-[11px] text-slate-400">{t("authPanel.signedInAs")}</div>
-            <div className="text-sm font-semibold text-slate-100">{email}</div>
+            <div className="text-[11px] text-[var(--color-muted)]">{t("authPanel.signedInAs")}</div>
+            <div className="text-sm font-semibold text-[var(--color-navy)]">{email}</div>
 
             {progress && (
               <div className="pt-2 space-y-2">
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                <div className="flex items-center justify-between text-[11px] text-[var(--color-muted)]">
                   <span>{t("authPanel.progressTitle")}</span>
                   <span>
                     {tf("authPanel.stepOf", {
@@ -191,16 +191,16 @@ export default function AuthPanel() {
                   </span>
                 </div>
 
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-light-sand)]">
                   <div
                     className="h-full bg-gradient-to-r from-blue-600 to-blue-400"
                     style={{ width: `${percent}%` }}
                   />
                 </div>
 
-                <div className="text-[11px] text-slate-500">
+                <div className="text-[11px] text-[var(--color-muted)]">
                   {t("authPanel.currentSection")}{" "}
-                  <span className="text-slate-300">{stepLabel}</span>
+                  <span className="text-[var(--color-slate)]">{stepLabel}</span>
                 </div>
               </div>
             )}
@@ -210,8 +210,8 @@ export default function AuthPanel() {
                 href={resumeHref}
                 className={`rounded-full px-4 py-2 text-xs font-semibold ${
                   activeCaseId
-                    ? "border border-blue-500/40 bg-blue-950/40 text-blue-100 hover:bg-blue-950/60"
-                    : "bg-blue-600 text-white hover:bg-blue-500"
+                    ? "border border-[var(--color-teal)]/40 bg-blue-950/40 text-blue-100 hover:bg-blue-950/60"
+                    : "bg-[var(--color-teal-deep)] text-white hover:bg-[var(--color-teal)]"
                 }`}
               >
                 {activeCaseId
@@ -221,14 +221,14 @@ export default function AuthPanel() {
 
               <Link
                 href="/dashboard"
-                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
+                className="rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]"
               >
                 {t("authPanel.myCases")}
               </Link>
 
               <Link
                 href="/knowledge/compensation"
-                className="rounded-full bg-slate-700 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-600"
+                className="rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]"
               >
                 {t("authPanel.learnHowItWorks")}
               </Link>
@@ -274,36 +274,36 @@ function InlineLoginCard() {
 
   return (
     <>
-      <div className="text-sm font-semibold text-slate-100">
+      <div className="text-sm font-semibold text-[var(--color-navy)]">
         {t("authPanel.inlineLoginTitle")}
       </div>
 
       <form onSubmit={handleSignIn} className="space-y-3 pt-1">
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">{t("authPanel.emailLabel")}</span>
+          <span className="text-[11px] text-[var(--color-muted)]">{t("authPanel.emailLabel")}</span>
           <input
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
             placeholder={t("loginForm.emailPlaceholder")}
             type="email"
             autoComplete="email"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">{t("authPanel.passwordLabel")}</span>
+          <span className="text-[11px] text-[var(--color-muted)]">{t("authPanel.passwordLabel")}</span>
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t("loginForm.passwordPlaceholder")}
             type="password"
             autoComplete="current-password"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
           />
         </label>
 
-        <label className="flex items-center gap-2 text-[11px] text-slate-300">
+        <label className="flex items-center gap-2 text-[11px] text-[var(--color-slate)]">
           <input
             type="checkbox"
             checked={remember}
@@ -322,16 +322,16 @@ function InlineLoginCard() {
         <button
           type="submit"
           disabled={loading || !identifier.trim() || !password}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? t("authPanel.signingIn") : t("authPanel.signIn")}
         </button>
 
-        <div className="flex items-start justify-between gap-4 text-[11px] text-slate-400">
+        <div className="flex items-start justify-between gap-4 text-[11px] text-[var(--color-muted)]">
           <div className="flex flex-col gap-1">
             <div>
               {t("authPanel.newHere")}{" "}
-              <Link href="/signup" className="underline underline-offset-2 hover:text-slate-200">
+              <Link href="/signup" className="underline underline-offset-2 hover:text-[var(--color-charcoal)]">
                 {t("authPanel.createVictimAccount")}
               </Link>
             </div>
@@ -339,14 +339,14 @@ function InlineLoginCard() {
               {t("authPanel.workAsAdvocate")}{" "}
               <Link
                 href="/signup?intent=advocate"
-                className="underline underline-offset-2 hover:text-slate-200"
+                className="underline underline-offset-2 hover:text-[var(--color-charcoal)]"
               >
                 {t("authPanel.createAdvocateAccount")}
               </Link>
             </div>
           </div>
 
-          <Link href="/help" className="underline underline-offset-2 hover:text-slate-200">
+          <Link href="/help" className="underline underline-offset-2 hover:text-[var(--color-charcoal)]">
             {t("authPanel.needHelp")}
           </Link>
         </div>

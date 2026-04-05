@@ -245,7 +245,7 @@ export default function AdminProgramsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <PageHeader
           contextLine="Admin → Programs"
@@ -256,13 +256,13 @@ export default function AdminProgramsPage() {
             <>
               <Link
                 href="/admin/cases"
-                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+                className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
               >
                 Cases
               </Link>
               <Link
                 href="/admin/knowledge"
-                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+                className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
               >
                 Knowledge
               </Link>
@@ -276,14 +276,14 @@ export default function AdminProgramsPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-4">
           <div className="flex flex-wrap gap-4 items-center text-sm">
             <label className="flex items-center gap-2">
-              <span className="text-slate-400">Status</span>
+              <span className="text-[var(--color-muted)]">Status</span>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
+                className="rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[var(--color-charcoal)]"
               >
                 <option value="">All</option>
                 <option value="draft">Draft</option>
@@ -292,19 +292,19 @@ export default function AdminProgramsPage() {
               </select>
             </label>
             <label className="flex items-center gap-2">
-              <span className="text-slate-400">State</span>
+              <span className="text-[var(--color-muted)]">State</span>
               <input
                 type="text"
                 value={filterState}
                 onChange={(e) => setFilterState(e.target.value)}
                 placeholder="e.g. IL"
-                className="w-20 rounded border border-slate-700 bg-slate-900 px-2 py-1 text-slate-200"
+                className="w-20 rounded border border-[var(--color-border)] bg-white px-2 py-1 text-[var(--color-charcoal)]"
               />
             </label>
           </div>
           <a
             href="#admin-program-create"
-            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shrink-0"
+            className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] shrink-0"
           >
             Create
           </a>
@@ -313,16 +313,16 @@ export default function AdminProgramsPage() {
         {/* Create form */}
         <section
           id="admin-program-create"
-          className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3 scroll-mt-24"
+          className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-3 scroll-mt-24"
         >
-          <h2 className="text-sm font-semibold text-slate-50">Create</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">Create</h2>
           <form onSubmit={handleCreate} className="grid gap-2 sm:grid-cols-2">
             <input
               type="text"
               value={form.program_key}
               onChange={(e) => setForm((f) => ({ ...f, program_key: e.target.value }))}
               placeholder="program_key (e.g. illinois_vc)"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 sm:col-span-2"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] sm:col-span-2"
               required
             />
             <input
@@ -330,7 +330,7 @@ export default function AdminProgramsPage() {
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="Name"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
               required
             />
             <input
@@ -338,12 +338,12 @@ export default function AdminProgramsPage() {
               value={form.state_code}
               onChange={(e) => setForm((f) => ({ ...f, state_code: e.target.value }))}
               placeholder="State code (e.g. IL)"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
             />
             <select
               value={form.scope_type}
               onChange={(e) => setForm((f) => ({ ...f, scope_type: e.target.value }))}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
             >
               <option value="state">state</option>
               <option value="federal">federal</option>
@@ -355,46 +355,46 @@ export default function AdminProgramsPage() {
               value={form.version}
               onChange={(e) => setForm((f) => ({ ...f, version: e.target.value }))}
               placeholder="Version"
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
             />
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Description"
               rows={2}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 sm:col-span-2"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] sm:col-span-2"
             />
             <div className="sm:col-span-2">
-              <label className="block text-slate-400 text-xs mb-1">rule_set (JSON)</label>
+              <label className="block text-[var(--color-muted)] text-xs mb-1">rule_set (JSON)</label>
               <textarea
                 value={form.rule_set_json}
                 onChange={(e) => setForm((f) => ({ ...f, rule_set_json: e.target.value }))}
                 rows={4}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-slate-400 text-xs mb-1">required_documents (JSON array)</label>
+              <label className="block text-[var(--color-muted)] text-xs mb-1">required_documents (JSON array)</label>
               <textarea
                 value={form.required_documents_json}
                 onChange={(e) => setForm((f) => ({ ...f, required_documents_json: e.target.value }))}
                 rows={2}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs"
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-slate-400 text-xs mb-1">deadline_metadata (JSON)</label>
+              <label className="block text-[var(--color-muted)] text-xs mb-1">deadline_metadata (JSON)</label>
               <textarea
                 value={form.deadline_metadata_json}
                 onChange={(e) => setForm((f) => ({ ...f, deadline_metadata_json: e.target.value }))}
                 rows={2}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs"
               />
             </div>
             <button
               type="submit"
               disabled={creating}
-              className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+              className="rounded bg-[var(--color-teal-deep)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {creating ? "Creating…" : "Create"}
             </button>
@@ -402,19 +402,19 @@ export default function AdminProgramsPage() {
         </section>
 
         {/* List */}
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-3">
-          <h2 className="text-sm font-semibold text-slate-50">All programs ({programs.length})</h2>
+        <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-3">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">All programs ({programs.length})</h2>
           {loading ? (
-            <p className="text-slate-400">Loading…</p>
+            <p className="text-[var(--color-muted)]">Loading…</p>
           ) : programs.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">No programs created.</p>
-              <p className="mt-2 text-xs text-slate-500">
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-slate)]">No programs created.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
                 Add a program to define routing rules, or use your seed data if available.
               </p>
             </div>
           ) : (
-            <ul className="divide-y divide-slate-800 space-y-2">
+            <ul className="divide-y divide-[var(--color-border-light)] space-y-2">
               {programs.map((p) => (
                 <li key={p.id} className="py-3 first:pt-0">
                   {editingId === p.id ? (
@@ -425,52 +425,52 @@ export default function AdminProgramsPage() {
                           value={form.name}
                           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                           placeholder="Name"
-                          className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                          className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                         />
                         <input
                           type="text"
                           value={form.program_key}
                           onChange={(e) => setForm((f) => ({ ...f, program_key: e.target.value }))}
                           placeholder="program_key"
-                          className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                          className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                         />
                         <input
                           type="text"
                           value={form.state_code}
                           onChange={(e) => setForm((f) => ({ ...f, state_code: e.target.value }))}
                           placeholder="State code"
-                          className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                          className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                         />
                         <textarea
                           value={form.rule_set_json}
                           onChange={(e) => setForm((f) => ({ ...f, rule_set_json: e.target.value }))}
                           rows={6}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs sm:col-span-2"
+                          className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs sm:col-span-2"
                         />
                         <textarea
                           value={form.required_documents_json}
                           onChange={(e) => setForm((f) => ({ ...f, required_documents_json: e.target.value }))}
                           rows={2}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs sm:col-span-2"
+                          className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs sm:col-span-2"
                         />
                         <textarea
                           value={form.deadline_metadata_json}
                           onChange={(e) => setForm((f) => ({ ...f, deadline_metadata_json: e.target.value }))}
                           rows={2}
-                          className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 font-mono text-xs sm:col-span-2"
+                          className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] font-mono text-xs sm:col-span-2"
                         />
                       </div>
                       <div className="flex gap-2">
                         <button
                           type="submit"
-                          className="rounded bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500"
+                          className="rounded bg-[var(--color-teal-deep)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-teal)]"
                         >
                           Update
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
-                          className="rounded border border-slate-600 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+                          className="rounded border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-slate)] hover:bg-[var(--color-light-sand)]"
                         >
                           Cancel
                         </button>
@@ -479,10 +479,10 @@ export default function AdminProgramsPage() {
                   ) : (
                     <>
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium text-slate-100">{p.name}</span>
-                        <span className="font-mono text-xs text-slate-400">{p.program_key}</span>
+                        <span className="font-medium text-[var(--color-navy)]">{p.name}</span>
+                        <span className="font-mono text-xs text-[var(--color-muted)]">{p.program_key}</span>
                         {p.state_code && (
-                          <span className="text-xs text-slate-500">{p.state_code}</span>
+                          <span className="text-xs text-[var(--color-muted)]">{p.state_code}</span>
                         )}
                         <span
                           className={`inline-flex rounded-full px-2 py-0.5 text-[10px] ${
@@ -490,7 +490,7 @@ export default function AdminProgramsPage() {
                               ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                               : p.status === "draft"
                                 ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
-                                : "bg-slate-600 text-slate-400"
+                                : "bg-[var(--color-light-sand)] text-[var(--color-muted)]"
                           }`}
                         >
                           {p.status}
@@ -498,7 +498,7 @@ export default function AdminProgramsPage() {
                         </span>
                       </div>
                       {p.description && (
-                        <p className="text-xs text-slate-400 mt-1">{p.description}</p>
+                        <p className="text-xs text-[var(--color-muted)] mt-1">{p.description}</p>
                       )}
                       <div className="flex gap-2 mt-2">
                         {p.status === "draft" && (

@@ -1,0 +1,33 @@
+---
+description: NxtStps Phase 3 — SAMHSA-aligned trauma-informed design for applicant pathway
+globs: app/victim/**/*,app/compensation/**/*,app/start/**/*,app/consent/**/*,components/applicant/**/*
+alwaysApply: false
+---
+
+# NxtStps — Trauma-informed design (Phase 3)
+
+**When applicant-pathway work conflicts with generic UX patterns, follow this rule.** Framework: SAMHSA *Concept of Trauma and Guidance for a Trauma-Informed Approach* (2014) — https://library.samhsa.gov/product/sma14-4884
+
+## Principles → product
+
+1. **Safety** — No alarming visuals for errors/progress; **Exit Safely** (instant, no confirm) + **Survivor Safety Mode** patterns; **auto-save** so users are not punished for pausing; crisis numbers easy to find.
+2. **Trust & transparency** — **“Why we’re asking”** before sensitive fields; **AI features** must state what the model is doing; accurate progress; no surprise required steps.
+3. **Peer support** — Path to **advocates** and **crisis / community** resources throughout; frame crisis lines as **support**, not warnings.
+4. **Collaboration** — Explain options; user can **review and change** answers before submit; advocates **assist**, not control.
+5. **Empowerment** — **Skip / defer / return** on sensitive items where policy allows; **async** completion; user overrides AI; **no fake urgency** (timers, pressure copy).
+6. **Culture & identity** — **Spanish parity** with English; non-gendered defaults; no assumptions about housing, family, papers, or work.
+
+## Implemented platform hooks (do not regress)
+
+- **Applicant route detector:** `lib/applicant/isApplicantFacingPath.ts` — keep aligned with real applicant URLs.
+- **Crisis strip + body padding:** `ApplicantPathChrome` in root layout; styling uses `--color-surface-2` / `--color-slate` (not red “alert”).
+- **Exit Safely:** `exitSafelyImmediate` — `sessionStorage.clear()`, app-scoped `localStorage` via `clearSensitiveLocalState`, optional `keepalive` quick-exit POST, `signOut`, then `location.replace` to a neutral site. **TopNav** shows **“Exit Safely →”** on applicant paths (neutral button); legacy **Quick Exit** (rose X) remains elsewhere.
+- **Intake:** Debounced **800ms** server autosave; **gentle save failure** copy (`intake.pathwaySafety.autosaveTrouble`); **save + exit** shows **saveReturnToast** before navigate; **grounding pause** banner = **idle timer only** (no content inference) on victim/crime steps; **`.nxt-sensitive-section`** for rose-tinted incident/person-harmed blocks.
+
+## Checklist before shipping an applicant screen
+
+Exit Safely visible without scrolling; crisis strip present; autosave or explicit save path documented; sensitive fields have skip/defer where allowed; no countdowns or pressure copy; errors **guide** (Phase 2); one primary action; **WCAG 2.2 AA** + **`prefers-reduced-motion`**; verify crisis **phone numbers** periodically.
+
+## Grounding pause — ethics note
+
+Signals are **time and navigation only**. **No** sentiment analysis, emotional inference, or monitoring of what the user types. Document that in AI safety / ethics materials.

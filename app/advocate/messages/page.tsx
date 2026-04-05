@@ -155,7 +155,9 @@ function AdvocateMessagesContent() {
       setItems(queue);
     } catch (e) {
       console.error(e);
-      setErr("Something went wrong loading messages.");
+      setErr(
+        "We couldn't load your messages — the request was interrupted. Refresh the page and try again.",
+      );
       setItems([]);
     } finally {
       setLoading(false);
@@ -180,49 +182,49 @@ function AdvocateMessagesContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-3xl mx-auto space-y-6">
         <header className="space-y-2">
           <Link
             href={ROUTES.advocateHome}
-            className="text-xs text-slate-400 hover:text-slate-200 mb-1 inline-block"
+            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mb-1 inline-block"
           >
             ← Back to My Dashboard
           </Link>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Advocate</p>
-          <h1 className="text-2xl font-semibold text-slate-50">Messages</h1>
-          <p className="text-sm text-slate-400 max-w-xl">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">Advocate</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Messages</h1>
+          <p className="text-sm text-[var(--color-muted)] max-w-xl">
             Use this triage list to spot new victim updates quickly. Open the case view to read
             and reply.
           </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-[var(--color-muted)]">
             Unread first, then recent. Use the case view to continue casework.
           </p>
         </header>
 
         {loading ? (
-          <p className="text-sm text-slate-400">Loading cases…</p>
+          <p className="text-sm text-[var(--color-muted)]">Loading cases…</p>
         ) : err ? (
           <div className="rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
             {err}
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-4">
-            <p className="text-sm text-slate-300">No unread or recent secure messages to show.</p>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 px-5 py-8 text-center space-y-4">
+            <p className="text-sm text-[var(--color-slate)]">No unread or recent secure messages to show.</p>
+            <p className="text-xs text-[var(--color-muted)] max-w-md mx-auto">
               When a victim sends a message or a thread is active, the case will appear here. You
               can continue case updates from My Dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Link
                 href={ROUTES.advocateHome}
-                className="inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+                className="inline-flex items-center justify-center rounded-full bg-[var(--color-teal-deep)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)]"
               >
                 Back to My Dashboard
               </Link>
               <Link
                 href={`${ROUTES.advocateHome}#advocate-clients`}
-                className="inline-flex items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:bg-slate-900/60"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-5 py-2.5 text-sm font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/85"
               >
                 View clients
               </Link>
@@ -234,11 +236,11 @@ function AdvocateMessagesContent() {
               return (
                 <li
                   key={row.caseId}
-                  className="rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-slate-800 bg-slate-950/70"
+                  className="rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85"
                 >
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-semibold text-slate-100 truncate">
+                      <span className="text-sm font-semibold text-[var(--color-navy)] truncate">
                         {row.victimLabel}
                       </span>
                       {row.unreadCount > 0 && (
@@ -247,10 +249,10 @@ function AdvocateMessagesContent() {
                         </span>
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-[var(--color-muted)]">
                       Latest victim update · {formatDate(row.lastAt)}
                     </p>
-                    <p className="text-xs text-slate-400 line-clamp-2">{row.preview}</p>
+                    <p className="text-xs text-[var(--color-muted)] line-clamp-2">{row.preview}</p>
                   </div>
                   <Link
                     href={`/compensation/intake?case=${encodeURIComponent(row.caseId)}`}
@@ -274,8 +276,8 @@ export default function AdvocateMessagesPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }
@@ -283,8 +285,8 @@ export default function AdvocateMessagesPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-          <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+          <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
         </main>
       }
     >

@@ -36,7 +36,12 @@ export default function AdvocateConnectionRequestsPage() {
         return;
       }
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to load connection requests"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load connection requests. Refresh the page and try again.",
+          ),
+        );
         setRequests([]);
         return;
       }
@@ -62,7 +67,12 @@ export default function AdvocateConnectionRequestsPage() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to accept"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't accept that connection. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setRequests((prev) => prev.filter((r) => r.id !== id));
@@ -82,7 +92,12 @@ export default function AdvocateConnectionRequestsPage() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to decline"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't decline that connection. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setRequests((prev) => prev.filter((r) => r.id !== id));
@@ -92,17 +107,17 @@ export default function AdvocateConnectionRequestsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-2xl mx-auto space-y-6">
         <header>
           <Link
             href="/dashboard"
-            className="text-sm text-slate-400 hover:text-slate-200 inline-flex items-center gap-1 mb-4"
+            className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)] inline-flex items-center gap-1 mb-4"
           >
             ← Back to dashboard
           </Link>
           <h1 className="text-2xl font-bold">Connection requests</h1>
-          <p className="text-sm text-slate-300 mt-2">
+          <p className="text-sm text-[var(--color-slate)] mt-2">
             Victims can request to connect with you as their advocate. Accept to add them as a
             client. Once accepted, they can invite you to their cases.
           </p>
@@ -114,12 +129,12 @@ export default function AdvocateConnectionRequestsPage() {
           </div>
         )}
 
-        {loading && <p className="text-sm text-slate-400">Loading…</p>}
+        {loading && <p className="text-sm text-[var(--color-muted)]">Loading…</p>}
 
         {!loading && requests.length === 0 && !err && (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-center">
-            <p className="text-slate-300">No pending connection requests.</p>
-            <p className="text-sm text-slate-500 mt-2">
+          <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 text-center">
+            <p className="text-[var(--color-slate)]">No pending connection requests.</p>
+            <p className="text-sm text-[var(--color-muted)] mt-2">
               When a victim sends you a request, it will appear here.
             </p>
           </div>
@@ -130,13 +145,13 @@ export default function AdvocateConnectionRequestsPage() {
             {requests.map((r) => (
               <li
                 key={r.id}
-                className="rounded-xl border border-slate-700 bg-slate-900/60 p-4 flex flex-wrap items-center justify-between gap-3"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 p-4 flex flex-wrap items-center justify-between gap-3"
               >
                 <div>
-                  <p className="font-medium text-slate-100">
+                  <p className="font-medium text-[var(--color-navy)]">
                     {r.victim_email ?? "Unknown"} wants to connect
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-[var(--color-muted)] mt-0.5">
                     {new Date(r.created_at).toLocaleString()}
                   </p>
                 </div>
@@ -145,7 +160,7 @@ export default function AdvocateConnectionRequestsPage() {
                     type="button"
                     onClick={() => handleAccept(r.id)}
                     disabled={actionId !== null}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                    className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
                   >
                     {actionId === r.id ? "…" : "Accept"}
                   </button>
@@ -153,7 +168,7 @@ export default function AdvocateConnectionRequestsPage() {
                     type="button"
                     onClick={() => handleDecline(r.id)}
                     disabled={actionId !== null}
-                    className="rounded-lg border border-slate-600 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-slate)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                   >
                     Decline
                   </button>

@@ -12,16 +12,22 @@ import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
 import { ROUTES } from "@/lib/routes/pageRegistry";
 import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
+import { isApplicantFacingPath } from "@/lib/applicant/isApplicantFacingPath";
+import { exitSafelyImmediate } from "@/lib/client/safety/exitSafelyImmediate";
 
 /** Nav pills — secondary (slate); avoid competing with page primary CTAs */
 const NAV_PRIMARY =
-  "rounded-full border border-slate-700 bg-slate-700 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-600 transition";
+  "rounded-full border border-[var(--color-teal-deep)] bg-[var(--color-teal-deep)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--color-teal)] transition";
 /** Secondary — plain text (browse, utilities) */
 const NAV_TEXT =
-  "text-xs text-slate-300 hover:text-slate-100 px-1.5 py-1 rounded-md hover:bg-slate-900/40 transition";
-/** Quick exit — compact rose X (top right; distinct from primary actions) */
+  "text-xs text-[var(--color-slate)] hover:text-[var(--color-navy)] px-1.5 py-1 rounded-md hover:bg-[var(--color-warm-cream)]/75 transition";
+/** Quick exit — compact rose X (non–applicant-pathway screens only) */
 const NAV_QUICK_EXIT =
   "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-500/70 bg-rose-950/50 text-rose-100 hover:bg-rose-900/55 hover:text-white disabled:opacity-50 transition";
+
+/** Exit Safely — neutral, Phase 3 applicant pathway */
+const NAV_EXIT_SAFELY =
+  "inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-slate)] hover:bg-[var(--color-surface)] hover:text-[var(--color-charcoal)] transition";
 
 export default function TopNav() {
   const router = useRouter();
@@ -145,14 +151,20 @@ export default function TopNav() {
   const showOrgNavForOrgRole = role === "organization" && orgLeadershipMembership;
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";
+  const applicantChrome = isApplicantFacingPath(pathname);
+
+  /** Marketing homepage (`/`) uses its own light-theme nav + exit flow. */
+  if (pathname === "/") {
+    return null;
+  }
 
   const languageSelect = (
-    <label className="flex items-center gap-2 rounded-md border border-slate-700/80 px-2 py-1">
-      <span className="text-[11px] text-slate-500">{t("nav.language")}</span>
+    <label className="flex items-center gap-2 rounded-md border border-[var(--color-border)] px-2 py-1">
+      <span className="text-[11px] text-[var(--color-muted)]">{t("nav.language")}</span>
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value as "en" | "es")}
-        className="bg-transparent text-slate-200 text-[11px] outline-none"
+        className="bg-transparent text-[var(--color-charcoal)] text-[11px] outline-none"
       >
         <option value="en">EN</option>
         <option value="es">ES</option>
@@ -161,16 +173,16 @@ export default function TopNav() {
   );
 
   return (
-    <header className="border-b border-slate-800 bg-slate-950">
+    <header className="border-b border-[var(--color-border-light)] bg-[var(--color-warm-white)]">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-2">
           <Link href={ROUTES.marketingLanding} className="flex shrink-0 items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-xs font-bold tracking-wide text-white">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--color-teal-deep)] text-xs font-bold tracking-wide text-white">
               N
             </div>
             <div className="text-sm">
-              <div className="font-semibold uppercase tracking-[0.14em] text-slate-200">NxtStps</div>
-              <div className="text-[11px] text-slate-400">{t("nav.brandTagline")}</div>
+              <div className="font-semibold uppercase tracking-[0.14em] text-[var(--color-charcoal)]">NxtStps</div>
+              <div className="text-[11px] text-[var(--color-muted)]">{t("nav.brandTagline")}</div>
             </div>
           </Link>
 
@@ -180,7 +192,7 @@ export default function TopNav() {
             aria-label="Main navigation"
           >
             {loading ? (
-              <span className="text-[11px] text-slate-400">{t("common.loading")}</span>
+              <span className="text-[11px] text-[var(--color-muted)]">{t("common.loading")}</span>
             ) : !user ? (
               <Link href={ROUTES.help} className={NAV_PRIMARY}>
                 {t("nav.help")}
@@ -254,15 +266,15 @@ export default function TopNav() {
                 <button
                   type="button"
                   onClick={() => setAccountMenuOpen((o) => !o)}
-                  className="flex max-w-[11rem] items-center gap-1.5 rounded-full border border-slate-600 px-3 py-1.5 text-left hover:bg-slate-900/60 sm:max-w-[16rem]"
+                  className="flex max-w-[11rem] items-center gap-1.5 rounded-full border border-[var(--color-border)] px-3 py-1.5 text-left hover:bg-[var(--color-warm-cream)]/85 sm:max-w-[16rem]"
                   aria-expanded={accountMenuOpen}
                   aria-haspopup="menu"
                   aria-label="Account menu"
                 >
-                  <span className="text-[11px] text-slate-400">{t("nav.accountNav")}</span>
-                  <span className="truncate text-[11px] text-slate-100">{user.email ?? "—"}</span>
+                  <span className="text-[11px] text-[var(--color-muted)]">{t("nav.accountNav")}</span>
+                  <span className="truncate text-[11px] text-[var(--color-navy)]">{user.email ?? "—"}</span>
                   <span
-                    className={`shrink-0 text-[10px] text-slate-400 transition ${accountMenuOpen ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-[10px] text-[var(--color-muted)] transition ${accountMenuOpen ? "rotate-180" : ""}`}
                     aria-hidden
                   >
                     ▾
@@ -270,19 +282,19 @@ export default function TopNav() {
                 </button>
                 {accountMenuOpen && (
                   <div
-                    className="absolute right-0 top-[calc(100%+6px)] z-[100] min-w-[12rem] overflow-hidden rounded-xl border border-slate-700 bg-slate-900 py-1 shadow-xl shadow-black/40"
+                    className="absolute right-0 top-[calc(100%+6px)] z-[100] min-w-[12rem] overflow-hidden rounded-xl border border-[var(--color-border)] bg-white py-1 shadow-xl shadow-[var(--shadow-modal)]"
                     role="menu"
                   >
-                    <div className="border-b border-slate-700/80 px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-wide text-slate-500">Signed in</p>
-                      <p className="truncate text-xs text-slate-200" title={user.email ?? undefined}>
+                    <div className="border-b border-[var(--color-border)] px-3 py-2">
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Signed in</p>
+                      <p className="truncate text-xs text-[var(--color-charcoal)]" title={user.email ?? undefined}>
                         {user.email ?? "—"}
                       </p>
                     </div>
                     <Link
                       href={ROUTES.account}
                       role="menuitem"
-                      className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-800/80"
+                      className="block px-3 py-2 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/85"
                       onClick={() => setAccountMenuOpen(false)}
                     >
                       {t("nav.myAccount")}
@@ -290,7 +302,7 @@ export default function TopNav() {
                     <Link
                       href={ROUTES.settingsSafety}
                       role="menuitem"
-                      className="block px-3 py-2 text-xs text-slate-200 hover:bg-slate-800/80"
+                      className="block px-3 py-2 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/85"
                       onClick={() => setAccountMenuOpen(false)}
                     >
                       Safety
@@ -298,7 +310,7 @@ export default function TopNav() {
                     <button
                       type="button"
                       role="menuitem"
-                      className="w-full border-t border-slate-700/80 px-3 py-2 text-left text-xs text-slate-300 hover:bg-slate-800/80"
+                      className="w-full border-t border-[var(--color-border)] px-3 py-2 text-left text-xs text-[var(--color-slate)] hover:bg-[var(--color-light-sand)]/85"
                       onClick={() => {
                         setAccountMenuOpen(false);
                         void handleLogout();
@@ -312,7 +324,7 @@ export default function TopNav() {
 
               <Link
                 href={ROUTES.notifications}
-                className={`${NAV_TEXT} relative inline-flex items-center justify-center rounded-md p-1.5 hover:text-slate-100`}
+                className={`${NAV_TEXT} relative inline-flex items-center justify-center rounded-md p-1.5 hover:text-[var(--color-navy)]`}
                 aria-label={t("nav.updates")}
                 title={t("nav.updates")}
               >
@@ -338,42 +350,97 @@ export default function TopNav() {
                 )}
               </Link>
 
-              <button
-                type="button"
-                onClick={handleQuickExit}
-                disabled={quickExitLoading}
-                className={NAV_QUICK_EXIT}
-                aria-label={
-                  strictPreviews ? "Quick Exit" : "Quick Exit — clears local state and redirects"
-                }
-                title={
-                  strictPreviews ? "Quick Exit" : "Quick Exit (clears local state and redirects)"
-                }
-              >
-                {quickExitLoading ? (
-                  <span
-                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-rose-300/80 border-t-transparent"
-                    aria-hidden
-                  />
-                ) : (
+              {applicantChrome ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    exitSafelyImmediate({ userId: user?.id ?? null, accessToken: accessToken ?? null })
+                  }
+                  className={NAV_EXIT_SAFELY}
+                  aria-label={t("intake.pathwaySafety.exitSafelyCta")}
+                >
+                  <span>{t("intake.pathwaySafety.exitSafelyCta")}</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
-                    strokeWidth={2}
+                    fill="none"
                     stroke="currentColor"
-                    className="h-5 w-5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     aria-hidden
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
                   </svg>
-                )}
-              </button>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleQuickExit}
+                  disabled={quickExitLoading}
+                  className={NAV_QUICK_EXIT}
+                  aria-label={
+                    strictPreviews ? "Quick Exit" : "Quick Exit — clears local state and redirects"
+                  }
+                  title={
+                    strictPreviews ? "Quick Exit" : "Quick Exit (clears local state and redirects)"
+                  }
+                >
+                  {quickExitLoading ? (
+                    <span
+                      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-rose-300/80 border-t-transparent"
+                      aria-hidden
+                    />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="h-5 w-5"
+                      aria-hidden
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+              )}
             </>
           ) : (
-            <Link href={ROUTES.login} className={NAV_TEXT}>
-              {t("nav.login")}
-            </Link>
+            <>
+              {applicantChrome && (
+                <button
+                  type="button"
+                  onClick={() => exitSafelyImmediate()}
+                  className={NAV_EXIT_SAFELY}
+                  aria-label={t("intake.pathwaySafety.exitSafelyCta")}
+                >
+                  <span>{t("intake.pathwaySafety.exitSafelyCta")}</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+              <Link href={ROUTES.login} className={NAV_TEXT}>
+                {t("nav.login")}
+              </Link>
+            </>
           )}
         </div>
       </div>

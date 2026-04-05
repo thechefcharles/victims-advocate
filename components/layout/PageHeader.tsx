@@ -27,7 +27,7 @@ export function PageHeader({
   eyebrow,
   contextLine,
   title,
-  titleClassName = "text-2xl sm:text-3xl font-bold text-slate-50",
+  titleClassName = "text-2xl sm:text-3xl font-bold text-[var(--color-navy)]",
   subtitle,
   meta,
   backLink,
@@ -39,25 +39,25 @@ export function PageHeader({
       {backLink && (
         <Link
           href={backLink.href}
-          className="text-xs text-slate-400 hover:text-slate-200 mb-1 inline-block"
+          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mb-1 inline-block"
         >
           {backLink.label}
         </Link>
       )}
       {contextLine && (
-        <p className="text-[11px] text-slate-500 tracking-wide">{contextLine}</p>
+        <p className="text-[11px] text-[var(--color-muted)] tracking-wide">{contextLine}</p>
       )}
       {eyebrow && (
-        <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">{eyebrow}</p>
+        <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">{eyebrow}</p>
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 space-y-2">
           <h1 className={titleClassName}>{title}</h1>
           {subtitle != null && subtitle !== "" && (
-            <div className="text-sm text-slate-400 max-w-2xl leading-relaxed">{subtitle}</div>
+            <div className="text-sm text-[var(--color-muted)] max-w-2xl leading-relaxed">{subtitle}</div>
           )}
           {meta != null && meta !== "" && (
-            <div className="text-[11px] text-slate-500 max-w-2xl">{meta}</div>
+            <div className="text-[11px] text-[var(--color-muted)] max-w-2xl">{meta}</div>
           )}
         </div>
         {rightActions ? (

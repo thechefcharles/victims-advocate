@@ -149,7 +149,7 @@ export async function createReferral(params: {
     metadata: input.metadata,
   });
   if (!parsed.success) {
-    throw new AppError("VALIDATION_ERROR", "Invalid referral payload", parsed.error.flatten(), 422);
+    throw new AppError("VALIDATION_ERROR", "Some referral information doesn't match what we need. Review the form and try again.", parsed.error.flatten(), 422);
   }
 
   const { caseId, toOrganizationId, fromOrganizationId: fromInput, metadata: clientMetadata } =

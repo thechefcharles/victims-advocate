@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 400);
     }
     const caseId = body.caseId ?? body.case_id;
     const fieldKey = body.fieldKey ?? body.field_key;

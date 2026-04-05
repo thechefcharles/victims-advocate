@@ -87,7 +87,12 @@ export default function AdvocateOrgSearchPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not search organizations"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't search organizations. Check your filters and try again.",
+          ),
+        );
         setResults([]);
         return;
       }
@@ -108,14 +113,14 @@ export default function AdvocateOrgSearchPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
-        <div className="max-w-5xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
+        <div className="max-w-5xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine="Advocate"
@@ -126,67 +131,67 @@ export default function AdvocateOrgSearchPage() {
         />
 
         {caseId ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400">
+          <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-xs text-[var(--color-muted)]">
             Case-aware search is active. Use filters below, then open the case when you are ready to
             review organization fit.
-            <span className="text-slate-500"> Case: {caseId.slice(0, 8)}…</span>
+            <span className="text-[var(--color-muted)]"> Case: {caseId.slice(0, 8)}…</span>
           </div>
         ) : null}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 space-y-3">
-          <p className="text-xs text-slate-400">
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 space-y-3">
+          <p className="text-xs text-[var(--color-muted)]">
             Internal only. Results default to matching-ready organizations (managed + publicly active; searchable or enriched).
           </p>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or service" className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm" />
-            <select value={service} onChange={(e) => setService(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or service" className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm" />
+            <select value={service} onChange={(e) => setService(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="">Any service</option>
               {SERVICE_TYPE_OPTIONS.map((v) => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
             </select>
-            <select value={stateCode} onChange={(e) => setStateCode(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <select value={stateCode} onChange={(e) => setStateCode(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="">Any state</option>
               {stateOptions.filter(Boolean).map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
-            <input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="Language (e.g. en, es)" className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm" />
-            <select value={availability} onChange={(e) => setAvailability(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <input value={language} onChange={(e) => setLanguage(e.target.value)} placeholder="Language (e.g. en, es)" className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm" />
+            <select value={availability} onChange={(e) => setAvailability(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="all">Any availability</option>
               <option value="accepting">Accepting clients</option>
               {CAPACITY_STATUS_OPTIONS.filter((c) => c !== "unknown").map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
-            <select value={stage} onChange={(e) => setStage(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <select value={stage} onChange={(e) => setStage(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="all">Any readiness stage</option>
               <option value="searchable">Searchable</option>
               <option value="enriched">Enriched</option>
             </select>
-            <select value={specialPop} onChange={(e) => setSpecialPop(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <select value={specialPop} onChange={(e) => setSpecialPop(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="">Any special population</option>
               {SPECIAL_POPULATION_OPTIONS.map((v) => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
             </select>
-            <select value={accessibility} onChange={(e) => setAccessibility(e.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm">
+            <select value={accessibility} onChange={(e) => setAccessibility(e.target.value)} className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm">
               <option value="">Any accessibility</option>
               {ACCESSIBILITY_FEATURE_OPTIONS.map((v) => <option key={v} value={v}>{v.replace(/_/g, " ")}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={runSearch} className="rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500">Search</button>
+            <button onClick={runSearch} className="rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]">Search</button>
             <button
               onClick={() => {
                 setQuery(""); setService(""); setStateCode(""); setLanguage(""); setAvailability("all"); setStage("all"); setSpecialPop(""); setAccessibility("");
               }}
-              className="rounded-full border border-slate-600 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+              className="rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
             >
               Clear filters
             </button>
           </div>
         </section>
 
-        {loading ? <p className="text-sm text-slate-400">Searching organizations…</p> : null}
+        {loading ? <p className="text-sm text-[var(--color-muted)]">Searching organizations…</p> : null}
         {err ? <p className="text-sm text-amber-200">{err}</p> : null}
 
         {!loading && !err && results.length === 0 ? (
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 text-sm text-slate-400 space-y-2">
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 text-sm text-[var(--color-muted)] space-y-2">
             <p>No organizations match these filters.</p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--color-muted)]">
               Try adjusting service, language, or area filters. Organizations must be publicly active and matching-ready to appear here.
             </p>
           </section>
@@ -195,11 +200,11 @@ export default function AdvocateOrgSearchPage() {
         {!loading && results.length > 0 ? (
           <ul className="space-y-3">
             {results.map((org) => (
-              <li key={org.id} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-2">
+              <li key={org.id} className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-100">{org.name}</p>
+                  <p className="text-sm font-semibold text-[var(--color-navy)]">{org.name}</p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-300">
+                    <span className="text-[10px] rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[var(--color-slate)]">
                       Profile stage: {org.profile_stage}
                     </span>
                     <NxtStpsVerifiedBadge org={org} />
@@ -211,15 +216,15 @@ export default function AdvocateOrgSearchPage() {
                     ) : null}
                   </div>
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--color-muted)]">
                   Services: {org.service_types.length ? org.service_types.join(", ") : "—"}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[var(--color-muted)]">
                   Languages: {org.languages.length ? org.languages.join(", ") : "—"} · Availability:{" "}
                   {org.accepting_clients ? "accepting clients" : "not currently accepting"} · Capacity: {org.capacity_status}
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1">
-                  <Link href={`/advocate/org?organization_id=${org.id}`} className="rounded-full border border-slate-600 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-800">
+                  <Link href={`/advocate/org?organization_id=${org.id}`} className="rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]">
                     View organization
                   </Link>
                 </div>

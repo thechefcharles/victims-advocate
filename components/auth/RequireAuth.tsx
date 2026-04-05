@@ -27,7 +27,7 @@ export function RequireAuth({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-slate-400">
+      <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[var(--color-muted)]">
         Loading…
       </div>
     );
@@ -35,7 +35,7 @@ export function RequireAuth({
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-slate-400">
+      <div className="mx-auto max-w-6xl px-4 py-10 text-sm text-[var(--color-muted)]">
         Redirecting…
       </div>
     );

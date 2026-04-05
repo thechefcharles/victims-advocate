@@ -44,6 +44,7 @@ import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
 import { ROUTES, victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
+import { GroundingPauseBanner } from "@/components/applicant/GroundingPauseBanner";
 import {
   applicantSectionComplete,
   victimSectionComplete,
@@ -267,6 +268,8 @@ const { t, tf, lang } = useI18n();
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
 const [saveToast, setSaveToast] = useState<string | null>(null);
 const [saveNowLoading, setSaveNowLoading] = useState(false);
+  const [autoSaveIssue, setAutoSaveIssue] = useState(false);
+  const [autoSaveFlash, setAutoSaveFlash] = useState(false);
 const creatingCaseRef = useRef(false);
 
   /** Loaded from GET /api/compensation/cases/:id — used for next-action on summary */
@@ -603,13 +606,19 @@ useEffect(() => {
 
       if (!res.ok) {
         console.error("PATCH case save failed:", await res.text());
+        setAutoSaveIssue(true);
+      } else {
+        setAutoSaveIssue(false);
+        setAutoSaveFlash(true);
+        window.setTimeout(() => setAutoSaveFlash(false), 1200);
       }
     } catch (err) {
       console.error("Failed to autosave case to Supabase", err);
+      setAutoSaveIssue(true);
     } finally {
       setSavingCase(false);
     }
-  }, 800); // debounce: prevents spam while typing
+  }, 800); // debounce: prevents spam while typing (Phase 3)
 
   return () => clearTimeout(timeout);
 }, [caseId, loadedFromStorage, canEdit, app, fieldState]);
@@ -669,8 +678,8 @@ const intakeStepTotal = INTAKE_STEP_ORDER.length;
   const continuePrimaryEnabled = isReadOnly || canContinueCurrent;
   const continueButtonClass = `text-xs rounded-lg px-4 py-2 font-semibold transition ${
     continuePrimaryEnabled
-      ? "bg-blue-600 text-white hover:bg-blue-500"
-      : "bg-slate-600 text-slate-400 cursor-not-allowed"
+      ? "bg-[var(--color-teal-deep)] text-white hover:bg-[var(--color-teal)]"
+      : "bg-[var(--color-light-sand)] text-[var(--color-muted)] cursor-not-allowed"
   }`;
 
   const lossCategoryMissingKey = "intake.requiredBeforeContinue.selectLossCategory";
@@ -859,20 +868,20 @@ alert(t("intake.pdf.summaryUnexpected"));
   }
 };
 
-const handleSaveNow = async () => {
+const handleSaveNow = async (options?: { showSavedToast?: boolean }): Promise<boolean> => {
   // If this user is viewing a case but can't edit, don't allow saving
   if (caseId && !canEdit) {
-setSaveToast(t("intake.save.viewOnly"));
+    setSaveToast(t("intake.save.viewOnly"));
     setTimeout(() => setSaveToast(null), 2000);
-    return;
+    return false;
   }
 
   // If there is no caseId (shouldn’t happen after “case created on start”),
   // you can either block or fallback. I’m blocking with a clear message:
   if (!caseId) {
-setSaveToast(t("intake.save.noCaseLoaded"));
+    setSaveToast(t("intake.save.noCaseLoaded"));
     setTimeout(() => setSaveToast(null), 2000);
-    return;
+    return false;
   }
 
   try {
@@ -895,12 +904,17 @@ setSaveToast(t("intake.save.noCaseLoaded"));
       throw new Error(await res.text());
     }
 
-setSaveToast(t("intake.save.saved"));
-    setTimeout(() => setSaveToast(null), 2000);
+    setAutoSaveIssue(false);
+    if (options?.showSavedToast !== false) {
+      setSaveToast(t("intake.save.saved"));
+      setTimeout(() => setSaveToast(null), 2000);
+    }
+    return true;
   } catch (e) {
     console.error("Save now failed:", e);
-setSaveToast(t("intake.save.failed"));
+    setSaveToast(t("intake.save.failed"));
     setTimeout(() => setSaveToast(null), 2500);
+    return false;
   } finally {
     setSaveNowLoading(false);
   }
@@ -1199,7 +1213,7 @@ const handleBack = () => {
 };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-3xl mx-auto space-y-8">
         <PageHeader
           eyebrow={t("intake.header.badge")}
@@ -1211,7 +1225,7 @@ const handleBack = () => {
               {t("intake.header.needMoreContext")}{" "}
               <a
                 href="/knowledge/compensation"
-                className="text-slate-300 hover:text-white underline underline-offset-2"
+                className="text-[var(--color-slate)] hover:text-white underline underline-offset-2"
               >
                 {t("intake.header.learnLink")}
               </a>
@@ -1219,7 +1233,22 @@ const handleBack = () => {
           }
         />
 
-        <p className="text-xs text-slate-500 -mt-4">{t("intake.reassurance")}</p>
+        <p className="text-xs text-[var(--color-muted)] -mt-4">{t("intake.reassurance")}</p>
+
+        {autoSaveIssue && caseId && canEdit && (
+          <div
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-charcoal)]"
+            role="status"
+          >
+            {t("intake.pathwaySafety.autosaveTrouble")}
+          </div>
+        )}
+
+        {(step === "victim" || step === "crime") && !isReadOnly && (
+          <p className="text-[11px] text-[var(--color-muted)] -mt-2">
+            {t("intake.pathwaySafety.sensitiveSectionHint")}
+          </p>
+        )}
 
         {isReadOnly && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
@@ -1229,10 +1258,10 @@ const handleBack = () => {
 
         {/* Step indicator */}
 <div className="space-y-3">
-<p className="text-xs text-slate-400">
+<p className="text-xs text-[var(--color-muted)]">
   {tf("intake.stepOf", { current: String(intakeStepCurrent), total: String(intakeStepTotal) })}
 </p>
-<div className="flex flex-wrap gap-2 text-xs text-slate-300">
+<div className="flex flex-wrap gap-2 text-xs text-[var(--color-slate)]">
             <StepBadge
               label={t("intake.steps.applicant")}
               active={step === "applicant"}
@@ -1323,11 +1352,20 @@ const handleBack = () => {
 )}
 
 {step === "victim" && (
-<VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
+  <div className="nxt-sensitive-section">
+    <VictimForm
+      victim={victim}
+      contact={contact}
+      onChange={updateVictim}
+      onContactChange={updateContact}
+      stateCode={stateCode}
+      isReadOnly={isReadOnly}
+    />
+  </div>
 )}
 
 {step === "crime" && (
-  <>
+  <div className="nxt-sensitive-section space-y-8">
     <CrimeForm
       crime={crime}
       onChange={updateCrime}
@@ -1381,7 +1419,7 @@ const handleBack = () => {
       }}
     />
     <CourtForm court={court} onChange={updateCourt} stateCode={stateCode} isReadOnly={isReadOnly} />
-  </>
+  </div>
 )}
 
 {step === "losses" && (
@@ -1434,23 +1472,23 @@ const handleBack = () => {
 </div>
 
 {/* Nav buttons + primary actions */}
-<div className="flex flex-col gap-3 pt-6 border-t border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+<div className="flex flex-col gap-3 pt-6 border-t border-[var(--color-border-light)] sm:flex-row sm:items-center sm:justify-between">
 {/* Left side: Back + Save */}
 <div className="flex items-center gap-2">
   <button
     type="button"
     onClick={handleBack}
     disabled={step === "applicant" && !reviewWalkthroughActive}
-    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-900 transition"
+    className="text-xs rounded-lg border border-[var(--color-border)] px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white transition"
   >
 {t("intake.actions.back")}
   </button>
 
   <button
     type="button"
-    onClick={handleSaveNow}
+    onClick={() => void handleSaveNow()}
     disabled={saveNowLoading || !caseId || !canEdit}
-    className="text-xs rounded-lg border border-slate-700 px-3 py-1.5 hover:bg-slate-900 transition disabled:opacity-40 disabled:cursor-not-allowed"
+    className="text-xs rounded-lg border border-[var(--color-border)] px-3 py-1.5 hover:bg-white transition disabled:opacity-40 disabled:cursor-not-allowed"
 title={
   !caseId
     ? t("intake.actions.creatingCase")
@@ -1466,18 +1504,26 @@ title={
     <button
       type="button"
       onClick={async () => {
-        await handleSaveNow();
-        router.push(ROUTES.victimDashboard);
+        const ok = await handleSaveNow({ showSavedToast: false });
+        if (!ok) return;
+        setSaveToast(t("intake.pathwaySafety.saveReturnToast"));
+        window.setTimeout(() => {
+          setSaveToast(null);
+          router.push(ROUTES.victimDashboard);
+        }, 2200);
       }}
       disabled={saveNowLoading}
-      className="text-xs rounded-lg border border-slate-600 px-3 py-1.5 text-slate-200 hover:bg-slate-900 transition disabled:opacity-40"
+      className="text-xs rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[var(--color-charcoal)] hover:bg-white transition disabled:opacity-40"
     >
       {t("intake.actions.saveAndExit")}
     </button>
   )}
 
   {caseId && canEdit && savingCase && (
-    <span className="text-[11px] text-slate-400">{t("intake.actions.autoSaving")}</span>
+    <span className="text-[11px] text-[var(--color-muted)]">{t("intake.actions.autoSaving")}</span>
+  )}
+  {caseId && canEdit && autoSaveFlash && !savingCase && (
+    <span className="text-[11px] text-[var(--color-muted)]">{t("intake.pathwaySafety.autoSaved")}</span>
   )}
 </div>
 
@@ -1487,7 +1533,7 @@ title={
       <button
         type="button"
         onClick={() => setRequiredFieldsModalOpen(true)}
-        className="text-[11px] text-blue-400 hover:text-blue-300 underline underline-offset-2"
+        className="text-[11px] text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline underline-offset-2"
       >
         {t("intake.requiredBeforeContinue.viewRequiredItems")}
       </button>
@@ -1595,7 +1641,7 @@ title={
         <button
           type="button"
           onClick={() => handleStepNav(intakeReview.missing[0].stepHint as IntakeStep)}
-          className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+          className="text-xs rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 font-semibold text-white hover:bg-[var(--color-teal)] transition"
         >
           {t("intake.actions.continue")}
         </button>
@@ -1603,7 +1649,7 @@ title={
         <button
           type="button"
           onClick={() => setSaveToast(t("forms.summary.placeholders.alreadyFinalReview"))}
-          className="text-xs rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition"
+          className="text-xs rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 font-semibold text-white hover:bg-[var(--color-teal)] transition"
         >
           {t("intake.actions.reviewSubmit")}
         </button>
@@ -1612,27 +1658,30 @@ title={
   </div>
 </div>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-[var(--color-muted)]">
 {t("intake.footer.draftDisclaimer")}
         </p>
 
       </div>
 
             {/* NxtGuide chat widget (intake) */}
-      <div className="fixed bottom-4 right-4 z-40">
+      <div
+        className="fixed right-4 z-40"
+        style={{ bottom: "max(5.75rem, calc(4.75rem + env(safe-area-inset-bottom, 0px)))" }}
+      >
         {chatOpen ? (
-          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-slate-950 shadow-lg shadow-black/40 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
+          <div className="w-72 sm:w-80 rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] shadow-lg shadow-[var(--shadow-modal)] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-light)] bg-white">
               <div className="text-[11px]">
-                <div className="font-semibold text-slate-50">NxtGuide</div>
-                <div className="text-slate-300">
+                <div className="font-semibold text-[var(--color-navy)]">NxtGuide</div>
+                <div className="text-[var(--color-slate)]">
 {t("nxtGuide.subtitle")}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setChatOpen(false)}
-                className="text-slate-400 hover:text-slate-200 text-xs"
+                className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-xs"
               >
                 ✕
               </button>
@@ -1657,8 +1706,8 @@ title={
                   <div
                     className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
                       m.role === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-900 text-slate-100 border border-slate-700"
+                        ? "bg-[var(--color-teal-deep)] text-white"
+                        : "bg-white text-[var(--color-navy)] border border-[var(--color-border)]"
                     } text-[11px] whitespace-pre-wrap`}
                   >
                     {m.content}
@@ -1666,19 +1715,19 @@ title={
                 </div>
               ))}
               {chatLoading && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--color-muted)]">
 {t("nxtGuide.typing")}
                 </p>
               )}
             </div>
 
-            <form onSubmit={handleChatSubmit} className="border-t border-slate-800 p-2">
+            <form onSubmit={handleChatSubmit} className="border-t border-[var(--color-border-light)] p-2">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
 placeholder={t("nxtGuide.placeholders.ask")}
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 px-3 py-1.5 text-[11px] text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)] focus:border-[var(--color-teal)]"
               />
             </form>
           </div>
@@ -1686,7 +1735,7 @@ placeholder={t("nxtGuide.placeholders.ask")}
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-black/40 hover:bg-blue-500 transition"
+            className="inline-flex items-center rounded-full bg-[var(--color-teal-deep)] px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-[var(--shadow-modal)] hover:bg-[var(--color-teal)] transition"
           >
 {t("nxtGuide.floating.needHelpOnThisStep")}
           </button>
@@ -1702,18 +1751,18 @@ placeholder={t("nxtGuide.placeholders.ask")}
             if (e.target === e.currentTarget) setRequiredFieldsModalOpen(false);
           }}
         >
-          <div className="bg-slate-900 border border-slate-600 rounded-xl max-w-md w-full p-5 shadow-xl space-y-4">
-            <h3 id="intake-required-modal-title" className="text-sm font-semibold text-slate-50">
+          <div className="bg-white border border-[var(--color-border)] rounded-xl max-w-md w-full p-5 shadow-xl space-y-4">
+            <h3 id="intake-required-modal-title" className="text-sm font-semibold text-[var(--color-navy)]">
               {t("intake.requiredBeforeContinue.modalTitle")}
             </h3>
             {missingKeysForCurrentStep.length > 0 ? (
-              <ul className="text-xs text-slate-300 space-y-2 list-disc list-inside">
+              <ul className="text-xs text-[var(--color-slate)] space-y-2 list-disc list-inside">
                 {missingKeysForCurrentStep.map((key) => (
                   <li key={key}>{t(key)}</li>
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-slate-400">{t("intake.requiredBeforeContinue.close")}</p>
+              <p className="text-xs text-[var(--color-muted)]">{t("intake.requiredBeforeContinue.close")}</p>
             )}
             <div className="flex flex-col gap-2 pt-1">
               {missingKeysForCurrentStep.includes(lossCategoryMissingKey) && (
@@ -1723,7 +1772,7 @@ placeholder={t("nxtGuide.placeholders.ask")}
                     setLossesNoneAck(true);
                     setRequiredFieldsModalOpen(false);
                   }}
-                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                  className="text-left text-xs rounded-lg border border-[var(--color-border)] px-3 py-2 text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] transition"
                 >
                   {t("intake.requiredBeforeContinue.ackLossesNone")}
                 </button>
@@ -1735,7 +1784,7 @@ placeholder={t("nxtGuide.placeholders.ask")}
                     setEmploymentNoEmployerAck(true);
                     setRequiredFieldsModalOpen(false);
                   }}
-                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                  className="text-left text-xs rounded-lg border border-[var(--color-border)] px-3 py-2 text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] transition"
                 >
                   {t("intake.requiredBeforeContinue.ackEmploymentNoEmployer")}
                 </button>
@@ -1747,17 +1796,17 @@ placeholder={t("nxtGuide.placeholders.ask")}
                     setFuneralIncompleteAck(true);
                     setRequiredFieldsModalOpen(false);
                   }}
-                  className="text-left text-xs rounded-lg border border-slate-600 px-3 py-2 text-slate-200 hover:bg-slate-800 transition"
+                  className="text-left text-xs rounded-lg border border-[var(--color-border)] px-3 py-2 text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] transition"
                 >
                   {t("intake.requiredBeforeContinue.ackFuneralContinue")}
                 </button>
               )}
             </div>
-            <div className="flex justify-end pt-2 border-t border-slate-800">
+            <div className="flex justify-end pt-2 border-t border-[var(--color-border-light)]">
               <button
                 type="button"
                 onClick={() => setRequiredFieldsModalOpen(false)}
-                className="text-xs rounded-lg bg-slate-700 px-4 py-2 font-medium text-white hover:bg-slate-600 transition"
+                className="text-xs rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 font-medium text-white hover:bg-[var(--color-teal)] transition"
               >
                 {t("intake.requiredBeforeContinue.close")}
               </button>
@@ -1767,11 +1816,15 @@ placeholder={t("nxtGuide.placeholders.ask")}
       )}
 
       {saveToast && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full border border-slate-700 bg-slate-950/90 px-4 py-2 text-xs text-slate-100 shadow-lg">
-    {saveToast}
-  </div>
-)}
-      
+        <div
+          className="fixed left-1/2 z-50 max-w-[min(90vw,24rem)] -translate-x-1/2 rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/95 px-4 py-2 text-center text-xs text-[var(--color-navy)] shadow-lg"
+          style={{ bottom: "max(8.5rem, calc(7.5rem + env(safe-area-inset-bottom, 0px)))" }}
+        >
+          {saveToast}
+        </div>
+      )}
+
+      <GroundingPauseBanner enabled={step === "victim" || step === "crime"} />
     </main>
   );
 }
@@ -1798,10 +1851,10 @@ function StepBadge({
   let stateClasses: string;
   if (disabled) {
     stateClasses =
-      "border-slate-800 bg-slate-900 text-slate-500 cursor-not-allowed opacity-60";
+      "border-[var(--color-border-light)] bg-white text-[var(--color-muted)] cursor-not-allowed opacity-60";
   } else if (active) {
     stateClasses =
-      "border-blue-500 bg-blue-900/30 text-slate-200 cursor-pointer ring-1 ring-blue-500/40";
+      "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)] cursor-pointer ring-1 ring-[var(--color-teal)]/40";
   } else if (reviewed) {
     stateClasses =
       "border-emerald-500/80 bg-emerald-500/15 text-emerald-100 hover:border-emerald-400 hover:bg-emerald-500/20 cursor-pointer";
@@ -1810,7 +1863,7 @@ function StepBadge({
       "border-amber-500/70 bg-amber-500/15 text-amber-100 hover:border-amber-400 hover:bg-amber-500/20 cursor-pointer";
   } else {
     stateClasses =
-      "border-slate-700 bg-slate-900 text-slate-400 hover:border-blue-500 hover:text-slate-200 cursor-pointer";
+      "border-[var(--color-border)] bg-white text-[var(--color-muted)] hover:border-[var(--color-teal)] hover:text-[var(--color-charcoal)] cursor-pointer";
   }
 
   return (
@@ -1849,18 +1902,18 @@ const isIN = stateCode === "IN";
   const disabilityTypes = ["physical", "mental", "developmental", "other"] as const;
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.victim.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.victim.description")}
       </p>
 
       {isIN && onContactChange && (
-        <div className="space-y-2 text-xs pb-3 border-b border-slate-800">
-          <p className="text-slate-200">{t("forms.int.whoIsSubmitting")}</p>
+        <div className="space-y-2 text-xs pb-3 border-b border-[var(--color-border-light)]">
+          <p className="text-[var(--color-charcoal)]">{t("forms.int.whoIsSubmitting")}</p>
           <div className="flex flex-wrap gap-2">
             {(["victim", "claimant", "advocate"] as const).map((v) => (
               <button
@@ -1870,8 +1923,8 @@ const isIN = stateCode === "IN";
                 onClick={() => !isReadOnly && onContactChange({ whoIsSubmitting: v })}
                 className={`px-3 py-1.5 rounded-full border text-[11px] ${disBtn} ${
                   contact?.whoIsSubmitting === v
-                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                    : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t(`forms.int.whoOptions.${v}`)}
@@ -1974,8 +2027,8 @@ const isIN = stateCode === "IN";
         />
       </div>
 
-      <div className="space-y-3 pt-3 border-t border-slate-800">
-        <p className="text-[11px] text-slate-400">
+      <div className="space-y-3 pt-3 border-t border-[var(--color-border-light)]">
+        <p className="text-[11px] text-[var(--color-muted)]">
           {t("forms.victim.civilRightsNote")}
         </p>
 
@@ -2004,7 +2057,7 @@ const isIN = stateCode === "IN";
         </div>
 
         <div className="space-y-2 text-xs">
-          <p className="text-slate-200">{t("fields.hasDisability.question")}</p>
+          <p className="text-[var(--color-charcoal)]">{t("fields.hasDisability.question")}</p>
 
           <div className="flex flex-wrap gap-3">
             <button
@@ -2013,8 +2066,8 @@ const isIN = stateCode === "IN";
               onClick={() => !isReadOnly && onChange({ hasDisability: true })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("common.yes")}
@@ -2028,8 +2081,8 @@ const isIN = stateCode === "IN";
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 victim.hasDisability === false
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("common.no")}
@@ -2046,8 +2099,8 @@ const isIN = stateCode === "IN";
                   onClick={() => !isReadOnly && onChange({ disabilityType: type })}
                   className={`px-2 py-1 rounded-full border text-[11px] ${disBtn} ${
                     victim.disabilityType === type
-                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                      : "border-slate-700 bg-slate-900 text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                      : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                   }`}
                 >
                   {t(`fields.disabilityType.${type}`)}
@@ -2077,15 +2130,15 @@ function ApplicantForm({
   const isIN = stateCode === "IN";
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.applicant.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">{t("forms.applicant.description")}</p>
+      <p className="text-xs text-[var(--color-slate)]">{t("forms.applicant.description")}</p>
 
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.applicant.isVictimAlsoApplicantLabel")}
         </p>
 
@@ -2112,14 +2165,14 @@ function ApplicantForm({
         </label>
 
         {applicant.isSameAsVictim && (
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--color-muted)]">
             {t("forms.applicant.sameAsVictimNote")}
           </p>
         )}
       </div>
 
       {!applicant.isSameAsVictim && (
-        <div className="space-y-4 pt-3 border-t border-slate-800">
+        <div className="space-y-4 pt-3 border-t border-[var(--color-border-light)]">
           <div className="grid gap-3 sm:grid-cols-2">
             <Field
               label={t("fields.firstName.required")}
@@ -2215,8 +2268,8 @@ function ApplicantForm({
           </div>
 
           {/* NEW: Seeking own expenses question */}
-          <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-            <p className="text-slate-200">
+          <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+            <p className="text-[var(--color-charcoal)]">
               {t("forms.applicant.seekingOwnExpenses.question")}
             </p>
             <div className="flex flex-wrap gap-3">
@@ -2228,8 +2281,8 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.seekingOwnExpenses === true
-                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                    : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.yes")}
@@ -2242,8 +2295,8 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.seekingOwnExpenses === false
-                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                    : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.no")}
@@ -2260,8 +2313,8 @@ function ApplicantForm({
             )}
           </div>
 
-          <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-            <p className="text-slate-200">
+          <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+            <p className="text-[var(--color-charcoal)]">
               {t("forms.applicant.legalGuardianship.question")}
             </p>
 
@@ -2274,8 +2327,8 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship
-                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                    : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.yes")}
@@ -2289,8 +2342,8 @@ function ApplicantForm({
                 }
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                   applicant.hasLegalGuardianship === false
-                    ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                    : "border-slate-700 bg-slate-900 text-slate-300"
+                    ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                    : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("forms.applicant.legalGuardianship.noNotSure")}
@@ -2318,16 +2371,16 @@ function ContactForm({
   const disBtn = isReadOnly ? "opacity-60 cursor-not-allowed" : "";
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4 mt-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.contact.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">{t("forms.contact.description")}</p>
+      <p className="text-xs text-[var(--color-slate)]">{t("forms.contact.description")}</p>
 
       {/* Language preference */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.contact.prefersEnglishQuestion")}
         </p>
         <div className="flex flex-wrap gap-3">
@@ -2337,8 +2390,8 @@ function ContactForm({
             onClick={() => !isReadOnly && onChange({ prefersEnglish: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.prefersEnglish === true
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2349,8 +2402,8 @@ function ContactForm({
             onClick={() => !isReadOnly && onChange({ prefersEnglish: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.prefersEnglish === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.no")}
@@ -2368,8 +2421,8 @@ function ContactForm({
       </div>
 
       {/* Working with advocate */}
-      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
-        <p className="text-slate-200">
+      <div className="space-y-2 text-xs pt-3 border-t border-[var(--color-border-light)]">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.contact.workingWithAdvocateQuestion")}
         </p>
         <div className="flex flex-wrap gap-3">
@@ -2381,8 +2434,8 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.workingWithAdvocate === true
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2395,8 +2448,8 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.workingWithAdvocate === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.no")}
@@ -2438,7 +2491,7 @@ function ContactForm({
 
             {/* Consent to talk to advocate */}
             <div className="space-y-2 pt-2">
-              <p className="text-slate-200">
+              <p className="text-[var(--color-charcoal)]">
                 {t("forms.contact.consentToTalkToAdvocateQuestion")}
               </p>
               <div className="flex flex-wrap gap-3">
@@ -2450,8 +2503,8 @@ function ContactForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     contact.consentToTalkToAdvocate === true
-                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                      : "border-slate-700 bg-slate-900 text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                      : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                   }`}
                 >
                   {t("common.yes")}
@@ -2464,8 +2517,8 @@ function ContactForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     contact.consentToTalkToAdvocate === false
-                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                      : "border-slate-700 bg-slate-900 text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                      : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                   }`}
                 >
                   {t("common.no")}
@@ -2477,8 +2530,8 @@ function ContactForm({
       </div>
 
       {/* Alternate contact */}
-      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
-        <p className="text-slate-200">
+      <div className="space-y-2 text-xs pt-3 border-t border-[var(--color-border-light)]">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.contact.alternateContactQuestion")}
         </p>
         <div className="flex flex-wrap gap-3">
@@ -2493,8 +2546,8 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               contact.alternateContactName
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2512,8 +2565,8 @@ function ContactForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               !contact.alternateContactName
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.no")}
@@ -2575,24 +2628,24 @@ function CrimeForm({
   const isIN = stateCode === "IN";
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.crime.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">{t("forms.crime.description")}</p>
+      <p className="text-xs text-[var(--color-slate)]">{t("forms.crime.description")}</p>
 
       {isIN && (
         <>
           <div className="space-y-2 text-xs">
-            <p className="text-slate-200">{t("forms.int.autoAccident")}</p>
+            <p className="text-[var(--color-charcoal)]">{t("forms.int.autoAccident")}</p>
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ isAutomobileAccident: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.isAutomobileAccident === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.isAutomobileAccident === true ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.yes")}
@@ -2602,7 +2655,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ isAutomobileAccident: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.isAutomobileAccident === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.isAutomobileAccident === false ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.no")}
@@ -2618,14 +2671,14 @@ function CrimeForm({
             )}
           </div>
           <div className="space-y-2 text-xs">
-            <p className="text-slate-200">{t("forms.int.physicalInjuries")}</p>
+            <p className="text-[var(--color-charcoal)]">{t("forms.int.physicalInjuries")}</p>
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.victimHasPhysicalInjuries === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.victimHasPhysicalInjuries === true ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.yes")}
@@ -2635,7 +2688,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ victimHasPhysicalInjuries: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  crime.victimHasPhysicalInjuries === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  crime.victimHasPhysicalInjuries === false ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.no")}
@@ -2663,14 +2716,14 @@ function CrimeForm({
         />
         {isIN && (
           <div className="space-y-1">
-            <label className="text-[11px] text-slate-400 block">{t("forms.int.timeOfCrime")}</label>
+            <label className="text-[11px] text-[var(--color-muted)] block">{t("forms.int.timeOfCrime")}</label>
             <div className="flex gap-2">
               <button
                 type="button"
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "AM" })}
                 className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
-                  crime.timeOfCrimeAmPm === "AM" ? "border-blue-500 bg-blue-900/30" : "border-slate-700"
+                  crime.timeOfCrimeAmPm === "AM" ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80" : "border-[var(--color-border)]"
                 }`}
               >
                 AM
@@ -2680,7 +2733,7 @@ function CrimeForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ timeOfCrimeAmPm: "PM" })}
                 className={`px-3 py-1.5 rounded border text-xs ${disBtn} ${
-                  crime.timeOfCrimeAmPm === "PM" ? "border-blue-500 bg-blue-900/30" : "border-slate-700"
+                  crime.timeOfCrimeAmPm === "PM" ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80" : "border-[var(--color-border)]"
                 }`}
               >
                 PM
@@ -2745,7 +2798,7 @@ function CrimeForm({
       )}
 
       {/* Phase 8: high-sensitivity block – safe-mode copy + skip/defer */}
-      <div className="rounded-xl border border-slate-700 bg-slate-800/50 px-3 py-2 text-xs text-slate-300">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-light-sand)]/70 px-3 py-2 text-xs text-[var(--color-slate)]">
         <p>{t("intake.safeMode.takeYourTime")}</p>
         <p className="mt-1.5">
           {t("intake.explainThisNeedHelp")}{" "}
@@ -2774,14 +2827,14 @@ function CrimeForm({
             <button
               type="button"
               onClick={() => onSkip("crime.crimeDescription")}
-              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+              className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline underline-offset-1"
             >
               {t("intake.skipForNow")}
             </button>
             <button
               type="button"
               onClick={() => onDefer("crime.crimeDescription")}
-              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+              className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline underline-offset-1"
             >
               {t("intake.answerLater")}
             </button>
@@ -2808,14 +2861,14 @@ function CrimeForm({
             <button
               type="button"
               onClick={() => onSkip("crime.injuryDescription")}
-              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+              className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline underline-offset-1"
             >
               {t("intake.skipForNow")}
             </button>
             <button
               type="button"
               onClick={() => onDefer("crime.injuryDescription")}
-              className="text-[11px] text-slate-400 hover:text-slate-200 underline underline-offset-1"
+              className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline underline-offset-1"
             >
               {t("intake.answerLater")}
             </button>
@@ -2827,7 +2880,7 @@ function CrimeForm({
         {fieldState["crime.injuryDescription"]?.status === "deferred" && (
           <p className="text-[11px] text-amber-200/80">{t("intake.review.deferred")}</p>
         )}
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-[var(--color-muted)]">
           {t("intake.explainThisNeedHelp")}{" "}
           <ExplainThisButton
             sourceText={t("forms.crime.injuryDescriptionLabel")}
@@ -2842,7 +2895,7 @@ function CrimeForm({
       </div>
 
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">{t("forms.crime.offenderKnownQuestion")}</p>
+        <p className="text-[var(--color-charcoal)]">{t("forms.crime.offenderKnownQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -2851,8 +2904,8 @@ function CrimeForm({
             onClick={() => !isReadOnly && onChange({ offenderKnown: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.offenderKnown
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2864,8 +2917,8 @@ function CrimeForm({
             onClick={() => !isReadOnly && onChange({ offenderKnown: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.offenderKnown === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.crime.noNotSure")}
@@ -2891,8 +2944,8 @@ function CrimeForm({
         </div>
       )}
 
-      <div className="space-y-2 text-xs pt-2 border-t border-slate-800">
-        <p className="text-slate-200">
+      <div className="space-y-2 text-xs pt-2 border-t border-[var(--color-border-light)]">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.crime.sexualAssaultKitQuestion")}
         </p>
 
@@ -2905,8 +2958,8 @@ function CrimeForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2920,8 +2973,8 @@ function CrimeForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               crime.sexualAssaultKitPerformed === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.crime.noNotSure")}
@@ -2954,18 +3007,18 @@ function CourtForm({
   const isIN = stateCode === "IN";
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 mt-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4 mt-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.court.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.court.description")}
       </p>
 
       {/* Arrested */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">{t("forms.court.offenderArrestedQuestion")}</p>
+        <p className="text-[var(--color-charcoal)]">{t("forms.court.offenderArrestedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -2973,8 +3026,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderArrested: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -2986,8 +3039,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderArrested: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderArrested === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.court.noNotSure")}
@@ -2997,7 +3050,7 @@ function CourtForm({
 
       {/* Charged */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">{t("forms.court.offenderChargedQuestion")}</p>
+        <p className="text-[var(--color-charcoal)]">{t("forms.court.offenderChargedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -3005,8 +3058,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderCharged: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -3018,8 +3071,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ offenderCharged: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.offenderCharged === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.court.noNotSure")}
@@ -3029,7 +3082,7 @@ function CourtForm({
 
       {/* Testified */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">{t("forms.court.applicantTestifiedQuestion")}</p>
+        <p className="text-[var(--color-charcoal)]">{t("forms.court.applicantTestifiedQuestion")}</p>
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -3037,8 +3090,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ applicantTestified: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -3050,8 +3103,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ applicantTestified: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.applicantTestified === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.court.noNotSure")}
@@ -3062,14 +3115,14 @@ function CourtForm({
       {isIN && (
         <>
           <div className="space-y-2 text-xs">
-            <p className="text-slate-200">{t("forms.int.willingToAssistProsecution")}</p>
+            <p className="text-[var(--color-charcoal)]">{t("forms.int.willingToAssistProsecution")}</p>
             <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: true })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  court.willingToAssistProsecution === true ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  court.willingToAssistProsecution === true ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.yes")}
@@ -3079,7 +3132,7 @@ function CourtForm({
                 disabled={isReadOnly}
                 onClick={() => !isReadOnly && onChange({ willingToAssistProsecution: false })}
                 className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
-                  court.willingToAssistProsecution === false ? "border-blue-500 bg-blue-900/30 text-slate-200" : "border-slate-700 bg-slate-900 text-slate-300"
+                  court.willingToAssistProsecution === false ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]" : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                 }`}
               >
                 {t("common.no")}
@@ -3120,7 +3173,7 @@ function CourtForm({
 
       {/* Restitution */}
       <div className="space-y-2 text-xs">
-        <p className="text-slate-200">{t("forms.court.restitutionOrderedQuestion")}</p>
+        <p className="text-[var(--color-charcoal)]">{t("forms.court.restitutionOrderedQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -3129,8 +3182,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ restitutionOrdered: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -3142,8 +3195,8 @@ function CourtForm({
             onClick={() => !isReadOnly && onChange({ restitutionOrdered: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.restitutionOrdered === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.court.noNotSure")}
@@ -3168,8 +3221,8 @@ function CourtForm({
       </div>
 
       {/* Human trafficking */}
-      <div className="space-y-2 text-xs pt-3 border-t border-slate-800">
-        <p className="text-slate-200">{t("forms.court.humanTraffickingQuestion")}</p>
+      <div className="space-y-2 text-xs pt-3 border-t border-[var(--color-border-light)]">
+        <p className="text-[var(--color-charcoal)]">{t("forms.court.humanTraffickingQuestion")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -3180,8 +3233,8 @@ function CourtForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -3195,8 +3248,8 @@ function CourtForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               court.humanTraffickingCaseFiled === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.court.noNotSure")}
@@ -3207,7 +3260,7 @@ function CourtForm({
           <>
             {/* NEW: Human trafficking testimony question */}
             <div className="space-y-2 pt-2">
-              <p className="text-slate-200">
+              <p className="text-[var(--color-charcoal)]">
                 {t("forms.court.humanTraffickingTestifiedQuestion")}
               </p>
               <div className="flex flex-wrap gap-3">
@@ -3219,8 +3272,8 @@ function CourtForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     court.humanTraffickingTestified === true
-                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                      : "border-slate-700 bg-slate-900 text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                      : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                   }`}
                 >
                   {t("common.yes")}
@@ -3233,8 +3286,8 @@ function CourtForm({
                   }
                   className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                     court.humanTraffickingTestified === false
-                      ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                      : "border-slate-700 bg-slate-900 text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                      : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
                   }`}
                 >
                   {t("forms.court.noNotSure")}
@@ -3283,11 +3336,11 @@ function LossesForm({
   // Indiana simplified 5-category view
   if (isIN) {
     return (
-      <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-        <h2 className="text-lg font-semibold text-slate-50">
+      <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+        <h2 className="text-lg font-semibold text-[var(--color-navy)]">
           {t("forms.int.compensationRequesting")}
         </h2>
-        <p className="text-xs text-slate-300">
+        <p className="text-xs text-[var(--color-slate)]">
           {t("forms.lossesExtended.description")}
         </p>
         <div className="space-y-3 text-xs">
@@ -3346,18 +3399,18 @@ function LossesForm({
   }
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.lossesExtended.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.lossesExtended.description")}
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 text-xs">
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.lossesExtended.groups.medical.title")}
           </h3>
 
@@ -3406,7 +3459,7 @@ function LossesForm({
         </div>
 
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.lossesExtended.groups.work.title")}
           </h3>
 
@@ -3443,7 +3496,7 @@ function LossesForm({
         </div>
 
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.lossesExtended.groups.funeralProperty.title")}
           </h3>
 
@@ -3488,7 +3541,7 @@ function LossesForm({
         </div>
 
         <div className="space-y-2">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.lossesExtended.groups.personalOther.title")}
           </h3>
 
@@ -3544,7 +3597,7 @@ function LossesForm({
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.lossesExtended.footerNote")}
       </p>
     </section>
@@ -3600,12 +3653,12 @@ function MedicalForm({
   };
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.medicalExtended.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.medicalExtended.description")}
       </p>
 
@@ -3651,8 +3704,8 @@ function MedicalForm({
         />
       </div>
 
-      <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-        <p className="text-slate-200">
+      <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.medicalExtended.otherSources.question")}
         </p>
 
@@ -3663,8 +3716,8 @@ function MedicalForm({
             onClick={() => !isReadOnly && onChange({ hasOtherSources: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -3676,8 +3729,8 @@ function MedicalForm({
             onClick={() => !isReadOnly && onChange({ hasOtherSources: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               medical.hasOtherSources === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.medicalExtended.noNotSure")}
@@ -3696,7 +3749,7 @@ function MedicalForm({
         )}
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.medicalExtended.footerNote")}
       </p>
 
@@ -3758,12 +3811,12 @@ function EmploymentForm({
   };
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.employmentExtended.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.employmentExtended.description")}
       </p>
 
@@ -3803,8 +3856,8 @@ function EmploymentForm({
           />
         </div>
 
-        <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-          <p className="text-slate-200">
+        <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+          <p className="text-[var(--color-charcoal)]">
             {t("forms.employmentExtended.benefits.question")}
           </p>
 
@@ -3817,8 +3870,8 @@ function EmploymentForm({
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("common.yes")}
@@ -3832,8 +3885,8 @@ function EmploymentForm({
               }
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 employment.receivedSickOrVacationOrDisability === false
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("forms.employmentExtended.noNotSure")}
@@ -3911,7 +3964,7 @@ function EmploymentForm({
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.employmentExtended.footerNote")}
       </p>
 
@@ -3981,12 +4034,12 @@ function FuneralForm({
   };
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.funeralExtended.title")}
       </h2>
 
-      <p className="text-xs text-slate-300">
+      <p className="text-xs text-[var(--color-slate)]">
         {t("forms.funeralExtended.description")}
       </p>
 
@@ -4022,8 +4075,8 @@ function FuneralForm({
       </div>
 
       {/* Cemetery */}
-      <div className="space-y-3 pt-3 border-t border-slate-800">
-        <h3 className="text-xs font-semibold text-slate-100">
+      <div className="space-y-3 pt-3 border-t border-[var(--color-border-light)]">
+        <h3 className="text-xs font-semibold text-[var(--color-navy)]">
           {t("forms.funeralExtended.cemetery.title")}
         </h3>
 
@@ -4056,8 +4109,8 @@ function FuneralForm({
       </div>
 
       {/* Who paid */}
-      <div className="space-y-3 pt-3 border-t border-slate-800">
-        <h3 className="text-xs font-semibold text-slate-100">
+      <div className="space-y-3 pt-3 border-t border-[var(--color-border-light)]">
+        <h3 className="text-xs font-semibold text-[var(--color-navy)]">
           {t("forms.funeralExtended.payer.title")}
         </h3>
 
@@ -4094,8 +4147,8 @@ function FuneralForm({
       </div>
 
       {/* Chicago ESVF */}
-      <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-        <p className="text-slate-200">{t("forms.funeralExtended.esvf.question")}</p>
+      <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+        <p className="text-[var(--color-charcoal)]">{t("forms.funeralExtended.esvf.question")}</p>
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -4104,8 +4157,8 @@ function FuneralForm({
             onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: true })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -4117,8 +4170,8 @@ function FuneralForm({
             onClick={() => !isReadOnly && onChange({ receivedChicagoESVF: false })}
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.receivedChicagoESVF === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.funeralExtended.noNotSure")}
@@ -4141,8 +4194,8 @@ function FuneralForm({
       </div>
 
       {/* Life insurance */}
-      <div className="space-y-2 pt-3 border-t border-slate-800 text-xs">
-        <p className="text-slate-200">
+      <div className="space-y-2 pt-3 border-t border-[var(--color-border-light)] text-xs">
+        <p className="text-[var(--color-charcoal)]">
           {t("forms.funeralExtended.lifeInsurance.question")}
         </p>
 
@@ -4155,8 +4208,8 @@ function FuneralForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("common.yes")}
@@ -4170,8 +4223,8 @@ function FuneralForm({
             }
             className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
               funeral.lifeInsurancePolicyExists === false
-                ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                : "border-slate-700 bg-slate-900 text-slate-300"
+                ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
             }`}
           >
             {t("forms.funeralExtended.noNotSure")}
@@ -4218,11 +4271,11 @@ function FuneralForm({
       </div>
 
       {/* NEW: Death benefits */}
-      <div className="space-y-3 pt-3 border-t border-slate-800 text-xs">
-        <h3 className="font-semibold text-slate-100">
+      <div className="space-y-3 pt-3 border-t border-[var(--color-border-light)] text-xs">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.funeralExtended.deathBenefits.title")}
         </h3>
-        <p className="text-slate-300 text-[11px]">
+        <p className="text-[var(--color-slate)] text-[11px]">
           {t("forms.funeralExtended.deathBenefits.description")}
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -4296,8 +4349,8 @@ function FuneralForm({
       </div>
 
       {/* Dependents */}
-      <div className="space-y-3 pt-3 border-t border-slate-800">
-        <h3 className="text-xs font-semibold text-slate-100">
+      <div className="space-y-3 pt-3 border-t border-[var(--color-border-light)]">
+        <h3 className="text-xs font-semibold text-[var(--color-navy)]">
           {t("forms.funeralExtended.dependents.title")}
         </h3>
 
@@ -4331,7 +4384,7 @@ function FuneralForm({
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.funeralExtended.footerNote")}
       </p>
 
@@ -4446,8 +4499,8 @@ function RecommendedSupportOrgsBlock({
 
   if (forbidden) {
     return (
-      <section className="rounded-xl border border-slate-700 bg-slate-900/50 p-4 mb-4 text-xs text-slate-400">
-        <p className="font-medium text-slate-200">Recommended support organizations</p>
+      <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-4 mb-4 text-xs text-[var(--color-muted)]">
+        <p className="font-medium text-[var(--color-charcoal)]">Recommended support organizations</p>
         <p className="mt-1">
           Your advocate or care team can suggest organizations that fit your situation.
         </p>
@@ -4456,46 +4509,46 @@ function RecommendedSupportOrgsBlock({
   }
 
   return (
-    <section className="rounded-xl border border-slate-700 bg-slate-900 p-4 mb-4 text-xs">
+    <section className="rounded-xl border border-[var(--color-border)] bg-white p-4 mb-4 text-xs">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="font-medium text-slate-100">Recommended support organizations</p>
+        <p className="font-medium text-[var(--color-navy)]">Recommended support organizations</p>
         {canRunMatch && (
           <button
             type="button"
             disabled={running}
             onClick={handleRun}
-            className="rounded-lg bg-slate-700 px-3 py-1 text-[11px] font-medium text-white hover:bg-slate-600 disabled:opacity-50"
+            className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-1 text-[11px] font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           >
             {running ? "Updating…" : "Refresh Suggestions"}
           </button>
         )}
       </div>
-      <p className="text-slate-400 mt-1 text-[11px] leading-relaxed">
+      <p className="text-[var(--color-muted)] mt-1 text-[11px] leading-relaxed">
         {TRUST_MICROCOPY.recommendationsLead} Always confirm directly with the organization.{" "}
         <a
           href={TRUST_LINK_HREF.matching}
-          className="text-slate-300 hover:text-white underline underline-offset-2"
+          className="text-[var(--color-slate)] hover:text-white underline underline-offset-2"
           target="_blank"
           rel="noreferrer"
         >
           {TRUST_LINK_LABELS.howRecommendationsWork}
         </a>
       </p>
-      {loading && <p className="text-slate-500 mt-2">Loading…</p>}
+      {loading && <p className="text-[var(--color-muted)] mt-2">Loading…</p>}
       {!loading && globalFlags.map((f, i) => (
         <p key={i} className="text-amber-200/90 mt-2 text-[11px]">
           {f}
         </p>
       ))}
       {!loading && matches.length === 0 && !globalFlags.length && (
-        <p className="text-slate-400 mt-2 text-[11px] leading-relaxed">
+        <p className="text-[var(--color-muted)] mt-2 text-[11px] leading-relaxed">
           {canRunMatch
             ? `${EMPTY_COPY.noMatchingResults} Save your application, then tap “Refresh suggestions” to find organizations that may help.`
             : "Suggestions will appear here after your advocate runs organization matching for this case."}
         </p>
       )}
       {!loading && matches.length > 0 && (
-        <ul className="mt-3 space-y-3 divide-y divide-slate-800">
+        <ul className="mt-3 space-y-3 divide-y divide-[var(--color-border-light)]">
           {matches.map((m) => (
             <li key={m.organization_id} className="pt-3 first:pt-0">
               <RecommendedOrganizationCard match={m} />
@@ -4726,8 +4779,8 @@ setInviteResult(
   ]);
 
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-5 text-sm">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-5 text-sm">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.summary.title")}
       </h2>
 
@@ -4737,7 +4790,7 @@ setInviteResult(
         </div>
       )}
 
-      <p className="text-xs text-slate-300">{t("forms.summary.description")}</p>
+      <p className="text-xs text-[var(--color-slate)]">{t("forms.summary.description")}</p>
 
       {onReviewApplication && (
         <div className="flex flex-wrap items-center gap-2">
@@ -4751,7 +4804,7 @@ setInviteResult(
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 space-y-3">
+      <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-sm font-semibold text-white">
             {t("forms.summary.checkpoint.nextStepTitle")}
@@ -4766,29 +4819,29 @@ setInviteResult(
         </div>
         {summaryNext ? (
           <>
-            <p className="text-xs text-slate-300 leading-relaxed">{summaryNext.reason}</p>
+            <p className="text-xs text-[var(--color-slate)] leading-relaxed">{summaryNext.reason}</p>
             {!isReadOnly && (
               <Link
                 href={summaryNext.href}
-                className="inline-flex text-xs font-semibold text-blue-400 hover:text-blue-300"
+                className="inline-flex text-xs font-semibold text-[var(--color-teal)] hover:text-[var(--color-teal-deep)]"
               >
                 {summaryNext.label} →
               </Link>
             )}
           </>
         ) : (
-          <p className="text-xs text-slate-300 leading-relaxed">
+          <p className="text-xs text-[var(--color-slate)] leading-relaxed">
             {t("forms.summary.checkpoint.whatNextAllClear")}
           </p>
         )}
       </div>
 
       {/* 1. Application progress */}
-      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-2">
-        <h3 className="text-sm font-semibold text-slate-100">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-[var(--color-navy)]">
           {t("forms.summary.checkpoint.progressTitle")}
         </h3>
-        <p className="text-[11px] text-slate-400 leading-relaxed">
+        <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
           {tf("forms.summary.checkpoint.progressHint", {
             visited: String(Math.min(maxStepIndex + 1, 9)),
             total: "9",
@@ -4803,7 +4856,7 @@ setInviteResult(
         </h3>
         <p className="text-[11px] text-amber-200/80">{t("forms.summary.checkpoint.missingExplainer")}</p>
         {review.missing.length > 0 ? (
-          <ul className="text-xs text-slate-200 space-y-1.5 list-disc list-inside">
+          <ul className="text-xs text-[var(--color-charcoal)] space-y-1.5 list-disc list-inside">
             {review.missing.map((item) => (
               <li key={item.fieldKey}>
                 {onGoToStep ? (
@@ -4821,21 +4874,21 @@ setInviteResult(
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-slate-400">{t("forms.summary.checkpoint.missingEmpty")}</p>
+          <p className="text-xs text-[var(--color-muted)]">{t("forms.summary.checkpoint.missingEmpty")}</p>
         )}
         {review.skipped.length > 0 || review.deferred.length > 0 ? (
           <div className="space-y-2 text-xs pt-3 mt-2 border-t border-amber-500/20">
             <p className="text-[11px] text-amber-200/80">{t("forms.summary.checkpoint.deferredExplainer")}</p>
             {review.skipped.length > 0 && (
               <div>
-                <span className="font-medium text-slate-300">{t("intake.review.skipped")}:</span>{" "}
+                <span className="font-medium text-[var(--color-slate)]">{t("intake.review.skipped")}:</span>{" "}
                 {review.skipped.map((item) => (
                   <span key={item.fieldKey} className="mr-2 inline-block">
                     {onGoToStep ? (
                       <button
                         type="button"
                         onClick={() => onGoToStep(item.stepHint as IntakeStep)}
-                        className="text-slate-300 hover:text-slate-200 underline"
+                        className="text-[var(--color-slate)] hover:text-[var(--color-charcoal)] underline"
                       >
                         {t("intake.steps." + item.stepHint)}
                       </button>
@@ -4848,14 +4901,14 @@ setInviteResult(
             )}
             {review.deferred.length > 0 && (
               <div>
-                <span className="font-medium text-slate-300">{t("intake.review.deferred")}:</span>{" "}
+                <span className="font-medium text-[var(--color-slate)]">{t("intake.review.deferred")}:</span>{" "}
                 {review.deferred.map((item) => (
                   <span key={item.fieldKey} className="mr-2 inline-block">
                     {onGoToStep ? (
                       <button
                         type="button"
                         onClick={() => onGoToStep(item.stepHint as IntakeStep)}
-                        className="text-slate-300 hover:text-slate-200 underline"
+                        className="text-[var(--color-slate)] hover:text-[var(--color-charcoal)] underline"
                       >
                         {t("intake.steps." + item.stepHint)}
                       </button>
@@ -4871,17 +4924,17 @@ setInviteResult(
       </div>
 
       {/* 4. Documents */}
-      <div className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-2">
-        <h3 className="text-sm font-semibold text-slate-100">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4 space-y-2">
+        <h3 className="text-sm font-semibold text-[var(--color-navy)]">
           {t("forms.summary.checkpoint.documentsTitle")}
         </h3>
-        <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.documentsSubtitle")}</p>
-        <p className="text-xs text-slate-500">{t("forms.summary.checkpoint.documentsEmpty")}</p>
+        <p className="text-[11px] text-[var(--color-muted)]">{t("forms.summary.checkpoint.documentsSubtitle")}</p>
+        <p className="text-xs text-[var(--color-muted)]">{t("forms.summary.checkpoint.documentsEmpty")}</p>
         {onGoToStep && (
           <button
             type="button"
             onClick={() => onGoToStep("documents")}
-            className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-950/60 px-3 py-1.5 text-[11px] font-medium text-slate-100 hover:bg-slate-900 transition"
+            className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-1.5 text-[11px] font-medium text-[var(--color-navy)] hover:bg-white transition"
           >
             {t("forms.summary.checkpoint.uploadDocuments")}
           </button>
@@ -4889,14 +4942,14 @@ setInviteResult(
       </div>
 
       {/* 5. Secure messages — dedicated tool at /victim/messages */}
-      <div id="summary-secure-messages" className="rounded-xl border border-slate-700/80 bg-slate-900/40 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-slate-100">
+      <div id="summary-secure-messages" className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-[var(--color-navy)]">
           {t("forms.summary.checkpoint.messagesTitle")}
         </h3>
-        <p className="text-[11px] text-slate-400">{t("forms.summary.checkpoint.messagesSubtitle")}</p>
+        <p className="text-[11px] text-[var(--color-muted)]">{t("forms.summary.checkpoint.messagesSubtitle")}</p>
         {caseId ? (
           <>
-            <p className="text-xs text-slate-300">{t("forms.summary.checkpoint.messagesOpenTool")}</p>
+            <p className="text-xs text-[var(--color-slate)]">{t("forms.summary.checkpoint.messagesOpenTool")}</p>
             <Link
               href={victimCaseMessagesUrl(caseId)}
               className="inline-flex items-center justify-center rounded-full bg-emerald-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition"
@@ -4905,7 +4958,7 @@ setInviteResult(
             </Link>
           </>
         ) : (
-          <p className="text-xs text-slate-500">{t("forms.summary.checkpoint.messagesEmpty")}</p>
+          <p className="text-xs text-[var(--color-muted)]">{t("forms.summary.checkpoint.messagesEmpty")}</p>
         )}
       </div>
 
@@ -4917,20 +4970,20 @@ setInviteResult(
           onMatchesLoaded={(n) => setRecommendedMatchCount(n)}
         />
       ) : (
-        <div className="rounded-xl border border-slate-700 bg-slate-900 p-4 text-xs text-slate-400">
-          <p className="font-medium text-slate-200">{t("forms.summary.checkpoint.recommendedTitle")}</p>
+        <div className="rounded-xl border border-[var(--color-border)] bg-white p-4 text-xs text-[var(--color-muted)]">
+          <p className="font-medium text-[var(--color-charcoal)]">{t("forms.summary.checkpoint.recommendedTitle")}</p>
           <p className="mt-1">{EMPTY_COPY.noMatchingResults}</p>
         </div>
       )}
 
-      <details className="rounded-xl border border-slate-700/80 bg-slate-950/40 p-4 space-y-4">
-        <summary className="text-sm font-semibold text-slate-100 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+      <details className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/70 p-4 space-y-4">
+        <summary className="text-sm font-semibold text-[var(--color-navy)] cursor-pointer list-none [&::-webkit-details-marker]:hidden">
           {t("forms.summary.checkpoint.applicationDetailsToggle")}
         </summary>
       <div className="pt-4 space-y-4">
       <div className="grid gap-4 sm:grid-cols-2 text-xs">
         <div className="space-y-1.5">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.summary.sections.victim")}
           </h3>
           <p>
@@ -4952,12 +5005,12 @@ setInviteResult(
         </div>
 
         <div className="space-y-1.5">
-          <h3 className="font-semibold text-slate-100">
+          <h3 className="font-semibold text-[var(--color-navy)]">
             {t("forms.summary.sections.applicant")}
           </h3>
 
           {applicant.isSameAsVictim ? (
-            <p className="text-slate-300">{t("forms.summary.applicant.samePerson")}</p>
+            <p className="text-[var(--color-slate)]">{t("forms.summary.applicant.samePerson")}</p>
           ) : (
             <>
               <p>
@@ -4979,7 +5032,7 @@ setInviteResult(
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.sections.crime")}
         </h3>
         <p>
@@ -5002,13 +5055,13 @@ setInviteResult(
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.sections.losses")}
         </h3>
         {selectedLosses.length === 0 ? (
-          <p className="text-slate-300">{t("forms.summary.losses.noneSelected")}</p>
+          <p className="text-[var(--color-slate)]">{t("forms.summary.losses.noneSelected")}</p>
         ) : (
-          <ul className="list-disc list-inside text-slate-300">
+          <ul className="list-disc list-inside text-[var(--color-slate)]">
 {selectedLosses.map((key) => (
   <li key={key}>{t(`forms.summary.losses.${key}`)}</li>
 ))}
@@ -5017,7 +5070,7 @@ setInviteResult(
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.sections.medical")}
         </h3>
         {primaryProvider?.providerName ? (
@@ -5041,12 +5094,12 @@ setInviteResult(
             </p>
           </>
         ) : (
-          <p className="text-slate-300">{t("forms.summary.medical.noneEntered")}</p>
+          <p className="text-[var(--color-slate)]">{t("forms.summary.medical.noneEntered")}</p>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.sections.employment")}
         </h3>
         {primaryJob?.employerName ? (
@@ -5066,12 +5119,12 @@ setInviteResult(
             </p>
           </>
         ) : (
-          <p className="text-slate-300">{t("forms.summary.employment.noneEntered")}</p>
+          <p className="text-[var(--color-slate)]">{t("forms.summary.employment.noneEntered")}</p>
         )}
       </div>
 
       <div className="space-y-1.5 text-xs">
-        <h3 className="font-semibold text-slate-100">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.sections.funeral")}
         </h3>
         {funeral.funeralHomeName || funeral.funeralBillTotal ? (
@@ -5105,24 +5158,24 @@ setInviteResult(
                 </p>
               </>
             ) : (
-              <p className="text-slate-300">{t("forms.summary.funeral.noPayer")}</p>
+              <p className="text-[var(--color-slate)]">{t("forms.summary.funeral.noPayer")}</p>
             )}
           </>
         ) : (
-          <p className="text-slate-300">{t("forms.summary.funeral.noneEntered")}</p>
+          <p className="text-[var(--color-slate)]">{t("forms.summary.funeral.noneEntered")}</p>
         )}
       </div>
 
       </div>
       </details>
 
-      <div className="space-y-1.5 text-xs pt-3 border-t border-slate-800">
-        <h3 className="font-semibold text-slate-100">
+      <div className="space-y-1.5 text-xs pt-3 border-t border-[var(--color-border-light)]">
+        <h3 className="font-semibold text-[var(--color-navy)]">
           {t("forms.summary.certification.title")}
         </h3>
 
         <div className="space-y-2 mt-2">
-          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
+          <label className={`flex items-start gap-2 text-[11px] text-[var(--color-charcoal)] ${disBtn}`}>
             <input
               disabled={isReadOnly}
               type="checkbox"
@@ -5130,7 +5183,7 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesSubrogation: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-warm-white)] text-[var(--color-teal)] disabled:opacity-60"
             />
             <span className="flex flex-wrap items-center gap-1">
               {t("forms.summary.certification.checks.subrogation")}{" "}
@@ -5146,7 +5199,7 @@ setInviteResult(
             </span>
           </label>
 
-          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
+          <label className={`flex items-start gap-2 text-[11px] text-[var(--color-charcoal)] ${disBtn}`}>
             <input
               disabled={isReadOnly}
               type="checkbox"
@@ -5154,12 +5207,12 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesRelease: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-warm-white)] text-[var(--color-teal)] disabled:opacity-60"
             />
             <span>{t("forms.summary.certification.checks.release")}</span>
           </label>
 
-          <label className={`flex items-start gap-2 text-[11px] text-slate-200 ${disBtn}`}>
+          <label className={`flex items-start gap-2 text-[11px] text-[var(--color-charcoal)] ${disBtn}`}>
             <input
               disabled={isReadOnly}
               type="checkbox"
@@ -5167,7 +5220,7 @@ setInviteResult(
               onChange={(e) =>
                 onChangeCertification({ acknowledgesPerjury: e.target.checked })
               }
-              className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60"
+              className="mt-[2px] h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-warm-white)] text-[var(--color-teal)] disabled:opacity-60"
             />
             <span>{t("forms.summary.certification.checks.perjury")}</span>
           </label>
@@ -5190,7 +5243,7 @@ setInviteResult(
         </div>
 
         <div className="space-y-2 mt-3">
-          <p className="text-[11px] text-slate-200">
+          <p className="text-[11px] text-[var(--color-charcoal)]">
             {t("forms.summary.certification.attorney.question")}
           </p>
 
@@ -5201,8 +5254,8 @@ setInviteResult(
               onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: true })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("common.yes")}
@@ -5214,8 +5267,8 @@ setInviteResult(
               onClick={() => !isReadOnly && onChangeCertification({ representedByAttorney: false })}
               className={`px-3 py-1 rounded-full border text-[11px] ${disBtn} ${
                 certification.representedByAttorney === false
-                  ? "border-blue-500 bg-blue-900/30 text-slate-200"
-                  : "border-slate-700 bg-slate-900 text-slate-300"
+                  ? "border-[var(--color-teal)] bg-[var(--color-teal-light)]/80 text-[var(--color-charcoal)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-slate)]"
               }`}
             >
               {t("common.no")}
@@ -5281,7 +5334,7 @@ setInviteResult(
         <button
           type="button"
           onClick={onDownloadSummaryPdf}
-          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+          className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[11px] text-[var(--color-navy)] hover:bg-[var(--color-light-sand)] transition"
         >
           {t("forms.summary.actions.downloadSummaryPdf")}
         </button>
@@ -5289,7 +5342,7 @@ setInviteResult(
         <button
           type="button"
           onClick={stateCode === "IN" ? onDownloadOfficialInPdf : onDownloadOfficialIlPdf}
-          className="inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition"
+          className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[11px] text-[var(--color-navy)] hover:bg-[var(--color-light-sand)] transition"
         >
           {stateCode === "IN"
             ? t("forms.summary.actions.downloadOfficialIn")
@@ -5300,7 +5353,7 @@ setInviteResult(
           <button
             type="button"
             onClick={onSaveCase}
-            className="inline-flex items-center rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 transition"
+            className="inline-flex items-center rounded-lg border border-blue-600 bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)] transition"
           >
             {t("forms.summary.actions.saveCaseForAdvocate")}
           </button>
@@ -5314,33 +5367,33 @@ setInviteResult(
             setInviteResult(null);
             setInviteOpen(true);
           }}
-          className={`inline-flex items-center rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-100 hover:bg-slate-800 transition ${disBtn}`}
+          className={`inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[11px] text-[var(--color-navy)] hover:bg-[var(--color-light-sand)] transition ${disBtn}`}
         >
           {t("forms.summary.actions.inviteAdvocate")}
         </button>
       </div>
 
       {inviteOpen && (
-        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 space-y-3 text-xs">
+        <div className="mt-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4 space-y-3 text-xs">
           <div className="flex items-center justify-between">
-            <div className="font-semibold text-slate-100">
+            <div className="font-semibold text-[var(--color-navy)]">
               {t("forms.summary.invite.title")}
             </div>
             <button
               type="button"
               onClick={() => setInviteOpen(false)}
-              className="text-slate-400 hover:text-slate-200"
+              className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
             >
               ✕
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--color-muted)]">
             {t("forms.summary.invite.note")}
           </p>
 
           <label className="block space-y-1">
-            <span className="text-slate-300">
+            <span className="text-[var(--color-slate)]">
               {t("forms.summary.invite.advocateEmailLabel")}
             </span>
             <input
@@ -5348,11 +5401,11 @@ setInviteResult(
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder={t("forms.summary.invite.advocateEmailPlaceholder")}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-60"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)] focus:border-[var(--color-teal)] disabled:opacity-60"
             />
           </label>
 
-          <label className="flex items-center gap-2 text-slate-300">
+          <label className="flex items-center gap-2 text-[var(--color-slate)]">
             <input
               disabled={isReadOnly}
               type="checkbox"
@@ -5367,7 +5420,7 @@ setInviteResult(
               type="button"
               onClick={handleInvite}
               disabled={isReadOnly || inviteLoading || !inviteEmail.trim()}
-              className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-blue-500 transition"
+              className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-[var(--color-teal)] transition"
             >
               {inviteLoading
                 ? t("forms.summary.actions.inviting")
@@ -5377,14 +5430,14 @@ setInviteResult(
             <button
               type="button"
               onClick={() => setInviteOpen(false)}
-              className="rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-900/60 transition"
+              className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/85 transition"
             >
               {t("ui.buttons.close")}
             </button>
           </div>
 
           {inviteResult && (
-            <pre className="whitespace-pre-wrap text-[11px] text-slate-200 bg-slate-900/60 border border-slate-800 rounded-lg p-2">
+            <pre className="whitespace-pre-wrap text-[11px] text-[var(--color-charcoal)] bg-[var(--color-warm-cream)]/85 border border-[var(--color-border-light)] rounded-lg p-2">
 {inviteResult}
             </pre>
           )}
@@ -5411,7 +5464,7 @@ function Field({
   disabled?: boolean;
 }) {
   return (
-    <label className="block text-xs text-slate-200 space-y-1">
+    <label className="block text-xs text-[var(--color-charcoal)] space-y-1">
       <span>{label}</span>
       <input
         disabled={disabled}
@@ -5419,8 +5472,8 @@ function Field({
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500
-          focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500
+        className={`w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)]
+          focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)] focus:border-[var(--color-teal)]
           disabled:opacity-60 disabled:cursor-not-allowed`}
       />
     </label>
@@ -5434,13 +5487,13 @@ function Checkbox({ label, checked, onChange, disabled = false }: {
   disabled?: boolean;
 }) {
   return (
-    <label className="flex items-start gap-2 text-[11px] text-slate-200 cursor-pointer">
+    <label className="flex items-start gap-2 text-[11px] text-[var(--color-charcoal)] cursor-pointer">
       <input
         disabled={disabled}
         type="checkbox"
         checked={checked}
         onChange={onChange}
-        className="mt-[2px] h-3 w-3 rounded border-slate-600 bg-slate-950 text-blue-400 disabled:opacity-60 disabled:cursor-not-allowed"
+        className="mt-[2px] h-3 w-3 rounded border-[var(--color-border)] bg-[var(--color-warm-white)] text-[var(--color-teal)] disabled:opacity-60 disabled:cursor-not-allowed"
       />
       <span className={disabled ? "opacity-60" : ""}>{label}</span>
     </label>
@@ -5450,8 +5503,8 @@ function Checkbox({ label, checked, onChange, disabled = false }: {
 function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
   const { t } = useI18n();
   return (
-    <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-4 text-xs">
-      <h2 className="text-lg font-semibold text-slate-50">
+    <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-4 text-xs">
+      <h2 className="text-lg font-semibold text-[var(--color-navy)]">
         {t("forms.documents.stepTitle")}
       </h2>
 
@@ -5461,11 +5514,11 @@ function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
         </div>
       )}
 
-      <p className="text-slate-300">
+      <p className="text-[var(--color-slate)]">
         {t("forms.documents.intro")}
       </p>
 
-      <ul className="list-disc list-inside text-slate-300 space-y-1">
+      <ul className="list-disc list-inside text-[var(--color-slate)] space-y-1">
         <li>{t("forms.documents.bullets.police")}</li>
         <li>{t("forms.documents.bullets.medical")}</li>
         <li>{t("forms.documents.bullets.funeral")}</li>
@@ -5473,7 +5526,7 @@ function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
         <li>{t("forms.documents.bullets.other")}</li>
       </ul>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.documents.disclaimer")}
       </p>
 
@@ -5482,8 +5535,8 @@ function DocumentsStep({ isReadOnly }: { isReadOnly?: boolean }) {
         className={`inline-flex items-center rounded-lg px-3 py-1.5 text-[11px] font-semibold transition
           ${
             isReadOnly
-              ? "cursor-not-allowed border border-slate-700 bg-slate-800 text-slate-400"
-              : "border-blue-600 bg-blue-600 text-white hover:bg-blue-500"
+              ? "cursor-not-allowed border border-[var(--color-border)] bg-[var(--color-light-sand)] text-[var(--color-muted)]"
+              : "border-blue-600 bg-[var(--color-teal-deep)] text-white hover:bg-[var(--color-teal)]"
           }`}
         aria-disabled={isReadOnly}
       >
@@ -5531,7 +5584,9 @@ const handleFiles = async (files: FileList | null) => {
           if (!res.ok) {
             const text = await res.text();
             console.error(`[UPLOAD] Failed for ${defaultDocType}`, text);
-            alert("There was an issue uploading that file. Please try again.");
+            alert(
+              "We couldn’t upload that file. The server may have rejected the format or size. Try a PDF, JPG, or PNG under the size limit, then upload again.",
+            );
             return;
           }
 
@@ -5539,7 +5594,9 @@ const handleFiles = async (files: FileList | null) => {
           console.log("[UPLOAD] Stored document:", json.document);
         } catch (err) {
           console.error("[UPLOAD] Error uploading document", err);
-          alert("Something went wrong uploading that file.");
+          alert(
+            "We couldn’t reach the server to upload that file. Check your connection, wait a moment, and try uploading again.",
+          );
         }
       })
     );
@@ -5550,16 +5607,16 @@ const handleFiles = async (files: FileList | null) => {
 
   // ✅ IMPORTANT: Component return is OUTSIDE handleFiles
   return (
-    <div className="mt-4 pt-4 border-t border-slate-800 space-y-3 text-xs">
-      <h3 className="font-semibold text-slate-100">
+    <div className="mt-4 pt-4 border-t border-[var(--color-border-light)] space-y-3 text-xs">
+      <h3 className="font-semibold text-[var(--color-navy)]">
         {tf("forms.documents.uploader.title", { context: contextLabel })}
       </h3>
-      <p className="text-[11px] text-slate-400">
+      <p className="text-[11px] text-[var(--color-muted)]">
         {t("forms.documents.uploader.helper")}
       </p>
 
       <div className="grid gap-2 sm:grid-cols-[2fr,3fr]">
-        <label className="block text-[11px] text-slate-200 space-y-1">
+        <label className="block text-[11px] text-[var(--color-charcoal)] space-y-1">
           <span>{t("forms.documents.uploader.shortDescriptionLabel")}</span>
           <input
             disabled={disabled}
@@ -5567,18 +5624,18 @@ const handleFiles = async (files: FileList | null) => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder={t("forms.documents.uploader.shortDescriptionPlaceholder")}
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-1.5 text-[11px] text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)] focus:border-[var(--color-teal)]"
           />
         </label>
 
-        <label className="block text-[11px] text-slate-200 space-y-1">
+        <label className="block text-[11px] text-[var(--color-charcoal)] space-y-1">
           <span>{t("forms.documents.uploader.uploadLabel")}</span>
           <input
             disabled={disabled}
             type="file"
             multiple
             onChange={(e) => handleFiles(e.target.files)}
-            className="block w-full text-[11px] text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-white hover:file:bg-blue-500"
+            className="block w-full text-[11px] text-[var(--color-slate)] file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-teal-deep)] file:px-3 file:py-1.5 file:text-[11px] file:font-semibold file:text-white hover:file:bg-[var(--color-teal)]"
           />
         </label>
       </div>
@@ -5590,7 +5647,7 @@ export default function CompensationIntakePage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
           <div className="max-w-3xl mx-auto">Loading…</div>
           
         </main>

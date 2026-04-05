@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
 
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
       return apiFail("VALIDATION_ERROR", "email is required", undefined, 422);
     }
     if (!isValidEmail(email)) {
-      return apiFail("VALIDATION_ERROR", "Invalid email format", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "That email doesn't look right. Check for typos and use a format like name@example.com.", undefined, 422);
     }
     if (!(ORG_SELF_SERVE_INVITE_ROLES as readonly string[]).includes(orgRole)) {
       return apiFail(

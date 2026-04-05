@@ -15,7 +15,7 @@ const OrganizationsMap = dynamic(
 
 function MapSkeleton() {
   return (
-    <div className="h-[min(420px,55vh)] min-h-[280px] w-full animate-pulse rounded-xl border border-slate-700 bg-slate-800/80" />
+    <div className="h-[min(420px,55vh)] min-h-[280px] w-full animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-light-sand)]/85" />
   );
 }
 
@@ -318,7 +318,7 @@ export function AdvocateConnectOrganizationsSection({
             setRaw(null);
             setRetryKey((k) => k + 1);
           }}
-          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700"
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-teal-deep)]"
         >
           {copy.tryAgain}
         </button>
@@ -333,29 +333,29 @@ export function AdvocateConnectOrganizationsSection({
   if (raw.length === 0) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-300 leading-relaxed">{copy.mapIntro}</p>
+        <p className="text-sm text-[var(--color-slate)] leading-relaxed">{copy.mapIntro}</p>
         <div
-          className="rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm text-slate-300"
+          className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-3 text-sm text-[var(--color-slate)]"
           role="status"
         >
           {copy.noOrgs}
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed">{copy.privacyNote}</p>
+        <p className="text-xs text-[var(--color-muted)] leading-relaxed">{copy.privacyNote}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-300 leading-relaxed">{copy.mapIntro}</p>
-      <p className="text-xs text-slate-500 leading-relaxed">{copy.privacyNote}</p>
+      <p className="text-sm text-[var(--color-slate)] leading-relaxed">{copy.mapIntro}</p>
+      <p className="text-xs text-[var(--color-muted)] leading-relaxed">{copy.privacyNote}</p>
 
       <label className="flex flex-col gap-1.5 sm:max-w-xs">
-        <span className="text-xs font-medium text-slate-400">{copy.stateFilterLabel}</span>
+        <span className="text-xs font-medium text-[var(--color-muted)]">{copy.stateFilterLabel}</span>
         <select
           value={selectedState}
           onChange={(e) => setSelectedState(e.target.value)}
-          className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+          className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)]"
         >
           {US_STATE_OPTIONS.map((o) => (
             <option key={o.value || "all"} value={o.value}>
@@ -387,7 +387,7 @@ export function AdvocateConnectOrganizationsSection({
           <button
             type="button"
             onClick={requestLocation}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-950/30 hover:bg-blue-500"
+            className="inline-flex items-center justify-center rounded-xl bg-[var(--color-teal-deep)] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-950/30 hover:bg-[var(--color-teal)]"
           >
             {geoStatus === "error" ? copy.tryAgain : copy.shareLocation}
           </button>
@@ -402,7 +402,7 @@ export function AdvocateConnectOrganizationsSection({
 
       {geoStatus === "requesting" ? (
         <div className="space-y-2">
-          <p className="text-sm text-slate-400">{copy.sharing}</p>
+          <p className="text-sm text-[var(--color-muted)]">{copy.sharing}</p>
           <MapSkeleton />
         </div>
       ) : null}
@@ -423,7 +423,7 @@ export function AdvocateConnectOrganizationsSection({
       {displayOrgs.length > 0 ? (
         <div className="space-y-4">
           <div className="relative" ref={comboRef}>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5" htmlFor="advocate-org-combo">
+            <label className="block text-xs font-medium text-[var(--color-muted)] mb-1.5" htmlFor="advocate-org-combo">
               {copy.orgPickerLabel}
             </label>
             <input
@@ -449,16 +449,16 @@ export function AdvocateConnectOrganizationsSection({
               }}
               placeholder={copy.orgSearchPlaceholder}
               disabled={Boolean(requestMsg)}
-              className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-500 focus:border-teal-500/60 focus:outline-none focus:ring-1 focus:ring-teal-500/40 disabled:opacity-60"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:border-teal-500/60 focus:outline-none focus:ring-1 focus:ring-teal-500/40 disabled:opacity-60"
             />
             {comboOpen && !requestMsg ? (
               <ul
                 id="advocate-org-listbox"
                 role="listbox"
-                className="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-slate-600 bg-slate-950 py-1 shadow-xl shadow-black/40"
+                className="absolute z-30 mt-1 max-h-52 w-full overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] py-1 shadow-xl shadow-[var(--shadow-modal)]"
               >
                 {searchFilteredOrgs.length === 0 ? (
-                  <li className="px-3 py-2.5 text-xs text-slate-500">{copy.orgSearchNoMatches}</li>
+                  <li className="px-3 py-2.5 text-xs text-[var(--color-muted)]">{copy.orgSearchNoMatches}</li>
                 ) : (
                   searchFilteredOrgs.map((o) => {
                     const dist =
@@ -469,7 +469,7 @@ export function AdvocateConnectOrganizationsSection({
                       <li key={o.id} role="option" aria-selected={selectedOrgId === o.id}>
                         <button
                           type="button"
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-slate-800/90 focus:bg-slate-800 focus:outline-none"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-[var(--color-light-sand)]/90 focus:bg-[var(--color-light-sand)] focus:outline-none"
                           onMouseDown={(e) => e.preventDefault()}
                           onClick={() => {
                             setSelectedOrgId(o.id);
@@ -477,8 +477,8 @@ export function AdvocateConnectOrganizationsSection({
                             setComboOpen(false);
                           }}
                         >
-                          <div className="font-medium text-slate-100 truncate">{o.name}</div>
-                          <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-slate-500">
+                          <div className="font-medium text-[var(--color-navy)] truncate">{o.name}</div>
+                          <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px] text-[var(--color-muted)]">
                             <span className="truncate">{o.region_label}</span>
                             {dist ? (
                               <span>
@@ -497,35 +497,35 @@ export function AdvocateConnectOrganizationsSection({
           </div>
 
           {selectedOrg ? (
-            <div className="rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm">
-              <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-2">
+            <div className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-3 text-sm">
+              <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)] mb-2">
                 {copy.orgSelectedTitle}
               </p>
               <div className="font-medium text-white">{selectedOrg.name}</div>
               {selectedOrg.program_type ? (
-                <div className="mt-0.5 text-xs text-slate-400">{selectedOrg.program_type}</div>
+                <div className="mt-0.5 text-xs text-[var(--color-muted)]">{selectedOrg.program_type}</div>
               ) : null}
               {typeof selectedOrg.distanceMiles === "number" ? (
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-1 text-xs text-[var(--color-muted)]">
                   {selectedOrg.distanceMiles.toFixed(1)} {copy.milesAway}
                   {selectedOrg.approximate ? ` · ${copy.approximateNote}` : ""}
                 </div>
               ) : null}
-              <div className="mt-1 text-xs text-slate-500">{selectedOrg.region_label}</div>
+              <div className="mt-1 text-xs text-[var(--color-muted)]">{selectedOrg.region_label}</div>
               {selectedOrg.address ? (
-                <div className="mt-1 text-xs text-slate-400 leading-snug">{selectedOrg.address}</div>
+                <div className="mt-1 text-xs text-[var(--color-muted)] leading-snug">{selectedOrg.address}</div>
               ) : null}
               {selectedOrg.phone ? (
                 <div className="mt-1 text-xs">
                   {selectedOrg.phone.replace(/\D/g, "").length >= 7 ? (
                     <a
                       href={`tel:${selectedOrg.phone.replace(/[^\d+]/g, "")}`}
-                      className="text-blue-300 hover:underline"
+                      className="text-[var(--color-teal)] hover:underline"
                     >
                       {selectedOrg.phone}
                     </a>
                   ) : (
-                    <span className="text-slate-400">{selectedOrg.phone}</span>
+                    <span className="text-[var(--color-muted)]">{selectedOrg.phone}</span>
                   )}
                 </div>
               ) : null}
@@ -535,7 +535,7 @@ export function AdvocateConnectOrganizationsSection({
                     href={safeHttpUrl(selectedOrg.website)!}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-300 hover:underline"
+                    className="text-[var(--color-teal)] hover:underline"
                   >
                     {selectedOrg.website!.replace(/^https?:\/\//i, "")}
                   </a>
@@ -543,16 +543,16 @@ export function AdvocateConnectOrganizationsSection({
               ) : null}
               <div className="mt-2 text-xs">
                 {selectedOrg.external ? (
-                  <span className="text-slate-500">Directory listing (not on NxtStps)</span>
+                  <span className="text-[var(--color-muted)]">Directory listing (not on NxtStps)</span>
                 ) : selectedOrg.accepting_clients ? (
                   <span className="text-emerald-400/90">{copy.accepting}</span>
                 ) : (
-                  <span className="text-slate-500">{copy.notAccepting}</span>
+                  <span className="text-[var(--color-muted)]">{copy.notAccepting}</span>
                 )}
                 {!selectedOrg.external ? (
                   <>
-                    <span className="text-slate-600"> · </span>
-                    <span className="text-slate-500">
+                    <span className="text-[var(--color-slate)]"> · </span>
+                    <span className="text-[var(--color-muted)]">
                       {copy.capacity}: {selectedOrg.capacity_status}
                     </span>
                   </>

@@ -6,26 +6,26 @@ export const metadata = {
 
 export default function WaiverPage() {
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-8">
-        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-          <Link href="/" className="hover:text-slate-200">← Home</Link>
-          <Link href="/terms" className="hover:text-slate-200">Terms</Link>
-          <Link href="/privacy" className="hover:text-slate-200">Privacy</Link>
+        <div className="flex flex-wrap gap-4 text-sm text-[var(--color-muted)]">
+          <Link href="/" className="hover:text-[var(--color-charcoal)]">← Home</Link>
+          <Link href="/terms" className="hover:text-[var(--color-charcoal)]">Terms</Link>
+          <Link href="/privacy" className="hover:text-[var(--color-charcoal)]">Privacy</Link>
         </div>
         <header className="space-y-2">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">
             Legal
           </p>
           <h1 className="text-3xl font-bold">
             NXTSTPS – LIABILITY WAIVER & RELEASE OF CLAIMS
           </h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             Effective Date: January 2025 · Last Updated: January 2025
           </p>
         </header>
 
-        <section className="prose prose-invert prose-sm max-w-none space-y-6 text-slate-200">
+        <section className="prose prose-invert prose-sm max-w-none space-y-6 text-[var(--color-charcoal)]">
           <p>
             This Liability Waiver & Release of Claims (“Waiver”) is a legally
             binding agreement between the User (“User,” “you,” “your”) and
@@ -38,10 +38,10 @@ export default function WaiverPage() {
             knowingly and voluntarily agrees to the terms below.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 1 – ACKNOWLEDGMENT OF NON-PROFESSIONAL STATUS
           </h2>
-          <h3 className="text-base font-medium text-slate-200">1.1 No Legal Advice or Legal Representation</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.1 No Legal Advice or Legal Representation</h3>
           <p>
             User acknowledges and agrees that NxtStps: (a) is not a law firm;
             (b) does not provide legal advice, legal interpretation, or legal
@@ -50,14 +50,14 @@ export default function WaiverPage() {
             as a representative, advocate, or agent in any legal or
             administrative matter.
           </p>
-          <h3 className="text-base font-medium text-slate-200">1.2 No Medical, Clinical, or Therapeutic Services</h3>
+          <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.2 No Medical, Clinical, or Therapeutic Services</h3>
           <p>
             User acknowledges that NxtStps is not a provider of medical,
             psychological, crisis-intervention, trauma therapy, or clinical
             services.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 2 – ASSUMPTION OF ALL RISKS ASSOCIATED WITH PLATFORM USE
           </h2>
           <p>
@@ -74,7 +74,7 @@ export default function WaiverPage() {
             unknown.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 3 – RELEASE OF CLAIMS AGAINST NXTSTPS
           </h2>
           <p>
@@ -88,7 +88,7 @@ export default function WaiverPage() {
             distress; failure to warn; and third-party agency decisions.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 4 – USER’S DUTY TO VERIFY ALL INFORMATION
           </h2>
           <p>
@@ -102,7 +102,7 @@ export default function WaiverPage() {
             reviewing all final documents.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 5 – NO WARRANTIES; DISCLAIMERS
           </h2>
           <p>
@@ -113,10 +113,10 @@ export default function WaiverPage() {
             third parties.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 6 – LIMITATION OF LIABILITY
           </h2>
-          <p className="font-semibold text-slate-100">
+          <p className="font-semibold text-[var(--color-navy)]">
             TO THE MAXIMUM EXTENT PERMITTED BY LAW, USER AGREES THAT: NXTSTPS
             SHALL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
             PUNITIVE, OR CONSEQUENTIAL DAMAGES; NXTSTPS SHALL NOT BE LIABLE FOR
@@ -126,7 +126,7 @@ export default function WaiverPage() {
             PAID BY USER IN THE PRECEDING TWELVE (12) MONTHS, WHICHEVER IS LESS.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 7 – INDEMNIFICATION
           </h2>
           <p>
@@ -139,7 +139,7 @@ export default function WaiverPage() {
             with this Waiver or the Terms of Use.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 8 – KNOWING AND VOLUNTARY AGREEMENT
           </h2>
           <p>
@@ -151,7 +151,7 @@ export default function WaiverPage() {
             into this Waiver.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 9 – GOVERNING LAW; ARBITRATION; CLASS ACTION WAIVER
           </h2>
           <p>
@@ -163,7 +163,7 @@ export default function WaiverPage() {
             consolidated, or representative action.
           </p>
 
-          <h2 className="text-lg font-semibold text-slate-100 pt-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)] pt-4">
             SECTION 10 – SEVERABILITY
           </h2>
           <p>
@@ -172,14 +172,14 @@ export default function WaiverPage() {
             extent permitted by law.
           </p>
 
-          <p className="font-medium text-slate-100 pt-6">
+          <p className="font-medium text-[var(--color-navy)] pt-6">
             USER ACKNOWLEDGMENT: By clicking “I Agree,” “Accept,” or using the
             Platform, the User acknowledges that they have read, understood,
             and voluntarily consent to be bound by this Liability Waiver &
             Release of Claims.
           </p>
 
-          <p className="text-[11px] text-slate-400 pt-6">
+          <p className="text-[11px] text-[var(--color-muted)] pt-6">
             If you’re in immediate danger, call 911. If you need support now,
             call or text 988.
           </p>

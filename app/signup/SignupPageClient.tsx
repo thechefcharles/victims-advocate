@@ -168,19 +168,19 @@ export function SignupPageClient({ initialAccountType }: Props) {
     !nameOk;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-12">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-12">
       <div className="max-w-md mx-auto space-y-8">
         <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 text-sm">
+          <Link href="/" className="inline-flex items-center gap-2 text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-sm">
             ← Back to home
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 sm:p-8 space-y-6">
+        <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 sm:p-8 space-y-6">
           <header>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-1">NxtStps</p>
-            <h1 className="text-2xl font-semibold text-slate-50">Create your account</h1>
-            <p className="text-sm text-slate-400 mt-2">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-muted)] mb-1">NxtStps</p>
+            <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Create your account</h1>
+            <p className="text-sm text-[var(--color-muted)] mt-2">
               Create your personal account first. If you lead an organization, you&apos;ll find or set up that
               organization after you sign in—we don&apos;t create it during this step.
             </p>
@@ -188,15 +188,15 @@ export function SignupPageClient({ initialAccountType }: Props) {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <span className="text-[11px] text-slate-400 block">Account type *</span>
+              <span className="text-[11px] text-[var(--color-muted)] block">Account type *</span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => setAccountType("victim")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "victim"
-                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
-                      : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
+                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
                   }`}
                 >
                   Victim
@@ -206,8 +206,8 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   onClick={() => setAccountType("advocate")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
                     accountType === "advocate"
-                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
-                      : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
+                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
                   }`}
                 >
                   Advocate
@@ -217,16 +217,17 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   onClick={() => setAccountType("organization")}
                   className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition leading-snug ${
                     accountType === "organization"
-                      ? "border-blue-500 bg-blue-600/20 text-slate-50"
-                      : "border-slate-700 text-slate-400 hover:border-slate-600 hover:text-slate-300"
+                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
+                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
                   }`}
                 >
                   Organization Leader
                 </button>
               </div>
-              <p className="text-[11px] text-slate-500">
-                {accountType === "victim" && "Personal tools and compensation guidance for victims."}
-                {accountType === "advocate" && "Case tools for victim advocates."}
+              <p className="text-[11px] text-[var(--color-muted)]">
+                {accountType === "victim" &&
+                  "Personal tools and step-by-step help when you’re applying for crime victim compensation."}
+                {accountType === "advocate" && "Case tools for advocates who support applicants."}
                 {accountType === "organization" &&
                   "For people who represent an agency. You&apos;ll link or propose your organization after email verification and agreements—not during signup."}
               </p>
@@ -234,9 +235,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block space-y-1">
-                <span className="text-[11px] text-slate-400">First name *</span>
+                <span className="text-[11px] text-[var(--color-muted)]">First name *</span>
                 <input
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                   placeholder="First name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -246,9 +247,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 />
               </label>
               <label className="block space-y-1">
-                <span className="text-[11px] text-slate-400">Last name *</span>
+                <span className="text-[11px] text-[var(--color-muted)]">Last name *</span>
                 <input
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                   placeholder="Last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -260,11 +261,11 @@ export function SignupPageClient({ initialAccountType }: Props) {
             </div>
 
             <label className="block space-y-1">
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-[var(--color-muted)]">
                 {accountType === "organization" ? "Work email *" : "Email *"}
               </span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                 placeholder={accountType === "organization" ? "you@agency.org" : "you@example.com"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -275,9 +276,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
             </label>
 
             <label className="block space-y-1">
-              <span className="text-[11px] text-slate-400">Password *</span>
+              <span className="text-[11px] text-[var(--color-muted)]">Password *</span>
               <input
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                 placeholder="At least 8 characters"
                 type="password"
                 value={password}
@@ -291,9 +292,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
             {accountType === "advocate" && (
               <div className="space-y-3">
                 <label className="block space-y-1">
-                  <span className="text-[11px] text-slate-400">Job title (optional)</span>
+                  <span className="text-[11px] text-[var(--color-muted)]">Job title (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                     placeholder="e.g. Victim advocate"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
@@ -312,14 +313,14 @@ export function SignupPageClient({ initialAccountType }: Props) {
             )}
 
             {accountType === "organization" && (
-              <div className="space-y-3 rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                <p className="text-[11px] text-slate-400 leading-relaxed">
+              <div className="space-y-3 rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 p-3">
+                <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
                   Optional details help us prefill organization setup later. They do not create an organization record.
                 </p>
                 <label className="block space-y-1">
-                  <span className="text-[11px] text-slate-400">Organization name (optional)</span>
+                  <span className="text-[11px] text-[var(--color-muted)]">Organization name (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                     placeholder="Agency or program name (for context only)"
                     value={orgNameHint}
                     onChange={(e) => setOrgNameHint(e.target.value)}
@@ -328,9 +329,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   />
                 </label>
                 <label className="block space-y-1">
-                  <span className="text-[11px] text-slate-400">Your title at the organization (optional)</span>
+                  <span className="text-[11px] text-[var(--color-muted)]">Your title at the organization (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                     placeholder="e.g. Executive director"
                     value={orgLeaderTitle}
                     onChange={(e) => setOrgLeaderTitle(e.target.value)}
@@ -342,13 +343,13 @@ export function SignupPageClient({ initialAccountType }: Props) {
             )}
 
             {accountType === "victim" && (
-              <p className="text-[11px] text-slate-500 leading-relaxed">
+              <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
                 {t("signup.preferredNameHelp")}
               </p>
             )}
 
-            <fieldset className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
-              <legend className="text-[11px] text-slate-400">
+            <fieldset className="space-y-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/70 p-3">
+              <legend className="text-[11px] text-[var(--color-muted)]">
                 Required agreements (must check all to continue)
               </legend>
               <label className="flex items-start gap-3 text-sm cursor-pointer">
@@ -356,7 +357,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(e) => setAgreeTerms(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+                  className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
                 />
                 <span>
                   I have read and agree to the{" "}
@@ -375,7 +376,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   type="checkbox"
                   checked={agreeWaiver}
                   onChange={(e) => setAgreeWaiver(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+                  className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
                 />
                 <span>
                   I have read and agree to the{" "}
@@ -394,7 +395,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                   type="checkbox"
                   checked={agreePrototype}
                   onChange={(e) => setAgreePrototype(e.target.checked)}
-                  className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+                  className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
                 />
                 <span>
                   I understand this is a prototype and NxtStps is not liable for the security or handling of my
@@ -415,7 +416,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
             )}
 
             <button
-              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 disabled:cursor-not-allowed transition"
               disabled={submitDisabled}
               type="submit"
             >
@@ -423,30 +424,30 @@ export function SignupPageClient({ initialAccountType }: Props) {
             </button>
           </form>
 
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--color-muted)]">
             Also see our{" "}
-            <Link href="/privacy" className="underline hover:text-slate-300">
+            <Link href="/privacy" className="underline hover:text-[var(--color-slate)]">
               Privacy Policy
             </Link>{" "}
             and{" "}
-            <Link href="/waiver" className="underline hover:text-slate-300">
+            <Link href="/waiver" className="underline hover:text-[var(--color-slate)]">
               Liability Waiver
             </Link>
             .
           </p>
         </div>
 
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-[var(--color-muted)]">
           Represent an organization? Choose{" "}
-          <Link href="/signup?intent=organization" className="underline hover:text-slate-200">
+          <Link href="/signup?intent=organization" className="underline hover:text-[var(--color-charcoal)]">
             Organization Leader
           </Link>{" "}
           above—you&apos;ll complete organization steps after you sign in.
         </p>
 
-        <p className="text-center text-sm text-slate-400">
+        <p className="text-center text-sm text-[var(--color-muted)]">
           Already have an account?{" "}
-          <Link href="/login" className="underline hover:text-slate-200">
+          <Link href="/login" className="underline hover:text-[var(--color-charcoal)]">
             Sign in
           </Link>
         </p>

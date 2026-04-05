@@ -30,7 +30,8 @@ export async function POST(req: Request) {
       }).catch(() => {});
       return apiFail(
         "DOCUMENT_UPLOAD_INVALID",
-        validation.errors[0] ?? "Invalid file",
+        validation.errors[0] ??
+          "That file didn't pass validation. Try PDF, JPG, or PNG under the size limit.",
         { errors: validation.errors },
         422
       );

@@ -1,0 +1,53 @@
+---
+description: NxtStps Phase 4 — WCAG 2.2 AA accessibility (POUR, focus, forms, axe)
+alwaysApply: true
+---
+
+# NxtStps — Accessibility (Phase 4)
+
+**Version 1.0 · Brand Kit V2.0 · Last updated: 2026-04-05**
+
+A feature that is not accessible is not finished. **Target: WCAG 2.2 Level AA** (Illinois AG / ADA Title II alignment). Meeting 2.2 AA satisfies Section 508 (2.0 AA).
+
+**Governing refs:** [WCAG 2.2](https://www.w3.org/TR/WCAG22/) · Automated checks: **axe-core** (`npm test` includes a smoke test; extend with page-level runs before merge).
+
+## Implemented in repo (do not regress)
+
+- **Global focus:** `:focus-visible` uses **3px solid `var(--color-teal)`**, **3px offset**, **`var(--radius-sm)`** — in `app/globals.css`. No `outline: none` without `:focus-visible`. Prefer **outline**, not box-shadow-only (High Contrast mode).
+- **Skip link:** `SkipToMainLink` → `#main-content` wrapper in `app/layout.tsx` (first focusable before `TopNav`).
+- **Touch targets:** Buttons and most inputs use **min-height ≥ 2.75rem (44px)** globally; use **`.nxt-touch-target-inline`** on a button only when a documented exception applies.
+- **`prefers-reduced-motion`:** Already global in `app/globals.css` — do not bypass.
+- **Form utilities:** `.nxt-form-field__label`, `__helper`, `__error`, `.nxt-required` — pair with real `<label htmlFor>`, `aria-describedby`, `aria-invalid`, and **text** for errors (never color alone).
+
+## POUR checklist (every new screen / component)
+
+| Principle | Must |
+|-----------|------|
+| **Perceivable** | Contrast AA (4.5:1 text, 3:1 UI / large text); don’t use color alone for status — add text, icon, or pattern. |
+| **Operable** | Full keyboard use; visible focus; **no keyboard trap**; **Escape** closes overlays; **Tab order** matches reading order; **`tabindex > 0` forbidden**. |
+| **Understandable** | Labels / instructions on inputs; errors identified in **text**; consistent navigation. |
+| **Robust** | Valid semantics; **name, role, value** for custom controls; **`aria-live`**: `assertive` + `role="alert"` for errors; `polite` + `role="status"` for non-critical updates. |
+
+## Structure & content
+
+- **One `<h1>`** per page; headings **don’t skip levels** (no `h1` → `h3`).
+- **Decorative images:** `alt=""` · **Informative:** descriptive `alt` · **Icon-only control:** `aria-label` on the control, `aria-hidden` on the icon if redundant.
+
+## Forms
+
+- **Never** placeholder-only labels. **Required:** visual indicator + legend text; **`aria-required="true"`** on required fields.
+- **`autocomplete`** on standard fields (`email`, `tel`, `street-address`, `postal-code`, `bday`, etc.) where applicable.
+
+## Modals / dialogs
+
+- **Focus** moves into the dialog on open; **Tab cycles inside**; **Escape** closes and **returns focus** to the trigger. (Audit existing overlays when touching them.)
+
+## Before merge (applicant-facing)
+
+1. **`npm test`** — zero axe violations in new/changed a11y tests (extend tests beyond smoke as surfaces grow).
+2. Keyboard pass: Tab / Shift+Tab / Enter / Space / Escape.
+3. **200% zoom** and **320px** width — no broken layout or loss of function (horizontal scroll only where essential, e.g. wide tables with alternative).
+
+## Typography note
+
+Prefer **rem** for new component font sizes and spacing so user text scaling works; design tokens in `:root` may still use px — align new UI to rem where practical.

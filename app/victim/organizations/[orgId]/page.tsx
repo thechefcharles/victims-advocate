@@ -138,7 +138,7 @@ export default function VictimOrganizationPublicProfilePage() {
         />
 
         {loading ? (
-          <div className={`${APP_CARD} text-sm text-slate-400 animate-pulse`}>
+          <div className={`${APP_CARD} text-sm text-[var(--color-muted)] animate-pulse`}>
             {t("victimDashboard.findOrganizationsPage.orgProfileLoading")}
           </div>
         ) : null}
@@ -151,33 +151,33 @@ export default function VictimOrganizationPublicProfilePage() {
 
         {org && !loading ? (
           <div className={`${APP_CARD} space-y-6`}>
-            <div className="text-sm text-slate-400">
-              <span className="text-slate-500">{org.region_label}</span>
-              <span className="text-slate-600"> · </span>
+            <div className="text-sm text-[var(--color-muted)]">
+              <span className="text-[var(--color-muted)]">{org.region_label}</span>
+              <span className="text-[var(--color-slate)]"> · </span>
               {org.accepting_clients ? (
                 <span className="text-emerald-400/90">
                   {t("victimDashboard.findOrganizationsPage.accepting")}
                 </span>
               ) : (
-                <span className="text-slate-500">
+                <span className="text-[var(--color-muted)]">
                   {t("victimDashboard.findOrganizationsPage.notAccepting")}
                 </span>
               )}
-              <span className="text-slate-600"> · </span>
-              <span className="text-slate-500">
+              <span className="text-[var(--color-slate)]"> · </span>
+              <span className="text-[var(--color-muted)]">
                 {t("victimDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
               </span>
             </div>
 
             {(org.address || org.phone || org.website) ? (
               <div className="space-y-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
                   {t("victimDashboard.findOrganizationsPage.orgProfileContact")}
                 </h2>
-                <dl className="grid gap-2 text-sm text-slate-300">
+                <dl className="grid gap-2 text-sm text-[var(--color-slate)]">
                   {org.address ? (
                     <div>
-                      <dt className="text-xs text-slate-500">
+                      <dt className="text-xs text-[var(--color-muted)]">
                         {t("victimDashboard.findOrganizationsPage.directoryAddress")}
                       </dt>
                       <dd>{org.address}</dd>
@@ -185,11 +185,11 @@ export default function VictimOrganizationPublicProfilePage() {
                   ) : null}
                   {org.phone ? (
                     <div>
-                      <dt className="text-xs text-slate-500">
+                      <dt className="text-xs text-[var(--color-muted)]">
                         {t("victimDashboard.findOrganizationsPage.directoryPhone")}
                       </dt>
                       <dd>
-                        <a href={`tel:${org.phone.replace(/\D/g, "")}`} className="text-blue-400 hover:text-blue-300 underline">
+                        <a href={`tel:${org.phone.replace(/\D/g, "")}`} className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline">
                           {org.phone}
                         </a>
                       </dd>
@@ -197,7 +197,7 @@ export default function VictimOrganizationPublicProfilePage() {
                   ) : null}
                   {org.website ? (
                     <div>
-                      <dt className="text-xs text-slate-500">
+                      <dt className="text-xs text-[var(--color-muted)]">
                         {t("victimDashboard.findOrganizationsPage.directoryWebsite")}
                       </dt>
                       <dd>
@@ -205,7 +205,7 @@ export default function VictimOrganizationPublicProfilePage() {
                           href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-400 hover:text-blue-300 underline"
+                          className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
                         >
                           {org.website}
                         </a>
@@ -218,14 +218,14 @@ export default function VictimOrganizationPublicProfilePage() {
 
             {org.special_populations?.length ? (
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
                   {t("victimDashboard.findOrganizationsPage.orgProfilePopulations")}
                 </h2>
                 <ul className="flex flex-wrap gap-2">
                   {org.special_populations.map((s) => (
                     <li
                       key={s}
-                      className="rounded-full border border-slate-600 bg-slate-900/80 px-3 py-1 text-xs text-slate-200"
+                      className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
                     >
                       {formatServiceKey(s)}
                     </li>
@@ -236,14 +236,14 @@ export default function VictimOrganizationPublicProfilePage() {
 
             {org.service_types.length > 0 ? (
               <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
                   {t("victimDashboard.findOrganizationsPage.orgProfileServices")}
                 </h2>
                 <ul className="flex flex-wrap gap-2">
                   {org.service_types.map((s) => (
                     <li
                       key={s}
-                      className="rounded-full border border-slate-600 bg-slate-900/80 px-3 py-1 text-xs text-slate-200"
+                      className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
                     >
                       {formatServiceKey(s)}
                     </li>
@@ -258,13 +258,13 @@ export default function VictimOrganizationPublicProfilePage() {
               copy={frameworkCopy}
             />
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">
               {t("victimDashboard.findOrganizationsPage.orgProfileFooter")}
             </p>
 
             <Link
               href={ROUTES.victimFindOrganizations}
-              className="inline-flex text-sm text-blue-400 hover:text-blue-300 underline"
+              className="inline-flex text-sm text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
             >
               {t("victimDashboard.findOrganizationsPage.orgProfileBack")}
             </Link>

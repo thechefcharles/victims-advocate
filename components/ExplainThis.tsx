@@ -94,7 +94,11 @@ export function ExplainThisButton({
 
       if (!res.ok) {
         setState("error");
-        setErrorMessage(json?.error?.message ?? json?.message ?? "Something went wrong.");
+        setErrorMessage(
+          json?.error?.message ??
+            json?.message ??
+            "We couldn't get an explanation right now. Wait a moment and try again.",
+        );
         return;
       }
 
@@ -108,14 +112,18 @@ export function ExplainThisButton({
       }
     } catch (err) {
       setState("error");
-      setErrorMessage(err instanceof Error ? err.message : "Something went wrong.");
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "We couldn't reach the explanation service. Check your connection and try again.",
+      );
     }
   }, [sourceText, contextType, workflowKey, fieldKey, programKey, stateCode, router, pathname]);
 
   const triggerClass =
     variant === "link"
-      ? "text-slate-400 hover:text-emerald-300 underline underline-offset-1 text-[11px]"
-      : "text-[11px] rounded border border-slate-600 bg-slate-800/80 px-2 py-1 text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition";
+      ? "text-[var(--color-muted)] hover:text-emerald-300 underline underline-offset-1 text-[11px]"
+      : "text-[11px] rounded border border-[var(--color-border)] bg-[var(--color-light-sand)]/85 px-2 py-1 text-[var(--color-slate)] hover:bg-[var(--color-teal-deep)] hover:text-[var(--color-navy)] transition";
 
   return (
     <>
@@ -137,36 +145,38 @@ export function ExplainThisButton({
           onClick={() => setOpen(false)}
         >
           <div
-            className="bg-slate-900 border border-slate-700 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
+            className="bg-white border border-[var(--color-border)] rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-700">
-              <span className="text-sm font-medium text-slate-200">Explanation</span>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)]">
+              <span className="text-sm font-medium text-[var(--color-charcoal)]">Explanation</span>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-slate-400 hover:text-slate-200 p-1"
+                className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] p-1"
                 aria-label="Close"
               >
                 ✕
               </button>
             </div>
-            <div className="p-4 overflow-y-auto text-sm text-slate-300 space-y-3">
+            <div className="p-4 overflow-y-auto text-sm text-[var(--color-slate)] space-y-3">
               {state === "loading" && (
-                <p className="text-slate-400">Getting a plain-language explanation…</p>
+                <p className="text-[var(--color-muted)]">Getting a plain-language explanation…</p>
               )}
               {state === "success" && explanation && (
                 <>
                   <p className="whitespace-pre-wrap">{explanation}</p>
                   {disclaimer && (
-                    <p className="text-[11px] text-slate-500 border-t border-slate-800 pt-2 mt-2">
+                    <p className="text-[11px] text-[var(--color-muted)] border-t border-[var(--color-border-light)] pt-2 mt-2">
                       {disclaimer}
                     </p>
                   )}
                 </>
               )}
               {state === "error" && (
-                <p className="text-amber-200">{errorMessage ?? "Something went wrong."}</p>
+                <p className="text-amber-200">
+                  {errorMessage ?? "We couldn't load an explanation. Try again in a moment."}
+                </p>
               )}
             </div>
           </div>

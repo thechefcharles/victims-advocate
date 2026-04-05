@@ -72,7 +72,7 @@ export default function DashboardRouterPage() {
 
   if (loading || !consentChecked) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
         <div className="max-w-xl mx-auto">Loading…</div>
       </main>
     );
@@ -80,15 +80,15 @@ export default function DashboardRouterPage() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-[11px] text-slate-400">Redirecting…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-[11px] text-[var(--color-muted)]">Redirecting…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-      <div className="max-w-xl mx-auto text-sm text-slate-400">Redirecting to your dashboard…</div>
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+      <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Redirecting to your dashboard…</div>
     </main>
   );
 }

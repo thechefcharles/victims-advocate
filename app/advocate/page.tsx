@@ -54,13 +54,13 @@ export default function AdvocateDashboardPage() {
 
   const organizationMeta =
     orgId != null ? (
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-[var(--color-muted)] leading-relaxed">
         {tf("advocateDashboard.organizationMeta", {
           name: organizationName?.trim() || "—",
         })}
       </p>
     ) : (
-      <p className="text-xs text-slate-400 leading-relaxed">
+      <p className="text-xs text-[var(--color-muted)] leading-relaxed">
         {t("advocateDashboard.noOrganizationMeta")}{" "}
         <Link
           href={ROUTES.advocateFindOrganizations}
@@ -82,13 +82,20 @@ export default function AdvocateDashboardPage() {
         });
         const json = await res.json().catch(() => null);
         if (!res.ok) {
-          setCcMsg(getApiErrorMessage(json, "Could not load your case work queue."));
+          setCcMsg(
+            getApiErrorMessage(
+              json,
+              "We couldn't load your case work queue. Refresh the page and try again.",
+            ),
+          );
           setCommandCenter(null);
           return;
         }
         setCommandCenter(json as CommandCenterResponse);
       } catch {
-        setCcMsg("Could not load your case work queue.");
+        setCcMsg(
+          "We couldn't load your case work queue — the request was interrupted. Refresh the page and try again.",
+        );
         setCommandCenter(null);
       } finally {
         setCcLoading(false);
@@ -113,14 +120,14 @@ export default function AdvocateDashboardPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-3xl mx-auto space-y-8">
         <PageHeader
           contextLine="Advocate"
@@ -132,7 +139,7 @@ export default function AdvocateDashboardPage() {
             showOrgLink ? (
               <Link
                 href={advocateOrgWorkspaceHref}
-                className="text-sm font-medium text-slate-300 hover:text-white border border-slate-600 rounded-lg px-3 py-2"
+                className="text-sm font-medium text-[var(--color-slate)] hover:text-white border border-[var(--color-border)] rounded-lg px-3 py-2"
               >
                 {t("nav.organization")}
               </Link>
@@ -143,7 +150,7 @@ export default function AdvocateDashboardPage() {
         <AdvocateProfileCompletionBanner />
 
         <section className="rounded-2xl border border-blue-800/40 bg-blue-950/20 p-5 space-y-3">
-          <p className="text-[11px] uppercase tracking-wide text-blue-300">Primary action</p>
+          <p className="text-[11px] uppercase tracking-wide text-[var(--color-teal)]">Primary action</p>
           <h2 className="text-base font-semibold text-blue-100">Continue case follow-up</h2>
           <p className="text-xs text-blue-100/80">
             Open your next case needing attention, then review victim updates and follow-up tasks.
@@ -151,19 +158,19 @@ export default function AdvocateDashboardPage() {
           <div className="flex flex-wrap gap-2">
             <Link
               href={primaryCaseHref}
-              className="inline-flex items-center rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+              className="inline-flex items-center rounded-full bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)]"
             >
               {nextCaseId ? "Open next case" : "Open client list"}
             </Link>
             <Link
               href={ROUTES.advocateMessages}
-              className="inline-flex items-center rounded-full border border-blue-500/40 px-4 py-2 text-xs font-semibold text-blue-100 hover:bg-blue-500/10"
+              className="inline-flex items-center rounded-full border border-[var(--color-teal)]/40 px-4 py-2 text-xs font-semibold text-blue-100 hover:bg-[var(--color-teal)]/10"
             >
               Review message triage
             </Link>
             <Link
               href={ROUTES.advocateOrgSearch}
-              className="inline-flex items-center rounded-full border border-slate-600 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800"
+              className="inline-flex items-center rounded-full border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
             >
               Search organizations
             </Link>
@@ -172,21 +179,21 @@ export default function AdvocateDashboardPage() {
 
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-200">What needs attention</h2>
-            <Link href={ROUTES.advocateMessages} className="text-xs text-slate-400 hover:text-slate-200">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">What needs attention</h2>
+            <Link href={ROUTES.advocateMessages} className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
               Messages triage →
             </Link>
           </div>
           {ccLoading ? (
-            <p className="text-xs text-slate-400">Loading case queue…</p>
+            <p className="text-xs text-[var(--color-muted)]">Loading case queue…</p>
           ) : ccMsg ? (
             <p className="text-xs text-amber-200">{ccMsg}</p>
           ) : !commandCenter || commandCenter.cases.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-400">
+            <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 text-xs text-[var(--color-muted)]">
               No active case queue yet. Open a connected client to begin casework.
             </div>
           ) : topAttentionCases.length === 0 ? (
-            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-xs text-slate-400">
+            <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 text-xs text-[var(--color-muted)]">
               No urgent follow-up right now. Continue with active cases and review recent victim
               updates in message triage.
             </div>
@@ -195,19 +202,19 @@ export default function AdvocateDashboardPage() {
               {topAttentionCases.map((c) => (
                 <li
                   key={c.id}
-                  className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-100 truncate">
+                    <p className="text-xs font-semibold text-[var(--color-navy)] truncate">
                       {c.victim_name || `Case ${c.id.slice(0, 8)}…`}
                     </p>
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-[var(--color-muted)]">
                       {c.priority_reasons?.[0] ?? "Needs follow-up"}
                     </p>
                   </div>
                   <Link
                     href={`/compensation/intake?case=${encodeURIComponent(c.id)}`}
-                    className="inline-flex shrink-0 items-center rounded-full border border-slate-600 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-800"
+                    className="inline-flex shrink-0 items-center rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
                   >
                     Open case
                   </Link>
@@ -216,14 +223,14 @@ export default function AdvocateDashboardPage() {
             </ul>
           )}
           {summary && (
-            <div className="flex flex-wrap gap-2 text-[11px] text-slate-400">
-              <span className="rounded-full border border-slate-700 px-2 py-0.5">
+            <div className="flex flex-wrap gap-2 text-[11px] text-[var(--color-muted)]">
+              <span className="rounded-full border border-[var(--color-border)] px-2 py-0.5">
                 Active cases: {summary.active_case_count}
               </span>
-              <span className="rounded-full border border-slate-700 px-2 py-0.5">
+              <span className="rounded-full border border-[var(--color-border)] px-2 py-0.5">
                 Priority follow-up: {summary.high_priority_count}
               </span>
-              <span className="rounded-full border border-slate-700 px-2 py-0.5">
+              <span className="rounded-full border border-[var(--color-border)] px-2 py-0.5">
                 Cases needing follow-up: {summary.blocking_completeness_count}
               </span>
             </div>

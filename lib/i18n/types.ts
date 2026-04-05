@@ -541,6 +541,12 @@ export type I18nDict = {
     findOrgsFooterSuffix: string;
   };
 
+  compensationDocumentsPage: {
+    loginToUpload: string;
+    uploadFailedGeneric: string;
+    networkError: string;
+  };
+
   eligibility: {
     introQualify: string;
     purposeText: string;
@@ -845,6 +851,160 @@ export type I18nDict = {
       };
     };
 
+    /** Phase 1 marketing homepage (Brand Kit V2 + investor shell). */
+    mkt: {
+      nav: {
+        exitSafely: string;
+        pilotLine: string;
+        howItWorks: string;
+        forAdvocates: string;
+        problem: string;
+        about: string;
+        requestDemo: string;
+        startApplication: string;
+        openMenu: string;
+        closeMenu: string;
+        wordmark: string;
+      };
+      hero: {
+        eyebrow: string;
+        headline: string;
+        subhead: string;
+        stat1Num: string;
+        stat1Label: string;
+        stat2Num: string;
+        stat2Label: string;
+        stat3Num: string;
+        stat3Label: string;
+        source: string;
+        ctaPrimary: string;
+        ctaDemo: string;
+        ctaFootnote: string;
+        previewCaption: string;
+        previewStepLabel: string;
+      };
+      trust: {
+        voca: string;
+        compliance: string;
+        pilot: string;
+        trauma: string;
+        encryption: string;
+      };
+      demo: {
+        label: string;
+        title: string;
+        subtitle: string;
+        disclaimer: string;
+        walkthroughSoon: string;
+      };
+      problem: {
+        label: string;
+        title: string;
+        body: string;
+        card1Eyebrow: string;
+        card1Stat: string;
+        card1Desc: string;
+        card2Eyebrow: string;
+        card2Stat: string;
+        card2Desc: string;
+        card3Eyebrow: string;
+        card3Stat: string;
+        card3Desc: string;
+        sources: string;
+      };
+      how: {
+        label: string;
+        title: string;
+        step1Title: string;
+        step1Body: string;
+        step2Title: string;
+        step2Body: string;
+        step3Title: string;
+        step3Body: string;
+        step4Title: string;
+        step4Body: string;
+        step5Title: string;
+        step5Body: string;
+      };
+      convert: {
+        title: string;
+        subtitle: string;
+        survivorsTitle: string;
+        survivorsBody: string;
+        survivorsCta: string;
+        demoTitle: string;
+        demoBody: string;
+        demoName: string;
+        demoOrg: string;
+        demoEmail: string;
+        demoRole: string;
+        demoRoleAdvocate: string;
+        demoRoleCbo: string;
+        demoRoleHospital: string;
+        demoRoleLe: string;
+        demoRoleOther: string;
+        demoSubmit: string;
+        demoThanks: string;
+        investorsTitle: string;
+        investorsBody: string;
+        scheduleCta: string;
+        emailLine: string;
+        seedLine: string;
+      };
+      about: {
+        label: string;
+        title: string;
+        pilotLabel: string;
+        pilotName: string;
+        pilotAddr: string;
+        pilotDesc: string;
+        pilotStatus: string;
+        pilotTargets: string;
+        pilotCtaIntro: string;
+        pilotCta: string;
+        teamHeading: string;
+        teamBody: string;
+        founder1Name: string;
+        founder1Role: string;
+        founder1Bio: string;
+        founder2Name: string;
+        founder2Role: string;
+        founder2Bio: string;
+        founder3Name: string;
+        founder3Role: string;
+        founder3Bio: string;
+        founder4Name: string;
+        founder4Role: string;
+        founder4Bio: string;
+        companyLine: string;
+      };
+      footerMkt: {
+        tagline: string;
+        pilotLine: string;
+        expanding: string;
+        colPlatform: string;
+        linkHow: string;
+        linkSurvivors: string;
+        linkAdvocates: string;
+        linkOrgs: string;
+        linkDemo: string;
+        colLegal: string;
+        linkTerms: string;
+        linkPrivacy: string;
+        linkHelp: string;
+        colSupport: string;
+        linkContact: string;
+        linkPilot: string;
+        crisisIf: string;
+        crisis988: string;
+        crisisText: string;
+        crisis911: string;
+        bottomCopy: string;
+        bottomChips: string;
+      };
+      stickyCrisis: string;
+    };
+
     // IMPORTANT: include this only if it exists in en.ts
     nxtGuide?: {
       title: string;
@@ -902,6 +1062,22 @@ export type I18nDict = {
 
     footer: {
       draftDisclaimer: string;
+    };
+
+    pathwaySafety: {
+      supportResourcesLabel: string;
+      supportIntro: string;
+      crisis988: string;
+      crisisText: string;
+      crisis911: string;
+      exitSafelyCta: string;
+      autosaveTrouble: string;
+      saveReturnToast: string;
+      autoSaved: string;
+      sensitiveSectionHint: string;
+      groundingBody: string;
+      groundingContinue: string;
+      groundingNeedSupport: string;
     };
 
     summary: {

@@ -119,7 +119,8 @@ export const es: I18nDict = {
         noCasesTitle: "Aún no hay caso",
         noCasesBody:
             "Toca el botón verde de arriba para empezar. Guardamos tu avance automáticamente.",
-        loadError: "No se pudieron cargar tus casos. Inténtalo de nuevo.",
+        loadError:
+            "No se pudieron cargar tus casos. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         sessionExpired: "La sesión expiró. Vuelve a iniciar sesión.",
         continue: "Continuar",
         more: "Más",
@@ -273,7 +274,8 @@ export const es: I18nDict = {
             capacity: "Capacidad",
             noOrgs:
                 "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
-            loadError: "No pudimos cargar las organizaciones. Inténtalo de nuevo.",
+            loadError:
+                "No pudimos cargar las organizaciones. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
             privacyNote:
                 "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
             sendReferral: "Enviar referencia para revisión",
@@ -288,7 +290,7 @@ export const es: I18nDict = {
             learnMoreDialogTitle: "Cómo mostramos la calidad de la organización",
             learnMoreDialogSubtitle:
                 "Áreas ponderadas y datos que los socios pueden completar con el tiempo. Las puntuaciones y niveles resumen señales de confianza: no son asesoramiento clínico ni legal.",
-            learnMore: "Más información",
+            learnMore: "Cómo funcionan las puntuaciones y los niveles",
             learnMoreClose: "Cerrar",
             organizationProfile: "Perfil de la Organización",
             visitWebsite: "Visitar sitio web",
@@ -331,7 +333,8 @@ export const es: I18nDict = {
             orgProfileBack: "← Volver al mapa de organizaciones",
             orgProfileSubtitle: "Información del perfil público de la organización.",
             orgProfileLoading: "Cargando organización…",
-            orgProfileInvalid: "Enlace de organización no válido.",
+            orgProfileInvalid:
+                "Ese enlace de organización no funciona. Vuelve al mapa y elige una organización de la lista.",
             orgProfileServices: "Servicios",
             orgProfileContact: "Contacto",
             orgProfilePopulations: "Enfoque",
@@ -416,7 +419,8 @@ export const es: I18nDict = {
         title: "Mensajes",
         subtitle:
             "Chatea con tu equipo de defensa en un solo lugar por caso. Esto está aparte del formulario de solicitud.",
-        loadError: "No se pudieron cargar tus casos. Inténtalo de nuevo.",
+        loadError:
+            "No se pudieron cargar tus casos. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         noCases: "Aún no tienes un caso. Inicia una solicitud para usar mensajes seguros.",
         startApplication: "Iniciar solicitud",
         casePickerLabel: "Casos",
@@ -474,7 +478,8 @@ export const es: I18nDict = {
             "Aún no hay organizaciones en el mapa. Mostramos socios activos en NxtStps (incluso si su perfil público sigue en borrador). Si esperabas ver una agencia, confirma en administración que la organización esté marcada como activa o vuelve más tarde.",
         noOrgsInState:
             "Ninguna organización coincide con este estado. Prueba “Todos los estados” u otro estado.",
-        loadError: "No se pudieron cargar las organizaciones. Inténtalo de nuevo.",
+        loadError:
+            "No se pudieron cargar las organizaciones. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         privacyNote:
             "Las distancias se calculan en tu navegador. No enviamos tus coordenadas GPS a nuestros servidores.",
         requestJoin: "Solicitar unirme",
@@ -565,6 +570,15 @@ export const es: I18nDict = {
         findOrgsFooterSuffix: "en cualquier momento después de iniciar sesión.",
     },
 
+    compensationDocumentsPage: {
+        loginToUpload:
+            "Inicia sesión para subir documentos. Los archivos se vinculan a tu cuenta para guardarlos con tu caso.",
+        uploadFailedGeneric:
+            "No pudimos subir ese archivo. Revisa el formato y el tamaño, e inténtalo de nuevo.",
+        networkError:
+            "No pudimos contactar al servidor. Revisa tu conexión, espera un momento e inténtalo de nuevo.",
+    },
+
     /* =========================
        ELIGIBILITY CHECK
     ========================== */
@@ -615,7 +629,7 @@ export const es: I18nDict = {
         },
         q4: {
             title: "Reporte policial",
-            question: "¿Se reportó el delito a las autoridades?",
+            question: "¿Se reportó el incidente a las autoridades?",
             helper:
                 "La Oficina del Fiscal General solicitará un reporte policial para investigar el reclamo. Si no tienes uno ahora, aún puedes continuar.",
             yes: "Sí",
@@ -712,49 +726,55 @@ export const es: I18nDict = {
             title: "¿Quién está solicitando?",
             question: "¿Qué opción te describe mejor?",
             options: {
-                victim: "Soy la víctima del crimen",
-                surviving_spouse: "Soy el cónyuge sobreviviente de la víctima",
-                dependent_child: "Soy hijo/a dependiente de la víctima",
+                victim: "Yo fui quien sufrió daño directo por lo que pasó",
+                surviving_spouse: "Soy el cónyuge sobreviviente de la persona que sufrió el daño",
+                dependent_child: "Soy hijo/a dependiente de la persona que sufrió el daño",
                 none: "Ninguna de estas / No estoy seguro/a",
             },
-            helper: "La ley de Indiana limita quién puede solicitar a víctimas, cónyuges sobrevivientes o hijos dependientes.",
+            helper:
+                "La ley de Indiana limita quién puede solicitar a personas que sufrieron daño, cónyuges sobrevivientes o hijos dependientes.",
         },
         q2: {
-            title: "Ubicación del crimen",
-            question: "¿El crimen ocurrió en Indiana?",
-            helper: "El Fondo de Compensación para Víctimas de Crímenes Violentos de Indiana solo cubre crímenes ocurridos en Indiana.",
+            title: "Dónde ocurrió",
+            question: "¿El incidente ocurrió en Indiana?",
+            helper: "El Fondo de Compensación para Víctimas de Crímenes Violentos de Indiana solo cubre incidentes ocurridos en Indiana.",
             yes: "Sí",
             no: "No",
             notSure: "No estoy seguro/a",
         },
         q3: {
             title: "Reporte policial y cooperación",
-            question: "¿El crimen fue reportado a las autoridades en 72 horas y estás dispuesto/a a cooperar durante la investigación y el juicio?",
-            helper: "Indiana requiere que el crimen sea reportado en 72 horas. Contacta a ICJI al 1-800-353-1484 si tienes preguntas.",
+            question:
+                "¿El incidente fue reportado a las autoridades en 72 horas y estás dispuesto/a a cooperar durante la investigación y el juicio?",
+            helper:
+                "Indiana suele exigir reporte en 72 horas en la mayoría de los casos. Contacta a ICJI al 1-800-353-1484 si tienes preguntas.",
             yes: "Sí",
             no: "No",
             notSure: "No estoy seguro/a",
         },
         q4: {
             title: "Gastos de bolsillo",
-            question: "¿La víctima tuvo al menos $100 en gastos de bolsillo como resultado del crimen?",
+            question:
+                "¿Tú o la persona para quien solicitas tuvieron al menos $100 en gastos de bolsillo por el incidente?",
             helper: "Facturas médicas, costos funerarios, consejería y otros gastos elegibles cuentan para el mínimo de $100.",
             yes: "Sí",
             no: "No",
             notSure: "No estoy seguro/a",
         },
         q5: {
-            title: "Conducta de la víctima",
-            question: "¿La víctima contribuyó al crimen o a su lesión?",
-            helper: "Si la víctima contribuyó al crimen o su lesión, puede no ser elegible.",
-            yes: "No, la víctima no contribuyó",
-            no: "Sí, la víctima contribuyó",
+            title: "Conducta",
+            question: "¿La persona que aplica contribuyó al incidente o a su lesión?",
+            helper:
+                "Si contribuyó al incidente o a la lesión, el fondo puede no pagar — ICJI puede explicar cómo aplica esta regla.",
+            yes: "No, no contribuyó",
+            no: "Sí, contribuyó",
             notSure: "No estoy seguro/a",
         },
         q6: {
             title: "Plazo de presentación",
-            question: "¿La solicitud puede presentarse dentro de 180 días de la fecha del crimen?",
-            helper: "Indiana requiere solicitudes en 180 días. Hay excepciones. Contacta a ICJI para más información.",
+            question: "¿La solicitud puede presentarse dentro de 180 días de la fecha del incidente?",
+            helper:
+                "Indiana suele exigir solicitudes en 180 días. Hay excepciones. Contacta a ICJI para más información.",
             yes: "Sí",
             no: "No",
             notSure: "No estoy seguro/a",
@@ -780,7 +800,7 @@ export const es: I18nDict = {
             checklist: [
                 "Confirma el reporte en 72 horas y disposición a cooperar con las autoridades",
                 "Verifica al menos $100 en gastos de bolsillo",
-                "Asegúrate de que la solicitud se presente en 180 días del crimen",
+                "Asegúrate de que la solicitud se presente en 180 días del incidente",
                 "Si eres menor de 18, coordina la firma del padre o tutor legal",
             ],
             ctaReady: "Continuar solicitud",
@@ -788,10 +808,11 @@ export const es: I18nDict = {
         },
         resultNotEligible: {
             headline: "Puedes no ser elegible según las reglas de Indiana.",
-            body: "La elegibilidad requiere que seas víctima, cónyuge sobreviviente o hijo dependiente; que el crimen ocurrió en Indiana; y otros requisitos. Contacta a ICJI al 1-800-353-1484.",
+            body:
+                "La elegibilidad suele requerir que seas la persona afectada, cónyuge sobreviviente o hijo dependiente; que lo ocurrido fue en Indiana; y que se cumplan otras reglas del programa. Contacta a ICJI al 1-800-353-1484.",
             nextSteps: [
                 "Contacta al Instituto de Justicia Penal de Indiana al 1-800-353-1484",
-                "Si el crimen ocurrió en otro estado, consulta el programa de compensación de ese estado",
+                "Si el incidente ocurrió en otro estado, consulta el programa de compensación de ese estado",
             ],
             cta: "Encontrar otras opciones de apoyo",
         },
@@ -862,7 +883,7 @@ export const es: I18nDict = {
         submit: "Actualizar contraseña",
         updating: "Actualizando…",
         backToLogin: "← Volver a iniciar sesión",
-        invalidOrExpired: "Enlace inválido o vencido",
+        invalidOrExpired: "Este enlace venció o ya no es válido.",
         invalidOrExpiredHint: "Los enlaces de restablecimiento caducan después de 1 hora. Solicita uno nuevo abajo.",
         requestNewLink: "Solicitar nuevo enlace",
         successTitle: "Contraseña actualizada",
@@ -895,7 +916,7 @@ export const es: I18nDict = {
             submitting: "…",
             subscribed: "Suscrito/a",
             thanks: "Gracias por suscribirte.",
-            error: "Algo salió mal. Intenta de nuevo.",
+            error: "No pudimos agregar tu correo. Revisa la dirección y tu conexión, e inténtalo de nuevo.",
         },
 
         guidedPath: {
@@ -1053,6 +1074,174 @@ export const es: I18nDict = {
                 crisis988: "Apoyo en crisis (988)",
             },
         },
+
+        mkt: {
+            nav: {
+                exitSafely: "Salir con seguridad →",
+                pilotLine: "Chicago, IL · Etapa piloto",
+                howItWorks: "Cómo funciona",
+                forAdvocates: "Para defensoras/es",
+                problem: "El problema",
+                about: "Acerca de",
+                requestDemo: "Solicitar demo",
+                startApplication: "Iniciar solicitud →",
+                openMenu: "Abrir menú",
+                closeMenu: "Cerrar menú",
+                wordmark: "NxtStps",
+            },
+            hero: {
+                eyebrow: "Compensación para víctimas de Illinois · Etapa piloto · Chicago, IL",
+                headline: "Dar el siguiente paso no debería ser lo más difícil.",
+                subhead:
+                    "El 63% de las solicitudes de compensación para víctimas de delitos en Illinois son denegadas—muchas por motivos prevenibles: documentos faltantes, plazos perdidos, formularios incompletos. NxtStps está hecho para reducir esas barreras.",
+                stat1Num: "63%",
+                stat1Label: "de solicitudes denegadas",
+                stat2Num: "281 días",
+                stat2Label: "espera mediana para el pago",
+                stat3Num: "3.677",
+                stat3Label: "solicitudes anuales en IL",
+                source:
+                    "Fuente: estudio revisado por pares de 2025 sobre solicitudes CVC de Illinois (2012–2024, n=46.792).",
+                ctaPrimary: "Iniciar mi solicitud →",
+                ctaDemo: "Ver una demo en vivo ↓",
+                ctaFootnote:
+                    "Gratis para sobrevivientes y defensoras/es. No se requiere cuenta para ver el video demo.",
+                previewCaption: "↑ Así se ve. Prueba lo real abajo ↓",
+                previewStepLabel: "Paso 2 de 7 · Unos 8 minutos restantes",
+            },
+            trust: {
+                voca: "Basado en estándares VOCA y VAWA",
+                compliance: "Cumplimiento primero, listo para GovTech",
+                pilot: "Piloto con Iglesia Santa Cruz, Chicago, IL",
+                trauma: "Diseño informado por trauma",
+                encryption: "Cifrado AES-256 · servidores en EE. UU.",
+            },
+            demo: {
+                label: "Demo en vivo",
+                title: "Cómo funciona",
+                subtitle: "Resumen breve—cuando estés listo/a. Recorrido interactivo completo próximamente.",
+                disclaimer: "Modo demo · Solo video · Sin cuenta",
+                walkthroughSoon: "Recorrido interactivo completo próximamente.",
+            },
+            problem: {
+                label: "El problema",
+                title: "El sistema de compensación para víctimas en Illinois está bajo presión.",
+                body:
+                    "Muchas denegaciones no se deben a que la persona no sea elegible, sino a fricción del proceso: documentos faltantes, requisitos confusos, plazos y poca orientación clara. NxtStps ayuda a presentar solicitudes más completas y coherentes.",
+                card1Eyebrow: "Estudio revisado por pares (2025)",
+                card1Stat: "63%",
+                card1Desc:
+                    "de las solicitudes CVC de Illinois en el periodo del estudio fueron denegadas—muchas por motivos administrativos prevenibles.",
+                card2Eyebrow: "Estudio revisado por pares (2025)",
+                card2Stat: "281 días",
+                card2Desc: "tiempo mediano entre la solicitud y el pago en los datos del estudio.",
+                card3Eyebrow: "Auditoría federal DOJ OIG (2024)",
+                card3Stat: "$125K",
+                card3Desc:
+                    "en costos cuestionados citados en la auditoría federal de subvenciones de compensación a víctimas en Illinois—incluye procesos manuales y temas de certificación, según el informe público.",
+                sources:
+                    "Fuentes: estudio revisado por pares de 2025 (2012–2024, n=46.792) · auditoría DOJ OIG de 2024 (hallazgos públicos).",
+            },
+            how: {
+                label: "Cómo funciona",
+                title: "Del primer contacto a la solicitud presentada",
+                step1Title: "Encuentra la organización adecuada",
+                step1Body:
+                    "Las personas sobrevivientes pueden descubrir organizaciones de servicios a víctimas por ubicación y conectar con el programa que elijan—sin asignación automática.",
+                step2Title: "Conecta con un defensor o una defensora",
+                step2Body:
+                    "Solicitudes de apoyo y mensajes seguros ayudan a coordinar en un solo lugar.",
+                step3Title: "Completa la solicitud guiada",
+                step3Body:
+                    "Orientación paso a paso para la compensación en Illinois, en lenguaje claro—con guardar y volver.",
+                step4Title: "Revisa antes de enviar",
+                step4Body:
+                    "Listas de verificación y validación ayudan a detectar faltantes antes de enviar al programa.",
+                step5Title: "Envía y sigue coordinando",
+                step5Body:
+                    "Solicitudes y documentos organizados para envío; seguimiento en la plataforma.",
+            },
+            convert: {
+                title: "¿Listo/a para verlo en acción?",
+                subtitle: "Sobrevivientes, defensoras/es, inversores/as y socios de agencias—elige tu camino.",
+                survivorsTitle: "Inicia tu solicitud",
+                survivorsBody: "Gratis y confidencial. Enfoque en Illinois hoy.",
+                survivorsCta: "Comenzar →",
+                demoTitle: "Solicitar una demo",
+                demoBody: "Defensoras/es, CBOs, hospitales—ve el flujo de trabajo.",
+                demoName: "Nombre",
+                demoOrg: "Organización",
+                demoEmail: "Correo",
+                demoRole: "¿Qué te describe mejor?",
+                demoRoleAdvocate: "Defensor/a",
+                demoRoleCbo: "Personal de CBO",
+                demoRoleHospital: "Trabajador/a social hospitalario",
+                demoRoleLe: "Aplicación de la ley",
+                demoRoleOther: "Otro",
+                demoSubmit: "Solicitar demo",
+                demoThanks: "Gracias—nos pondremos en contacto en 24 horas.",
+                investorsTitle: "Habla con el equipo",
+                investorsBody: "Inversores/as, aceleradoras y agencias estatales—conversemos.",
+                scheduleCta: "Agendar una conversación →",
+                emailLine: "contact@nxtstps.org",
+                seedLine: "NxtStps está levantando una ronda seed.",
+            },
+            about: {
+                label: "Acerca de",
+                title: "Piloto y equipo",
+                pilotLabel: "Socio piloto actual",
+                pilotName: "Iglesia Santa Cruz",
+                pilotAddr: "6545 S Springfield Ave, Chicago, IL 60629",
+                pilotDesc:
+                    "Organización comunitaria de base religiosa en el suroeste de Chicago que sirve a un vecindario predominantemente latino.",
+                pilotStatus: "MOU firmado · Piloto activo",
+                pilotTargets:
+                    "Metas del piloto: alta integridad de solicitudes y menos carga administrativa para defensoras/es—medido con el socio.",
+                pilotCtaIntro: "¿Interés en un piloto?",
+                pilotCta: "Solicitar asociación piloto →",
+                teamHeading: "Construido por personas cercanas al trabajo",
+                teamBody:
+                    "NxtStps combina experiencia en servicios a víctimas con ingeniería de producto y cumplimiento—primero en compensación de Illinois.",
+                founder1Name: "Sam Brandstrader",
+                founder1Role: "CEO",
+                founder1Bio: "Servicios a víctimas y CVI; ex Director Asistente de Programa, SWOP.",
+                founder2Name: "Charlie Foreman",
+                founder2Role: "CTO",
+                founder2Bio: "Arquitectura de plataforma, sistemas e infraestructura de cumplimiento.",
+                founder3Name: "Armando Mancilla",
+                founder3Role: "CPO",
+                founder3Bio: "Casework CVI activo; guía el producto desde la primera línea.",
+                founder4Name: "Christina Rice",
+                founder4Role: "CSO",
+                founder4Bio: "Liderazgo en organizaciones sin fines de lucro y estrategia.",
+                companyLine: "NxtStps, LLC · Chicago, IL · Fundada en 2025 · Etapa piloto",
+            },
+            footerMkt: {
+                tagline: "Infraestructura de servicios a víctimas con cumplimiento primero.",
+                pilotLine: "Chicago, IL · Fundada 2025 · Etapa piloto",
+                expanding: "Piloto en Illinois. Expansión nacional.",
+                colPlatform: "Plataforma",
+                linkHow: "Cómo funciona",
+                linkSurvivors: "Para sobrevivientes",
+                linkAdvocates: "Para defensoras/es",
+                linkOrgs: "Para organizaciones",
+                linkDemo: "Solicitar demo",
+                colLegal: "Legal",
+                linkTerms: "Términos de uso",
+                linkPrivacy: "Política de privacidad",
+                linkHelp: "Ayuda",
+                colSupport: "Apoyo",
+                linkContact: "Contáctanos",
+                linkPilot: "Asociaciones piloto",
+                crisisIf: "Si necesitas apoyo:",
+                crisis988: "Línea 988: llama o envía texto al 988",
+                crisisText: "Línea de crisis por texto: envía HOME al 741741",
+                crisis911: "Emergencia: 911",
+                bottomCopy: "© {year} NxtStps, LLC · Chicago, Illinois · Todos los derechos reservados",
+                bottomChips: "VOCA · VAWA · HIPAA-adjunto · CJIS-aware · WCAG 2.2 AA",
+            },
+            stickyCrisis: "Apoyo: 988 (llamada o texto) · Crisis por texto: HOME al 741741",
+        },
     },
 
     /* =========================
@@ -1062,9 +1251,9 @@ export const es: I18nDict = {
         stepOf: "Paso {current} de {total}",
         reassurance: "Puedes guardar y volver cuando quieras.",
         steps: {
-            victim: "Víctima",
+            victim: "Persona afectada",
             applicant: "Solicitante",
-            crime: "Delito e incidente",
+            crime: "Incidente y detalles",
             losses: "Gastos y dinero",
             medical: "Atención médica y consejería",
             employment: "Trabajo e ingresos",
@@ -1110,6 +1299,26 @@ export const es: I18nDict = {
                 "Borrador. Nada se envía al estado sin tu consentimiento. Puedes guardar y volver cuando quieras.",
         },
 
+        pathwaySafety: {
+            supportResourcesLabel: "Recursos de apoyo",
+            supportIntro: "Si necesitas apoyo ahora mismo:",
+            crisis988: "Línea 988 de prevención del suicidio y crisis: llama o envía texto al 988",
+            crisisText: "Línea de crisis por texto: envía HOME al 741741",
+            crisis911: "Emergencia: 911",
+            exitSafelyCta: "Salir con seguridad →",
+            autosaveTrouble:
+                "Tenemos problemas para guardar tu avance. No te preocupues — sigue y lo intentaremos de nuevo.",
+            saveReturnToast:
+                "Tu avance está guardado. Vuelve cuando quieras — todo seguirá donde lo dejaste.",
+            autoSaved: "Guardado",
+            sensitiveSectionHint:
+                "Esta sección tiene pocas preguntas. Tómate tu tiempo — puedes omitir y volver después.",
+            groundingBody:
+                "Tómate todo el tiempo que necesites. Tu avance está guardado. Hay apoyo si lo necesitas: llama o envía texto al 988.",
+            groundingContinue: "Continuar",
+            groundingNeedSupport: "Necesito apoyo",
+        },
+
         summary: {
             alreadyFinalReview: "Ya estás en el paso final de revisión.",
         },
@@ -1120,24 +1329,29 @@ export const es: I18nDict = {
         started: "Solicitud iniciada",
 
         loadCase: {
-            failed: "No se pudo cargar ese caso (sin acceso o no existe).",
-            unexpected: "Ocurrió un error al cargar ese caso.",
+            failed:
+                "No pudimos abrir ese caso — puede que no tengas acceso o el enlace no sea correcto. Vuelve a tu panel y elige un caso de tu lista.",
+            unexpected:
+                "No pudimos cargar ese caso porque algo interrumpió la solicitud. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         },
 
         save: {
             viewOnly: "Acceso de solo lectura. No puedes guardar cambios.",
             noCaseLoaded: "Aún no hay un caso cargado. Inicia la solicitud primero.",
             saved: "Solicitud guardada",
-            failed: "No se pudo guardar. Intenta de nuevo.",
+            failed:
+                "No pudimos guardar tu solicitud — el servidor puede estar ocupado. Espera un momento, actualiza la página e inténtalo de nuevo.",
         },
 
         pdf: {
             summaryFailed:
-                "Hubo un problema al generar el PDF. Por favor intenta de nuevo.",
-            summaryUnexpected: "Ocurrió un error inesperado al generar el PDF.",
+                "No pudimos generar el PDF de resumen — el servidor puede haber tardado demasiado. Espera un momento e inténtalo de nuevo, o descarga después de guardar.",
+            summaryUnexpected:
+                "No pudimos terminar el PDF de resumen. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
             officialFailed:
-                "Hubo un problema al generar el formulario oficial de Illinois. Por favor intenta de nuevo.",
-            officialUnexpected: "Ocurrió un error al crear el formulario oficial.",
+                "No pudimos generar el formulario oficial de Illinois en PDF. Espera un momento e inténtalo de nuevo — si sigue fallando, contacta a soporte.",
+            officialUnexpected:
+                "No pudimos terminar el PDF del formulario oficial. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         },
 
         safeMode: {
@@ -1168,15 +1382,15 @@ export const es: I18nDict = {
             applicantRequired:
                 "Por favor completa las preguntas del solicitante y de contacto en este paso antes de continuar (incluido el idioma y los datos del defensor si trabajas con alguien).",
             victimRequired:
-                "Por favor completa el nombre de la víctima, fecha de nacimiento y dirección antes de continuar.",
+                "Agrega el nombre, la fecha de nacimiento y la dirección de la persona afectada antes de continuar.",
             completeApplicantFirst:
                 "Completa primero el paso Solicitante. Después podrás avanzar por el resto del formulario.",
             completeVictimBeforeOther:
-                "Completa el paso Víctima antes de abrir Delito e incidente o secciones posteriores.",
+                "Termina el paso Persona afectada antes de abrir Incidente y detalles o secciones posteriores.",
             crimeMinimumRequired:
-                "Por favor proporciona al menos la fecha del delito, dónde ocurrió y a qué departamento de policía se reportó.",
+                "Agrega al menos la fecha del incidente, dónde ocurrió y a qué departamento de policía lo reportaste.",
             certificationRequired:
-                "Antes de guardar esto como un caso, revisa la sección de certificación y agrega tu nombre, fecha y confirmaciones.",
+                "Antes de guardar esto como caso, abre la certificación y agrega tu nombre, fecha y las casillas — confirman que revisaste las declaraciones.",
         },
 
         requiredBeforeContinue: {
@@ -1197,26 +1411,26 @@ export const es: I18nDict = {
             applicantFirstName: "Nombre del solicitante",
             applicantLastName: "Apellido del solicitante",
             applicantDateOfBirth: "Fecha de nacimiento del solicitante",
-            applicantRelationship: "Relación con la víctima",
+            applicantRelationship: "Relación con la persona afectada",
             applicantStreet: "Dirección del solicitante",
             applicantCity: "Ciudad del solicitante",
             applicantState: "Estado del solicitante",
             applicantZip: "Código postal del solicitante",
             applicantLast4Ssn: "Últimos 4 dígitos del SSN del solicitante (Indiana)",
             applicantSeekingOwnExpenses: "Si buscas tus propios gastos (sí o no)",
-            victimFirstName: "Nombre de la víctima",
-            victimLastName: "Apellido de la víctima",
-            victimDateOfBirth: "Fecha de nacimiento de la víctima",
-            victimStreet: "Dirección de la víctima",
-            victimCity: "Ciudad de la víctima",
-            victimZip: "Código postal de la víctima",
-            victimState: "Estado de la víctima",
-            victimLast4Ssn: "Últimos 4 dígitos del SSN de la víctima (Indiana)",
+            victimFirstName: "Persona afectada — nombre",
+            victimLastName: "Persona afectada — apellido",
+            victimDateOfBirth: "Persona afectada — fecha de nacimiento",
+            victimStreet: "Persona afectada — dirección",
+            victimCity: "Persona afectada — ciudad",
+            victimZip: "Persona afectada — código postal",
+            victimState: "Persona afectada — estado",
+            victimLast4Ssn: "Persona afectada — últimos 4 dígitos del SSN (Indiana)",
             whoIsSubmitting: "Quién presenta la solicitud (Indiana)",
-            crimeDate: "Fecha del delito",
-            crimeAddress: "Lugar / dirección donde ocurrió el delito",
-            crimeCity: "Ciudad donde ocurrió el delito",
-            reportingAgency: "Agencia a la que se reportó el delito",
+            crimeDate: "Fecha del incidente",
+            crimeAddress: "Lugar / dirección donde ocurrió el incidente",
+            crimeCity: "Ciudad donde ocurrió el incidente",
+            reportingAgency: "Agencia a la que reportaste el incidente",
             selectLossCategory:
                 "Selecciona al menos una categoría de pérdida, o confirma abajo que no aplica ninguna",
             medicalProviderName:
@@ -1238,11 +1452,11 @@ export const es: I18nDict = {
 
         saveCase: {
             failed:
-                "Hubo un problema al guardar tu caso. Por favor revisa la consola.",
+                "No pudimos guardar tu caso — algo interrumpió el servidor. Espera un momento, actualiza la página e inténtalo de nuevo. Si sigue pasando, contacta a soporte.",
             missingId:
-                "Se guardó, pero no se devolvió un ID de caso. Revisa la respuesta del API.",
+                "Tu caso puede haberse guardado, pero no recibimos un ID. Actualiza la página — si falta el caso, intenta guardar otra vez.",
             unexpected:
-                "Ocurrió un error al guardar tu caso. Revisa la consola para más detalles.",
+                "No pudimos terminar de guardar tu caso. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
         },
     },
 
@@ -1363,9 +1577,10 @@ export const es: I18nDict = {
         },
 
         errors: {
-            generic: "Ocurrió un error. Por favor intenta de nuevo.",
+            generic:
+                "No pudimos terminar esa solicitud—algo la interrumpió. Revisa tu conexión, actualiza la página e inténtalo de nuevo.",
             network:
-                "Error de red. Verifica tu conexión e inténtalo nuevamente.",
+                "No pudimos contactar al servidor. Revisa tu conexión, espera un momento e inténtalo de nuevo.",
             unauthorized: "No tienes acceso a esto.",
             notFound: "No se pudo encontrar ese elemento.",
         },
@@ -1391,14 +1606,14 @@ export const es: I18nDict = {
         int: {
             whoIsSubmitting: "¿Quién presenta la reclamación?",
             whoOptions: {
-                victim: "Víctima",
+                victim: "Persona afectada",
                 claimant: "Reclamante",
                 advocate: "Defensor/a",
             },
             last4SSN: "Últimos 4 dígitos del SSN o Tax ID",
             autoAccident: "¿Es un accidente automovilístico?",
             autoInsuranceName: "Nombre del seguro de auto",
-            physicalInjuries: "¿La víctima tiene lesiones físicas?",
+            physicalInjuries: "¿La persona afectada tiene lesiones físicas?",
             medicalFacilityName: "Nombre del centro médico de tratamiento",
             timeOfCrime: "Hora en que ocurrió el crimen",
             crimeType: "Tipo de crimen",
@@ -1414,7 +1629,7 @@ export const es: I18nDict = {
             otherDescribe: "Otro (describa)",
         },
         victim: {
-            title: "Información de la víctima",
+            title: "Información de la persona afectada",
             description:
                 "Esta sección es sobre la persona que fue lesionada físicamente o falleció. Si usted es esa persona y tiene más de 18 años, esta es su información.",
             civilRightsNote:
@@ -1468,7 +1683,7 @@ export const es: I18nDict = {
                 funeralInvoices: "Facturas funerarias / de sepelio",
                 wageProof:
                     "Comprobante de salarios perdidos (carta del empleador, talones de pago, etc.)",
-                idProof: "Identificación (víctima/solicitante)",
+                idProof: "Identificación (persona afectada / solicitante)",
             },
 
             otherEmpty: "Aún no se agregaron otros documentos.",
@@ -1524,21 +1739,21 @@ export const es: I18nDict = {
         applicant: {
             title: "Información del solicitante",
             description: "Esta es la persona que solicita la compensación.",
-            isVictimAlsoApplicantLabel: "¿La víctima también es el solicitante?",
+            isVictimAlsoApplicantLabel: "¿La persona afectada también es el solicitante?",
             sameAsVictimNote:
-                "En el siguiente paso ingresarás los datos de la víctima; los copiaremos al solicitante al continuar a Delito e incidente.",
+                "En el siguiente paso ingresarás los datos de la persona afectada; los copiaremos al solicitante al continuar a Incidente y detalles.",
 
             options: {
-                victim: "Soy la víctima (igualaremos los datos del solicitante después de la víctima)",
+                victim: "Yo fui quien sufrió el daño (igualaremos los datos del solicitante después de ingresar esa información)",
                 proxy:
-                    "Estoy solicitando en nombre de la víctima (padre/madre, cónyuge, otro)",
+                    "Estoy solicitando para alguien que sufrió el daño (padre/madre, cónyuge, otro)",
             }, // <-- IMPORTANT COMMA HERE
 
             relationshipPlaceholder: "Padre/madre, cónyuge, hermano/a, amigo/a...",
 
             legalGuardianship: {
                 question:
-                    "Si la víctima es menor de edad o un adulto incapacitado, ¿tienes tutela legal?",
+                    "Si la persona afectada es menor de edad o un adulto incapacitado, ¿tienes tutela legal?",
                 noNotSure: "No / No estoy seguro/a",
             },
 
@@ -1816,17 +2031,17 @@ export const es: I18nDict = {
             sectionDescription:
                 "Esta sección es sobre lo que ocurrió. No necesitas recordar cada detalle.",
 
-            dateOfCrimeLabel: "Fecha del delito *",
-            dateReportedLabel: "Fecha en que se reportó el delito",
+            dateOfCrimeLabel: "Fecha del incidente *",
+            dateReportedLabel: "Fecha en que se reportó el incidente",
 
             crimeAddressLabel:
-                "¿Dónde ocurrió el delito? (dirección o lugar aproximado) *",
+                "¿Dónde ocurrió el incidente? (dirección o lugar aproximado) *",
 
             crimeCityLabel: "Ciudad *",
             crimeCountyLabel: "Condado",
 
             reportingAgencyLabel:
-                "Departamento de policía al que se reportó el delito *",
+                "Departamento de policía al que reportaste el incidente *",
             reportingAgencyPlaceholder:
                 "p. ej., Departamento de Policía de Chicago",
 
@@ -1847,7 +2062,7 @@ export const es: I18nDict = {
             offenderNamesLabel: "Nombre(s) de la persona agresora, si lo sabes",
 
             offenderRelationshipLabel:
-                "Relación con la víctima, si existe",
+                "Relación con la persona afectada, si existe",
             offenderRelationshipPlaceholder:
                 "Desconocido, pareja, familiar, etc.",
 
@@ -1970,8 +2185,8 @@ export const es: I18nDict = {
             },
 
             questions: {
-                hasMedicalTreatment: "¿La víctima recibió atención médica?",
-                hasCounseling: "¿La víctima recibió consejería / terapia?",
+                hasMedicalTreatment: "¿La persona afectada recibió atención médica?",
+                hasCounseling: "¿La persona afectada recibió consejería / terapia?",
             },
 
             fields: {
@@ -2032,7 +2247,7 @@ export const es: I18nDict = {
                 documentsTitle: "Documentos",
                 documentsSubtitle: "Los documentos pueden ayudar a respaldar tu caso.",
                 documentsEmpty:
-                    "Aún no hay documentos cargados. Puedes agregar archivos en el paso de documentos.",
+                    "Aún no hay documentos cargados. Ve al paso de documentos y sube archivos—los verás aquí.",
                 uploadDocuments: "Cargar documentos",
                 uploadMissingDocuments: "Cargar documentos faltantes",
                 messagesTitle: "Mensajes",
@@ -2085,8 +2300,9 @@ export const es: I18nDict = {
                 results: {
                     saveCaseFirst:
                         "Primero guarda esto como un caso para poder generar un enlace seguro de invitación.",
-                    mustBeLoggedIn: "Debes iniciar sesión para invitar a un defensor.",
-                    unexpected: "Error inesperado al invitar al defensor.",
+                    mustBeLoggedIn: "Inicia sesión para invitar a un defensor.",
+                    unexpected:
+                        "No pudimos enviar esa invitación. Actualiza la página e inténtalo de nuevo.",
                     accessGranted:
                         "✅ Acceso otorgado.\nComparte este enlace con el defensor:\n{url}",
                 },
@@ -2095,8 +2311,9 @@ export const es: I18nDict = {
                 errors: {
                     saveCaseFirst:
                         "Primero guarda esto como un caso para poder generar un enlace seguro de invitación.",
-                    mustBeLoggedIn: "Debes iniciar sesión para invitar a un defensor.",
-                    unexpected: "Error inesperado al invitar al defensor.",
+                    mustBeLoggedIn: "Inicia sesión para invitar a un defensor.",
+                    unexpected:
+                        "No pudimos enviar esa invitación. Actualiza la página e inténtalo de nuevo.",
                 },
                 success: {
                     accessGranted:
@@ -2105,13 +2322,14 @@ export const es: I18nDict = {
             },
 
             snapshots: {
-                victimTitle: "Víctima",
+                victimTitle: "Persona afectada",
                 applicantTitle: "Solicitante",
-                applicantSamePerson: "La víctima y el solicitante son la misma persona.",
+                applicantSamePerson:
+                    "La persona afectada y el solicitante son la misma persona.",
 
-                crimeTitle: "Resumen del delito",
+                crimeTitle: "Resumen del incidente",
                 crime: {
-                    dateOfCrime: "Fecha del delito",
+                    dateOfCrime: "Fecha del incidente",
                     location: "Lugar",
                     cityCounty: "Ciudad / Condado",
                     reportedTo: "Reportado a",
@@ -2152,15 +2370,15 @@ export const es: I18nDict = {
 
             // Alias (algunos componentes esperan estos bloques a nivel superior)
             crime: {
-                title: "Resumen del delito",
+                title: "Resumen del incidente",
                 // Alias para claves planas usadas en SummaryView (forms.summary.crime.*)
-                dateOfCrime: "Fecha del delito",
+                dateOfCrime: "Fecha del incidente",
                 location: "Lugar",
                 cityCounty: "Ciudad / Condado",
                 reportedTo: "Reportado a",
                 policeReportNumber: "N.º de reporte policial",
                 fields: {
-                    dateOfCrime: "Fecha del delito",
+                    dateOfCrime: "Fecha del incidente",
                     location: "Lugar",
                     cityCounty: "Ciudad / Condado",
                     reportedTo: "Reportado a",
@@ -2258,9 +2476,9 @@ export const es: I18nDict = {
             },
 
             sections: {
-                victim: "Víctima",
+                victim: "Persona afectada",
                 applicant: "Solicitante",
-                crime: "Delito / incidente",
+                crime: "Incidente / detalles",
                 losses: "Gastos solicitados",
                 medical: "Atención médica y consejería",
                 employment: "Trabajo e ingresos",
@@ -2275,8 +2493,8 @@ export const es: I18nDict = {
                 phone: "Teléfono",
                 email: "Correo electrónico",
                 address: "Dirección",
-                isVictimAlsoApplicant: "¿La víctima también es solicitante?",
-                relationshipToVictim: "Relación con la víctima",
+                isVictimAlsoApplicant: "La persona afectada también es solicitante",
+                relationshipToVictim: "Relación con la persona afectada",
                 date: "Fecha",
                 time: "Hora",
                 location: "Lugar",

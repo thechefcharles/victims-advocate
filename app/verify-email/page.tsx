@@ -51,10 +51,15 @@ export default function VerifyEmailPage() {
       if (res.ok && json.data?.sent) {
         setResendMsg("Verification email sent. Check your inbox.");
       } else {
-        setResendMsg(json?.error?.message || "Could not send. Try again later.");
+        setResendMsg(
+          json?.error?.message ||
+            "We couldn't resend the verification email. Wait a minute and try again.",
+        );
       }
     } catch {
-      setResendMsg("Something went wrong.");
+      setResendMsg(
+        "We couldn't reach the server to resend verification. Check your connection and try again.",
+      );
     } finally {
       setResending(false);
     }
@@ -62,8 +67,8 @@ export default function VerifyEmailPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p className="text-slate-400">Loading…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+        <p className="text-[var(--color-muted)]">Loading…</p>
       </main>
     );
   }
@@ -71,33 +76,33 @@ export default function VerifyEmailPage() {
   if (!hasSession) {
     router.replace("/login");
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
-        <p className="text-slate-400">Redirecting to login…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
+        <p className="text-[var(--color-muted)]">Redirecting to login…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
-      <div className="max-w-md w-full rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4">
-        <h1 className="text-xl font-semibold text-slate-100">Verify your email</h1>
-        <p className="text-sm text-slate-400">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
+      <div className="max-w-md w-full rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 space-y-4">
+        <h1 className="text-xl font-semibold text-[var(--color-navy)]">Verify your email</h1>
+        <p className="text-sm text-[var(--color-muted)]">
           We sent a verification link to your email. Click the link to activate your account, then
           you can use the app.
         </p>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-[var(--color-muted)]">
           Didn’t get the email? Check spam, or request a new link below.
         </p>
         <button
           type="button"
           onClick={handleResend}
           disabled={resending}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
         >
           {resending ? "Sending…" : "Resend verification email"}
         </button>
         {resendMsg && (
-          <p className="text-sm text-slate-300">{resendMsg}</p>
+          <p className="text-sm text-[var(--color-slate)]">{resendMsg}</p>
         )}
         <button
           type="button"
@@ -105,12 +110,12 @@ export default function VerifyEmailPage() {
             await supabase.auth.signOut();
             router.push("/login");
           }}
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]"
         >
           Sign out
         </button>
         <p className="text-center">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-slate-200">
+          <Link href="/login" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
             Back to login
           </Link>
         </p>

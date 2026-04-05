@@ -81,7 +81,12 @@ export function OrganizationCreationSection({
           setExistingOrgId(json.meta.organization_id);
           setExistingOrgName(json.meta.organization_name ?? "this organization");
         } else {
-          setErr(getApiErrorMessage(json, "Could not create organization"));
+          setErr(
+            getApiErrorMessage(
+              json,
+              "We couldn't create that organization. Check required fields and try again.",
+            ),
+          );
         }
         return;
       }
@@ -116,7 +121,12 @@ export function OrganizationCreationSection({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not submit request"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't submit that request. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setSuccessMsg(
@@ -162,7 +172,12 @@ export function OrganizationCreationSection({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not submit proposal"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't submit that proposal. Check required fields and try again.",
+          ),
+        );
         return;
       }
       setSuccessMsg(
@@ -186,7 +201,7 @@ export function OrganizationCreationSection({
     <div className="space-y-6">
       {backLink}
 
-      <div className="flex gap-2 border-b border-slate-800 pb-2">
+      <div className="flex gap-2 border-b border-[var(--color-border-light)] pb-2">
         <button
           type="button"
           onClick={() => {
@@ -196,8 +211,8 @@ export function OrganizationCreationSection({
           }}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${
             mode === "directory"
-              ? "bg-slate-700 text-slate-100"
-              : "text-slate-400 hover:text-slate-200"
+              ? "bg-[var(--color-teal-deep)] text-[var(--color-navy)]"
+              : "text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
           }`}
         >
           Select from directory
@@ -211,8 +226,8 @@ export function OrganizationCreationSection({
           }}
           className={`rounded-lg px-4 py-2 text-sm font-medium ${
             mode === "add_new"
-              ? "bg-slate-700 text-slate-100"
-              : "text-slate-400 hover:text-slate-200"
+              ? "bg-[var(--color-teal-deep)] text-[var(--color-navy)]"
+              : "text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
           }`}
         >
           My organization isn&apos;t listed
@@ -228,7 +243,7 @@ export function OrganizationCreationSection({
       {mode === "directory" ? (
         <form
           onSubmit={handleDirectorySubmit}
-          className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
+          className="space-y-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6"
         >
           <ProgramCatalogSelect
             id="org-catalog"
@@ -259,7 +274,7 @@ export function OrganizationCreationSection({
             <button
               type="submit"
               disabled={loading || catalogId == null}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+              className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {loading ? "Creating…" : "Create organization"}
             </button>
@@ -268,15 +283,15 @@ export function OrganizationCreationSection({
       ) : (
         <form
           onSubmit={handleAddNewSubmit}
-          className="space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
+          className="space-y-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6"
         >
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--color-muted)]">
             Submit your organization details. An administrator will review and approve your
             request. You&apos;ll be notified when it&apos;s ready.
           </p>
 
           <div>
-            <label htmlFor="org-name" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-name" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Organization name *
             </label>
             <input
@@ -285,13 +300,13 @@ export function OrganizationCreationSection({
               required
               value={addNewForm.name}
               onChange={(e) => setAddNewForm((p) => ({ ...p, name: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="e.g. Safe Harbor Advocacy Center"
             />
           </div>
 
           <div>
-            <label htmlFor="org-type" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-type" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Type *
             </label>
             <select
@@ -303,7 +318,7 @@ export function OrganizationCreationSection({
                   type: e.target.value as (typeof ORG_TYPES)[number]["value"],
                 }))
               }
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
             >
               {ORG_TYPES.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -314,7 +329,7 @@ export function OrganizationCreationSection({
           </div>
 
           <div>
-            <label htmlFor="org-address" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-address" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Address
             </label>
             <input
@@ -322,13 +337,13 @@ export function OrganizationCreationSection({
               type="text"
               value={addNewForm.address}
               onChange={(e) => setAddNewForm((p) => ({ ...p, address: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="Street address, city, state, zip"
             />
           </div>
 
           <div>
-            <label htmlFor="org-phone" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-phone" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Phone
             </label>
             <input
@@ -336,13 +351,13 @@ export function OrganizationCreationSection({
               type="tel"
               value={addNewForm.phone}
               onChange={(e) => setAddNewForm((p) => ({ ...p, phone: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="(555) 123-4567"
             />
           </div>
 
           <div>
-            <label htmlFor="org-website" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-website" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Website
             </label>
             <input
@@ -350,13 +365,13 @@ export function OrganizationCreationSection({
               type="url"
               value={addNewForm.website}
               onChange={(e) => setAddNewForm((p) => ({ ...p, website: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="https://..."
             />
           </div>
 
           <div>
-            <label htmlFor="org-program-type" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-program-type" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Program type (e.g. Domestic Violence, CAC)
             </label>
             <input
@@ -364,13 +379,13 @@ export function OrganizationCreationSection({
               type="text"
               value={addNewForm.program_type}
               onChange={(e) => setAddNewForm((p) => ({ ...p, program_type: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="Domestic Violence"
             />
           </div>
 
           <div>
-            <label htmlFor="org-notes" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="org-notes" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Additional notes (optional)
             </label>
             <textarea
@@ -378,7 +393,7 @@ export function OrganizationCreationSection({
               rows={3}
               value={addNewForm.notes}
               onChange={(e) => setAddNewForm((p) => ({ ...p, notes: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="Any other details for the review"
             />
           </div>
@@ -392,7 +407,7 @@ export function OrganizationCreationSection({
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+            className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           >
             {loading ? "Submitting…" : "Submit for approval"}
           </button>

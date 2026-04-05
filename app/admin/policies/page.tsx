@@ -49,7 +49,12 @@ export default function AdminPoliciesPage() {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setErr(getApiErrorMessage(json, "Failed to load policies"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load policies. Refresh the page and try again.",
+          ),
+        );
         setPolicies([]);
         return;
       }
@@ -76,7 +81,12 @@ export default function AdminPoliciesPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to activate"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't activate that policy version. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     setErr(null);
@@ -105,7 +115,12 @@ export default function AdminPoliciesPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to create"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't create that policy draft. Check required fields and try again.",
+          ),
+        );
         return;
       }
       setErr(null);
@@ -117,7 +132,7 @@ export default function AdminPoliciesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine="Admin → Policies"
@@ -126,13 +141,13 @@ export default function AdminPoliciesPage() {
           subtitle="Publish terms, privacy, and disclaimers. New versions are inactive until you activate them."
           rightActions={
             <>
-              <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/cases" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Cases
               </Link>
-              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/orgs" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Organizations
               </Link>
-              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/audit" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Audit
               </Link>
             </>
@@ -145,24 +160,24 @@ export default function AdminPoliciesPage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
-          <p className="text-xs text-slate-500">Create a draft, then activate when ready.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-3">
+          <p className="text-xs text-[var(--color-muted)]">Create a draft, then activate when ready.</p>
           <a
             href="#admin-policy-create"
-            className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shrink-0"
+            className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] shrink-0"
           >
             Create
           </a>
         </div>
 
-        <section id="admin-policy-create" className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 scroll-mt-24">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Create</h2>
+        <section id="admin-policy-create" className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5 scroll-mt-24">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Create</h2>
           <form onSubmit={handleCreate} className="space-y-3">
             <div className="flex flex-wrap gap-3">
               <select
                 value={form.doc_type}
                 onChange={(e) => setForm((f) => ({ ...f, doc_type: e.target.value }))}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)]"
               >
                 {DOC_TYPES.map((t) => (
                   <option key={t} value={t}>
@@ -175,14 +190,14 @@ export default function AdminPoliciesPage() {
                 placeholder="Version (e.g. 2025-01)"
                 value={form.version}
                 onChange={(e) => setForm((f) => ({ ...f, version: e.target.value }))}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 w-32"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] w-32"
               />
               <input
                 type="text"
                 placeholder="Title"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 flex-1 min-w-[200px]"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] flex-1 min-w-[200px]"
               />
             </div>
             <div className="flex flex-wrap gap-3">
@@ -191,14 +206,14 @@ export default function AdminPoliciesPage() {
                 placeholder="Applies to role (victim/advocate/admin or leave empty)"
                 value={form.applies_to_role}
                 onChange={(e) => setForm((f) => ({ ...f, applies_to_role: e.target.value }))}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 w-56"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] w-56"
               />
               <input
                 type="text"
                 placeholder="Workflow key (e.g. compensation_intake)"
                 value={form.workflow_key}
                 onChange={(e) => setForm((f) => ({ ...f, workflow_key: e.target.value }))}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 w-56"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] w-56"
               />
             </div>
             <textarea
@@ -206,26 +221,26 @@ export default function AdminPoliciesPage() {
               value={form.content}
               onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
               rows={6}
-              className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)]"
             />
             <button
               type="submit"
               disabled={creating || !form.version.trim() || !form.title.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+              className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {creating ? "Creating…" : "Create"}
             </button>
           </form>
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">All versions</h2>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">All versions</h2>
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : policies.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">No policies available.</p>
-              <p className="mt-2 text-xs text-slate-500">
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-slate)]">No policies available.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
                 Create a policy version above to store terms, privacy, or disclaimers for the
                 platform.
               </p>
@@ -235,11 +250,11 @@ export default function AdminPoliciesPage() {
               {policies.map((p) => (
                 <li
                   key={p.id}
-                  className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0"
+                  className="flex items-center justify-between py-2 border-b border-[var(--color-border-light)] last:border-0"
                 >
                   <div>
-                    <span className="font-medium text-slate-100">{p.title}</span>
-                    <span className="ml-2 text-xs text-slate-400">
+                    <span className="font-medium text-[var(--color-navy)]">{p.title}</span>
+                    <span className="ml-2 text-xs text-[var(--color-muted)]">
                       {p.doc_type} · v{p.version}
                       {p.applies_to_role ? ` · ${p.applies_to_role}` : ""}
                       {p.workflow_key ? ` · ${p.workflow_key}` : ""}
