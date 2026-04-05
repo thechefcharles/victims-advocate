@@ -70,7 +70,7 @@ function VictimFindOrganizationsContent() {
             caseId ? (
               <>
                 {t("victimDashboard.findOrganizationsPage.subtitle")}{" "}
-                <span className="block mt-2 text-slate-400">
+                <span className="block mt-2 text-[var(--color-muted)]">
                   {t("victimDashboard.caseOrgManage.intro")}
                 </span>
               </>
@@ -85,12 +85,12 @@ function VictimFindOrganizationsContent() {
           className={APP_CARD}
         />
         {caseId ? (
-          <div className={`${APP_CARD} text-sm text-slate-400`}>
+          <div className={`${APP_CARD} text-sm text-[var(--color-muted)]`}>
             <p>
               {t("victimDashboard.caseOrgManage.changeOrganization")} —{" "}
               <Link
                 href={victimCasePaths.organization(caseId)}
-                className="text-blue-400 hover:text-blue-300 underline"
+                className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
               >
                 {t("victimDashboard.caseOrgManage.title")}
               </Link>
@@ -111,7 +111,7 @@ export default function VictimFindOrganizationsPage() {
     <Suspense
       fallback={
         <main className={APP_PAGE_MAIN}>
-          <div className="max-w-3xl mx-auto text-slate-400 text-sm">Loading…</div>
+          <div className="max-w-3xl mx-auto text-[var(--color-muted)] text-sm">Loading…</div>
         </main>
       }
     >

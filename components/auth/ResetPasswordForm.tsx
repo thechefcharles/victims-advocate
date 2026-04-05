@@ -67,9 +67,9 @@ export default function ResetPasswordForm() {
 
   if (hasRecoverySession === null) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
         <div className="max-w-md w-full px-6">
-          <p className="text-sm text-slate-400">{t("common.loading")}</p>
+          <p className="text-sm text-[var(--color-muted)]">{t("common.loading")}</p>
         </div>
       </main>
     );
@@ -77,17 +77,17 @@ export default function ResetPasswordForm() {
 
   if (hasRecoverySession === false) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
         <div className="max-w-md w-full px-6 space-y-4 text-center">
-          <h1 className="text-xl font-semibold text-slate-100">
+          <h1 className="text-xl font-semibold text-[var(--color-navy)]">
             {t("resetPassword.invalidOrExpired")}
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--color-muted)]">
             {t("resetPassword.invalidOrExpiredHint")}
           </p>
           <Link
             href="/forgot-password"
-            className="inline-block rounded-lg border border-slate-600 bg-slate-900 px-4 py-2 text-sm hover:bg-slate-800"
+            className="inline-block rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm hover:bg-[var(--color-light-sand)]"
           >
             {t("resetPassword.requestNewLink")}
           </Link>
@@ -98,12 +98,12 @@ export default function ResetPasswordForm() {
 
   if (success) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
         <div className="max-w-md w-full px-6 space-y-4 text-center">
           <h1 className="text-xl font-semibold text-emerald-400">
             {t("resetPassword.successTitle")}
           </h1>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--color-muted)]">
             {t("resetPassword.successHint")}
           </p>
         </div>
@@ -112,18 +112,18 @@ export default function ResetPasswordForm() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
       <form
         onSubmit={onSubmit}
-        className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
+        className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6"
       >
-        <h1 className="text-2xl font-semibold text-slate-100">
+        <h1 className="text-2xl font-semibold text-[var(--color-navy)]">
           {t("resetPassword.title")}
         </h1>
-        <p className="text-sm text-slate-400">{t("resetPassword.subtitle")}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("resetPassword.subtitle")}</p>
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]"
           placeholder={t("resetPassword.newPasswordPlaceholder")}
           type="password"
           value={password}
@@ -133,7 +133,7 @@ export default function ResetPasswordForm() {
         />
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]"
           placeholder={t("resetPassword.confirmPasswordPlaceholder")}
           type="password"
           value={confirmPassword}
@@ -145,7 +145,7 @@ export default function ResetPasswordForm() {
         {err && <div className="text-sm text-red-400">{err}</div>}
 
         <button
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           type="submit"
           disabled={loading || !password || !confirmPassword || !validatePassword(password).valid}
         >
@@ -153,7 +153,7 @@ export default function ResetPasswordForm() {
         </button>
 
         <p className="text-center">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-slate-200">
+          <Link href="/login" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
             {t("resetPassword.backToLogin")}
           </Link>
         </p>

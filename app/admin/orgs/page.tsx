@@ -299,7 +299,7 @@ export default function AdminOrgsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine="Admin → Organizations"
@@ -308,22 +308,22 @@ export default function AdminOrgsPage() {
           subtitle="Operational control surface: operational status, lifecycle, public visibility, profile stage, ownership, activation, and sensitive edits — without changing matching rules yet."
           rightActions={
             <>
-              <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/cases" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Cases
               </Link>
-              <Link href="/admin/ecosystem" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/ecosystem" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Ecosystem
               </Link>
-              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/audit" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Audit
               </Link>
               <Link
                 href="/admin/grading"
-                className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
+                className="inline-flex items-center rounded-md bg-[var(--color-teal-deep)] px-2.5 py-1 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
               >
                 Review grading
               </Link>
-              <Link href="/admin/designations" className="text-sm text-slate-400 hover:text-white">
+              <Link href="/admin/designations" className="text-sm text-[var(--color-muted)] hover:text-white">
                 Review designation
               </Link>
               <Link href="/admin/designation-reviews" className="text-sm text-amber-400 hover:text-amber-200">
@@ -334,7 +334,7 @@ export default function AdminOrgsPage() {
         />
 
         {!loading && (
-          <div className="rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-3 text-xs text-slate-400 space-y-1">
+          <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-3 text-xs text-[var(--color-muted)] space-y-1">
             {(() => {
               const qClaims = ownershipClaims.length;
               const qJoins = repJoinRequests.length;
@@ -344,18 +344,18 @@ export default function AdminOrgsPage() {
               if (total === 0) {
                 return (
                   <p>
-                    <span className="text-slate-500">Queues:</span> no pending ownership claims, join
+                    <span className="text-[var(--color-muted)]">Queues:</span> no pending ownership claims, join
                     requests, activations, or proposals.
                   </p>
                 );
               }
               return (
                 <p>
-                  <span className="text-slate-500">Queues:</span>{" "}
-                  <span className="text-slate-300">{qClaims} ownership</span> ·{" "}
-                  <span className="text-slate-300">{qJoins} join</span> ·{" "}
-                  <span className="text-slate-300">{qAct} activation</span> ·{" "}
-                  <span className="text-slate-300">{qProp} proposals</span>
+                  <span className="text-[var(--color-muted)]">Queues:</span>{" "}
+                  <span className="text-[var(--color-slate)]">{qClaims} ownership</span> ·{" "}
+                  <span className="text-[var(--color-slate)]">{qJoins} join</span> ·{" "}
+                  <span className="text-[var(--color-slate)]">{qAct} activation</span> ·{" "}
+                  <span className="text-[var(--color-slate)]">{qProp} proposals</span>
                 </p>
               );
             })()}
@@ -368,7 +368,7 @@ export default function AdminOrgsPage() {
                 .
               </p>
             ) : (
-              <p className="text-slate-500">No unresolved sensitive-change flags on the list right now.</p>
+              <p className="text-[var(--color-muted)]">No unresolved sensitive-change flags on the list right now.</p>
             )}
           </div>
         )}
@@ -378,7 +378,7 @@ export default function AdminOrgsPage() {
             Pending organization ownership claims ({ownershipClaims.length})
           </h2>
           {ownershipClaims.length === 0 ? (
-            <p className="text-xs text-slate-500 py-1">No pending ownership claims.</p>
+            <p className="text-xs text-[var(--color-muted)] py-1">No pending ownership claims.</p>
           ) : (
             <>
             <p className="text-xs text-violet-200/80 mb-4">
@@ -390,16 +390,16 @@ export default function AdminOrgsPage() {
               {ownershipClaims.map((r) => (
                 <li
                   key={r.id}
-                  className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-4 space-y-2"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium text-slate-100">{r.organization_name}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="font-medium text-[var(--color-navy)]">{r.organization_name}</p>
+                      <p className="text-xs text-[var(--color-muted)]">
                         Requester: {r.requester_display_name}
                         {r.requester_email ? ` · ${r.requester_email}` : ""}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
+                      <p className="text-[11px] text-[var(--color-muted)] mt-1">
                         Submitted {new Date(r.submitted_at).toLocaleString()}
                       </p>
                     </div>
@@ -456,7 +456,7 @@ export default function AdminOrgsPage() {
                           }
                         }}
                         disabled={actingId !== null}
-                        className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                       >
                         {actingId === r.id ? "…" : "Reject"}
                       </button>
@@ -474,7 +474,7 @@ export default function AdminOrgsPage() {
             Pending requests to join an organization ({repJoinRequests.length})
           </h2>
           {repJoinRequests.length === 0 ? (
-            <p className="text-xs text-slate-500 py-1">No pending join requests.</p>
+            <p className="text-xs text-[var(--color-muted)] py-1">No pending join requests.</p>
           ) : (
             <>
               <p className="text-xs text-cyan-200/80 mb-4">
@@ -487,16 +487,16 @@ export default function AdminOrgsPage() {
                 {repJoinRequests.map((r) => (
                 <li
                   key={r.id}
-                  className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-4 space-y-2"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium text-slate-100">{r.organization_name}</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="font-medium text-[var(--color-navy)]">{r.organization_name}</p>
+                      <p className="text-xs text-[var(--color-muted)]">
                         Requester: {r.requester_display_name}
                         {r.requester_email ? ` · ${r.requester_email}` : ""}
                       </p>
-                      <p className="text-[11px] text-slate-500 mt-1">
+                      <p className="text-[11px] text-[var(--color-muted)] mt-1">
                         Submitted {new Date(r.created_at).toLocaleString()}
                       </p>
                     </div>
@@ -549,7 +549,7 @@ export default function AdminOrgsPage() {
                           }
                         }}
                         disabled={actingId !== null}
-                        className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                        className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                       >
                         {actingId === r.id ? "…" : "Decline"}
                       </button>
@@ -568,7 +568,7 @@ export default function AdminOrgsPage() {
             {orgs.filter((o) => o.public_profile_status === "pending_review").length})
           </h2>
           {orgs.filter((o) => o.public_profile_status === "pending_review").length === 0 ? (
-            <p className="text-xs text-slate-500 py-1">There are no organizations pending activation.</p>
+            <p className="text-xs text-[var(--color-muted)] py-1">There are no organizations pending activation.</p>
           ) : (
             <>
               <p className="text-xs text-teal-200/80 mb-4">
@@ -582,16 +582,16 @@ export default function AdminOrgsPage() {
                   .map((o) => (
                   <li
                     key={o.id}
-                    className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-4 space-y-2"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-slate-100">{o.name}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="font-medium text-[var(--color-navy)]">{o.name}</p>
+                        <p className="text-xs text-[var(--color-muted)]">
                           Owners (active): {o.org_owner_count ?? 0} · Lifecycle:{" "}
                           {o.lifecycle_status ?? "—"} · Stage: {o.profile_stage ?? "—"}
                         </p>
-                        <p className="text-[11px] text-slate-500 mt-1">
+                        <p className="text-[11px] text-[var(--color-muted)] mt-1">
                           Submitted{" "}
                           {o.activation_submitted_at
                             ? new Date(o.activation_submitted_at).toLocaleString()
@@ -651,7 +651,7 @@ export default function AdminOrgsPage() {
                             }
                           }}
                           disabled={actingId !== null}
-                          className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                         >
                           {actingId === o.id ? "…" : "Reject / Request Changes"}
                         </button>
@@ -669,7 +669,7 @@ export default function AdminOrgsPage() {
             Pending organization requests ({proposals.filter((p) => p.status === "pending").length})
           </h2>
           {proposals.filter((p) => p.status === "pending").length === 0 ? (
-            <p className="text-xs text-slate-500 py-1">No pending organization proposals.</p>
+            <p className="text-xs text-[var(--color-muted)] py-1">No pending organization proposals.</p>
           ) : (
             <>
               <p className="text-xs text-amber-200/80 mb-4">
@@ -684,18 +684,18 @@ export default function AdminOrgsPage() {
                   .map((p) => (
                   <li
                     key={p.id}
-                    className="rounded-lg border border-slate-700 bg-slate-950/60 p-4 space-y-2"
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-4 space-y-2"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
-                        <p className="font-medium text-slate-100">{p.name}</p>
-                        <p className="text-xs text-slate-400">
+                        <p className="font-medium text-[var(--color-navy)]">{p.name}</p>
+                        <p className="text-xs text-[var(--color-muted)]">
                           {p.type}
                           {p.program_type ? ` · ${p.program_type}` : ""}
                         </p>
-                        {p.address && <p className="text-xs text-slate-500 mt-1">{p.address}</p>}
+                        {p.address && <p className="text-xs text-[var(--color-muted)] mt-1">{p.address}</p>}
                         {(p.phone || p.website) && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-[var(--color-muted)]">
                             {p.phone}
                             {p.phone && p.website && " · "}
                             {p.website && (
@@ -711,7 +711,7 @@ export default function AdminOrgsPage() {
                           </p>
                         )}
                         {p.created_by_email && (
-                          <p className="text-xs text-slate-500 mt-1">Submitted by {p.created_by_email}</p>
+                          <p className="text-xs text-[var(--color-muted)] mt-1">Submitted by {p.created_by_email}</p>
                         )}
                       </div>
                       <div className="flex gap-2">
@@ -763,7 +763,7 @@ export default function AdminOrgsPage() {
                             }
                           }}
                           disabled={actingId !== null}
-                          className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-50"
+                          className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                         >
                           {actingId === p.id ? "…" : "Decline"}
                         </button>
@@ -776,25 +776,25 @@ export default function AdminOrgsPage() {
           )}
         </section>
 
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3">
-          <p className="text-sm text-slate-300 flex-1 min-w-[200px]">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--color-border)] bg-white px-4 py-3">
+          <p className="text-sm text-[var(--color-slate)] flex-1 min-w-[200px]">
             Run internal <strong className="text-white">CBO quality grading</strong> per org (scores stay
             admin-only). Then use <strong className="text-white">Review designation</strong> for tiers.
           </p>
           <Link
             href="/admin/grading"
-            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 shadow-sm"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] shadow-sm"
           >
             Open grading
           </Link>
         </div>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-1">Create organization (admin)</h2>
-          <p className="text-xs text-slate-500 mb-3">
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-1">Create organization (admin)</h2>
+          <p className="text-xs text-[var(--color-muted)] mb-3">
             Creates an active organization record only—no Organization Owner is added automatically. Use org
             invites or membership tools to assign an owner, or expect{" "}
-            <span className="text-slate-400">No Organization Owner Assigned</span> in the list below until you
+            <span className="text-[var(--color-muted)]">No Organization Owner Assigned</span> in the list below until you
             do.
           </p>
           <form onSubmit={handleCreate} className="flex flex-wrap gap-3">
@@ -803,14 +803,14 @@ export default function AdminOrgsPage() {
               placeholder="Organization name"
               value={createName}
               onChange={(e) => setCreateName(e.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 w-64"
+              className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] w-64"
             />
             <select
               value={createType}
               onChange={(e) =>
                 setCreateType(e.target.value as "nonprofit" | "hospital" | "gov" | "other")
               }
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+              className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)]"
             >
               <option value="nonprofit">Nonprofit</option>
               <option value="hospital">Hospital</option>
@@ -820,7 +820,7 @@ export default function AdminOrgsPage() {
             <button
               type="submit"
               disabled={submitting || !createName.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+              className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create Organization"}
             </button>
@@ -833,49 +833,49 @@ export default function AdminOrgsPage() {
           </div>
         )}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5 space-y-4">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-sm font-semibold text-slate-200">All organizations</h2>
-            <p className="text-[11px] text-slate-500">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">All organizations</h2>
+            <p className="text-[11px] text-[var(--color-muted)]">
               Product-visible in matching/discovery: {matchingCount} of {orgs.length}
             </p>
           </div>
 
-          <p className="text-xs text-slate-500 border-l-2 border-slate-700 pl-3">
+          <p className="text-xs text-[var(--color-muted)] border-l-2 border-[var(--color-border)] pl-3">
             By default, this list shows organizations that meet the same readiness bar as matching (active
             org, active profile, profile stage searchable or enriched). Turn on the internal toggle below to
             include incomplete or unready profiles.
           </p>
 
-          <label className="flex flex-wrap items-center gap-2 text-xs text-slate-400 cursor-pointer">
+          <label className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)] cursor-pointer">
             <input
               type="checkbox"
               checked={showUnreadyInternal}
               onChange={(e) => setShowUnreadyInternal(e.target.checked)}
-              className="rounded border-slate-600"
+              className="rounded border-[var(--color-border)]"
             />
             <span>
               Show incomplete / unready organizations{" "}
-              <span className="text-slate-500">(internal — includes profile stage “created”)</span>
+              <span className="text-[var(--color-muted)]">(internal — includes profile stage “created”)</span>
             </span>
           </label>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="space-y-1 text-xs">
-              <span className="text-slate-500">Search name, service, or language</span>
+              <span className="text-[var(--color-muted)]">Search name, service, or language</span>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="e.g. compensation, es"
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2 text-sm text-[var(--color-navy)]"
               />
             </label>
             <label className="space-y-1 text-xs">
-              <span className="text-slate-500">Org status</span>
+              <span className="text-[var(--color-muted)]">Org status</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2 text-sm text-[var(--color-navy)]"
               >
                 <option value="all">All</option>
                 <option value="active">Active</option>
@@ -883,11 +883,11 @@ export default function AdminOrgsPage() {
               </select>
             </label>
             <label className="space-y-1 text-xs">
-              <span className="text-slate-500">Profile stage</span>
+              <span className="text-[var(--color-muted)]">Profile stage</span>
               <select
                 value={stageFilter}
                 onChange={(e) => setStageFilter(e.target.value as typeof stageFilter)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2 text-sm text-[var(--color-navy)]"
               >
                 <option value="all">All</option>
                 <option value="created">Created</option>
@@ -896,11 +896,11 @@ export default function AdminOrgsPage() {
               </select>
             </label>
             <label className="space-y-1 text-xs">
-              <span className="text-slate-500">Designation</span>
+              <span className="text-[var(--color-muted)]">Designation</span>
               <select
                 value={designationFilter}
                 onChange={(e) => setDesignationFilter(e.target.value as typeof designationFilter)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2 text-sm text-[var(--color-navy)]"
               >
                 <option value="all">All</option>
                 <option value="has">Has designation</option>
@@ -909,27 +909,27 @@ export default function AdminOrgsPage() {
               </select>
             </label>
             <label className="space-y-1 text-xs">
-              <span className="text-slate-500">Accepting clients</span>
+              <span className="text-[var(--color-muted)]">Accepting clients</span>
               <select
                 value={acceptingFilter}
                 onChange={(e) => setAcceptingFilter(e.target.value as typeof acceptingFilter)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2 text-sm text-[var(--color-navy)]"
               >
                 <option value="all">All</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
               </select>
             </label>
-            <label className="flex flex-wrap items-center gap-2 text-xs text-slate-400 cursor-pointer sm:col-span-2 lg:col-span-3">
+            <label className="flex flex-wrap items-center gap-2 text-xs text-[var(--color-muted)] cursor-pointer sm:col-span-2 lg:col-span-3">
               <input
                 type="checkbox"
                 checked={followUpOnly}
                 onChange={(e) => setFollowUpOnly(e.target.checked)}
-                className="rounded border-slate-600"
+                className="rounded border-[var(--color-border)]"
               />
               <span>
                 Follow-up only{" "}
-                <span className="text-slate-500">
+                <span className="text-[var(--color-muted)]">
                   (no owner, pending claim, pending activation, or sensitive profile flag)
                 </span>
               </span>
@@ -937,29 +937,29 @@ export default function AdminOrgsPage() {
           </div>
 
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : orgs.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">No organizations yet.</p>
-              <p className="mt-2 text-xs text-slate-500">
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-slate)]">No organizations yet.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
                 Create an organization above to onboard a partner and assign advocates.
               </p>
             </div>
           ) : filteredOrgs.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">No organizations match these filters.</p>
-              <p className="mt-2 text-xs text-slate-500">
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-slate)]">No organizations match these filters.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
                 Try clearing search text, setting filters to “All,” or enabling “Show incomplete / unready” if
                 you expect organizations still in draft.
               </p>
               {followUpOnly ? (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--color-muted)]">
                   There are no organizations with follow-up cues (missing owner, pending claim, pending
                   activation, or sensitive profile flag) under the current filters.
                 </p>
               ) : null}
               {!showUnreadyInternal && matchingCount === 0 ? (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--color-muted)]">
                   No organizations are currently ready for matching in this directory. Use the internal
                   toggle to review drafts.
                 </p>
@@ -984,39 +984,39 @@ export default function AdminOrgsPage() {
                 return (
                   <li
                     key={o.id}
-                    className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-2"
+                    className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 space-y-2"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="space-y-1 min-w-0 flex-1">
-                        <p className="font-medium text-slate-100 truncate">{o.name}</p>
-                        <p className="text-[11px] text-slate-500">{o.type}</p>
+                        <p className="font-medium text-[var(--color-navy)] truncate">{o.name}</p>
+                        <p className="text-[11px] text-[var(--color-muted)]">{o.type}</p>
                         <div className="flex flex-wrap gap-1.5 pt-1">
                           <span
-                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            className="text-[10px] rounded border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-1.5 py-0.5 text-[var(--color-slate)]"
                             title={operationalStatusLabel(o.status)}
                           >
                             Op: {o.status}
                           </span>
                           <span
-                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            className="text-[10px] rounded border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-1.5 py-0.5 text-[var(--color-slate)]"
                             title={lifecycleStatusLabel(o.lifecycle_status)}
                           >
                             Life: {o.lifecycle_status ?? "—"}
                           </span>
                           <span
-                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            className="text-[10px] rounded border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-1.5 py-0.5 text-[var(--color-slate)]"
                             title={publicProfileStatusLabel(o.public_profile_status)}
                           >
                             Public: {o.public_profile_status ?? "—"}
                           </span>
                           <span
-                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            className="text-[10px] rounded border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-1.5 py-0.5 text-[var(--color-slate)]"
                             title={profileStageLabel(o.profile_stage)}
                           >
                             Stage: {o.profile_stage ?? "—"}
                           </span>
                           <span
-                            className="text-[10px] rounded border border-slate-700/80 bg-slate-900/50 px-1.5 py-0.5 text-slate-300"
+                            className="text-[10px] rounded border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-1.5 py-0.5 text-[var(--color-slate)]"
                             title="Active org_owner memberships"
                           >
                             Owners: {o.org_owner_count ?? 0}
@@ -1054,18 +1054,18 @@ export default function AdminOrgsPage() {
                                 : ""}
                             </span>
                           ) : (
-                            <span className="text-[10px] rounded-full border border-slate-700 px-2 py-0.5 text-slate-500">
+                            <span className="text-[10px] rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[var(--color-muted)]">
                               No designation yet
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 pt-1">
+                        <p className="text-xs text-[var(--color-muted)] pt-1">
                           Services: {formatServicesPreview(o.service_types)} · Capacity:{" "}
                           {o.capacity_status ?? "—"}
                           {o.accepting_clients === true ? " · accepting" : ""}
                           {o.accepting_clients === false ? " · not accepting" : ""}
                         </p>
-                        <p className="text-[11px] text-slate-500 leading-relaxed border-l border-slate-700 pl-2">
+                        <p className="text-[11px] text-[var(--color-muted)] leading-relaxed border-l border-[var(--color-border)] pl-2">
                           Next: {adminCue}
                         </p>
                       </div>
@@ -1078,27 +1078,27 @@ export default function AdminOrgsPage() {
                         </Link>
                         <Link
                           href={`/admin/designations?org=${o.id}`}
-                          className="text-xs text-slate-400 hover:text-slate-200"
+                          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
                         >
                           Review designation
                         </Link>
                         <Link
                           href={`/admin/grading?org=${o.id}`}
-                          className="text-xs text-slate-400 hover:text-slate-200"
+                          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
                         >
                           Review grading
                         </Link>
                         <Link
                           href={`/admin/grading?org=${o.id}#org-signals-snapshot`}
-                          className="text-xs text-slate-400 hover:text-slate-200"
+                          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)]"
                         >
                           Review signals
                         </Link>
                         <div
-                          className="mt-2 pt-2 border-t border-slate-800 w-full space-y-1"
+                          className="mt-2 pt-2 border-t border-[var(--color-border-light)] w-full space-y-1"
                           aria-label="Admin-only lifecycle"
                         >
-                          <p className="text-[10px] uppercase tracking-wide text-slate-600 text-right">
+                          <p className="text-[10px] uppercase tracking-wide text-[var(--color-slate)] text-right">
                             Admin
                           </p>
                           {canPause ? (
@@ -1106,7 +1106,7 @@ export default function AdminOrgsPage() {
                               type="button"
                               disabled={actingId !== null}
                               onClick={() => void runOrgLifecycle(o.id, "pause")}
-                              className="w-full rounded border border-slate-600 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                              className="w-full rounded border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-slate)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                             >
                               {actingId === `pause:${o.id}` ? "…" : "Pause public profile"}
                             </button>
@@ -1116,7 +1116,7 @@ export default function AdminOrgsPage() {
                               type="button"
                               disabled={actingId !== null}
                               onClick={() => void runOrgLifecycle(o.id, "resume")}
-                              className="w-full rounded border border-slate-600 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                              className="w-full rounded border border-[var(--color-border)] px-2 py-1 text-[11px] text-[var(--color-slate)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
                             >
                               {actingId === `resume:${o.id}` ? "…" : "Resume public profile"}
                             </button>

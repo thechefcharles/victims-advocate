@@ -145,7 +145,7 @@ export default function AdminEcosystemPage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <PageHeader
           contextLine="Admin → Ecosystem"
@@ -162,15 +162,15 @@ export default function AdminEcosystemPage() {
           }
           rightActions={
             <>
-              <Link href="/admin/audit" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/audit" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Audit
               </Link>
-              <Link href="/admin/orgs" className="text-sm text-slate-400 hover:text-slate-200">
+              <Link href="/admin/orgs" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
                 Organizations
               </Link>
               <Link
                 href="/admin/grading"
-                className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
+                className="inline-flex items-center rounded-md bg-[var(--color-teal-deep)] px-2.5 py-1 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
               >
                 Review
               </Link>
@@ -178,7 +178,7 @@ export default function AdminEcosystemPage() {
           }
         />
 
-        <p className="text-xs text-slate-500 border-l-2 border-slate-700 pl-3 py-1 max-w-3xl">
+        <p className="text-xs text-[var(--color-muted)] border-l-2 border-[var(--color-border)] pl-3 py-1 max-w-3xl">
           This is an internal aggregated view. No victim-identifying data is shown.
         </p>
 
@@ -187,24 +187,24 @@ export default function AdminEcosystemPage() {
             {summaryCards.map(([label, val]) => (
               <div
                 key={label}
-                className="rounded-xl border border-slate-800 bg-slate-900/60 p-4"
+                className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-4"
               >
-                <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
-                <p className="text-2xl font-semibold text-slate-100 mt-1">{val}</p>
+                <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">{label}</p>
+                <p className="text-2xl font-semibold text-[var(--color-navy)] mt-1">{val}</p>
               </div>
             ))}
           </section>
         )}
 
-        <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-200">Filters</h2>
+        <section className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Filters</h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 text-xs">
             <label className="space-y-1">
-              <span className="text-slate-500">State</span>
+              <span className="text-[var(--color-muted)]">State</span>
               <select
                 value={state}
                 onChange={(e) => setState(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-warm-white)] px-2 py-1.5 text-[var(--color-charcoal)]"
               >
                 <option value="">All states</option>
                 {US_STATES.map((st) => (
@@ -215,20 +215,20 @@ export default function AdminEcosystemPage() {
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-slate-500">County (optional)</span>
+              <span className="text-[var(--color-muted)]">County (optional)</span>
               <input
                 value={county}
                 onChange={(e) => setCounty(e.target.value)}
                 placeholder="e.g. cook"
-                className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-warm-white)] px-2 py-1.5 text-[var(--color-charcoal)]"
               />
             </label>
             <label className="space-y-1">
-              <span className="text-slate-500">Time window (days)</span>
+              <span className="text-[var(--color-muted)]">Time window (days)</span>
               <select
                 value={timeWindow}
                 onChange={(e) => setTimeWindow(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-warm-white)] px-2 py-1.5 text-[var(--color-charcoal)]"
               >
                 <option value="7">7</option>
                 <option value="30">30</option>
@@ -237,11 +237,11 @@ export default function AdminEcosystemPage() {
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-slate-500">Service type</span>
+              <span className="text-[var(--color-muted)]">Service type</span>
               <select
                 value={serviceType}
                 onChange={(e) => setServiceType(e.target.value)}
-                className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-warm-white)] px-2 py-1.5 text-[var(--color-charcoal)]"
               >
                 <option value="">Any</option>
                 {SERVICE_TYPES.map((t) => (
@@ -252,12 +252,12 @@ export default function AdminEcosystemPage() {
               </select>
             </label>
             <label className="space-y-1">
-              <span className="text-slate-500">Language code</span>
+              <span className="text-[var(--color-muted)]">Language code</span>
               <input
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 placeholder="es, en…"
-                className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-[var(--color-warm-white)] px-2 py-1.5 text-[var(--color-charcoal)]"
               />
             </label>
           </div>
@@ -265,7 +265,7 @@ export default function AdminEcosystemPage() {
             type="button"
             onClick={() => load()}
             disabled={loading}
-            className="text-xs rounded-lg bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-600 disabled:opacity-50"
+            className="text-xs rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           >
             Refresh
           </button>
@@ -277,24 +277,24 @@ export default function AdminEcosystemPage() {
           </p>
         )}
 
-        {loading && !overview && <p className="text-slate-500 text-sm">Loading…</p>}
+        {loading && !overview && <p className="text-[var(--color-muted)] text-sm">Loading…</p>}
 
         {!loading && !err && !overview && (
-          <p className="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3 text-sm text-slate-400">
+          <p className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-3 text-sm text-[var(--color-muted)]">
             No ecosystem data for these filters. Try adjusting filters.
           </p>
         )}
 
         {overview && s && (
           <>
-            <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-              <h2 className="text-sm font-semibold text-slate-200 mb-2">Demand–supply gaps</h2>
-              <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+            <section className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+              <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-2">Demand–supply gaps</h2>
+              <p className="text-[11px] text-[var(--color-muted)] mb-3 leading-relaxed">
                 These are operational hints where demand signals and partner capacity may be misaligned — use
                 them to prioritize outreach or profile follow-up, not to rank organizations.
               </p>
               {gaps.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[var(--color-muted)]">
                   No gap signals for current filters. Try another state, service, or time window if you expect
                   activity.
                 </p>
@@ -308,16 +308,16 @@ export default function AdminEcosystemPage() {
                           ? "border-red-900/60 bg-red-950/20"
                           : g.severity === "medium"
                             ? "border-amber-900/50 bg-amber-950/15"
-                            : "border-slate-700 bg-slate-950/40"
+                            : "border-[var(--color-border)] bg-[var(--color-warm-cream)]/70"
                       }`}
                     >
                       <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-medium text-slate-100">{String(g.title)}</span>
-                        <span className="text-[10px] uppercase text-slate-500">
+                        <span className="font-medium text-[var(--color-navy)]">{String(g.title)}</span>
+                        <span className="text-[10px] uppercase text-[var(--color-muted)]">
                           {String(g.gap_type)} · {String(g.severity)}
                         </span>
                       </div>
-                      <p className="text-slate-400 text-xs leading-relaxed">{String(g.description)}</p>
+                      <p className="text-[var(--color-muted)] text-xs leading-relaxed">{String(g.description)}</p>
                       <p className="text-teal-400/90 text-[11px] mt-2">{String(g.action_hint)}</p>
                     </li>
                   ))}
@@ -337,10 +337,10 @@ export default function AdminEcosystemPage() {
             )}
 
             <section className="grid gap-4 lg:grid-cols-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 lg:col-span-1">
-                <h2 className="text-sm font-semibold text-slate-200 mb-3">Demand (match runs, window)</h2>
-                <p className="text-[10px] text-slate-500 mb-2">Service types referenced in run inputs</p>
-                <ul className="text-xs space-y-1 text-slate-300 max-h-40 overflow-y-auto">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 lg:col-span-1">
+                <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Demand (match runs, window)</h2>
+                <p className="text-[10px] text-[var(--color-muted)] mb-2">Service types referenced in run inputs</p>
+                <ul className="text-xs space-y-1 text-[var(--color-slate)] max-h-40 overflow-y-auto">
                   {Object.entries(
                     (overview.coverage as { demand_service_counts?: Record<string, number> })
                       ?.demand_service_counts || {}
@@ -348,53 +348,53 @@ export default function AdminEcosystemPage() {
                     .sort((a, b) => b[1] - a[1])
                     .slice(0, 12)
                     .map(([k, v]) => (
-                      <li key={k} className="flex justify-between border-b border-slate-800/80 py-1">
+                      <li key={k} className="flex justify-between border-b border-[var(--color-border-light)] py-1">
                         <span>{k.replace(/_/g, " ")}</span>
                         <span>{v}</span>
                       </li>
                     ))}
                 </ul>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <h2 className="text-sm font-semibold text-slate-200 mb-3">Capacity mix</h2>
-                <ul className="text-xs space-y-1 text-slate-300">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Capacity mix</h2>
+                <ul className="text-xs space-y-1 text-[var(--color-slate)]">
                   {Object.entries(cap).map(([k, v]) => (
-                    <li key={k} className="flex justify-between border-b border-slate-800/80 py-1">
+                    <li key={k} className="flex justify-between border-b border-[var(--color-border-light)] py-1">
                       <span>{k}</span>
                       <span>{v}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <h2 className="text-sm font-semibold text-slate-200 mb-3">Designation mix</h2>
-                <ul className="text-xs space-y-1 text-slate-300">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Designation mix</h2>
+                <ul className="text-xs space-y-1 text-[var(--color-slate)]">
                   {Object.entries(des).map(([k, v]) => (
-                    <li key={k} className="flex justify-between border-b border-slate-800/80 py-1">
+                    <li key={k} className="flex justify-between border-b border-[var(--color-border-light)] py-1">
                       <span>{k.replace(/_/g, " ")}</span>
                       <span>{v}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <h2 className="text-sm font-semibold text-slate-200 mb-3">Profile completeness</h2>
-                <ul className="text-xs space-y-1 text-slate-300">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Profile completeness</h2>
+                <ul className="text-xs space-y-1 text-[var(--color-slate)]">
                   {Object.entries(prof).map(([k, v]) => (
-                    <li key={k} className="flex justify-between border-b border-slate-800/80 py-1">
+                    <li key={k} className="flex justify-between border-b border-[var(--color-border-light)] py-1">
                       <span>{k}</span>
                       <span>{v}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <h2 className="text-sm font-semibold text-slate-200 mb-3">Org segments</h2>
-                <ul className="text-xs space-y-1 text-slate-300">
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Org segments</h2>
+                <ul className="text-xs space-y-1 text-[var(--color-slate)]">
                   {(overview.org_segments || []).map((seg) => (
                     <li
                       key={seg.key}
-                      className="flex justify-between border-b border-slate-800/80 py-1"
+                      className="flex justify-between border-b border-[var(--color-border-light)] py-1"
                     >
                       <span>{seg.label}</span>
                       <span>{seg.count}</span>
@@ -404,13 +404,13 @@ export default function AdminEcosystemPage() {
               </div>
             </section>
 
-            <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 overflow-x-auto">
+            <section className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 overflow-x-auto">
               <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-200">
+                  <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">
                     Organizations ({orgTotal} in view)
                   </h2>
-                  <p className="text-[11px] text-slate-500 mt-1 max-w-2xl">
+                  <p className="text-[11px] text-[var(--color-muted)] mt-1 max-w-2xl">
                     Listed partners are active with searchable or enriched profile stages (same bar as
                     matching). Readiness and designation are context — not a scoreboard.
                   </p>
@@ -423,17 +423,17 @@ export default function AdminEcosystemPage() {
                 </Link>
               </div>
               {orgs.length === 0 ? (
-                <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-5 text-sm text-slate-400">
-                  <p className="font-medium text-slate-300">No organizations in this view.</p>
-                  <p className="mt-2 text-xs text-slate-500">
+                <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-5 text-sm text-[var(--color-muted)]">
+                  <p className="font-medium text-[var(--color-slate)]">No organizations in this view.</p>
+                  <p className="mt-2 text-xs text-[var(--color-muted)]">
                     No active, searchable organizations match the current filters. Try clearing state,
                     service, or language filters, or confirm partners have completed profile requirements.
                   </p>
                 </div>
               ) : (
-                <table className="w-full text-left text-[11px] text-slate-300 min-w-[960px]">
+                <table className="w-full text-left text-[11px] text-[var(--color-slate)] min-w-[960px]">
                   <thead>
-                    <tr className="border-b border-slate-700 text-slate-500">
+                    <tr className="border-b border-[var(--color-border)] text-[var(--color-muted)]">
                       <th className="py-2 pr-2">Name</th>
                       <th className="py-2 pr-2">Stage</th>
                       <th className="py-2 pr-2">Profile</th>
@@ -449,14 +449,14 @@ export default function AdminEcosystemPage() {
                   </thead>
                   <tbody>
                     {orgs.map((o) => (
-                      <tr key={o.organization_id} className="border-b border-slate-800/80 align-top">
-                        <td className="py-2 pr-2 text-slate-200 max-w-[120px]">
+                      <tr key={o.organization_id} className="border-b border-[var(--color-border-light)] align-top">
+                        <td className="py-2 pr-2 text-[var(--color-charcoal)] max-w-[120px]">
                           <span className="font-medium block truncate" title={o.organization_name}>
                             {o.organization_name}
                           </span>
                         </td>
-                        <td className="py-2 pr-2 whitespace-nowrap text-slate-400">{o.profile_stage}</td>
-                        <td className="py-2 pr-2 text-slate-500">{o.profile_status || "—"}</td>
+                        <td className="py-2 pr-2 whitespace-nowrap text-[var(--color-muted)]">{o.profile_stage}</td>
+                        <td className="py-2 pr-2 text-[var(--color-muted)]">{o.profile_status || "—"}</td>
                         <td className="py-2 pr-2 max-w-[100px] truncate">{o.region_label}</td>
                         <td className="py-2 pr-2 max-w-[140px] truncate">
                           {o.service_types?.join(", ") || "—"}
@@ -469,25 +469,25 @@ export default function AdminEcosystemPage() {
                         <td className="py-2 pr-2 text-[11px] max-w-[120px]">
                           {o.designation_tier ? (
                             <div className="space-y-0.5">
-                              <div className="text-slate-300">
+                              <div className="text-[var(--color-slate)]">
                                 {designationTierBadgeText(o.designation_tier) ??
                                   o.designation_tier.replace(/_/g, " ")}
                               </div>
                               {o.designation_confidence ? (
-                                <div className="text-slate-500 text-[10px] leading-tight">
+                                <div className="text-[var(--color-muted)] text-[10px] leading-tight">
                                   {confidenceChipText(o.designation_confidence)}
                                 </div>
                               ) : null}
                             </div>
                           ) : (
-                            <span className="text-slate-500">No designation yet</span>
+                            <span className="text-[var(--color-muted)]">No designation yet</span>
                           )}
                         </td>
-                        <td className="py-2 pr-2 text-slate-400">{o.profile_completeness}</td>
-                        <td className="py-2 pr-2 max-w-[200px] text-slate-500 leading-snug">
+                        <td className="py-2 pr-2 text-[var(--color-muted)]">{o.profile_completeness}</td>
+                        <td className="py-2 pr-2 max-w-[200px] text-[var(--color-muted)] leading-snug">
                           {o.internal_followup_cue}
                         </td>
-                        <td className="py-2 pr-2 text-right text-slate-500 whitespace-nowrap">
+                        <td className="py-2 pr-2 text-right text-[var(--color-muted)] whitespace-nowrap">
                           R{o.routing_runs_in_window} C{o.completeness_runs_in_window} M
                           {o.messages_sent_in_window}
                         </td>
@@ -501,19 +501,19 @@ export default function AdminEcosystemPage() {
                             </Link>
                             <Link
                               href={`/admin/designations?org=${o.organization_id}`}
-                              className="text-slate-500 hover:text-slate-300"
+                              className="text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                             >
                               Review designation
                             </Link>
                             <Link
                               href={`/admin/grading?org=${o.organization_id}`}
-                              className="text-slate-500 hover:text-slate-300"
+                              className="text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                             >
                               Review grading
                             </Link>
                             <Link
                               href={`/admin/grading?org=${o.organization_id}#org-signals-snapshot`}
-                              className="text-slate-500 hover:text-slate-300"
+                              className="text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                             >
                               Review signals
                             </Link>

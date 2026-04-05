@@ -182,13 +182,13 @@ export function CaseMessagesPanel({
   if (!caseId) return null;
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-3">
+    <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-0.5">
-          <h2 className="text-sm font-semibold text-slate-100">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">
             {headingTitle ?? (strictPreviews ? "Messages" : "Secure messages")}
           </h2>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--color-muted)]">
             {headingSubtitle ??
               (strictPreviews
                 ? "Secure messages for this case."
@@ -199,7 +199,7 @@ export function CaseMessagesPanel({
           type="button"
           onClick={loadThread}
           disabled={loading}
-          className="text-[11px] rounded-full bg-slate-700 px-3 py-1.5 font-medium text-white hover:bg-slate-600 disabled:opacity-60"
+          className="text-[11px] rounded-full bg-[var(--color-teal-deep)] px-3 py-1.5 font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-60"
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
@@ -207,9 +207,9 @@ export function CaseMessagesPanel({
 
       {err && <div className="text-[11px] text-red-300">{err}</div>}
 
-      <div className="rounded-xl border border-slate-700 bg-slate-900 p-3 max-h-64 overflow-y-auto space-y-3">
+      <div className="rounded-xl border border-[var(--color-border)] bg-white p-3 max-h-64 overflow-y-auto space-y-3">
         {messages.length === 0 ? (
-          <div className="text-[11px] text-slate-500">
+          <div className="text-[11px] text-[var(--color-muted)]">
             {emptyStateText ??
               "No messages yet. You can send the first message from this case."}
           </div>
@@ -217,15 +217,15 @@ export function CaseMessagesPanel({
           messages.map((m) => (
             <div key={m.id} className="text-xs">
               <div className="flex items-baseline gap-2">
-                <span className="text-[11px] font-semibold text-slate-200">
+                <span className="text-[11px] font-semibold text-[var(--color-charcoal)]">
                   {m.sender_role === "victim" ? "Victim" : "Advocate"}
                 </span>
-                <span className="text-[10px] text-slate-500">{formatTime(m.created_at)}</span>
+                <span className="text-[10px] text-[var(--color-muted)]">{formatTime(m.created_at)}</span>
               </div>
               {m.status === "deleted" ? (
-                <div className="text-[11px] text-slate-500 italic">Message deleted</div>
+                <div className="text-[11px] text-[var(--color-muted)] italic">Message deleted</div>
               ) : (
-                <div className="text-[11px] text-slate-100 whitespace-pre-wrap">
+                <div className="text-[11px] text-[var(--color-navy)] whitespace-pre-wrap">
                   {m.message_text}
                 </div>
               )}
@@ -235,7 +235,7 @@ export function CaseMessagesPanel({
       </div>
 
       {canSendMessages === false ? (
-        <p className="text-[11px] text-slate-500 border border-slate-800 rounded-lg px-3 py-2 bg-slate-900/50">
+        <p className="text-[11px] text-[var(--color-muted)] border border-[var(--color-border-light)] rounded-lg px-3 py-2 bg-[var(--color-warm-cream)]/80">
           View only — you can read this thread but do not have permission to send messages on this case.
         </p>
       ) : canSendMessages === true ? (
@@ -245,19 +245,19 @@ export function CaseMessagesPanel({
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Write a message…"
             rows={2}
-            className="flex-1 rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/60 focus:border-blue-500/60"
+            className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]/60 focus:border-[var(--color-teal)]/60"
           />
           <button
             type="button"
             onClick={send}
             disabled={loading || !draft.trim()}
-            className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+            className="rounded-xl bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-60"
           >
             Send
           </button>
         </div>
       ) : (
-        <p className="text-[11px] text-slate-500">Loading message permissions…</p>
+        <p className="text-[11px] text-[var(--color-muted)]">Loading message permissions…</p>
       )}
 
     </section>

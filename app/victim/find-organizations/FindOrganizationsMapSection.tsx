@@ -19,7 +19,7 @@ const OrganizationsMap = dynamic(
 
 function MapSkeleton() {
   return (
-    <div className="h-[min(420px,55vh)] min-h-[280px] w-full animate-pulse rounded-xl border border-slate-700 bg-slate-800/80" />
+    <div className="h-[min(420px,55vh)] min-h-[280px] w-full animate-pulse rounded-xl border border-[var(--color-border)] bg-[var(--color-light-sand)]/85" />
   );
 }
 
@@ -292,7 +292,7 @@ export function FindOrganizationsMapSection({
             setRaw(null);
             setRetryKey((k) => k + 1);
           }}
-          className="rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700"
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-teal-deep)]"
         >
           {copy.tryAgain}
         </button>
@@ -307,22 +307,22 @@ export function FindOrganizationsMapSection({
   if (raw.length === 0) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-slate-300 leading-relaxed">{copy.mapIntro}</p>
+        <p className="text-sm text-[var(--color-slate)] leading-relaxed">{copy.mapIntro}</p>
         <div
-          className="rounded-xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm text-slate-300"
+          className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-3 text-sm text-[var(--color-slate)]"
           role="status"
         >
           {copy.noOrgs}
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed">{copy.privacyNote}</p>
+        <p className="text-xs text-[var(--color-muted)] leading-relaxed">{copy.privacyNote}</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-slate-300 leading-relaxed">{copy.mapIntro}</p>
-      <p className="text-xs text-slate-500 leading-relaxed">{copy.privacyNote}</p>
+      <p className="text-sm text-[var(--color-slate)] leading-relaxed">{copy.mapIntro}</p>
+      <p className="text-xs text-[var(--color-muted)] leading-relaxed">{copy.privacyNote}</p>
 
       {!usePresetLocation &&
       (geoStatus === "idle" || geoStatus === "denied" || geoStatus === "error") ? (
@@ -330,7 +330,7 @@ export function FindOrganizationsMapSection({
           <button
             type="button"
             onClick={requestLocation}
-            className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-950/30 hover:bg-blue-500"
+            className="inline-flex items-center justify-center rounded-xl bg-[var(--color-teal-deep)] px-5 py-3 text-sm font-semibold text-white shadow-md shadow-blue-950/30 hover:bg-[var(--color-teal)]"
           >
             {geoStatus === "error" ? copy.tryAgain : copy.shareLocation}
           </button>
@@ -345,7 +345,7 @@ export function FindOrganizationsMapSection({
 
       {!usePresetLocation && geoStatus === "requesting" ? (
         <div className="space-y-2">
-          <p className="text-sm text-slate-400">{copy.sharing}</p>
+          <p className="text-sm text-[var(--color-muted)]">{copy.sharing}</p>
           <MapSkeleton />
         </div>
       ) : null}
@@ -364,31 +364,31 @@ export function FindOrganizationsMapSection({
             {sorted.map((o) => (
               <li
                 key={o.id}
-                className="rounded-lg border border-slate-700 bg-slate-900/80 px-3 py-2 text-slate-200"
+                className="rounded-lg border border-[var(--color-border)] bg-white/92 px-3 py-2 text-[var(--color-charcoal)]"
               >
                 <div className="font-medium text-white">{o.name}</div>
                 {o.program_type ? (
-                  <div className="mt-0.5 text-xs text-slate-400">{o.program_type}</div>
+                  <div className="mt-0.5 text-xs text-[var(--color-muted)]">{o.program_type}</div>
                 ) : null}
-                <div className="mt-1 text-xs text-slate-400">
+                <div className="mt-1 text-xs text-[var(--color-muted)]">
                   {o.distanceMiles.toFixed(1)} {copy.milesAway}
                   {o.approximate ? ` · ${copy.approximateNote}` : ""}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">{o.region_label}</div>
+                <div className="mt-1 text-xs text-[var(--color-muted)]">{o.region_label}</div>
                 {o.address ? (
-                  <div className="mt-1 text-xs text-slate-400 leading-snug">{o.address}</div>
+                  <div className="mt-1 text-xs text-[var(--color-muted)] leading-snug">{o.address}</div>
                 ) : null}
                 {o.phone ? (
                   <div className="mt-1 text-xs">
                     {o.phone.replace(/\D/g, "").length >= 7 ? (
                       <a
                         href={`tel:${o.phone.replace(/[^\d+]/g, "")}`}
-                        className="text-blue-300 hover:underline"
+                        className="text-[var(--color-teal)] hover:underline"
                       >
                         {o.phone}
                       </a>
                     ) : (
-                      <span className="text-slate-400">{o.phone}</span>
+                      <span className="text-[var(--color-muted)]">{o.phone}</span>
                     )}
                   </div>
                 ) : null}
@@ -398,7 +398,7 @@ export function FindOrganizationsMapSection({
                       href={safeHttpUrl(o.website)!}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-300 hover:underline"
+                      className="text-[var(--color-teal)] hover:underline"
                     >
                       {o.website!.replace(/^https?:\/\//i, "")}
                     </a>
@@ -406,16 +406,16 @@ export function FindOrganizationsMapSection({
                 ) : null}
                 <div className="mt-1 text-xs">
                   {o.external ? (
-                    <span className="text-slate-500">Directory listing</span>
+                    <span className="text-[var(--color-muted)]">Directory listing</span>
                   ) : o.accepting_clients ? (
                     <span className="text-emerald-400/90">{copy.accepting}</span>
                   ) : (
-                    <span className="text-slate-500">{copy.notAccepting}</span>
+                    <span className="text-[var(--color-muted)]">{copy.notAccepting}</span>
                   )}
                   {!o.external ? (
                     <>
-                      <span className="text-slate-600"> · </span>
-                      <span className="text-slate-500">
+                      <span className="text-[var(--color-slate)]"> · </span>
+                      <span className="text-[var(--color-muted)]">
                         {copy.capacity}: {o.capacity_status}
                       </span>
                     </>
@@ -425,20 +425,20 @@ export function FindOrganizationsMapSection({
                   <button
                     type="button"
                     onClick={() => setLearnMoreOrg(o)}
-                    className="rounded-lg border border-slate-600 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                    className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
                   >
                     {copy.learnMore}
                   </button>
                   {!o.external ? (
                     <Link
                       href={ROUTES.victimOrganization(o.id)}
-                      className="inline-flex items-center justify-center rounded-lg border border-slate-500 bg-slate-800/90 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--color-muted)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
                     >
                       {copy.organizationProfile}
                     </Link>
                   ) : (
                     <span
-                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      className="inline-flex items-center rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-muted)] cursor-not-allowed"
                       title={copy.profileUnavailableExternal}
                     >
                       {copy.organizationProfile}
@@ -456,7 +456,7 @@ export function FindOrganizationsMapSection({
                     </Link>
                   ) : (
                     <span
-                      className="inline-flex items-center rounded-lg border border-slate-700 px-3 py-1.5 text-[11px] font-semibold text-slate-500 cursor-not-allowed"
+                      className="inline-flex items-center rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-muted)] cursor-not-allowed"
                       title={copy.connectUnavailableExternal}
                     >
                       {copy.connectWithOrg}

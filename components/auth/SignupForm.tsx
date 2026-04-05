@@ -101,25 +101,25 @@ export default function SignupForm() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-10">
       <form
         onSubmit={onSubmit}
-        className="max-w-md mx-auto rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4"
+        className="max-w-md mx-auto rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 space-y-4"
       >
         <header className="space-y-1">
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">
             Victim account
           </p>
           <h1 className="text-2xl font-semibold">Create your account</h1>
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-[var(--color-muted)]">
             This account is for victims starting applications.
           </p>
         </header>
 
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">Email</span>
+          <span className="text-[11px] text-[var(--color-muted)]">Email</span>
           <input
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -129,9 +129,9 @@ export default function SignupForm() {
         </label>
 
         <label className="block space-y-1">
-          <span className="text-[11px] text-slate-400">Password</span>
+          <span className="text-[11px] text-[var(--color-muted)]">Password</span>
           <input
-            className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-xs text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400"
             placeholder="At least 12 characters; 3 of: lowercase, uppercase, number, symbol"
             type="password"
             value={password}
@@ -147,8 +147,8 @@ export default function SignupForm() {
           )}
         </label>
 
-        <fieldset className="space-y-3 rounded-lg border border-slate-700 bg-slate-950/40 p-3">
-          <legend className="text-[11px] text-slate-400">
+        <fieldset className="space-y-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/70 p-3">
+          <legend className="text-[11px] text-[var(--color-muted)]">
             Required agreements (must check all to continue)
           </legend>
           <label className="flex items-start gap-3 text-xs cursor-pointer">
@@ -156,7 +156,7 @@ export default function SignupForm() {
               type="checkbox"
               checked={agreeTerms}
               onChange={(e) => setAgreeTerms(e.target.checked)}
-              className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+              className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
             />
             <span>
               I have read and agree to the{" "}
@@ -175,7 +175,7 @@ export default function SignupForm() {
               type="checkbox"
               checked={agreeWaiver}
               onChange={(e) => setAgreeWaiver(e.target.checked)}
-              className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+              className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
             />
             <span>
               I have read and agree to the{" "}
@@ -194,7 +194,7 @@ export default function SignupForm() {
               type="checkbox"
               checked={agreePrototype}
               onChange={(e) => setAgreePrototype(e.target.checked)}
-              className="mt-0.5 rounded border-slate-600 bg-slate-900 text-emerald-500 focus:ring-emerald-400"
+              className="mt-0.5 rounded border-[var(--color-border)] bg-white text-emerald-500 focus:ring-emerald-400"
             />
             <span>
               I understand this is a prototype and NxtStps is not liable for the
@@ -215,29 +215,29 @@ export default function SignupForm() {
         )}
 
         <button
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={loading || !email.trim() || !passwordValidation.valid || !agreeTerms || !agreeWaiver || !agreePrototype}
           type="submit"
         >
           {loading ? "Creating…" : "Create account"}
         </button>
 
-        <div className="flex items-center justify-between text-[11px] text-slate-400">
-          <Link href="/login" className="underline underline-offset-2 hover:text-slate-200">
+        <div className="flex items-center justify-between text-[11px] text-[var(--color-muted)]">
+          <Link href="/login" className="underline underline-offset-2 hover:text-[var(--color-charcoal)]">
             Already have an account?
           </Link>
 
           <Link
             href="/signup?intent=advocate"
-            className="underline underline-offset-2 hover:text-slate-200"
+            className="underline underline-offset-2 hover:text-[var(--color-charcoal)]"
           >
             I’m a victim advocate
           </Link>
         </div>
 
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-[var(--color-muted)]">
           Also see our{" "}
-          <Link href="/privacy" className="underline underline-offset-2 hover:text-slate-300">
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-[var(--color-slate)]">
             Privacy Policy
           </Link>
           .

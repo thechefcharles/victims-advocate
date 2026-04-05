@@ -202,7 +202,7 @@ export default function AdminKnowledgePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine="Admin → Knowledge base"
@@ -210,7 +210,7 @@ export default function AdminKnowledgePage() {
           title="Knowledge base"
           subtitle="Help articles and eligibility text shown to advocates and victims. Draft first, then activate."
           rightActions={
-            <Link href="/admin/cases" className="text-sm text-slate-400 hover:text-slate-200">
+            <Link href="/admin/cases" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
               Cases
             </Link>
           }
@@ -222,19 +222,19 @@ export default function AdminKnowledgePage() {
           </div>
         )}
 
-        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-4">
           <div className="flex flex-wrap gap-2">
             <input
               type="text"
               placeholder="Search title/body"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200 w-48 min-w-[10rem]"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm text-[var(--color-charcoal)] w-48 min-w-[10rem]"
             />
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm text-[var(--color-charcoal)]"
             >
               <option value="">All categories</option>
               {CATEGORIES.map((c) => (
@@ -244,7 +244,7 @@ export default function AdminKnowledgePage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm text-[var(--color-charcoal)]"
             >
               <option value="">All statuses</option>
               <option value="draft">Draft</option>
@@ -254,7 +254,7 @@ export default function AdminKnowledgePage() {
             <select
               value={filterState}
               onChange={(e) => setFilterState(e.target.value)}
-              className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-sm text-slate-200"
+              className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-sm text-[var(--color-charcoal)]"
             >
               <option value="">All states</option>
               <option value="IL">IL</option>
@@ -264,7 +264,7 @@ export default function AdminKnowledgePage() {
           {!editingId && (
             <a
               href="#admin-knowledge-create"
-              className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 shrink-0"
+              className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] shrink-0"
             >
               Create
             </a>
@@ -274,9 +274,9 @@ export default function AdminKnowledgePage() {
         {!editingId ? (
           <section
             id="admin-knowledge-create"
-            className="rounded-xl border border-slate-800 bg-slate-900/50 p-4 scroll-mt-24"
+            className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 scroll-mt-24"
           >
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Create</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Create</h2>
             <form onSubmit={handleCreate} className="space-y-2 text-sm">
               <div className="grid gap-2 sm:grid-cols-2">
                 <input
@@ -284,21 +284,21 @@ export default function AdminKnowledgePage() {
                   placeholder="entry_key (e.g. il.vc.eligibility.overview)"
                   value={form.entry_key}
                   onChange={(e) => setForm((f) => ({ ...f, entry_key: e.target.value }))}
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 w-full"
+                  className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] w-full"
                 />
                 <input
                   required
                   placeholder="Title"
                   value={form.title}
                   onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 w-full"
+                  className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] w-full"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
                 <select
                   value={form.category}
                   onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                  className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>{c}</option>
@@ -308,13 +308,13 @@ export default function AdminKnowledgePage() {
                   placeholder="State (IL, IN)"
                   value={form.state_code}
                   onChange={(e) => setForm((f) => ({ ...f, state_code: e.target.value }))}
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 w-20"
+                  className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] w-20"
                 />
                 <input
                   placeholder="Program key"
                   value={form.program_key}
                   onChange={(e) => setForm((f) => ({ ...f, program_key: e.target.value }))}
-                  className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200 w-40"
+                  className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)] w-40"
                 />
               </div>
               <textarea
@@ -323,27 +323,27 @@ export default function AdminKnowledgePage() {
                 value={form.body}
                 onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
                 rows={4}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
               />
               <button
                 type="submit"
                 disabled={creating}
-                className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                className="rounded bg-[var(--color-teal-deep)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
               >
                 {creating ? "Creating…" : "Create"}
               </button>
             </form>
           </section>
         ) : (
-          <section className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Edit</h2>
+          <section className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Edit</h2>
             <form onSubmit={handleUpdate} className="space-y-2 text-sm">
               <input
                 required
                 placeholder="Title"
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
               />
               <textarea
                 required
@@ -351,19 +351,19 @@ export default function AdminKnowledgePage() {
                 value={form.body}
                 onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
                 rows={6}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
               />
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500"
+                  className="rounded bg-[var(--color-teal-deep)] px-3 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
                 >
                   Update
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingId(null)}
-                  className="rounded border border-slate-600 px-3 py-1.5 text-sm text-slate-300 hover:bg-slate-800"
+                  className="rounded border border-[var(--color-border)] px-3 py-1.5 text-sm text-[var(--color-slate)] hover:bg-[var(--color-light-sand)]"
                 >
                   Cancel
                 </button>
@@ -373,24 +373,24 @@ export default function AdminKnowledgePage() {
         )}
 
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold text-slate-200">All entries ({entries.length})</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">All entries ({entries.length})</h2>
           {loading ? (
-            <p className="text-sm text-slate-400 py-4">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)] py-4">Loading…</p>
           ) : entries.length === 0 ? (
-            <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-              <p className="font-medium text-slate-300">No items found.</p>
-              <p className="mt-2 text-xs text-slate-500">
+            <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+              <p className="font-medium text-[var(--color-slate)]">No items found.</p>
+              <p className="mt-2 text-xs text-[var(--color-muted)]">
                 Clear filters or create a draft entry to add help content.
               </p>
             </div>
           ) : (
-          <ul className="divide-y divide-slate-800">
+          <ul className="divide-y divide-[var(--color-border-light)]">
             {entries.map((entry) => (
               <li key={entry.id} className="py-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-mono text-xs text-slate-400">{entry.entry_key}</p>
-                  <p className="font-medium text-slate-100 truncate">{entry.title}</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="font-mono text-xs text-[var(--color-muted)]">{entry.entry_key}</p>
+                  <p className="font-medium text-[var(--color-navy)] truncate">{entry.title}</p>
+                  <p className="text-xs text-[var(--color-muted)]">
                     {entry.category} · {entry.state_code ?? "—"} · {entry.program_key ?? "—"} · {entry.status}
                     {entry.is_active && " · active"}
                   </p>
@@ -401,14 +401,14 @@ export default function AdminKnowledgePage() {
                       <button
                         type="button"
                         onClick={() => startEdit(entry)}
-                        className="rounded border border-slate-600 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+                        className="rounded border border-[var(--color-border)] px-2 py-1 text-xs text-[var(--color-slate)] hover:bg-[var(--color-light-sand)]"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleActivate(entry.id)}
-                        className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-500"
+                        className="rounded bg-[var(--color-teal-deep)] px-2 py-1 text-xs text-white hover:bg-[var(--color-teal)]"
                       >
                         Activate
                       </button>

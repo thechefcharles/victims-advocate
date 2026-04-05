@@ -33,26 +33,26 @@ export default function AdvocateClientsPage() {
 
   if (loading || !user || role !== "advocate") {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-300 px-6 py-10">
-        <p className="text-sm text-slate-500">Loading…</p>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-slate)] px-6 py-10">
+        <p className="text-sm text-[var(--color-muted)]">Loading…</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-300 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-slate)] px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex flex-wrap items-center gap-3 text-[11px]">
           <Link
             href={ROUTES.advocateHome}
-            className="text-slate-400 hover:text-white font-medium"
+            className="text-[var(--color-muted)] hover:text-white font-medium"
           >
             ← My Dashboard
           </Link>
         </div>
 
         <header>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500 mb-1">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)] mb-1">
             Advocate workspace
           </p>
           <h1 className="text-2xl font-semibold text-white">My clients</h1>

@@ -53,13 +53,13 @@ export default function SafetySettingsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-xl font-semibold text-slate-100">Safety Mode</h1>
-      <p className="mt-2 text-sm text-slate-400">
+      <h1 className="text-xl font-semibold text-[var(--color-navy)]">Safety Mode</h1>
+      <p className="mt-2 text-sm text-[var(--color-muted)]">
         These settings reduce what’s visible at a glance and help you exit quickly.
       </p>
 
-      <div className="mt-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-        {loading && <p className="text-[11px] text-slate-400">Loading…</p>}
+      <div className="mt-6 space-y-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5">
+        {loading && <p className="text-[11px] text-[var(--color-muted)]">Loading…</p>}
 
         <ToggleRow
           label="Enable Safety Mode"
@@ -101,7 +101,7 @@ export default function SafetySettingsPage() {
           disabled={saving}
         />
 
-        <div className="pt-2 text-[11px] text-slate-500">
+        <div className="pt-2 text-[11px] text-[var(--color-muted)]">
           Changes apply immediately on refresh. Quick Exit is available in the top bar when signed in.
         </div>
       </div>
@@ -120,21 +120,21 @@ function ToggleRow(props: {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="min-w-0">
-        <div className="text-sm font-medium text-slate-100">{label}</div>
-        <div className="text-[11px] text-slate-400">{description}</div>
+        <div className="text-sm font-medium text-[var(--color-navy)]">{label}</div>
+        <div className="text-[11px] text-[var(--color-muted)]">{description}</div>
       </div>
       <button
         type="button"
         onClick={() => onChange(!value)}
         disabled={disabled}
         className={`h-7 w-12 rounded-full border transition ${
-          value ? "bg-emerald-500/20 border-emerald-400/40" : "bg-slate-900 border-slate-700"
+          value ? "bg-emerald-500/20 border-emerald-400/40" : "bg-white border-[var(--color-border)]"
         } disabled:opacity-60`}
         aria-pressed={value}
       >
         <span
-          className={`block h-5 w-5 rounded-full bg-slate-200 transition translate-y-[1px] ${
-            value ? "translate-x-6 bg-emerald-300" : "translate-x-1 bg-slate-300"
+          className={`block h-5 w-5 rounded-full bg-[var(--color-border-light)] transition translate-y-[1px] ${
+            value ? "translate-x-6 bg-[var(--color-sage)]" : "translate-x-1 bg-[var(--color-muted)]"
           }`}
         />
       </button>

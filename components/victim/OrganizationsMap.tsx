@@ -100,7 +100,7 @@ export function OrganizationsMap({ userLat, userLng, orgs, userLabel, orgPopupSu
   return (
     <div
       ref={containerRef}
-      className="relative z-0 isolate h-[min(420px,55vh)] min-h-[280px] w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-900"
+      className="relative z-0 isolate h-[min(420px,55vh)] min-h-[280px] w-full overflow-hidden rounded-xl border border-[var(--color-border)] bg-white"
       aria-hidden
     />
   );

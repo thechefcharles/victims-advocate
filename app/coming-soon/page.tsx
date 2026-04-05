@@ -32,22 +32,22 @@ export default function ComingSoonPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center px-4">
       <div className="max-w-lg w-full space-y-8 text-center">
-        <h1 className="text-3xl sm:text-4xl font-bold text-slate-50">
+        <h1 className="text-3xl sm:text-4xl font-bold text-[var(--color-navy)]">
           Coming soon
         </h1>
-        <p className="text-slate-300">
+        <p className="text-[var(--color-slate)]">
           Thanks for signing up. We’re building NxtStps and will notify you when
           the full platform is available.
         </p>
 
         {/* Newsletter opt-in */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 space-y-4">
-          <h2 className="text-lg font-semibold text-slate-50">
+        <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">
             Stay updated
           </h2>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             Subscribe to our weekly newsletter for product updates and resources.
           </p>
           <form onSubmit={handleNewsletterSubmit} className="space-y-2">
@@ -57,13 +57,13 @@ export default function ComingSoonPage() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
               disabled={status === "loading"}
             />
             <button
               type="submit"
               disabled={status === "loading"}
-              className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
+              className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 transition"
             >
               {status === "loading"
                 ? "Subscribing…"
@@ -82,7 +82,7 @@ export default function ComingSoonPage() {
 
         <Link
           href="/"
-          className="inline-block text-sm text-slate-400 hover:text-slate-200 underline underline-offset-2"
+          className="inline-block text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline underline-offset-2"
         >
           ← Back to home
         </Link>

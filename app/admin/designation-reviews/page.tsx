@@ -144,22 +144,22 @@ export default function AdminDesignationReviewsPage() {
         className={`w-full text-left rounded-xl border px-3 py-3 transition ${
           active
             ? "border-teal-500 bg-teal-950/30"
-            : "border-slate-700 hover:border-slate-600 bg-slate-950/30"
+            : "border-[var(--color-border)] hover:border-[var(--color-border)] bg-[var(--color-warm-white)]/30"
         }`}
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-medium text-teal-200">{r.organization_name}</span>
-          <span className="text-[10px] font-medium rounded-full border border-slate-600 px-1.5 py-0.5 text-slate-300">
+          <span className="text-[10px] font-medium rounded-full border border-[var(--color-border)] px-1.5 py-0.5 text-[var(--color-slate)]">
             {formatReviewStatusLabel(r.status)}
           </span>
         </div>
-        <p className="text-[11px] text-slate-500 mt-1">
+        <p className="text-[11px] text-[var(--color-muted)] mt-1">
           Submitted {formatSubmitted(r.created_at)} · {r.request_kind.replace(/_/g, " ")}
         </p>
-        <p className="text-sm text-slate-200 mt-1 line-clamp-2">{r.subject}</p>
+        <p className="text-sm text-[var(--color-charcoal)] mt-1 line-clamp-2">{r.subject}</p>
         {r.admin_response_org_visible && (
-          <p className="text-[11px] text-slate-500 mt-2 border-t border-slate-800 pt-2">
-            <span className="text-slate-400">Admin response: </span>
+          <p className="text-[11px] text-[var(--color-muted)] mt-2 border-t border-[var(--color-border-light)] pt-2">
+            <span className="text-[var(--color-muted)]">Admin response: </span>
             {r.admin_response_org_visible}
           </p>
         )}
@@ -168,7 +168,7 @@ export default function AdminDesignationReviewsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine="Admin → Designation reviews"
@@ -181,7 +181,7 @@ export default function AdminDesignationReviewsPage() {
                 {TRUST_MICROCOPY.designationNotRating} Resolve formal org requests with a written
                 response; do not share numeric scores.
               </p>
-              <p className="border-l-2 border-slate-700 pl-3 mb-2">
+              <p className="border-l-2 border-[var(--color-border)] pl-3 mb-2">
                 Organizations can request clarification or updates to their designation.
               </p>
               <a href={TRUST_LINK_HREF.designations} className="text-teal-400/90 hover:underline">
@@ -191,7 +191,7 @@ export default function AdminDesignationReviewsPage() {
           }
           rightActions={
             <>
-              <label className="flex items-center gap-2 text-slate-400 text-sm">
+              <label className="flex items-center gap-2 text-[var(--color-muted)] text-sm">
                 <input
                   type="checkbox"
                   checked={showAll}
@@ -214,30 +214,30 @@ export default function AdminDesignationReviewsPage() {
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-              <h2 className="text-sm font-semibold text-slate-200 mb-1">Active requests</h2>
-              <p className="text-xs text-slate-500 mb-4">
+            <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4">
+              <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-1">Active requests</h2>
+              <p className="text-xs text-[var(--color-muted)] mb-4">
                 {showAll
                   ? `${openRequests.length} open · ${resolved.length} resolved`
                   : `${openRequests.length} open (pending or in review)`}
               </p>
               {loading ? (
-                <p className="text-sm text-slate-400">Loading…</p>
+                <p className="text-sm text-[var(--color-muted)]">Loading…</p>
               ) : requests.length === 0 ? (
-                <p className="text-sm text-slate-400 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-4">
+                <p className="text-sm text-[var(--color-muted)] rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-3 py-4">
                   No designation requests yet. When organizations submit requests, they will appear
                   here for you to review.
                 </p>
               ) : showAll ? (
                 <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
                   {pending.length === 0 && inReview.length === 0 ? (
-                    <p className="text-sm text-slate-400 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-4">
+                    <p className="text-sm text-[var(--color-muted)] rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-3 py-4">
                       No open requests. Resolved items are listed below when &quot;Show all&quot; is on.
                     </p>
                   ) : null}
                   {pending.length > 0 && (
                     <div>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-2">
                         Pending
                       </h3>
                       <ul className="space-y-2">
@@ -251,7 +251,7 @@ export default function AdminDesignationReviewsPage() {
                   )}
                   {inReview.length > 0 && (
                     <div>
-                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-2">
                         In review
                       </h3>
                       <ul className="space-y-2">
@@ -276,8 +276,8 @@ export default function AdminDesignationReviewsPage() {
             </section>
 
             {showAll && resolved.length > 0 && (
-              <section className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4">
-                <h2 className="text-sm font-semibold text-slate-300 mb-4">Resolved</h2>
+              <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-slate)] mb-4">Resolved</h2>
                 <ul className="space-y-2 max-h-[50vh] overflow-y-auto">
                   {resolved.map((r) => (
                     <li key={r.id}>
@@ -289,38 +289,38 @@ export default function AdminDesignationReviewsPage() {
             )}
           </div>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 space-y-4 min-h-[320px]">
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-4 space-y-4 min-h-[320px]">
             {!selected ? (
-              <p className="text-sm text-slate-400">Select a request to review.</p>
+              <p className="text-sm text-[var(--color-muted)]">Select a request to review.</p>
             ) : (
               <>
                 <div>
-                  <h3 className="font-semibold text-slate-100">{selected.organization_name}</h3>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <h3 className="font-semibold text-[var(--color-navy)]">{selected.organization_name}</h3>
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
                     Submitted {formatSubmitted(selected.created_at)} ·{" "}
                     {selected.request_kind.replace(/_/g, " ")} ·{" "}
-                    <span className="text-slate-400">{formatReviewStatusLabel(selected.status)}</span>
+                    <span className="text-[var(--color-muted)]">{formatReviewStatusLabel(selected.status)}</span>
                   </p>
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-[var(--color-muted)] mt-2">
                     Tier at submit:{" "}
                     {designationTierBadgeText(selected.designation_tier_snapshot) ??
                       selected.designation_tier_snapshot ??
                       "—"}
                   </p>
-                  <h4 className="text-sm font-medium text-slate-200 mt-3">{selected.subject}</h4>
-                  <div className="mt-2 text-sm text-slate-300 whitespace-pre-wrap max-h-48 overflow-y-auto border border-slate-800 rounded-lg p-3 bg-slate-950/40">
+                  <h4 className="text-sm font-medium text-[var(--color-charcoal)] mt-3">{selected.subject}</h4>
+                  <div className="mt-2 text-sm text-[var(--color-slate)] whitespace-pre-wrap max-h-48 overflow-y-auto border border-[var(--color-border-light)] rounded-lg p-3 bg-[var(--color-warm-cream)]/70">
                     {selected.body}
                   </div>
                   {selected.admin_response_org_visible && (
-                    <div className="mt-3 text-xs text-slate-400 border border-slate-800 rounded-lg p-3">
-                      <span className="text-slate-500">Admin response (visible to org): </span>
+                    <div className="mt-3 text-xs text-[var(--color-muted)] border border-[var(--color-border-light)] rounded-lg p-3">
+                      <span className="text-[var(--color-muted)]">Admin response (visible to org): </span>
                       {selected.admin_response_org_visible}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)] mb-2">
                     Actions
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -331,7 +331,7 @@ export default function AdminDesignationReviewsPage() {
                         setResolution("mark_in_review");
                         void submitResolution("mark_in_review");
                       }}
-                      className="rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-2 text-xs font-medium text-slate-100 hover:bg-slate-800 disabled:opacity-40"
+                      className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/85 px-3 py-2 text-xs font-medium text-[var(--color-navy)] hover:bg-[var(--color-light-sand)] disabled:opacity-40"
                     >
                       Mark in Review
                     </button>
@@ -353,7 +353,7 @@ export default function AdminDesignationReviewsPage() {
                         setResolution("recompute_designation");
                         orgResponseRef.current?.focus();
                       }}
-                      className="rounded-lg bg-slate-700 px-3 py-2 text-xs font-medium text-white hover:bg-slate-600 disabled:opacity-40"
+                      className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-2 text-xs font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-40"
                     >
                       Recompute Designation
                     </button>
@@ -372,11 +372,11 @@ export default function AdminDesignationReviewsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs text-slate-400">Resolution</label>
+                  <label className="text-xs text-[var(--color-muted)]">Resolution</label>
                   <select
                     value={resolution}
                     onChange={(e) => setResolution(e.target.value)}
-                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm"
+                    className="mt-1 w-full rounded border border-[var(--color-border)] bg-white px-2 py-2 text-sm"
                   >
                     <option value="mark_in_review">Mark in Review</option>
                     <option value="affirm">Affirm</option>
@@ -386,7 +386,7 @@ export default function AdminDesignationReviewsPage() {
                 </div>
                 {resolution !== "mark_in_review" && (
                   <div>
-                    <label className="text-xs text-slate-400">
+                    <label className="text-xs text-[var(--color-muted)]">
                       Response visible to organization (min 10 characters)
                     </label>
                     <textarea
@@ -394,25 +394,25 @@ export default function AdminDesignationReviewsPage() {
                       value={orgVisible}
                       onChange={(e) => setOrgVisible(e.target.value)}
                       rows={4}
-                      className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm"
+                      className="mt-1 w-full rounded border border-[var(--color-border)] bg-white px-2 py-2 text-sm"
                       placeholder="Calm, non-punitive language. Do not share numeric scores."
                     />
                   </div>
                 )}
                 <div>
-                  <label className="text-xs text-slate-400">Internal notes (optional)</label>
+                  <label className="text-xs text-[var(--color-muted)]">Internal notes (optional)</label>
                   <textarea
                     value={internalNotes}
                     onChange={(e) => setInternalNotes(e.target.value)}
                     rows={2}
-                    className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm"
+                    className="mt-1 w-full rounded border border-[var(--color-border)] bg-white px-2 py-2 text-sm"
                   />
                 </div>
                 <button
                   type="button"
                   disabled={submitting || !isOpenStatus(selected.status)}
                   onClick={() => void submitResolution()}
-                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                  className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
                 >
                   {submitting ? "Updating…" : "Update"}
                 </button>

@@ -107,25 +107,25 @@ export default function VictimCaseAdvocateManagePage() {
         <div className={`${APP_CARD} space-y-4`}>
           <Link
             href={connectHref}
-            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-emerald-900/30 hover:brightness-110"
+            className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/30 hover:brightness-110"
           >
             {t("victimDashboard.caseAdvocateManage.connectDifferent")}
           </Link>
 
           {loading ? (
-            <p className="text-sm text-slate-500">{t("victimDashboard.supportTeamLoading")}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t("victimDashboard.supportTeamLoading")}</p>
           ) : team?.advocates && team.advocates.length > 0 ? (
             <ul className="space-y-3">
               {team.advocates.map((a) => (
                 <li
                   key={a.id}
-                  className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-slate-800/80 bg-slate-950/40 px-3 py-3"
+                  className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-3 py-3"
                 >
-                  <span className="text-sm font-medium text-slate-100">{a.label}</span>
+                  <span className="text-sm font-medium text-[var(--color-navy)]">{a.label}</span>
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
                       href={messagesHref}
-                      className="inline-flex items-center justify-center rounded-full border border-slate-600 px-3 py-1.5 text-[11px] font-semibold text-slate-200 hover:bg-slate-900/70"
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/90"
                     >
                       {t("victimDashboard.caseAdvocateManage.sendMessage")}
                     </Link>
@@ -151,12 +151,12 @@ export default function VictimCaseAdvocateManagePage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">{t("victimDashboard.supportTeamNoAdvocates")}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t("victimDashboard.supportTeamNoAdvocates")}</p>
           )}
         </div>
 
-        <p className="text-[11px] text-slate-500">
-          <Link href={victimCasePaths.organization(caseId)} className="text-slate-400 hover:text-slate-200 underline">
+        <p className="text-[11px] text-[var(--color-muted)]">
+          <Link href={victimCasePaths.organization(caseId)} className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline">
             {t("victimDashboard.caseOrgManage.title")}
           </Link>
         </p>

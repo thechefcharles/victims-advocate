@@ -42,11 +42,11 @@ export default function AccountPage() {
 
   return (
     <RequireAuth>
-      <main className="mx-auto max-w-2xl px-4 py-12 text-slate-200 space-y-8">
-        <p className="text-xs uppercase tracking-[0.2em] text-slate-500 mb-2">
+      <main className="mx-auto max-w-2xl px-4 py-12 text-[var(--color-charcoal)] space-y-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-[var(--color-muted)] mb-2">
           {t("nav.myAccount")}
         </p>
-        <h1 className="text-2xl font-semibold text-slate-50 mb-6">
+        <h1 className="text-2xl font-semibold text-[var(--color-navy)] mb-6">
           {t("nav.accountPlaceholderTitle")}
         </h1>
 
@@ -88,12 +88,12 @@ export default function AccountPage() {
           />
         )}
 
-        <div className="rounded-2xl border border-slate-700 bg-slate-900/50 p-6 space-y-4">
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 p-6 space-y-4">
           <div>
-            <p className="text-[11px] uppercase tracking-wide text-slate-500 mb-1">Email</p>
-            <p className="text-sm text-slate-200 break-all">{user?.email ?? "—"}</p>
+            <p className="text-[11px] uppercase tracking-wide text-[var(--color-muted)] mb-1">Email</p>
+            <p className="text-sm text-[var(--color-charcoal)] break-all">{user?.email ?? "—"}</p>
           </div>
-          <p className="text-sm text-slate-400 leading-relaxed">
+          <p className="text-sm text-[var(--color-muted)] leading-relaxed">
             {isVictimProfile
               ? t("nav.accountVictimEmailCardBody")
               : isAdvocateProfile
@@ -129,7 +129,7 @@ export default function AccountPage() {
         )}
 
         {orgId && !hasOrgBillingAuthoritySimpleRole(orgRole) && (
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--color-muted)]">
             Only an organization owner can change which directory program this agency uses.
           </p>
         )}

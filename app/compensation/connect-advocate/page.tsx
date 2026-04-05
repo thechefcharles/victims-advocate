@@ -160,17 +160,17 @@ function ConnectAdvocateForm() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-3xl mx-auto space-y-8">
         <header>
           <Link
             href={ROUTES.compensationHub}
-            className="text-sm text-slate-400 hover:text-slate-200 inline-flex items-center gap-1 mb-4"
+            className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)] inline-flex items-center gap-1 mb-4"
           >
             ← Back to compensation
           </Link>
           <h1 className="text-2xl font-bold">{tc("title")}</h1>
-          <p className="text-sm text-slate-300 mt-2 leading-relaxed">{tc("subtitle")}</p>
+          <p className="text-sm text-[var(--color-slate)] mt-2 leading-relaxed">{tc("subtitle")}</p>
           {!caseId ? (
             <div className="mt-4 rounded-lg border border-amber-500/35 bg-amber-950/25 px-4 py-3 text-sm text-amber-100/95">
               <p className="leading-relaxed">{tc("caseRequiredHint")}</p>
@@ -182,10 +182,10 @@ function ConnectAdvocateForm() {
           )}
         </header>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-100">{tc("addressStepTitle")}</h2>
-          <p className="text-xs text-slate-400 leading-relaxed">{tc("addressStepBody")}</p>
-          <p className="text-xs text-slate-500 leading-relaxed border-l-2 border-slate-600 pl-3">
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-6 space-y-4">
+          <h2 className="text-base font-semibold text-[var(--color-navy)]">{tc("addressStepTitle")}</h2>
+          <p className="text-xs text-[var(--color-muted)] leading-relaxed">{tc("addressStepBody")}</p>
+          <p className="text-xs text-[var(--color-muted)] leading-relaxed border-l-2 border-[var(--color-border)] pl-3">
             {tc("directoryNote")}
           </p>
 
@@ -198,12 +198,12 @@ function ConnectAdvocateForm() {
                   setGeocodeLabel(null);
                   setGeocodeErr(null);
                 }}
-                className="text-xs font-medium text-blue-400 hover:text-blue-300 underline"
+                className="text-xs font-medium text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
               >
                 {tc("changeAddress")}
               </button>
               {geocodeLabel ? (
-                <span className="text-[11px] text-slate-500 truncate max-w-full">{geocodeLabel}</span>
+                <span className="text-[11px] text-[var(--color-muted)] truncate max-w-full">{geocodeLabel}</span>
               ) : null}
             </div>
           ) : null}
@@ -211,7 +211,7 @@ function ConnectAdvocateForm() {
           {!userPosition ? (
             <form onSubmit={handleGeocode} className="space-y-4">
               <label className="block space-y-1">
-                <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                   {tc("homeAddressLabel")}
                 </span>
                 <input
@@ -221,12 +221,12 @@ function ConnectAdvocateForm() {
                   placeholder={tc("homeAddressPlaceholder")}
                   autoComplete="street-address"
                   disabled={!canUseApis || geocodeLoading}
-                  className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
                 />
               </label>
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block space-y-1 sm:col-span-2">
-                  <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                     {tc("cityLabel")}
                   </span>
                   <input
@@ -236,11 +236,11 @@ function ConnectAdvocateForm() {
                     placeholder={tc("cityPlaceholder")}
                     autoComplete="address-level2"
                     disabled={!canUseApis || geocodeLoading}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
                   />
                 </label>
                 <label className="block space-y-1">
-                  <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                     {tc("stateLabel")}
                   </span>
                   <select
@@ -249,7 +249,7 @@ function ConnectAdvocateForm() {
                     aria-label={tc("stateLabel")}
                     autoComplete="address-level1"
                     disabled={!canUseApis || geocodeLoading}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
                   >
                     {STATE_SELECT_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>
@@ -259,7 +259,7 @@ function ConnectAdvocateForm() {
                   </select>
                 </label>
                 <label className="block space-y-1">
-                  <span className="text-[11px] uppercase tracking-wide text-slate-400">
+                  <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                     {tc("zipLabel")}
                   </span>
                   <input
@@ -270,7 +270,7 @@ function ConnectAdvocateForm() {
                     placeholder={tc("zipPlaceholder")}
                     autoComplete="postal-code"
                     disabled={!canUseApis || geocodeLoading}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
                   />
                 </label>
               </div>
@@ -289,7 +289,7 @@ function ConnectAdvocateForm() {
                   !usState ||
                   !zip.trim()
                 }
-                className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 disabled:cursor-not-allowed transition"
               >
                 {geocodeLoading ? tc("geocoding") : tc("findOrganizationsButton")}
               </button>
@@ -298,8 +298,8 @@ function ConnectAdvocateForm() {
         </section>
 
         {userPosition ? (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-3">
-            <h2 className="text-base font-semibold text-slate-100">{tc("mapSectionTitle")}</h2>
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-6 space-y-3">
+            <h2 className="text-base font-semibold text-[var(--color-navy)]">{tc("mapSectionTitle")}</h2>
             <FindOrganizationsMapSection
               copy={mapCopy}
               referCaseId={caseId || undefined}
@@ -309,12 +309,12 @@ function ConnectAdvocateForm() {
           </section>
         ) : null}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-100">{tc("emailInsteadTitle")}</h2>
-          <p className="text-sm text-slate-400">{tc("emailInsteadBody")}</p>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-6 space-y-4">
+          <h2 className="text-base font-semibold text-[var(--color-navy)]">{tc("emailInsteadTitle")}</h2>
+          <p className="text-sm text-[var(--color-muted)]">{tc("emailInsteadBody")}</p>
           <form onSubmit={handleEmailSubmit} className="space-y-4">
             <label className="block space-y-1">
-              <span className="text-[11px] uppercase tracking-wide text-slate-400">
+              <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                 {tc("advocateEmailLabel")}
               </span>
               <input
@@ -324,7 +324,7 @@ function ConnectAdvocateForm() {
                 placeholder="advocate@agency.org"
                 required
                 disabled={!canSubmitEmail || emailLoading}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
               />
             </label>
             {emailErr ? (
@@ -335,14 +335,14 @@ function ConnectAdvocateForm() {
             <button
               type="submit"
               disabled={emailLoading || !advocateEmail.trim() || !canSubmitEmail}
-              className="w-full rounded-lg bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 disabled:cursor-not-allowed transition"
             >
               {emailLoading ? tc("sending") : tc("sendRequest")}
             </button>
           </form>
         </section>
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--color-muted)]">
           {tc("findOrgsFooterPrefix")}{" "}
           <Link
             href={
@@ -365,8 +365,8 @@ export default function ConnectAdvocatePage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 px-4 py-8">
-          <div className="max-w-lg mx-auto text-sm text-slate-400">Loading…</div>
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-8">
+          <div className="max-w-lg mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
         </main>
       }
     >

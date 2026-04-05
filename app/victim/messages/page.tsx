@@ -97,34 +97,34 @@ function VictimMessagesContent() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
           <Link
             href={ROUTES.victimDashboard}
-            className="text-xs text-slate-400 hover:text-slate-200 mb-1 inline-block"
+            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mb-1 inline-block"
           >
             ← {t("victimMessages.backDashboard")}
           </Link>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">
             {t("victimMessages.eyebrow")}
           </p>
-          <h1 className="text-2xl font-semibold text-slate-50">{t("victimMessages.title")}</h1>
-          <p className="text-sm text-slate-400 max-w-xl">{t("victimMessages.subtitle")}</p>
+          <h1 className="text-2xl font-semibold text-[var(--color-navy)]">{t("victimMessages.title")}</h1>
+          <p className="text-sm text-[var(--color-muted)] max-w-xl">{t("victimMessages.subtitle")}</p>
         </header>
 
         {loading ? (
-          <p className="text-sm text-slate-400">{t("common.loading")}</p>
+          <p className="text-sm text-[var(--color-muted)]">{t("common.loading")}</p>
         ) : err ? (
           <div className="rounded-2xl border border-red-900/40 bg-red-950/20 px-4 py-3 text-sm text-red-200">
             {err}
           </div>
         ) : cases.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-5 py-8 text-center space-y-3">
-            <p className="text-sm text-slate-300">{t("victimMessages.noCases")}</p>
+          <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 px-5 py-8 text-center space-y-3">
+            <p className="text-sm text-[var(--color-slate)]">{t("victimMessages.noCases")}</p>
             <Link
               href={ROUTES.compensationIntake}
-              className="inline-flex rounded-full bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+              className="inline-flex rounded-full bg-[var(--color-teal-deep)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)]"
             >
               {t("victimMessages.startApplication")}
             </Link>
@@ -132,10 +132,10 @@ function VictimMessagesContent() {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,240px)_1fr] items-start">
             <nav
-              className="rounded-2xl border border-slate-800 bg-slate-950/70 p-3 space-y-1"
+              className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-3 space-y-1"
               aria-label={t("victimMessages.casePickerLabel")}
             >
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 px-2 pb-2">
+              <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)] px-2 pb-2">
                 {t("victimMessages.yourCases")}
               </p>
               {cases.map((c) => {
@@ -147,13 +147,13 @@ function VictimMessagesContent() {
                     onClick={() => selectCase(c.id)}
                     className={`w-full text-left rounded-xl px-3 py-2.5 text-sm transition ${
                       active
-                        ? "bg-blue-600/25 border border-blue-500/40 text-white"
-                        : "border border-transparent text-slate-300 hover:bg-slate-900/80"
+                        ? "bg-[var(--color-teal-deep)]/25 border border-[var(--color-teal)]/40 text-white"
+                        : "border border-transparent text-[var(--color-slate)] hover:bg-white/92"
                     }`}
                   >
                     <span className="block font-medium truncate">{caseLabel(c)}</span>
                     {c.created_at && (
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-[var(--color-muted)]">
                         {new Date(c.created_at).toLocaleDateString()}
                       </span>
                     )}
@@ -184,8 +184,8 @@ export default function VictimMessagesPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }
@@ -193,8 +193,8 @@ export default function VictimMessagesPage() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-          <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+        <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+          <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
         </main>
       }
     >

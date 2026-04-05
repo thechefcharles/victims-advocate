@@ -195,19 +195,19 @@ export default function OrganizationDashboardPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
       <div className="max-w-4xl mx-auto space-y-10">
         <header>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Organization</p>
+          <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">Organization</p>
           <h1 className="text-2xl font-semibold mt-1">My Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-2">
+          <p className="text-sm text-[var(--color-muted)] mt-2">
             Advocates in your agency and victims tied to cases. Manage staff and invites in{" "}
             <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
               Org settings
@@ -215,7 +215,7 @@ export default function OrganizationDashboardPage() {
             .
           </p>
           {publicProfileStatus && publicProfileStatus !== "active" && (
-            <p className="mt-3 text-sm text-slate-400 rounded-lg border border-slate-700/80 bg-slate-900/40 px-3 py-2">
+            <p className="mt-3 text-sm text-[var(--color-muted)] rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 px-3 py-2">
               {publicProfileStatus === "pending_review" ? (
                 <>
                   Your organization&apos;s public listing is{" "}
@@ -228,7 +228,7 @@ export default function OrganizationDashboardPage() {
                 </>
               ) : publicProfileStatus === "paused" ? (
                 <>
-                  Public visibility is <span className="text-slate-200">paused</span>. Open{" "}
+                  Public visibility is <span className="text-[var(--color-charcoal)]">paused</span>. Open{" "}
                   <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                     Org settings
                   </Link>{" "}
@@ -236,7 +236,7 @@ export default function OrganizationDashboardPage() {
                 </>
               ) : (
                 <>
-                  Your organization is <span className="text-slate-200">not yet public</span>. Complete your
+                  Your organization is <span className="text-[var(--color-charcoal)]">not yet public</span>. Complete your
                   profile and submit for review in{" "}
                   <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                     Org settings
@@ -254,8 +254,8 @@ export default function OrganizationDashboardPage() {
 
         {!refForbidden ? (
           <section className="space-y-3">
-            <h2 className="text-lg font-medium text-slate-100">Incoming referrals (pending)</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-lg font-medium text-[var(--color-navy)]">Incoming referrals (pending)</h2>
+            <p className="text-xs text-[var(--color-muted)]">
               Only open requests appear here. Accepting connects the case to your organization and completes the
               handoff. Declining closes the request and ends temporary review access. Accepted or declined items
               leave this list; case history stays on the case timeline for people with access.
@@ -266,9 +266,9 @@ export default function OrganizationDashboardPage() {
               </div>
             ) : null}
             {refLoading ? (
-              <p className="text-sm text-slate-400">Loading referrals…</p>
+              <p className="text-sm text-[var(--color-muted)]">Loading referrals…</p>
             ) : referrals.length === 0 ? (
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-[var(--color-muted)]">
                 Nothing waiting. When a victim or partner sends a referral to your organization, it will show up
                 here until someone accepts or declines.
               </p>
@@ -281,11 +281,11 @@ export default function OrganizationDashboardPage() {
                   return (
                     <li
                       key={rid}
-                      className="rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm space-y-2"
+                      className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm space-y-2"
                     >
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="font-medium text-slate-100">{row.case.label}</span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="font-medium text-[var(--color-navy)]">{row.case.label}</span>
+                        <span className="text-[11px] text-[var(--color-muted)]">
                           {new Date(row.referral.created_at).toLocaleString(undefined, {
                             month: "short",
                             day: "numeric",
@@ -295,16 +295,16 @@ export default function OrganizationDashboardPage() {
                           })}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-500 space-y-0.5">
+                      <div className="text-[11px] text-[var(--color-muted)] space-y-0.5">
                         <div>
                           Case ID{" "}
-                          <span className="font-mono text-slate-400">
+                          <span className="font-mono text-[var(--color-muted)]">
                             {strictPreviews ? `${row.case.id.slice(0, 8)}…` : row.case.id}
                           </span>
                           {row.case.status ? (
                             <>
                               {" "}
-                              · <span className="text-slate-500">{row.case.status}</span>
+                              · <span className="text-[var(--color-muted)]">{row.case.status}</span>
                             </>
                           ) : null}
                         </div>
@@ -315,7 +315,7 @@ export default function OrganizationDashboardPage() {
                       <div className="flex flex-wrap gap-2 pt-1">
                         <Link
                           href={intakeHref}
-                          className="inline-flex items-center justify-center rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800/80"
+                          className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)]/85"
                         >
                           Review case
                         </Link>
@@ -331,7 +331,7 @@ export default function OrganizationDashboardPage() {
                           type="button"
                           disabled={busy || refActionId !== null}
                           onClick={() => void actOnReferral(rid, "decline")}
-                          className="inline-flex items-center justify-center rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800/80 disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-slate)] hover:bg-[var(--color-light-sand)]/85 disabled:opacity-50"
                         >
                           {busy ? "Working…" : "Decline request"}
                         </button>
@@ -345,14 +345,14 @@ export default function OrganizationDashboardPage() {
         ) : null}
 
         <section className="space-y-3">
-          <h2 className="text-lg font-medium text-slate-100">Advocates in your organization</h2>
-          <p className="text-xs text-slate-500">
+          <h2 className="text-lg font-medium text-[var(--color-navy)]">Advocates in your organization</h2>
+          <p className="text-xs text-[var(--color-muted)]">
             Team members with the advocate profile role (day-to-day case work).
           </p>
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : advocates.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--color-muted)]">
               No victim advocates in this org yet. Invite staff in{" "}
               <Link href={ROUTES.organizationSettings} className="text-emerald-400 hover:underline">
                 Org settings
@@ -364,19 +364,19 @@ export default function OrganizationDashboardPage() {
               {advocates.map((a) => (
                 <li
                   key={a.id}
-                  className="rounded-lg border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <span className="font-medium text-slate-100">
+                    <span className="font-medium text-[var(--color-navy)]">
                       {a.email ? (
                         <span title={a.user_id}>{a.email}</span>
                       ) : (
-                        <span className="font-mono text-xs text-slate-400" title={a.user_id}>
+                        <span className="font-mono text-xs text-[var(--color-muted)]" title={a.user_id}>
                           {a.user_id.slice(0, 8)}…
                         </span>
                       )}
                     </span>
-                    <span className="ml-2 text-slate-500 text-xs">{a.org_role}</span>
+                    <span className="ml-2 text-[var(--color-muted)] text-xs">{a.org_role}</span>
                   </div>
                 </li>
               ))}
@@ -385,11 +385,11 @@ export default function OrganizationDashboardPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-medium text-slate-100">Victims in your organization</h2>
+          <h2 className="text-lg font-medium text-[var(--color-navy)]">Victims in your organization</h2>
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : victims.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--color-muted)]">
               No cases are associated with your organization yet. When victims work with your advocates on
               applications, they will appear here.
             </p>
@@ -398,30 +398,30 @@ export default function OrganizationDashboardPage() {
               {victims.map((v) => (
                 <li
                   key={v.victim_user_id}
-                  className="rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm"
+                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-medium text-slate-100">
+                    <span className="font-medium text-[var(--color-navy)]">
                       {maskVictimLabel(v.display_name, v.victim_user_id)}
                     </span>
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-[var(--color-muted)]">
                       {v.case_count} case{v.case_count === 1 ? "" : "es"}
                     </span>
                   </div>
                   <ul className="mt-2 space-y-1.5 pl-0 list-none">
                     {v.cases.map((c) => (
-                      <li key={c.id} className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                      <li key={c.id} className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-muted)]">
                         <Link
                           href={`/compensation/intake?case=${encodeURIComponent(c.id)}`}
                           className="text-emerald-400 hover:underline font-mono"
                         >
                           {strictPreviews ? `Case ${c.id.slice(0, 8)}…` : `Open case ${c.id.slice(0, 8)}…`}
                         </Link>
-                        <span className="text-slate-600">·</span>
+                        <span className="text-[var(--color-slate)]">·</span>
                         <span>{c.status || "—"}</span>
                         {c.created_at && (
                           <>
-                            <span className="text-slate-600">·</span>
+                            <span className="text-[var(--color-slate)]">·</span>
                             <span>
                               {new Date(c.created_at).toLocaleDateString(undefined, {
                                 month: "short",
@@ -440,11 +440,11 @@ export default function OrganizationDashboardPage() {
           )}
         </section>
 
-        <div className="flex flex-wrap gap-4 text-xs text-slate-500">
-          <Link href={ROUTES.organizationSettings} className="underline hover:text-slate-300">
+        <div className="flex flex-wrap gap-4 text-xs text-[var(--color-muted)]">
+          <Link href={ROUTES.organizationSettings} className="underline hover:text-[var(--color-slate)]">
             Org settings
           </Link>
-          <Link href="/" className="underline hover:text-slate-300">
+          <Link href="/" className="underline hover:text-[var(--color-slate)]">
             Home
           </Link>
         </div>

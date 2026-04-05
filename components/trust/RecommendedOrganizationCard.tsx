@@ -49,7 +49,7 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-medium text-slate-100">{m.organization_name}</span>
+        <span className="font-medium text-[var(--color-navy)]">{m.organization_name}</span>
         {fit && <span className={fit.className}>{fit.label}</span>}
         <NxtStpsVerifiedBadge
           org={{
@@ -60,38 +60,38 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
       </div>
 
       {m.service_overlap.length > 0 && (
-        <p className="text-slate-400 text-[11px]">
-          <span className="text-slate-500">Offers services aligned with:</span>{" "}
+        <p className="text-[var(--color-muted)] text-[11px]">
+          <span className="text-[var(--color-muted)]">Offers services aligned with:</span>{" "}
           {m.service_overlap.map((s) => s.replace(/_/g, " ")).join(", ")}
         </p>
       )}
 
       <div className="flex flex-wrap items-center gap-1.5 text-[10px]">
         {m.language_match && (
-          <span className="text-slate-400 border border-slate-600/70 rounded px-1.5 py-0.5">
+          <span className="text-[var(--color-muted)] border border-[var(--color-border)]/70 rounded px-1.5 py-0.5">
             Language match
           </span>
         )}
         {acc.length > 0 && (
-          <span className="text-slate-400 border border-slate-600/70 rounded px-1.5 py-0.5 max-w-[min(100%,20rem)]">
+          <span className="text-[var(--color-muted)] border border-[var(--color-border)]/70 rounded px-1.5 py-0.5 max-w-[min(100%,20rem)]">
             Supports: {acc.slice(0, 4).map((s) => s.replace(/_/g, " ")).join(", ")}
           </span>
         )}
         {cap && (
-          <span className="text-slate-400 border border-slate-600/70 rounded px-1.5 py-0.5">
+          <span className="text-[var(--color-muted)] border border-[var(--color-border)]/70 rounded px-1.5 py-0.5">
             {cap}
           </span>
         )}
         {m.virtual_ok === true && (
-          <span className="text-slate-400 border border-slate-600/70 rounded px-1.5 py-0.5">
+          <span className="text-[var(--color-muted)] border border-[var(--color-border)]/70 rounded px-1.5 py-0.5">
             Virtual options OK
           </span>
         )}
       </div>
 
       {showDesignationBlock && (
-        <div className="rounded-lg border border-slate-800/90 bg-slate-950/40 px-3 py-2 space-y-1.5">
-          <p className="text-[10px] text-slate-500 leading-snug">{TRUST_MICROCOPY.designationSmallSignal}</p>
+        <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-3 py-2 space-y-1.5">
+          <p className="text-[10px] text-[var(--color-muted)] leading-snug">{TRUST_MICROCOPY.designationSmallSignal}</p>
           <div className="flex flex-wrap items-baseline gap-2">
             {trustName && (
               <span
@@ -101,19 +101,19 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
                 {trustName}
               </span>
             )}
-            {conf && <span className="text-[10px] text-slate-500">{conf}</span>}
+            {conf && <span className="text-[10px] text-[var(--color-muted)]">{conf}</span>}
           </div>
           {m.designation_summary && (
-            <p className="text-slate-500 text-[10px] line-clamp-3">{m.designation_summary}</p>
+            <p className="text-[var(--color-muted)] text-[10px] line-clamp-3">{m.designation_summary}</p>
           )}
           {m.designation_reason && (
-            <p className="text-slate-400 text-[11px] leading-snug">{m.designation_reason}</p>
+            <p className="text-[var(--color-muted)] text-[11px] leading-snug">{m.designation_reason}</p>
           )}
           {showDesignationLink && (
             <p className="text-[10px] pt-0.5">
               <Link
                 href={TRUST_LINK_HREF.designations}
-                className="text-slate-300 hover:text-white underline"
+                className="text-[var(--color-slate)] hover:text-white underline"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -126,8 +126,8 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
 
       {m.reasons.length > 0 && (
         <div>
-          <p className="text-[10px] text-slate-500 uppercase tracking-wide mb-1">Recommended because</p>
-          <ul className="list-disc list-inside text-slate-300 space-y-0.5 text-[11px]">
+          <p className="text-[10px] text-[var(--color-muted)] uppercase tracking-wide mb-1">Recommended because</p>
+          <ul className="list-disc list-inside text-[var(--color-slate)] space-y-0.5 text-[11px]">
             {m.reasons.slice(0, 6).map((r, i) => (
               <li key={i}>{r}</li>
             ))}
@@ -136,7 +136,7 @@ export function RecommendedOrganizationCard({ match: m }: { match: RecommendedOr
       )}
 
       {m.flags.length > 0 && (
-        <ul className="text-amber-200/80 text-[11px] list-disc list-inside pt-1 border-t border-slate-800/60">
+        <ul className="text-amber-200/80 text-[11px] list-disc list-inside pt-1 border-t border-[var(--color-border-light)]">
           {m.flags.slice(0, 4).map((f, i) => (
             <li key={i}>{f}</li>
           ))}

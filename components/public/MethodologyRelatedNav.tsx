@@ -17,7 +17,7 @@ export function MethodologyRelatedNav() {
   return (
     <nav
       aria-label="Related help pages"
-      className="flex flex-wrap justify-center gap-x-5 gap-y-2 border-t border-slate-800 pt-6 text-sm"
+      className="flex flex-wrap justify-center gap-x-5 gap-y-2 border-t border-[var(--color-border-light)] pt-6 text-sm"
     >
       {LINKS.map((item) => {
         const active = pathname === item.href;
@@ -27,7 +27,7 @@ export function MethodologyRelatedNav() {
             href={item.href}
             className={
               active
-                ? "text-slate-200 font-medium"
+                ? "text-[var(--color-charcoal)] font-medium"
                 : "text-teal-400/90 hover:text-teal-300"
             }
           >

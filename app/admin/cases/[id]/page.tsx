@@ -802,7 +802,7 @@ export default function CaseDetailPage() {
 
   if (loading) {
     return (
-      <main className=" min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <main className=" min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
         <div className="max-w-3xl mx-auto">Loading case…</div>
       </main>
     );
@@ -810,23 +810,23 @@ export default function CaseDetailPage() {
 
   if (!loadedCase) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
         <div className="max-w-3xl mx-auto space-y-4">
           <header className="space-y-2">
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+            <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
               Admin · Case Not Found
             </p>
             <h1 className="text-2xl sm:text-3xl font-bold">
               Case could not be found
             </h1>
           </header>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             This case ID could not be loaded from the server. It may have been
             removed or you may be using a different environment.
           </p>
           <a
             href="/admin/cases"
-            className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 transition"
+            className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] transition"
           >
             ← Back to all cases
           </a>
@@ -834,18 +834,18 @@ export default function CaseDetailPage() {
               {/* Advocate NxtGuide chat widget */}
       <div className="fixed bottom-4 right-4 z-40">
         {chatOpen ? (
-          <div className="w-72 sm:w-80 rounded-2xl border border-slate-700 bg-slate-950 shadow-lg shadow-black/40 flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-800 bg-slate-900">
+          <div className="w-72 sm:w-80 rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] shadow-lg shadow-[var(--shadow-modal)] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-light)] bg-white">
               <div className="text-[11px]">
-                <div className="font-semibold text-slate-50">NxtGuide</div>
-                <div className="text-slate-300">
+                <div className="font-semibold text-[var(--color-navy)]">NxtGuide</div>
+                <div className="text-[var(--color-slate)]">
                   Advocate view – case support
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setChatOpen(false)}
-                className="text-slate-400 hover:text-slate-200 text-xs"
+                className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-xs"
               >
                 ✕
               </button>
@@ -853,7 +853,7 @@ export default function CaseDetailPage() {
 
             <div className="flex-1 overflow-y-auto px-3 py-2 space-y-2 text-[11px]">
               {chatMessages.length === 0 && (
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   You can ask things like:
                   <br />
                   • “What appears to be missing in this case?”
@@ -873,8 +873,8 @@ export default function CaseDetailPage() {
                   <div
                     className={`max-w-[80%] rounded-2xl px-3 py-1.5 ${
                       m.role === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-slate-900 text-slate-100 border border-slate-700"
+                        ? "bg-[var(--color-teal-deep)] text-white"
+                        : "bg-white text-[var(--color-navy)] border border-[var(--color-border)]"
                     } text-[11px] whitespace-pre-wrap`}
                   >
                     {m.content}
@@ -882,19 +882,19 @@ export default function CaseDetailPage() {
                 </div>
               ))}
               {chatLoading && (
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--color-muted)]">
                   NxtGuide is typing…
                 </p>
               )}
             </div>
 
-            <form onSubmit={handleChatSubmit} className="border-t border-slate-800 p-2">
+            <form onSubmit={handleChatSubmit} className="border-t border-[var(--color-border-light)] p-2">
               <input
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Ask NxtGuide about this case..."
-                className="w-full rounded-full border border-slate-700 bg-slate-950/70 px-3 py-1.5 text-[11px] text-slate-50 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 px-3 py-1.5 text-[11px] text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)] focus:border-[var(--color-teal)]"
               />
             </form>
           </div>
@@ -902,7 +902,7 @@ export default function CaseDetailPage() {
           <button
             type="button"
             onClick={() => setChatOpen(true)}
-            className="inline-flex items-center rounded-full bg-blue-600 px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-black/40 hover:bg-blue-500 transition"
+            className="inline-flex items-center rounded-full bg-[var(--color-teal-deep)] px-3 py-2 text-[11px] font-semibold text-white shadow-md shadow-[var(--shadow-modal)] hover:bg-[var(--color-teal)] transition"
           >
             Ask NxtGuide about this case
           </button>
@@ -963,37 +963,37 @@ export default function CaseDetailPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+          <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
             Admin · Case workspace
           </p>
-          <h1 className="text-2xl sm:px-auto text-slate-200">
+          <h1 className="text-2xl sm:px-auto text-[var(--color-charcoal)]">
             {victim.firstName || victim.lastName
               ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
               : "Unknown victim"}
           </h1>
-          <p className="text-sm text-slate-400 max-w-3xl">
+          <p className="text-sm text-[var(--color-muted)] max-w-3xl">
             Review and manage all activity, documents, messaging, and evaluations for this case.
           </p>
-          <p className="text-xs text-slate-500 max-w-3xl">
+          <p className="text-xs text-[var(--color-muted)] max-w-3xl">
             Run evaluations to understand what this case still needs. Open messages to coordinate
             with victims in one place.
           </p>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-[var(--color-slate)]">
             Case ID:{" "}
-            <span className="font-mono text-[11px] text-slate-400">
+            <span className="font-mono text-[11px] text-[var(--color-muted)]">
               {loadedCase.id}
             </span>
           </p>
-          <p className="text-[11px] text-slate-500">
+          <p className="text-[11px] text-[var(--color-muted)]">
             Created: {formatDate(loadedCase.createdAt)} · Status:{" "}
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 ${
                 loadedCase.status === "ready_for_review"
                   ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/40"
-                  : "bg-slate-800 text-slate-300 border border-slate-600"
+                  : "bg-[var(--color-light-sand)] text-[var(--color-slate)] border border-[var(--color-border)]"
               }`}
             >
               {loadedCase.status === "ready_for_review"
@@ -1004,7 +1004,7 @@ export default function CaseDetailPage() {
         </header>
 
         <nav
-          className="sticky top-0 z-20 -mx-1 flex flex-wrap gap-1.5 border-b border-slate-800/90 bg-slate-950/95 px-1 py-2 backdrop-blur-sm"
+          className="sticky top-0 z-20 -mx-1 flex flex-wrap gap-1.5 border-b border-[var(--color-border-light)] bg-[var(--color-warm-white)]/95 px-1 py-2 backdrop-blur-sm"
           aria-label="Case sections"
         >
           {visibleAdminTabs.map((t) => (
@@ -1015,7 +1015,7 @@ export default function CaseDetailPage() {
               className={`rounded-full px-3 py-1.5 text-[11px] font-medium transition ${
                 activeTab === t.id
                   ? "bg-emerald-600/25 text-emerald-100 border border-emerald-500/40"
-                  : "bg-slate-900/80 text-slate-400 border border-slate-700 hover:border-slate-600"
+                  : "bg-white/92 text-[var(--color-muted)] border border-[var(--color-border)] hover:border-[var(--color-border)]"
               }`}
             >
               {t.label}
@@ -1024,15 +1024,15 @@ export default function CaseDetailPage() {
         </nav>
 
         {activeTab === "overview" && (
-          <section className="rounded-2xl border border-slate-700 bg-slate-900/80 p-5 text-xs space-y-4">
-            <h2 className="text-sm font-semibold text-slate-100">Overview</h2>
-            <p className="text-slate-400">
+          <section className="rounded-2xl border border-[var(--color-border)] bg-white/92 p-5 text-xs space-y-4">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">Overview</h2>
+            <p className="text-[var(--color-muted)]">
               Quick summary and common actions. Use the tabs above to jump to intake details,
               documents, secure messages, evaluations, and more.
             </p>
             {adminNextAction && (
-              <div className="rounded-xl border border-slate-700/90 bg-slate-950/45 p-3 space-y-2">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              <div className="rounded-xl border border-[var(--color-border)]/90 bg-[var(--color-warm-white)]/45 p-3 space-y-2">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-muted)]">
                   Next action for this case
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1043,11 +1043,11 @@ export default function CaseDetailPage() {
                   >
                     {priorityLabel(adminNextAction.priority)}
                   </span>
-                  <span className="text-sm font-semibold text-slate-100">
+                  <span className="text-sm font-semibold text-[var(--color-navy)]">
                     {adminNextAction.label}
                   </span>
                 </div>
-                <p className="text-slate-400 leading-relaxed">{adminNextAction.reason}</p>
+                <p className="text-[var(--color-muted)] leading-relaxed">{adminNextAction.reason}</p>
                 {adminNextAction.href ? (
                   <Link
                     href={adminNextAction.href}
@@ -1059,17 +1059,17 @@ export default function CaseDetailPage() {
               </div>
             )}
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
-                <p className="text-[10px] uppercase tracking-wide text-slate-500">Victim</p>
-                <p className="text-slate-200 font-medium">
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-3">
+                <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Victim</p>
+                <p className="text-[var(--color-charcoal)] font-medium">
                   {victim.firstName || victim.lastName
                     ? `${victim.firstName || ""} ${victim.lastName || ""}`.trim()
                     : "—"}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/50 p-3">
-                <p className="text-[10px] uppercase tracking-wide text-slate-500">Your access</p>
-                <p className="text-slate-200">
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 p-3">
+                <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Your access</p>
+                <p className="text-[var(--color-charcoal)]">
                   {caseAccess
                     ? `${caseAccess.role} · ${caseAccess.can_edit ? "Can edit" : "View only"}`
                     : "—"}
@@ -1077,12 +1077,12 @@ export default function CaseDetailPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-end gap-3">
-              <label className="text-slate-300 flex flex-col gap-1">
-                <span className="text-[10px] uppercase text-slate-500">Update case status</span>
+              <label className="text-[var(--color-slate)] flex flex-col gap-1">
+                <span className="text-[10px] uppercase text-[var(--color-muted)]">Update case status</span>
                 <select
                   value={caseStatusDraft}
                   onChange={(e) => setCaseStatusDraft(e.target.value as CaseStatus)}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                  className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                 >
                   <option value="draft">draft</option>
                   <option value="ready_for_review">ready_for_review</option>
@@ -1094,22 +1094,22 @@ export default function CaseDetailPage() {
                 type="button"
                 disabled={statusSaving || caseStatusDraft === loadedCase.status}
                 onClick={updateCaseStatus}
-                className="rounded-lg border border-slate-600 bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-700 disabled:opacity-50"
+                className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)] disabled:opacity-50"
               >
                 {statusSaving ? "Saving…" : "Update case status"}
               </button>
             </div>
-            <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-800">
+            <div className="flex flex-wrap gap-2 pt-1 border-t border-[var(--color-border-light)]">
               <a
                 href="/admin/cases"
-                className="inline-flex items-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-[11px] text-slate-200 hover:bg-slate-800 transition"
+                className="inline-flex items-center rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-[11px] text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] transition"
               >
                 ← Back to all cases
               </a>
               <button
                 type="button"
                 onClick={handleDownloadSummaryPdf}
-                className="inline-flex items-center rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 transition"
+                className="inline-flex items-center rounded-lg border border-blue-600 bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)] transition"
               >
                 Download summary PDF
               </button>
@@ -1160,7 +1160,7 @@ export default function CaseDetailPage() {
                       setRoutingLoading(false);
                     }
                   }}
-                  className="inline-flex items-center rounded-lg border border-blue-500 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
+                  className="inline-flex items-center rounded-lg border border-[var(--color-teal)] bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 transition"
                 >
                   {routingLoading ? "Evaluating…" : "Run Routing"}
                 </button>
@@ -1249,7 +1249,7 @@ export default function CaseDetailPage() {
                       setOrgMatchingRunLoading(false);
                     }
                   }}
-                  className="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50 transition"
+                  className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50 transition"
                 >
                   {orgMatchingRunLoading ? "Matching…" : "Find Matching Organizations"}
                 </button>
@@ -1260,7 +1260,7 @@ export default function CaseDetailPage() {
                   onClick={() => {
                     setActiveTab("documents");
                   }}
-                  className="inline-flex items-center rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                  className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)]"
                 >
                   Run OCR (in Documents)
                 </button>
@@ -1271,31 +1271,31 @@ export default function CaseDetailPage() {
 
         {/* Victim & applicant */}
         <section
-          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+          className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-2 ${
             activeTab !== "intake" ? "hidden" : ""
           }`}
         >
-          <h2 className="text-sm font-semibold text-slate-50">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">
             Victim & applicant
           </h2>
-          <p className="text-slate-200">
+          <p className="text-[var(--color-charcoal)]">
             Victim: {victim.firstName || "—"} {victim.lastName || ""}
           </p>
-          <p className="text-slate-300">
+          <p className="text-[var(--color-slate)]">
             DOB: {victim.dateOfBirth || "—"} · City: {victim.city || "—"},{" "}
             {victim.state || "—"}
           </p>
           {applicant.isSameAsVictim ? (
-            <p className="text-slate-300">
+            <p className="text-[var(--color-slate)]">
               Applicant is the same as the victim.
             </p>
           ) : (
             <>
-              <p className="text-slate-200">
+              <p className="text-[var(--color-charcoal)]">
                 Applicant: {applicant.firstName || "—"}{" "}
                 {applicant.lastName || ""}
               </p>
-              <p className="text-slate-300">
+              <p className="text-[var(--color-slate)]">
                 Relationship: {applicant.relationshipToVictim || "Not provided"}
                 · Phone: {applicant.cellPhone || "—"}
               </p>
@@ -1305,24 +1305,24 @@ export default function CaseDetailPage() {
 
         {/* Crime */}
         <section
-          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+          className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-2 ${
             activeTab !== "intake" ? "hidden" : ""
           }`}
         >
-          <h2 className="text-sm font-semibold text-slate-50">Crime</h2>
-          <p className="text-slate-300">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">Crime</h2>
+          <p className="text-[var(--color-slate)]">
             Date of crime: {crime.dateOfCrime || "—"}
           </p>
-          <p className="text-slate-300">
+          <p className="text-[var(--color-slate)]">
             Location: {crime.crimeAddress || "—"}, {crime.crimeCity || "—"}
             {crime.crimeCounty ? ` (${crime.crimeCounty})` : ""}
           </p>
-          <p className="text-slate-300">
+          <p className="text-[var(--color-slate)]">
             Reported to: {crime.reportingAgency || "—"} · Police report #:{" "}
             {crime.policeReportNumber || "—"}
           </p>
           {crime.crimeDescription && (
-            <p className="text-slate-300">
+            <p className="text-[var(--color-slate)]">
               Description: {crime.crimeDescription}
               {fieldState["crime.crimeDescription"]?.status === "amended" && (
                 <span className="ml-2 text-amber-300 text-[10px]">(Amended)</span>
@@ -1330,7 +1330,7 @@ export default function CaseDetailPage() {
             </p>
           )}
           {crime.injuryDescription && (
-            <p className="text-slate-300">
+            <p className="text-[var(--color-slate)]">
               Injuries: {crime.injuryDescription}
               {fieldState["crime.injuryDescription"]?.status === "amended" && (
                 <span className="ml-2 text-amber-300 text-[10px]">(Amended)</span>
@@ -1342,17 +1342,17 @@ export default function CaseDetailPage() {
         {/* Phase 8: Advocate amend intake */}
         {canAmendIntake && (
           <section
-            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+            className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-3 ${
               activeTab !== "intake" ? "hidden" : ""
             }`}
           >
-            <h2 className="text-sm font-semibold text-slate-50">Amend intake field</h2>
-            <p className="text-slate-400">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">Amend intake field</h2>
+            <p className="text-[var(--color-muted)]">
               Change a value with a required reason. Original value is preserved in the audit trail.
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               <div>
-                <label className="block text-slate-400 mb-1">Field</label>
+                <label className="block text-[var(--color-muted)] mb-1">Field</label>
                 <select
                   value={amendFieldKey}
                   onChange={(e) => {
@@ -1360,7 +1360,7 @@ export default function CaseDetailPage() {
                     const val = e.target.value ? getNested(app, e.target.value) : "";
                     setAmendNewValue(typeof val === "string" ? val : val != null ? String(val) : "");
                   }}
-                  className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                  className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                 >
                   <option value="">Select field…</option>
                   {AMENDABLE_FIELDS.map((f) => (
@@ -1371,8 +1371,8 @@ export default function CaseDetailPage() {
               {amendFieldKey && (
                 <>
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-400 mb-1">Current value</label>
-                    <p className="text-slate-200 break-words">
+                    <label className="block text-[var(--color-muted)] mb-1">Current value</label>
+                    <p className="text-[var(--color-charcoal)] break-words">
                       {currentValueForAmend !== undefined && currentValueForAmend !== null && currentValueForAmend !== ""
                         ? String(currentValueForAmend)
                         : "(empty)"}
@@ -1384,22 +1384,22 @@ export default function CaseDetailPage() {
                     </p>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-400 mb-1">New value</label>
+                    <label className="block text-[var(--color-muted)] mb-1">New value</label>
                     <input
                       type="text"
                       value={amendNewValue}
                       onChange={(e) => setAmendNewValue(e.target.value)}
-                      className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                      className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                       placeholder="Enter new value"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-slate-400 mb-1">Reason (required)</label>
+                    <label className="block text-[var(--color-muted)] mb-1">Reason (required)</label>
                     <textarea
                       value={amendReason}
                       onChange={(e) => setAmendReason(e.target.value)}
                       rows={2}
-                      className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5 text-slate-200"
+                      className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5 text-[var(--color-charcoal)]"
                       placeholder="Why is this being amended?"
                     />
                   </div>
@@ -1440,7 +1440,7 @@ export default function CaseDetailPage() {
                           setAmendLoading(false);
                         }
                       }}
-                      className="rounded border border-blue-600 bg-blue-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                      className="rounded border border-blue-600 bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
                     >
                       {amendLoading ? "Amending…" : "Amend"}
                     </button>
@@ -1454,36 +1454,36 @@ export default function CaseDetailPage() {
         {/* Phase 11: Program routing result */}
         {(activeTab === "routing" || routingResult || canRunRouting) && (
           <section
-            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+            className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-3 ${
               activeTab !== "routing" ? "hidden" : ""
             }`}
           >
-            <h2 className="text-sm font-semibold text-slate-50">Program routing</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">Program routing</h2>
             {routingRunAt && (
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[var(--color-muted)]">
                 Last evaluated: {formatDate(routingRunAt)}
               </p>
             )}
             {!routingResult ? (
               <div className="space-y-2">
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   No routing result yet. Run Routing from the Overview tab to see which programs may
                   apply based on this intake.
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                  className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)]"
                 >
                   Run Routing
                 </button>
               </div>
             ) : (
-              <ul className="divide-y divide-slate-800 space-y-4">
+              <ul className="divide-y divide-[var(--color-border-light)] space-y-4">
                 {routingResult.programs.map((prog) => (
                   <li key={prog.program_key} className="py-3 first:pt-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-slate-100">{prog.program_name}</span>
+                      <span className="font-medium text-[var(--color-navy)]">{prog.program_name}</span>
                       <span
                         className={`inline-flex rounded-full px-2 py-0.5 text-[10px] ${
                           prog.eligibility_status === "likely_eligible"
@@ -1491,21 +1491,21 @@ export default function CaseDetailPage() {
                             : prog.eligibility_status === "possibly_eligible"
                               ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                               : prog.eligibility_status === "insufficient_information"
-                                ? "bg-slate-500/20 text-slate-300 border border-slate-500/40"
+                                ? "bg-[var(--color-teal-light)]/40 text-[var(--color-slate)] border border-[var(--color-muted)]/40"
                                 : "bg-red-500/20 text-red-300 border border-red-500/40"
                         }`}
                       >
                         {prog.eligibility_status.replace(/_/g, " ")}
                       </span>
-                      <span className="text-[10px] text-slate-500">confidence: {prog.confidence}</span>
+                      <span className="text-[10px] text-[var(--color-muted)]">confidence: {prog.confidence}</span>
                     </div>
                     {prog.explanation && (
-                      <p className="text-slate-400 mt-1">{prog.explanation}</p>
+                      <p className="text-[var(--color-muted)] mt-1">{prog.explanation}</p>
                     )}
                     {prog.missing_requirements.length > 0 && (
                       <div className="mt-2">
-                        <p className="text-slate-500 text-[10px] uppercase tracking-wide">Missing / unknown</p>
-                        <ul className="list-disc list-inside text-slate-400 mt-0.5">
+                        <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide">Missing / unknown</p>
+                        <ul className="list-disc list-inside text-[var(--color-muted)] mt-0.5">
                           {prog.missing_requirements.slice(0, 8).map((m, i) => (
                             <li key={i}>{m}</li>
                           ))}
@@ -1516,20 +1516,20 @@ export default function CaseDetailPage() {
                       </div>
                     )}
                     {prog.required_documents.length > 0 && (
-                      <p className="mt-1.5 text-slate-400">
-                        <span className="text-slate-500">Required documents:</span>{" "}
+                      <p className="mt-1.5 text-[var(--color-muted)]">
+                        <span className="text-[var(--color-muted)]">Required documents:</span>{" "}
                         {prog.required_documents.join(", ")}
                       </p>
                     )}
                     {prog.deadline_summary && (
-                      <p className="mt-1 text-slate-400">
-                        <span className="text-slate-500">Deadline:</span> {prog.deadline_summary}
+                      <p className="mt-1 text-[var(--color-muted)]">
+                        <span className="text-[var(--color-muted)]">Deadline:</span> {prog.deadline_summary}
                       </p>
                     )}
                     {prog.next_steps.length > 0 && (
                       <div className="mt-1.5">
-                        <p className="text-slate-500 text-[10px] uppercase tracking-wide">Next steps</p>
-                        <ul className="list-disc list-inside text-slate-400 mt-0.5">
+                        <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide">Next steps</p>
+                        <ul className="list-disc list-inside text-[var(--color-muted)] mt-0.5">
                           {prog.next_steps.slice(0, 5).map((s, i) => (
                             <li key={i}>{s}</li>
                           ))}
@@ -1549,16 +1549,16 @@ export default function CaseDetailPage() {
           orgMatchGlobalFlags.length > 0 ||
           canRunOrgMatching) && (
           <section
-            className={`bg-slate-900 border border-slate-700 rounded-2xl p-5 text-xs space-y-3 ${
+            className={`bg-white border border-[var(--color-border)] rounded-2xl p-5 text-xs space-y-3 ${
               activeTab !== "matching" ? "hidden" : ""
             }`}
           >
-            <h2 className="text-sm font-semibold text-slate-50">Recommended organizations</h2>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">Recommended organizations</h2>
+            <p className="text-[var(--color-muted)] text-[11px] leading-relaxed">
               {TRUST_MICROCOPY.recommendationsLead} Confirm fit directly with each organization.{" "}
               <a
                 href={TRUST_LINK_HREF.matching}
-                className="text-slate-300 hover:text-white underline"
+                className="text-[var(--color-slate)] hover:text-white underline"
                 target="_blank"
                 rel="noreferrer"
               >
@@ -1566,7 +1566,7 @@ export default function CaseDetailPage() {
               </a>
             </p>
             {orgMatchRunAt && (
-              <p className="text-[11px] text-slate-500">Last run: {formatDate(orgMatchRunAt)}</p>
+              <p className="text-[11px] text-[var(--color-muted)]">Last run: {formatDate(orgMatchRunAt)}</p>
             )}
             {orgMatchGlobalFlags.map((f, i) => (
               <p key={i} className="text-amber-200/90 text-[11px]">
@@ -1575,21 +1575,21 @@ export default function CaseDetailPage() {
             ))}
             {orgMatches.length === 0 && !orgMatchGlobalFlags.length && canRunOrgMatching && (
               <div className="space-y-2">
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   {EMPTY_COPY.noMatchingResults} Find Matching Organizations from the Overview tab to
                   suggest organizations that may help with this case.
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="rounded-lg bg-slate-700 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-600"
+                  className="rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[var(--color-teal)]"
                 >
                   Find Matching Organizations
                 </button>
               </div>
             )}
             {orgMatches.length > 0 && (
-              <ul className="divide-y divide-slate-800 space-y-3">
+              <ul className="divide-y divide-[var(--color-border-light)] space-y-3">
                 {orgMatches.map((m) => (
                   <li key={m.organization_id} className="pt-3 first:pt-0">
                     <RecommendedOrganizationCard match={m} />
@@ -1603,26 +1603,26 @@ export default function CaseDetailPage() {
         {/* Phase 12: Documentation completeness */}
         {(activeTab === "completeness" || completenessResult || canRunCompleteness) && (
           <section
-            className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+            className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-3 ${
               activeTab !== "completeness" ? "hidden" : ""
             }`}
           >
-            <h2 className="text-sm font-semibold text-slate-50">Documentation completeness</h2>
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">Documentation completeness</h2>
             {completenessRunAt && (
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-[var(--color-muted)]">
                 Last evaluated: {formatDate(completenessRunAt)}
               </p>
             )}
             {!completenessResult ? (
               <div className="space-y-2">
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   No completeness result yet. Run Routing first, then Run Completeness from the
                   Overview tab to see what documents and information are missing.
                 </p>
                 <button
                   type="button"
                   onClick={() => setActiveTab("overview")}
-                  className="rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-1.5 text-[11px] font-semibold text-slate-100 hover:bg-slate-800"
+                  className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/85 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-light-sand)]"
                 >
                   Run Completeness
                 </button>
@@ -1638,19 +1638,19 @@ export default function CaseDetailPage() {
                           ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
                           : completenessResult.overall_status === "incomplete"
                             ? "bg-red-500/20 text-red-300 border border-red-500/40"
-                            : "bg-slate-500/20 text-slate-300 border border-slate-500/40"
+                            : "bg-[var(--color-teal-light)]/40 text-[var(--color-slate)] border border-[var(--color-muted)]/40"
                     }`}
                   >
                     {completenessResult.overall_status.replace(/_/g, " ")}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-[var(--color-muted)]">
                     Blocking: {completenessResult.summary_counts.blocking_count} · Warnings: {completenessResult.summary_counts.warning_count} · Info: {completenessResult.summary_counts.informational_count}
                   </span>
                 </div>
                 {completenessResult.recommended_next_actions.length > 0 && (
                   <div>
-                    <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Recommended next actions</p>
-                    <ul className="list-disc list-inside text-slate-300 space-y-0.5">
+                    <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide mb-1">Recommended next actions</p>
+                    <ul className="list-disc list-inside text-[var(--color-slate)] space-y-0.5">
                       {completenessResult.recommended_next_actions.slice(0, 5).map((a, i) => (
                         <li key={i}>{a}</li>
                       ))}
@@ -1660,8 +1660,8 @@ export default function CaseDetailPage() {
                 <div className="grid gap-3 sm:grid-cols-3">
                   {completenessResult.missing_items.filter((m) => m.type === "missing_document").length > 0 && (
                     <div>
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Missing documents</p>
-                      <ul className="text-slate-400 space-y-0.5">
+                      <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide mb-1">Missing documents</p>
+                      <ul className="text-[var(--color-muted)] space-y-0.5">
                         {completenessResult.missing_items
                           .filter((m) => m.type === "missing_document")
                           .slice(0, 6)
@@ -1669,15 +1669,15 @@ export default function CaseDetailPage() {
                             <li key={i}>{m.message}</li>
                           ))}
                       </ul>
-                      <p className="text-[10px] text-slate-500 mt-1">
+                      <p className="text-[10px] text-[var(--color-muted)] mt-1">
                         <a href="/compensation/documents" className="text-amber-400 hover:underline">Upload document</a>
                       </p>
                     </div>
                   )}
                   {completenessResult.missing_items.filter((m) => m.type === "missing_field").length > 0 && (
                     <div>
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Missing information</p>
-                      <ul className="text-slate-400 space-y-0.5">
+                      <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide mb-1">Missing information</p>
+                      <ul className="text-[var(--color-muted)] space-y-0.5">
                         {completenessResult.missing_items
                           .filter((m) => m.type === "missing_field")
                           .slice(0, 6)
@@ -1685,15 +1685,15 @@ export default function CaseDetailPage() {
                             <li key={i}>{m.message}</li>
                           ))}
                       </ul>
-                      <p className="text-[10px] text-slate-500 mt-1">
+                      <p className="text-[10px] text-[var(--color-muted)] mt-1">
                         <a href={`/compensation/intake?case=${caseId}`} className="text-amber-400 hover:underline">Go to intake</a>
                       </p>
                     </div>
                   )}
                   {completenessResult.inconsistencies.length > 0 && (
                     <div>
-                      <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-1">Warnings / inconsistencies</p>
-                      <ul className="text-slate-400 space-y-0.5">
+                      <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide mb-1">Warnings / inconsistencies</p>
+                      <ul className="text-[var(--color-muted)] space-y-0.5">
                         {completenessResult.inconsistencies.slice(0, 4).map((m, i) => (
                           <li key={i}>{m.message}</li>
                         ))}
@@ -1702,19 +1702,19 @@ export default function CaseDetailPage() {
                   )}
                 </div>
                 {completenessResult.program_results.length > 0 && (
-                  <div className="border-t border-slate-800 pt-3 mt-3">
-                    <p className="text-slate-500 text-[10px] uppercase tracking-wide mb-2">By program</p>
+                  <div className="border-t border-[var(--color-border-light)] pt-3 mt-3">
+                    <p className="text-[var(--color-muted)] text-[10px] uppercase tracking-wide mb-2">By program</p>
                     <ul className="space-y-3">
                       {completenessResult.program_results.map((prog) => (
-                        <li key={prog.program_key} className="border border-slate-700 rounded-lg p-3">
-                          <p className="font-medium text-slate-200">{prog.program_name}</p>
+                        <li key={prog.program_key} className="border border-[var(--color-border)] rounded-lg p-3">
+                          <p className="font-medium text-[var(--color-charcoal)]">{prog.program_name}</p>
                           {prog.missing_documents.length > 0 && (
-                            <p className="text-[11px] text-slate-400 mt-1">
+                            <p className="text-[11px] text-[var(--color-muted)] mt-1">
                               Missing docs: {prog.missing_documents.join(", ")}
                             </p>
                           )}
                           {prog.missing_fields.length > 0 && (
-                            <p className="text-[11px] text-slate-400">
+                            <p className="text-[11px] text-[var(--color-muted)]">
                               Missing fields: {prog.missing_fields.slice(0, 3).join(", ")}{prog.missing_fields.length > 3 ? "…" : ""}
                             </p>
                           )}
@@ -1735,17 +1735,17 @@ export default function CaseDetailPage() {
 
         {/* Losses */}
         <section
-          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+          className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-2 ${
             activeTab !== "intake" ? "hidden" : ""
           }`}
         >
-          <h2 className="text-sm font-semibold text-slate-50">
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">
             Losses claimed
           </h2>
           {selectedLossTypes.length === 0 ? (
-            <p className="text-slate-300">No losses selected.</p>
+            <p className="text-[var(--color-slate)]">No losses selected.</p>
           ) : (
-            <p className="text-slate-300">{selectedLossTypes.join(", ")}</p>
+            <p className="text-[var(--color-slate)]">{selectedLossTypes.join(", ")}</p>
           )}
         </section>
 
@@ -1755,23 +1755,23 @@ export default function CaseDetailPage() {
             activeTab !== "intake" ? "hidden" : ""
           }`}
         >
-          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
-            <h2 className="text-sm font-semibold text-slate-50">
+          <div className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">
               Medical / counseling
             </h2>
             {primaryProvider && primaryProvider.providerName ? (
               <>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Provider: {primaryProvider.providerName}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   City: {primaryProvider.city || "—"} · Phone:{" "}
                   {primaryProvider.phone || "—"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Dates: {primaryProvider.serviceDates || "—"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Bill:{" "}
                   {primaryProvider.amountOfBill != null
                     ? `$${primaryProvider.amountOfBill}`
@@ -1779,23 +1779,23 @@ export default function CaseDetailPage() {
                 </p>
               </>
             ) : (
-              <p className="text-slate-300">No provider entered.</p>
+              <p className="text-[var(--color-slate)]">No provider entered.</p>
             )}
           </div>
 
-          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
-            <h2 className="text-sm font-semibold text-slate-50">
+          <div className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">
               Work & income
             </h2>
             {primaryJob && primaryJob.employerName ? (
               <>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Employer: {primaryJob.employerName}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Phone: {primaryJob.employerPhone || "—"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Net monthly wages:{" "}
                   {primaryJob.netMonthlyWages != null
                     ? `$${primaryJob.netMonthlyWages}`
@@ -1803,30 +1803,30 @@ export default function CaseDetailPage() {
                 </p>
               </>
             ) : (
-              <p className="text-slate-300">No employment info entered.</p>
+              <p className="text-[var(--color-slate)]">No employment info entered.</p>
             )}
           </div>
 
-          <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-5 space-y-1.5">
-            <h2 className="text-sm font-semibold text-slate-50">
+          <div className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 space-y-1.5">
+            <h2 className="text-sm font-semibold text-[var(--color-navy)]">
               Funeral / burial
             </h2>
             {funeral.funeralHomeName || funeral.funeralBillTotal ? (
               <>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Funeral home: {funeral.funeralHomeName || "—"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Phone: {funeral.funeralHomePhone || "—"}
                 </p>
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Total funeral bill:{" "}
                   {funeral.funeralBillTotal != null
                     ? `$${funeral.funeralBillTotal}`
                     : "—"}
               </p>
               {primaryFuneralPayer && primaryFuneralPayer.payerName ? (
-                <p className="text-slate-300">
+                <p className="text-[var(--color-slate)]">
                   Payer: {primaryFuneralPayer.payerName} (
                   {primaryFuneralPayer.relationshipToVictim || "relationship not set"}
                   ) · Amount:{" "}
@@ -1837,39 +1837,39 @@ export default function CaseDetailPage() {
               ) : null}
             </>
           ) : (
-            <p className="text-slate-300">No funeral information entered.</p>
+            <p className="text-[var(--color-slate)]">No funeral information entered.</p>
           )}
         </div>
       </section>
 
       {/* Documents */}
       <section
-        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+        className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-2 ${
           activeTab !== "documents" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50">
+        <h2 className="text-sm font-semibold text-[var(--color-navy)]">
           Documents attached
         </h2>
-        <p className="text-[11px] text-slate-500">
+        <p className="text-[11px] text-[var(--color-muted)]">
           Uploads, statuses, secure access, and per-document OCR review.
         </p>
         {docs.length === 0 ? (
-          <p className="text-slate-300">No documents attached.</p>
+          <p className="text-[var(--color-slate)]">No documents attached.</p>
         ) : (
           <>
-            <p className="text-slate-300">
+            <p className="text-[var(--color-slate)]">
               {docs.length} document{docs.length > 1 ? "s" : ""} attached.
             </p>
             {Object.keys(docTypeCounts).length > 0 && (
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-[var(--color-muted)]">
                 By type:{" "}
                 {Object.entries(docTypeCounts)
                   .map(([t, n]) => `${t.replace(/_/g, " ")} (${n})`)
                   .join(", ")}
               </p>
             )}
-            <ul className="divide-y divide-slate-800 mt-2">
+            <ul className="divide-y divide-[var(--color-border-light)] mt-2">
               {docs.map((d) => (
                 <li
                   key={d.id}
@@ -1877,7 +1877,7 @@ export default function CaseDetailPage() {
                 >
                   <div className="space-y-0.5 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-slate-100">
+                      <p className="font-semibold text-[var(--color-navy)]">
                         {d.type.replace(/_/g, " ")}
                       </p>
                       {d.status === "restricted" && (
@@ -1886,20 +1886,20 @@ export default function CaseDetailPage() {
                         </span>
                       )}
                       {d.status === "deleted" && (
-                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] bg-slate-600 text-slate-400">
+                        <span className="inline-flex rounded-full px-2 py-0.5 text-[10px] bg-[var(--color-light-sand)] text-[var(--color-muted)]">
                           Deleted
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-300 truncate">{d.fileName}</p>
+                    <p className="text-[var(--color-slate)] truncate">{d.fileName}</p>
                     {d.description && (
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-[var(--color-muted)]">
                         {d.description}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="text-[11px] text-slate-500">
+                    <span className="text-[11px] text-[var(--color-muted)]">
                       {new Date(d.lastModified).toLocaleDateString("en-US")}
                     </span>
                     {d.status !== "deleted" && (
@@ -1992,18 +1992,18 @@ export default function CaseDetailPage() {
                     )}
                   </div>
                   {canRunOcr && (ocrLoadingDocId === d.id || ocrByDocId[d.id]) && (
-                    <div className="sm:col-span-2 mt-2 pt-2 border-t border-slate-800">
+                    <div className="sm:col-span-2 mt-2 pt-2 border-t border-[var(--color-border-light)]">
                       {ocrLoadingDocId === d.id ? (
-                        <p className="text-slate-500 text-[11px]">Running OCR…</p>
+                        <p className="text-[var(--color-muted)] text-[11px]">Running OCR…</p>
                       ) : !ocrByDocId[d.id] ? null : (() => {
                         const ocrData = ocrByDocId[d.id]!;
                         return (
                         <>
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[10px] text-slate-500">
+                            <span className="text-[10px] text-[var(--color-muted)]">
                               OCR: {ocrData.run.status} · {ocrData.fields.length} field(s)
                             </span>
-                            <button type="button" onClick={() => setOcrExpandedDocId((prev) => (prev === d.id ? null : d.id))} className="text-[10px] text-slate-400 hover:text-slate-300">
+                            <button type="button" onClick={() => setOcrExpandedDocId((prev) => (prev === d.id ? null : d.id))} className="text-[10px] text-[var(--color-muted)] hover:text-[var(--color-slate)]">
                               {ocrExpandedDocId === d.id ? "Collapse" : "Expand"}
                             </button>
                           </div>
@@ -2015,29 +2015,29 @@ export default function CaseDetailPage() {
                                     <p key={i} className="text-[11px] text-amber-200/90">{inc.message}</p>
                                   ))}
                                   {ocrData.warnings?.map((w, i) => (
-                                    <p key={i} className="text-[11px] text-slate-400">{w}</p>
+                                    <p key={i} className="text-[11px] text-[var(--color-muted)]">{w}</p>
                                   ))}
                                 </div>
                               )}
-                              <table className="w-full text-[11px] border border-slate-700 rounded overflow-hidden">
+                              <table className="w-full text-[11px] border border-[var(--color-border)] rounded overflow-hidden">
                                 <thead>
-                                  <tr className="bg-slate-800/80 text-left">
-                                    <th className="p-1.5 text-slate-400">Field</th>
-                                    <th className="p-1.5 text-slate-400">Value</th>
-                                    <th className="p-1.5 text-slate-400">Conf.</th>
-                                    <th className="p-1.5 text-slate-400">Status</th>
-                                    {canRunOcr && <th className="p-1.5 text-slate-400">Actions</th>}
+                                  <tr className="bg-[var(--color-light-sand)]/85 text-left">
+                                    <th className="p-1.5 text-[var(--color-muted)]">Field</th>
+                                    <th className="p-1.5 text-[var(--color-muted)]">Value</th>
+                                    <th className="p-1.5 text-[var(--color-muted)]">Conf.</th>
+                                    <th className="p-1.5 text-[var(--color-muted)]">Status</th>
+                                    {canRunOcr && <th className="p-1.5 text-[var(--color-muted)]">Actions</th>}
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {ocrData.fields.map((f) => (
-                                    <tr key={f.id} className="border-t border-slate-700">
-                                      <td className="p-1.5 text-slate-300">{f.field_label ?? f.field_key}</td>
-                                      <td className="p-1.5 text-slate-200">
+                                    <tr key={f.id} className="border-t border-[var(--color-border)]">
+                                      <td className="p-1.5 text-[var(--color-slate)]">{f.field_label ?? f.field_key}</td>
+                                      <td className="p-1.5 text-[var(--color-charcoal)]">
                                         {f.value_text ?? (f.value_number != null ? String(f.value_number) : f.value_date ?? "—")}
                                       </td>
-                                      <td className="p-1.5 text-slate-400">{f.confidence_score != null ? Math.round(f.confidence_score * 100) + "%" : "—"}</td>
-                                      <td className="p-1.5 text-slate-400">{f.status}</td>
+                                      <td className="p-1.5 text-[var(--color-muted)]">{f.confidence_score != null ? Math.round(f.confidence_score * 100) + "%" : "—"}</td>
+                                      <td className="p-1.5 text-[var(--color-muted)]">{f.status}</td>
                                       {canRunOcr && (
                                         <td className="p-1.5 flex gap-1 flex-wrap">
                                           {f.status === "extracted" && (
@@ -2129,12 +2129,12 @@ export default function CaseDetailPage() {
 
       {/* Secure messages */}
       <section
-        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 ${
+        className={`rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-5 ${
           activeTab !== "messages" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50 mb-2">Secure messages</h2>
-        <p className="text-[11px] text-slate-500 mb-3">
+        <h2 className="text-sm font-semibold text-[var(--color-navy)] mb-2">Secure messages</h2>
+        <p className="text-[11px] text-[var(--color-muted)] mb-3">
           When there are no messages yet, victims and advocates can start the thread here.
         </p>
         <CaseMessagesPanel caseId={caseId} />
@@ -2142,24 +2142,24 @@ export default function CaseDetailPage() {
 
       {/* Timeline */}
       <section
-        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-2 ${
+        className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-2 ${
           activeTab !== "timeline" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50">Case timeline</h2>
+        <h2 className="text-sm font-semibold text-[var(--color-navy)]">Case timeline</h2>
         {timelineEvents.length === 0 ? (
-          <p className="text-slate-400">No timeline events yet.</p>
+          <p className="text-[var(--color-muted)]">No timeline events yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-800 space-y-2">
+          <ul className="divide-y divide-[var(--color-border-light)] space-y-2">
             {timelineEvents.map((e) => (
               <li key={e.id} className="py-2 first:pt-0">
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[var(--color-muted)]">
                   {new Date(e.created_at).toLocaleString()}
                   {e.actor_role ? ` · ${e.actor_role}` : ""}
                 </p>
-                <p className="font-medium text-slate-200">{e.title}</p>
+                <p className="font-medium text-[var(--color-charcoal)]">{e.title}</p>
                 {e.description && (
-                  <p className="text-slate-400 mt-0.5">{e.description}</p>
+                  <p className="text-[var(--color-muted)] mt-0.5">{e.description}</p>
                 )}
               </li>
             ))}
@@ -2170,35 +2170,35 @@ export default function CaseDetailPage() {
       {/* Internal notes (advocates/admins only) */}
       {canViewNotes && (
         <section
-          className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-3 ${
+          className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-3 ${
             activeTab !== "notes" ? "hidden" : ""
           }`}
         >
-          <h2 className="text-sm font-semibold text-slate-50">Internal notes</h2>
+          <h2 className="text-sm font-semibold text-[var(--color-navy)]">Internal notes</h2>
           <div>
             <textarea
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
               placeholder="Add an internal note…"
               rows={2}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]"
             />
             <button
               type="button"
               onClick={handleAddNote}
               disabled={!noteContent.trim() || noteActioning === "add"}
-              className="mt-2 rounded-lg bg-blue-600 px-3 py-1.5 text-[11px] font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+              className="mt-2 rounded-lg bg-[var(--color-teal-deep)] px-3 py-1.5 text-[11px] font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {noteActioning === "add" ? "Adding…" : "Add note"}
             </button>
           </div>
           {notes.length === 0 ? (
-            <p className="text-slate-400">
+            <p className="text-[var(--color-muted)]">
               No internal notes yet. Add a note above for handoffs and follow-ups your team should
               see.
             </p>
           ) : (
-            <ul className="divide-y divide-slate-800 space-y-3">
+            <ul className="divide-y divide-[var(--color-border-light)] space-y-3">
               {notes.map((n) => (
                 <li key={n.id} className="py-2">
                   {editingNoteId === n.id ? (
@@ -2207,7 +2207,7 @@ export default function CaseDetailPage() {
                         value={editingNoteContent}
                         onChange={(e) => setEditingNoteContent(e.target.value)}
                         rows={3}
-                        className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-slate-100"
+                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2 text-[var(--color-navy)]"
                       />
                       <div className="mt-2 flex gap-2">
                         <button
@@ -2224,7 +2224,7 @@ export default function CaseDetailPage() {
                             setEditingNoteId(null);
                             setEditingNoteContent("");
                           }}
-                          className="text-[11px] text-slate-400 hover:text-slate-300"
+                          className="text-[11px] text-[var(--color-muted)] hover:text-[var(--color-slate)]"
                         >
                           Cancel
                         </button>
@@ -2232,14 +2232,14 @@ export default function CaseDetailPage() {
                     </div>
                   ) : (
                     <>
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-[var(--color-muted)]">
                         {new Date(n.created_at).toLocaleString()}
                         {n.author_role ? ` · ${n.author_role}` : ""}
                         {n.status === "edited" && n.edited_at
                           ? ` · edited ${new Date(n.edited_at).toLocaleString()}`
                           : ""}
                       </p>
-                      <p className="text-slate-200 whitespace-pre-wrap">{n.content}</p>
+                      <p className="text-[var(--color-charcoal)] whitespace-pre-wrap">{n.content}</p>
                       <div className="mt-1 flex gap-2">
                         <button
                           type="button"
@@ -2272,18 +2272,18 @@ export default function CaseDetailPage() {
 
       {/* Certification */}
       <section
-        className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 text-xs space-y-1.5 ${
+        className={`bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl p-5 text-xs space-y-1.5 ${
           activeTab !== "intake" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50">
+        <h2 className="text-sm font-semibold text-[var(--color-navy)]">
           Certification snapshot
         </h2>
-        <p className="text-slate-300">
+        <p className="text-[var(--color-slate)]">
           Signature: {certification.applicantSignatureName || "—"} · Date:{" "}
           {certification.applicantSignatureDate || "—"}
         </p>
-        <p className="text-[11px] text-slate-400">
+        <p className="text-[11px] text-[var(--color-muted)]">
           Subrogation acknowledged:{" "}
           {certification.acknowledgesSubrogation ? "Yes" : "No / not marked"};
           {" · "}
@@ -2297,25 +2297,25 @@ export default function CaseDetailPage() {
 
       {/* Case access */}
       <section
-        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-xs space-y-2 ${
+        className={`rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-5 text-xs space-y-2 ${
           activeTab !== "access" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50">Access</h2>
-        <p className="text-slate-400">
+        <h2 className="text-sm font-semibold text-[var(--color-navy)]">Access</h2>
+        <p className="text-[var(--color-muted)]">
           Who can see and edit this case in the platform. Advocate connections and sharing are
           managed from case access rules in your workflow.
         </p>
         {caseAccess ? (
-          <ul className="text-slate-300 space-y-1 list-disc list-inside">
+          <ul className="text-[var(--color-slate)] space-y-1 list-disc list-inside">
             <li>Role: {caseAccess.role}</li>
             <li>Can view: {caseAccess.can_view ? "Yes" : "No"}</li>
             <li>Can edit: {caseAccess.can_edit ? "Yes" : "No"}</li>
           </ul>
         ) : (
-          <p className="text-slate-500">No access details loaded.</p>
+          <p className="text-[var(--color-muted)]">No access details loaded.</p>
         )}
-        <p className="text-[11px] text-slate-500 pt-2">
+        <p className="text-[11px] text-[var(--color-muted)] pt-2">
           Open the guided intake with this case:{" "}
           <a
             href={`/compensation/intake?case=${caseId}`}
@@ -2328,12 +2328,12 @@ export default function CaseDetailPage() {
 
       {/* Appointments — UI not wired on this page; placeholder keeps tab usable */}
       <section
-        className={`rounded-2xl border border-slate-800 bg-slate-900/70 p-5 text-xs space-y-2 ${
+        className={`rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-5 text-xs space-y-2 ${
           activeTab !== "appointments" ? "hidden" : ""
         }`}
       >
-        <h2 className="text-sm font-semibold text-slate-50">Appointments</h2>
-        <p className="text-slate-400">
+        <h2 className="text-sm font-semibold text-[var(--color-navy)]">Appointments</h2>
+        <p className="text-[var(--color-muted)]">
           No appointments listed in this view yet. Appointment scheduling may appear in other tools
           or future releases.
         </p>

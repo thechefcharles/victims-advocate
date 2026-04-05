@@ -10,8 +10,8 @@ export default function VictimDashboardPage() {
 
   if (!consentReady) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
-        <div className="max-w-xl mx-auto text-sm text-slate-400">Loading…</div>
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
+        <div className="max-w-xl mx-auto text-sm text-[var(--color-muted)]">Loading…</div>
       </main>
     );
   }

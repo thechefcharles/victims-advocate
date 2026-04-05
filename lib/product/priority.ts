@@ -22,13 +22,13 @@ export function priorityLabel(p: ProductPriority): string {
 export function priorityBadgeClassName(p: ProductPriority): string {
   switch (p) {
     case "high":
-      return "border-amber-500/35 bg-amber-950/25 text-amber-100/90";
+      return "border-[var(--color-warning)]/40 bg-[var(--color-gold-light)] text-[var(--color-charcoal)]";
     case "medium":
-      return "border-sky-500/30 bg-sky-950/20 text-sky-100/85";
+      return "border-[var(--color-teal)]/35 bg-[var(--color-teal-light)] text-[var(--color-teal-deep)]";
     case "low":
-      return "border-slate-600/80 bg-slate-900/50 text-slate-400";
+      return "border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 text-[var(--color-muted)]";
     default:
-      return "border-slate-700 bg-slate-900/40 text-slate-400";
+      return "border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 text-[var(--color-muted)]";
   }
 }
 
@@ -39,7 +39,7 @@ export function priorityRingClassName(p: ProductPriority): string {
     case "medium":
       return "ring-1 ring-sky-500/20";
     case "low":
-      return "ring-1 ring-slate-700/60";
+      return "ring-1 ring-[var(--color-border)]";
     default:
       return "";
   }

@@ -147,13 +147,13 @@ export function VictimPersonalInfoForm({
   };
 
   const field =
-    "block w-full rounded-lg border border-slate-600 bg-slate-950/80 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500";
+    "block w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/90 px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500";
 
-  const label = "block text-xs font-medium text-slate-400 mb-1";
+  const label = "block text-xs font-medium text-[var(--color-muted)] mb-1";
 
   const section = (titleKey: string, children: React.ReactNode) => (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-slate-200 border-b border-slate-700 pb-2">
+      <h3 className="text-sm font-semibold text-[var(--color-charcoal)] border-b border-[var(--color-border)] pb-2">
         {a(titleKey)}
       </h3>
       {children}
@@ -161,11 +161,11 @@ export function VictimPersonalInfoForm({
   );
 
   return (
-    <div className="space-y-6 rounded-2xl border border-slate-700 bg-slate-900/40 p-6">
+    <div className="space-y-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-6">
       <div>
-        <h2 className="text-lg font-semibold text-slate-50">{a("title")}</h2>
-        <p className="text-xs text-slate-500 mt-2 leading-relaxed">{a("intro")}</p>
-        <p className="text-xs text-slate-600 mt-1">{a("privacyNote")}</p>
+        <h2 className="text-lg font-semibold text-[var(--color-navy)]">{a("title")}</h2>
+        <p className="text-xs text-[var(--color-muted)] mt-2 leading-relaxed">{a("intro")}</p>
+        <p className="text-xs text-[var(--color-slate)] mt-1">{a("privacyNote")}</p>
       </div>
 
       {section("identitySection", (

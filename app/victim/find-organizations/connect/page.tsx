@@ -173,7 +173,7 @@ function ConnectOrganizationHelpInner() {
           />
           <Link
             href={backHref}
-            className="inline-flex text-sm text-blue-400 hover:text-blue-300 underline"
+            className="inline-flex text-sm text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
           >
             {t("victimDashboard.findOrganizationsPage.connectHelpNeedsContinueBrowse")}
           </Link>
@@ -202,33 +202,33 @@ function ConnectOrganizationHelpInner() {
         ) : null}
 
         {orgName ? (
-          <p className="text-sm text-slate-400 px-1">
-            <span className="text-slate-500">
+          <p className="text-sm text-[var(--color-muted)] px-1">
+            <span className="text-[var(--color-muted)]">
               {t("victimDashboard.findOrganizationsPage.connectHelpNeedsOrgLabel")}:{" "}
             </span>
-            <span className="font-medium text-slate-200">{orgName}</span>
+            <span className="font-medium text-[var(--color-charcoal)]">{orgName}</span>
           </p>
         ) : !orgLoadErr && validOrg && !orgName ? (
-          <p className="text-xs text-slate-600 px-1 animate-pulse">
+          <p className="text-xs text-[var(--color-slate)] px-1 animate-pulse">
             {t("victimDashboard.findOrganizationsPage.orgProfileLoading")}
           </p>
         ) : null}
 
         <form onSubmit={(e) => void onSubmit(e)} className={`${APP_CARD} space-y-4`}>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
             {t("victimDashboard.findOrganizationsPage.connectHelpNeedsSelectHint")}
           </p>
           <ul className="space-y-3">
             {ORGANIZATION_CONNECT_HELP_NEED_KEYS.map((key) => (
               <li key={key}>
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-700/80 bg-slate-950/40 px-3 py-3 hover:border-slate-600">
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/70 px-3 py-3 hover:border-[var(--color-border)]">
                   <input
                     type="checkbox"
                     checked={selected.has(key)}
                     onChange={() => toggle(key)}
-                    className="mt-1 h-4 w-4 rounded border-slate-600 bg-slate-900 text-teal-600 focus:ring-teal-500/40"
+                    className="mt-1 h-4 w-4 rounded border-[var(--color-border)] bg-white text-teal-600 focus:ring-teal-500/40"
                   />
-                  <span className="text-sm text-slate-200">{needLabel(t, key)}</span>
+                  <span className="text-sm text-[var(--color-charcoal)]">{needLabel(t, key)}</span>
                 </label>
               </li>
             ))}
@@ -257,17 +257,17 @@ function ConnectOrganizationHelpInner() {
           aria-modal="true"
           aria-labelledby="connect-success-modal-title"
         >
-          <div className="w-full max-w-md rounded-2xl border border-slate-600/80 bg-slate-950 px-5 py-6 shadow-2xl shadow-black/50 space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] px-5 py-6 shadow-2xl shadow-black/50 space-y-4">
             <h2
               id="connect-success-modal-title"
-              className="text-lg font-semibold text-slate-50 tracking-tight"
+              className="text-lg font-semibold text-[var(--color-navy)] tracking-tight"
             >
               {t("victimDashboard.findOrganizationsPage.connectSuccessModalTitle")}
             </h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-[var(--color-slate)] leading-relaxed">
               {t("victimDashboard.findOrganizationsPage.connectSuccessModalBody")}
             </p>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-[var(--color-slate)] leading-relaxed">
               {t("victimDashboard.findOrganizationsPage.connectSuccessModalCrisisLead")}{" "}
               <a href="tel:911" className="font-medium text-teal-400 underline hover:text-teal-300">
                 911
@@ -296,7 +296,7 @@ export default function VictimConnectOrganizationHelpPage() {
     <Suspense
       fallback={
         <main className={APP_PAGE_MAIN}>
-          <div className="max-w-lg mx-auto text-slate-400 text-sm">Loading…</div>
+          <div className="max-w-lg mx-auto text-[var(--color-muted)] text-sm">Loading…</div>
         </main>
       }
     >

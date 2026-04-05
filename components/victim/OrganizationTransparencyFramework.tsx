@@ -47,7 +47,7 @@ function SourceIcon({
     );
   }
   return (
-    <span title={selfHint} className="inline-flex shrink-0 text-slate-500" aria-hidden>
+    <span title={selfHint} className="inline-flex shrink-0 text-[var(--color-muted)]" aria-hidden>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
         <circle cx="10" cy="10" r="3.5" />
       </svg>
@@ -99,7 +99,7 @@ export function OrganizationTransparencyFramework({
       {!omitIntroHeading ? (
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-white">{copy.learnMoreDialogTitle}</h2>
-          <p className="text-[11px] text-slate-400 leading-snug">{copy.learnMoreDialogSubtitle}</p>
+          <p className="text-[11px] text-[var(--color-muted)] leading-snug">{copy.learnMoreDialogSubtitle}</p>
         </div>
       ) : null}
 
@@ -108,23 +108,23 @@ export function OrganizationTransparencyFramework({
           <div className="text-[10px] font-bold uppercase tracking-wide text-teal-200/95">
             {copy.tier1Title}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 leading-snug">{copy.tier1Desc}</p>
+          <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-snug">{copy.tier1Desc}</p>
         </div>
         <div className="rounded-lg border border-cyan-500/25 bg-cyan-950/20 px-2.5 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wide text-cyan-200/90">
             {copy.tier2Title}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 leading-snug">{copy.tier2Desc}</p>
+          <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-snug">{copy.tier2Desc}</p>
         </div>
-        <div className="rounded-lg border border-slate-500/35 bg-slate-900/80 px-2.5 py-2">
-          <div className="text-[10px] font-bold uppercase tracking-wide text-slate-300">
+        <div className="rounded-lg border border-[var(--color-muted)]/35 bg-white/92 px-2.5 py-2">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-[var(--color-slate)]">
             {copy.tier3Title}
           </div>
-          <p className="text-[10px] text-slate-400 mt-1 leading-snug">{copy.tier3Desc}</p>
+          <p className="text-[10px] text-[var(--color-muted)] mt-1 leading-snug">{copy.tier3Desc}</p>
         </div>
       </div>
 
-      <p className="text-[10px] text-slate-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <p className="text-[10px] text-[var(--color-muted)] flex flex-wrap items-center gap-x-3 gap-y-1">
         <span className="inline-flex items-center gap-1">
           <SourceIcon source="self" selfHint={copy.sourceSelfHint} platformHint={copy.sourcePlatformHint} />
           {copy.sourceSelfHint}
@@ -142,7 +142,7 @@ export function OrganizationTransparencyFramework({
           return (
             <div
               key={section.id}
-              className={`rounded-xl border overflow-hidden ${styles.border} bg-slate-950/40`}
+              className={`rounded-xl border overflow-hidden ${styles.border} bg-[var(--color-warm-cream)]/70`}
             >
               <button
                 type="button"
@@ -162,7 +162,7 @@ export function OrganizationTransparencyFramework({
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 shrink-0 text-[var(--color-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`}
                   aria-hidden
                 >
                   <path
@@ -173,12 +173,12 @@ export function OrganizationTransparencyFramework({
                 </svg>
               </button>
               {isOpen ? (
-                <div className="px-3 pb-3 pt-2 flex flex-wrap gap-2 border-t border-slate-800/60">
+                <div className="px-3 pb-3 pt-2 flex flex-wrap gap-2 border-t border-[var(--color-border-light)]">
                   {section.fields.map((field) => (
                     <div
                       key={field.id}
-                      className={`rounded-lg border px-2.5 py-1.5 max-w-full flex gap-1.5 items-start bg-slate-900/80 ${
-                        field.dashed ? "border-dashed border-slate-500" : "border-slate-600"
+                      className={`rounded-lg border px-2.5 py-1.5 max-w-full flex gap-1.5 items-start bg-white/92 ${
+                        field.dashed ? "border-dashed border-[var(--color-muted)]" : "border-[var(--color-border)]"
                       }`}
                     >
                       <SourceIcon
@@ -187,10 +187,10 @@ export function OrganizationTransparencyFramework({
                         platformHint={copy.sourcePlatformHint}
                       />
                       <div className="min-w-0">
-                        <div className="text-[10px] uppercase tracking-wide text-slate-500 leading-tight">
+                        <div className="text-[10px] uppercase tracking-wide text-[var(--color-muted)] leading-tight">
                           {field.label}
                         </div>
-                        <div className="text-xs text-slate-200 mt-0.5 break-words">
+                        <div className="text-xs text-[var(--color-charcoal)] mt-0.5 break-words">
                           {resolveFieldValue(field, external, responseAccessibility, copy)}
                         </div>
                       </div>

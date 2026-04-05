@@ -216,25 +216,25 @@ export default function AdminGradingPage() {
     : [];
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+            <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
               Admin · Internal only
             </p>
             <h1 className="text-2xl font-bold">CBO quality grading</h1>
-            <p className="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-sm text-[var(--color-muted)] mt-1 max-w-2xl leading-relaxed">
               Internal scoring supports designation mapping — scores are not shown to victims or the
               public. Version <code className="text-violet-300">{ORG_GRADING_VERSION}</code> — not
               public, not used in matching.
             </p>
           </div>
           <div className="flex flex-wrap gap-3 text-sm items-center">
-            <Link href="/admin/orgs" className="text-slate-400 hover:text-slate-200">
+            <Link href="/admin/orgs" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
               ← Orgs
             </Link>
-            <Link href="/admin/cases" className="text-slate-400 hover:text-slate-200">
+            <Link href="/admin/cases" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
               Cases
             </Link>
             <Link href="/admin/designations" className="text-teal-400 hover:text-teal-200">
@@ -249,16 +249,16 @@ export default function AdminGradingPage() {
           </div>
         )}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-          <h2 className="text-sm font-semibold text-slate-200">Organization</h2>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Organization</h2>
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : (
             <div className="flex flex-wrap gap-3 items-center">
               <select
                 value={orgId}
                 onChange={(e) => setOrgId(e.target.value)}
-                className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 min-w-[240px]"
+                className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] min-w-[240px]"
               >
                 {orgs.map((o) => (
                   <option key={o.id} value={o.id}>
@@ -270,7 +270,7 @@ export default function AdminGradingPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runGrading(false)}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
               >
                 {running ? "…" : "Load / compute if missing"}
               </button>
@@ -278,7 +278,7 @@ export default function AdminGradingPage() {
                 type="button"
                 disabled={running || !orgId}
                 onClick={() => runGrading(true)}
-                className="rounded-lg bg-slate-700 px-4 py-2 text-sm text-white hover:bg-slate-600 disabled:opacity-50"
+                className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
               >
                 Force recompute
               </button>
@@ -286,7 +286,7 @@ export default function AdminGradingPage() {
                 type="button"
                 disabled={batchRunning}
                 onClick={runAll}
-                className="rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm text-[var(--color-slate)] hover:bg-[var(--color-light-sand)] disabled:opacity-50"
               >
                 {batchRunning ? "Batch…" : "Run all (cap 30)"}
               </button>
@@ -295,47 +295,47 @@ export default function AdminGradingPage() {
         </section>
 
         {current && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-200">Latest score</h2>
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Latest score</h2>
             <div className="flex flex-wrap gap-6 items-baseline">
               <div>
-                <p className="text-[11px] text-slate-500 uppercase">Overall</p>
-                <p className="text-3xl font-semibold text-slate-100">{current.overall_score}</p>
+                <p className="text-[11px] text-[var(--color-muted)] uppercase">Overall</p>
+                <p className="text-3xl font-semibold text-[var(--color-navy)]">{current.overall_score}</p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 uppercase">Confidence</p>
+                <p className="text-[11px] text-[var(--color-muted)] uppercase">Confidence</p>
                 <p
                   className={`text-lg font-medium ${
                     current.score_confidence === "high"
                       ? "text-emerald-400"
                       : current.score_confidence === "medium"
                         ? "text-amber-300"
-                        : "text-slate-400"
+                        : "text-[var(--color-muted)]"
                   }`}
                 >
                   {current.score_confidence}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 uppercase">Computed</p>
-                <p className="text-sm text-slate-300">
+                <p className="text-[11px] text-[var(--color-muted)] uppercase">Computed</p>
+                <p className="text-sm text-[var(--color-slate)]">
                   {new Date(current.computed_at).toLocaleString()}
                 </p>
               </div>
               <div>
-                <p className="text-[11px] text-slate-500 uppercase">Model</p>
-                <p className="text-sm text-slate-300">{current.score_version}</p>
+                <p className="text-[11px] text-[var(--color-muted)] uppercase">Model</p>
+                <p className="text-sm text-[var(--color-slate)]">{current.score_version}</p>
               </div>
             </div>
 
             {current.flags.length > 0 && (
               <div>
-                <p className="text-[11px] text-slate-500 uppercase mb-1">Flags</p>
+                <p className="text-[11px] text-[var(--color-muted)] uppercase mb-1">Flags</p>
                 <ul className="flex flex-wrap gap-2">
                   {current.flags.map((f) => (
                     <li
                       key={f}
-                      className="text-xs rounded-full border border-slate-600 px-2 py-0.5 text-slate-300"
+                      className="text-xs rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[var(--color-slate)]"
                     >
                       {f.replace(/_/g, " ")}
                     </li>
@@ -345,31 +345,31 @@ export default function AdminGradingPage() {
             )}
 
             <div>
-              <p className="text-[11px] text-slate-500 uppercase mb-2">Input summary</p>
-              <pre className="text-[11px] bg-slate-950/80 border border-slate-800 rounded-lg p-3 overflow-x-auto text-slate-400">
+              <p className="text-[11px] text-[var(--color-muted)] uppercase mb-2">Input summary</p>
+              <pre className="text-[11px] bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-lg p-3 overflow-x-auto text-[var(--color-muted)]">
                 {JSON.stringify(current.inputs_summary, null, 2)}
               </pre>
             </div>
 
             <div>
-              <p className="text-[11px] text-slate-500 uppercase mb-2">Category breakdown</p>
+              <p className="text-[11px] text-[var(--color-muted)] uppercase mb-2">Category breakdown</p>
               <div className="space-y-4">
                 {cats.map(([key, c]) => (
                   <div
                     key={key}
-                    className="border border-slate-800 rounded-lg p-3 bg-slate-950/40"
+                    className="border border-[var(--color-border-light)] rounded-lg p-3 bg-[var(--color-warm-cream)]/70"
                   >
                     <div className="flex flex-wrap justify-between gap-2">
-                      <span className="font-medium text-slate-200">
+                      <span className="font-medium text-[var(--color-charcoal)]">
                         {key.replace(/_/g, " ")}
                       </span>
-                      <span className="text-sm text-slate-400">
+                      <span className="text-sm text-[var(--color-muted)]">
                         score {c.score} · weight {c.weight} · weighted {c.weighted_score} ·{" "}
                         <span className="text-violet-300">{c.confidence}</span>
                       </span>
                     </div>
                     {c.reasons?.length > 0 && (
-                      <ul className="mt-2 list-disc list-inside text-xs text-slate-400">
+                      <ul className="mt-2 list-disc list-inside text-xs text-[var(--color-muted)]">
                         {c.reasons.map((r, i) => (
                           <li key={i}>{r}</li>
                         ))}
@@ -385,37 +385,37 @@ export default function AdminGradingPage() {
         {signals && (
           <section
             id="org-signals-snapshot"
-            className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5 space-y-4 scroll-mt-24"
+            className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5 space-y-4 scroll-mt-24"
           >
-            <h2 className="text-sm font-semibold text-slate-200">Org signal snapshot (internal)</h2>
-            <p className="text-xs text-slate-500">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Org signal snapshot (internal)</h2>
+            <p className="text-xs text-[var(--color-muted)]">
               Lightweight derived operational signals for internal scoring/debug use. Not public and
               not shown to victims.
             </p>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
-              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                <p className="text-slate-500 uppercase">Profile</p>
-                <p className="text-slate-300 mt-1">
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 p-3">
+                <p className="text-[var(--color-muted)] uppercase">Profile</p>
+                <p className="text-[var(--color-slate)] mt-1">
                   {signals.profile.profileStatus ?? "—"} · {signals.profile.profileStage ?? "—"}
                 </p>
-                <p className="text-slate-400">Completeness: {signals.profile.completeness ?? "—"}</p>
+                <p className="text-[var(--color-muted)]">Completeness: {signals.profile.completeness ?? "—"}</p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                <p className="text-slate-500 uppercase">Cases</p>
-                <p className="text-slate-300 mt-1">
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 p-3">
+                <p className="text-[var(--color-muted)] uppercase">Cases</p>
+                <p className="text-[var(--color-slate)] mt-1">
                   total {signals.cases.total} · active {signals.cases.active} · stale {signals.cases.stale}
                 </p>
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   avg age {signals.cases.avgAgeDays != null ? `${signals.cases.avgAgeDays.toFixed(1)}d` : "—"}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-3">
-                <p className="text-slate-500 uppercase">Messaging</p>
-                <p className="text-slate-300 mt-1">
+              <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 p-3">
+                <p className="text-[var(--color-muted)] uppercase">Messaging</p>
+                <p className="text-[var(--color-slate)] mt-1">
                   threads {signals.messaging.recentMessageThreads} · confidence{" "}
                   {signals.messaging.replySignalConfidence}
                 </p>
-                <p className="text-slate-400">
+                <p className="text-[var(--color-muted)]">
                   avg first reply{" "}
                   {signals.messaging.avgFirstReplyHours != null
                     ? `${signals.messaging.avgFirstReplyHours.toFixed(1)}h`
@@ -426,12 +426,12 @@ export default function AdminGradingPage() {
 
             {signals.flags.length > 0 && (
               <div>
-                <p className="text-[11px] text-slate-500 uppercase mb-1">Signal flags</p>
+                <p className="text-[11px] text-[var(--color-muted)] uppercase mb-1">Signal flags</p>
                 <ul className="flex flex-wrap gap-2">
                   {signals.flags.map((f) => (
                     <li
                       key={f}
-                      className="text-xs rounded-full border border-slate-600 px-2 py-0.5 text-slate-300"
+                      className="text-xs rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[var(--color-slate)]"
                     >
                       {f.replace(/_/g, " ")}
                     </li>
@@ -440,29 +440,29 @@ export default function AdminGradingPage() {
               </div>
             )}
 
-            <pre className="text-[11px] bg-slate-950/80 border border-slate-800 rounded-lg p-3 overflow-x-auto text-slate-400">
+            <pre className="text-[11px] bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-lg p-3 overflow-x-auto text-[var(--color-muted)]">
               {JSON.stringify(signals, null, 2)}
             </pre>
           </section>
         )}
 
         {!current && !loading && orgId && (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-[var(--color-muted)]">
             No score on file for this organization. Use &quot;Load / compute if missing&quot; to
             generate one.
           </p>
         )}
 
         {history.filter((h) => h.id !== current?.id).length > 0 && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-5">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Recent runs</h2>
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Recent runs</h2>
             <ul className="text-xs space-y-2">
               {history
                 .filter((h) => h.id !== current?.id)
                 .slice(0, 10)
                 .map((h) => (
-                <li key={h.id} className="flex justify-between border-b border-slate-800 py-2">
-                  <span className="text-slate-400">
+                <li key={h.id} className="flex justify-between border-b border-[var(--color-border-light)] py-2">
+                  <span className="text-[var(--color-muted)]">
                     {new Date(h.computed_at).toLocaleString()} · {h.status}
                   </span>
                   <span>

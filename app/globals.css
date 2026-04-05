@@ -1,53 +1,7 @@
 @import "tailwindcss";
 
+/* —— NxtStps Brand Kit V2 — global tokens (all surfaces) —— */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Victim dashboard funnel progress — shimmer sweep across the fill */
-@keyframes funnel-progress-shimmer {
-  0% {
-    transform: translateX(-120%) skewX(-12deg);
-  }
-  100% {
-    transform: translateX(280%) skewX(-12deg);
-  }
-}
-
-.funnel-progress-fill-shimmer {
-  animation: funnel-progress-shimmer 2.8s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .funnel-progress-fill-shimmer {
-    animation: none;
-  }
-}
-
-/* —— NxtStps marketing homepage (Brand Kit V2) —— */
-.marketing-home-root {
-  scroll-behavior: smooth;
   --color-teal-deep: #0c5f72;
   --color-teal: #1a8ba6;
   --color-teal-soft: #4aaec7;
@@ -79,9 +33,46 @@ body {
   --shadow-card: 0 12px 40px rgba(15, 40, 64, 0.08);
   --shadow-modal: 0 20px 50px rgba(15, 40, 64, 0.12);
 
-  background-color: var(--color-warm-white);
+  --background: var(--color-warm-white);
+  --foreground: var(--color-charcoal);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-marketing-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-warm-white);
   color: var(--color-charcoal);
   font-family: var(--font-marketing-sans), system-ui, sans-serif;
+}
+
+/* Victim dashboard funnel progress — shimmer sweep across the fill */
+@keyframes funnel-progress-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(280%) skewX(-12deg);
+  }
+}
+
+.funnel-progress-fill-shimmer {
+  animation: funnel-progress-shimmer 2.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .funnel-progress-fill-shimmer {
+    animation: none;
+  }
+}
+
+/* Marketing homepage extras */
+.marketing-home-root {
+  scroll-behavior: smooth;
 }
 
 .marketing-serif {

@@ -287,20 +287,20 @@ export default function NotificationsPage() {
   };
 
   const markReadButtonClass =
-    "inline-flex items-center rounded-full border border-slate-600 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60";
+    "inline-flex items-center rounded-full border border-[var(--color-border)] px-3 py-1 text-xs text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-60";
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-xl font-semibold text-slate-100 mb-2">{t("notificationsPage.title")}</h1>
-      <p className="text-xs text-slate-500 mb-4 max-w-xl">{t("notificationsPage.subtitle")}</p>
+      <h1 className="text-xl font-semibold text-[var(--color-navy)] mb-2">{t("notificationsPage.title")}</h1>
+      <p className="text-xs text-[var(--color-muted)] mb-4 max-w-xl">{t("notificationsPage.subtitle")}</p>
       {actionError && (
         <p className="text-sm text-red-300 mb-3" role="alert">
           {actionError}
         </p>
       )}
-      {loading && <p className="text-sm text-slate-400">{t("common.loading")}</p>}
+      {loading && <p className="text-sm text-[var(--color-muted)]">{t("common.loading")}</p>}
       {!loading && items.length === 0 && (
-        <p className="text-sm text-slate-400">{t("notificationsPage.empty")}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("notificationsPage.empty")}</p>
       )}
       <ul className="mt-4 space-y-3">
         {items.map((n) => {
@@ -323,8 +323,8 @@ export default function NotificationsPage() {
               key={n.id}
               className={`rounded-lg border px-4 py-3 text-sm ${
                 isRead
-                  ? "border-slate-700/90 border-l-2 border-l-emerald-500/55 bg-slate-900/50 text-slate-300"
-                  : "border-slate-600 bg-slate-900 text-slate-100"
+                  ? "border-[var(--color-border)]/90 border-l-2 border-l-emerald-500/55 bg-[var(--color-warm-cream)]/80 text-[var(--color-slate)]"
+                  : "border-[var(--color-border)] bg-white text-[var(--color-navy)]"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -348,22 +348,22 @@ export default function NotificationsPage() {
                           : n.title}
                   </div>
                 </div>
-                <span className="shrink-0 text-[11px] uppercase tracking-wide text-slate-500">
+                <span className="shrink-0 text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                   {new Date(n.created_at).toLocaleString()}
                 </span>
               </div>
 
               {canActOnJoinRequest ? (
                 !strictPreviews && n.preview_safe && n.body ? (
-                  <p className="mt-2 text-xs text-slate-300 whitespace-pre-line sm:pl-7">{n.body}</p>
+                  <p className="mt-2 text-xs text-[var(--color-slate)] whitespace-pre-line sm:pl-7">{n.body}</p>
                 ) : null
               ) : isAdvocateConnection ? (
                 <div className="mt-2 space-y-1 pl-0 sm:pl-7">
-                  <p className="text-sm text-slate-100 font-medium">{connAdv.victimName}</p>
+                  <p className="text-sm text-[var(--color-navy)] font-medium">{connAdv.victimName}</p>
                   {connAdv.victimEmail ? (
-                    <p className="text-xs text-slate-400">{connAdv.victimEmail}</p>
+                    <p className="text-xs text-[var(--color-muted)]">{connAdv.victimEmail}</p>
                   ) : null}
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
                     {connAdv.scopedToCase
                       ? "Wants to connect with you on a case."
                       : "Wants to connect with you as their advocate."}
@@ -371,12 +371,12 @@ export default function NotificationsPage() {
                 </div>
               ) : isVictimPendingUnread ? (
                 !strictPreviews && n.preview_safe && n.body ? (
-                  <p className="mt-2 text-xs text-slate-300 whitespace-pre-line sm:pl-7">{n.body}</p>
+                  <p className="mt-2 text-xs text-[var(--color-slate)] whitespace-pre-line sm:pl-7">{n.body}</p>
                 ) : null
               ) : (
                 <>
                   {!strictPreviews && n.preview_safe && n.body && (
-                    <p className="mt-2 text-xs text-slate-300 whitespace-pre-line sm:pl-7">{n.body}</p>
+                    <p className="mt-2 text-xs text-[var(--color-slate)] whitespace-pre-line sm:pl-7">{n.body}</p>
                   )}
                 </>
               )}
@@ -387,7 +387,7 @@ export default function NotificationsPage() {
                     <>
                       {orgJoin !== null ? (
                         <label className="flex w-full max-w-xs flex-col gap-1 sm:pl-7">
-                          <span className="text-[11px] uppercase tracking-wide text-slate-500">
+                          <span className="text-[11px] uppercase tracking-wide text-[var(--color-muted)]">
                             Role for new member
                           </span>
                           <select
@@ -399,7 +399,7 @@ export default function NotificationsPage() {
                               }))
                             }
                             disabled={updatingId === n.id}
-                            className="rounded-lg border border-slate-600 bg-slate-900 px-2 py-1.5 text-xs text-slate-100"
+                            className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1.5 text-xs text-[var(--color-navy)]"
                           >
                             {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
                               <option key={r} value={r}>
@@ -423,7 +423,7 @@ export default function NotificationsPage() {
                           )
                         }
                         disabled={updatingId === n.id}
-                        className="inline-flex items-center rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                        className="inline-flex items-center rounded-full bg-[var(--color-teal-deep)] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-60"
                       >
                         {updatingId === n.id ? "…" : t("notificationsPage.orgJoinApprove")}
                       </button>
@@ -438,7 +438,7 @@ export default function NotificationsPage() {
                           )
                         }
                         disabled={updatingId === n.id}
-                        className="inline-flex items-center rounded-full border border-slate-500 px-4 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-60"
+                        className="inline-flex items-center rounded-full border border-[var(--color-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-60"
                       >
                         {updatingId === n.id ? "…" : t("notificationsPage.orgJoinDecline")}
                       </button>
@@ -457,7 +457,7 @@ export default function NotificationsPage() {
                         type="button"
                         onClick={() => void handleConnectionDecision(n.id, connAdv.requestId, "accept")}
                         disabled={updatingId === n.id}
-                        className="inline-flex items-center rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                        className="inline-flex items-center rounded-full bg-[var(--color-teal-deep)] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-60"
                       >
                         {updatingId === n.id ? "…" : "Accept"}
                       </button>
@@ -465,7 +465,7 @@ export default function NotificationsPage() {
                         type="button"
                         onClick={() => void handleConnectionDecision(n.id, connAdv.requestId, "decline")}
                         disabled={updatingId === n.id}
-                        className="inline-flex items-center rounded-full border border-slate-500 px-4 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-800 disabled:opacity-60"
+                        className="inline-flex items-center rounded-full border border-[var(--color-muted)] px-4 py-1.5 text-xs font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-light-sand)] disabled:opacity-60"
                       >
                         {updatingId === n.id ? "…" : "Reject"}
                       </button>

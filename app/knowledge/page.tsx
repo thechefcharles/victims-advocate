@@ -64,12 +64,12 @@ export default function KnowledgePage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">Knowledge base</p>
-          <h1 className="text-2xl font-bold text-slate-100">Program & eligibility information</h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">Knowledge base</p>
+          <h1 className="text-2xl font-bold text-[var(--color-navy)]">Program & eligibility information</h1>
+          <p className="text-sm text-[var(--color-slate)]">
             Plain-language overviews for compensation programs. This is general information, not legal advice.
           </p>
         </header>
@@ -80,12 +80,12 @@ export default function KnowledgePage() {
             placeholder="Search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-200 w-48"
+            className="rounded border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-charcoal)] w-48"
           />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-200"
+            className="rounded border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-charcoal)]"
           >
             <option value="">All categories</option>
             <option value="program_overview">Program overview</option>
@@ -99,7 +99,7 @@ export default function KnowledgePage() {
           <select
             value={stateCode}
             onChange={(e) => setStateCode(e.target.value)}
-            className="rounded border border-slate-700 bg-slate-900 px-3 py-1.5 text-sm text-slate-200"
+            className="rounded border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-charcoal)]"
           >
             <option value="">All states</option>
             <option value="IL">Illinois</option>
@@ -108,23 +108,23 @@ export default function KnowledgePage() {
         </div>
 
         {loading ? (
-          <p className="text-slate-400">Loading…</p>
+          <p className="text-[var(--color-muted)]">Loading…</p>
         ) : entries.length === 0 ? (
-          <p className="text-slate-400">No entries found.</p>
+          <p className="text-[var(--color-muted)]">No entries found.</p>
         ) : (
           <ul className="space-y-4">
             {entries.map((entry) => (
               <li
                 key={entry.id}
-                className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 space-y-2"
+                className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-4 space-y-2"
               >
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-[var(--color-muted)]">
                   {entry.category} {entry.state_code ? ` · ${entry.state_code}` : ""} {entry.program_key ? ` · ${entry.program_key}` : ""}
                 </p>
-                <h2 className="text-lg font-semibold text-slate-100">{entry.title}</h2>
-                <p className="text-sm text-slate-300 whitespace-pre-wrap">{entry.body}</p>
+                <h2 className="text-lg font-semibold text-[var(--color-navy)]">{entry.title}</h2>
+                <p className="text-sm text-[var(--color-slate)] whitespace-pre-wrap">{entry.body}</p>
                 {(entry.source_label || entry.last_reviewed_at) && (
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     {entry.source_label ?? ""}
                     {entry.source_label && entry.last_reviewed_at && " · "}
                     {entry.last_reviewed_at && `Last reviewed: ${formatDate(entry.last_reviewed_at) ?? entry.last_reviewed_at}`}
@@ -135,7 +135,7 @@ export default function KnowledgePage() {
           </ul>
         )}
 
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-[var(--color-muted)]">
           <Link href="/knowledge/compensation" className="text-emerald-400 hover:text-emerald-300">
             Illinois compensation guide
           </Link>

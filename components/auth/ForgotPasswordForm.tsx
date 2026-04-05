@@ -30,18 +30,18 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 flex items-center justify-center">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] flex items-center justify-center">
       <form
         onSubmit={onSubmit}
-        className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-6"
+        className="max-w-md w-full px-6 space-y-4 rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6"
       >
-        <h1 className="text-2xl font-semibold text-slate-100">
+        <h1 className="text-2xl font-semibold text-[var(--color-navy)]">
           {t("forgotPassword.title")}
         </h1>
-        <p className="text-sm text-slate-400">{t("forgotPassword.subtitle")}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t("forgotPassword.subtitle")}</p>
 
         <input
-          className="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-teal)]"
           placeholder={t("forgotPassword.emailPlaceholder")}
           type="email"
           value={email}
@@ -58,7 +58,7 @@ export default function ForgotPasswordForm() {
         )}
 
         <button
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          className="w-full rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
           type="submit"
           disabled={loading || !email.trim()}
         >
@@ -66,7 +66,7 @@ export default function ForgotPasswordForm() {
         </button>
 
         <p className="text-center">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-slate-200">
+          <Link href="/login" className="text-sm text-[var(--color-muted)] hover:text-[var(--color-charcoal)]">
             {t("forgotPassword.backToLogin")}
           </Link>
         </p>

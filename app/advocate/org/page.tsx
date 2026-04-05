@@ -613,7 +613,7 @@ export default function AdvocateOrgPage() {
   });
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-6 py-8 sm:py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-6 py-8 sm:py-10">
       <div className="max-w-5xl mx-auto space-y-6">
         <PageHeader
           contextLine={isOrganizationSettingsRoute ? "Organization" : "Advocate → Organization"}
@@ -646,8 +646,8 @@ export default function AdvocateOrgPage() {
         ) : null}
 
         {profile && !profileLoading && profile.public_profile_status === "draft" && (
-          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300 space-y-2">
-            <p className="text-slate-200 font-medium">Public visibility</p>
+          <div className="rounded-xl border border-[var(--color-border)]/60 bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm text-[var(--color-slate)] space-y-2">
+            <p className="text-[var(--color-charcoal)] font-medium">Public visibility</p>
             <p>
               Your organization is not yet public on NxtStps. After your profile meets the basics below,
               you can submit it for platform review.
@@ -662,13 +662,13 @@ export default function AdvocateOrgPage() {
                 {activationSubmitting ? "Submitting…" : "Submit for Review"}
               </button>
             ) : myOrgRole === "owner" ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[var(--color-muted)]">
                 {profile.lifecycle_status !== "managed"
                   ? "Ownership must be confirmed before you can request public activation."
                   : "Complete services, languages, coverage area, and capacity to enable submit."}
               </p>
             ) : (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[var(--color-muted)]">
                 Only an organization owner can submit for public review.
               </p>
             )}
@@ -689,9 +689,9 @@ export default function AdvocateOrgPage() {
         )}
 
         {profile && !profileLoading && profile.public_profile_status === "paused" && (
-          <div className="rounded-xl border border-slate-600/60 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
-            <p className="font-medium text-slate-200">Your organization is currently not visible</p>
-            <p className="mt-1 text-slate-400">
+          <div className="rounded-xl border border-[var(--color-border)]/60 bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm text-[var(--color-slate)]">
+            <p className="font-medium text-[var(--color-charcoal)]">Your organization is currently not visible</p>
+            <p className="mt-1 text-[var(--color-muted)]">
               Public listing is paused. Contact support or use org tools if you need this changed.
             </p>
             {canSubmitPublicActivation && (
@@ -711,7 +711,7 @@ export default function AdvocateOrgPage() {
         )}
 
         <nav
-          className="flex flex-wrap gap-2 border-b border-slate-800/80 pb-3"
+          className="flex flex-wrap gap-2 border-b border-[var(--color-border-light)] pb-3"
           aria-label="Organization sections"
         >
           {visibleTabs.map((t) => (
@@ -721,8 +721,8 @@ export default function AdvocateOrgPage() {
               onClick={() => setActiveTab(t.id)}
               className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
                 activeTab === t.id
-                  ? "bg-blue-900/40 text-blue-100 border border-blue-500/40"
-                  : "bg-slate-900/70 text-slate-400 border border-slate-700/80 hover:border-slate-600"
+                  ? "bg-blue-900/40 text-blue-100 border border-[var(--color-teal)]/40"
+                  : "bg-[var(--color-warm-cream)]/90 text-[var(--color-muted)] border border-[var(--color-border)] hover:border-[var(--color-border)]"
               }`}
             >
               {t.label}
@@ -732,20 +732,20 @@ export default function AdvocateOrgPage() {
 
         {profile && !profileLoading && (
           <section
-            className="rounded-2xl border border-slate-700/80 bg-slate-900/40 p-4 text-sm text-slate-200 space-y-2"
+            className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/75 p-4 text-sm text-[var(--color-charcoal)] space-y-2"
             aria-label="Profile stage for matching"
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
               Profile stage
             </p>
             {profile.profile_stage === "created" && (
               <>
-                <p className="text-slate-300">
-                  <span className="font-semibold text-slate-100">Created.</span> Add the basics below
+                <p className="text-[var(--color-slate)]">
+                  <span className="font-semibold text-[var(--color-navy)]">Created.</span> Add the basics below
                   so your organization can become searchable for support matching.
                 </p>
                 {listMissingForSearchable(profile as OrganizationProfile).length > 0 && (
-                  <ul className="list-disc list-inside text-xs text-slate-400 space-y-1">
+                  <ul className="list-disc list-inside text-xs text-[var(--color-muted)] space-y-1">
                     {listMissingForSearchable(profile as OrganizationProfile).map((m) => (
                       <li key={m}>{m}</li>
                     ))}
@@ -755,12 +755,12 @@ export default function AdvocateOrgPage() {
             )}
             {profile.profile_stage === "searchable" && (
               <>
-                <p className="text-slate-300">
-                  <span className="font-semibold text-slate-100">Searchable.</span> When your profile
+                <p className="text-[var(--color-slate)]">
+                  <span className="font-semibold text-[var(--color-navy)]">Searchable.</span> When your profile
                   status is Active, your organization can appear in support matching.
                 </p>
                 {listOptionalEnrichedHints(profile as OrganizationProfile).length > 0 && (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-muted)]">
                     You can add more detail any time:{" "}
                     {listOptionalEnrichedHints(profile as OrganizationProfile).join(" · ")}
                   </p>
@@ -768,32 +768,32 @@ export default function AdvocateOrgPage() {
               </>
             )}
             {profile.profile_stage === "enriched" && (
-              <p className="text-slate-300">
-                <span className="font-semibold text-slate-100">Enriched.</span> Your profile includes
+              <p className="text-[var(--color-slate)]">
+                <span className="font-semibold text-[var(--color-navy)]">Enriched.</span> Your profile includes
                 extra information that helps build confidence over time.
               </p>
             )}
             {!["created", "searchable", "enriched"].includes(profile.profile_stage) && (
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--color-muted)]">
                 Current stage: {profile.profile_stage}. Save your profile to refresh this label.
               </p>
             )}
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-[var(--color-muted)]">
               Stages update when you save. Matching also requires profile status set to Active.
             </p>
           </section>
         )}
 
         {profile && !profileLoading && canManageOrg && (
-          <section className="rounded-2xl border border-slate-700/70 bg-slate-900/30 p-4 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <section className="rounded-2xl border border-[var(--color-border)]/70 bg-white/30 p-4 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
               Org health snapshot
             </p>
-            <p className="text-sm text-slate-300">
-              Stage: <span className="text-slate-100 font-medium">{profile.profile_stage}</span>
+            <p className="text-sm text-[var(--color-slate)]">
+              Stage: <span className="text-[var(--color-navy)] font-medium">{profile.profile_stage}</span>
               {" · "}
               Last profile update:{" "}
-              <span className="text-slate-100 font-medium">
+              <span className="text-[var(--color-navy)] font-medium">
                 {formatDate(
                   orgSignals?.profile.lastProfileUpdate ?? profile.profile_last_updated_at ?? undefined
                 )}
@@ -801,11 +801,11 @@ export default function AdvocateOrgPage() {
               {orgSignals?.cases?.active != null ? (
                 <>
                   {" · "}Active cases:{" "}
-                  <span className="text-slate-100 font-medium">{orgSignals.cases.active}</span>
+                  <span className="text-[var(--color-navy)] font-medium">{orgSignals.cases.active}</span>
                 </>
               ) : null}
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--color-muted)]">
               {!["searchable", "enriched"].includes(profile.profile_stage)
                 ? "Complete required profile fields to become searchable."
                 : designation?.designation_confidence === "low"
@@ -813,7 +813,7 @@ export default function AdvocateOrgPage() {
                   : "Your organization profile is in good shape. Keep services and capacity current."}
             </p>
             {designationConfidenceNote && (
-              <p className="text-xs text-slate-500">{designationConfidenceNote}</p>
+              <p className="text-xs text-[var(--color-muted)]">{designationConfidenceNote}</p>
             )}
           </section>
         )}
@@ -836,54 +836,54 @@ export default function AdvocateOrgPage() {
             </p>
           )}
           {canEditProfile && (
-            <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+            <p className="text-[11px] text-[var(--color-muted)] mb-4 leading-relaxed">
               Some updates may be reviewed by NxtStps for trust and accuracy. Routine details (hours,
               capacity, languages, and similar) save immediately.
             </p>
           )}
           {profileLoading ? (
-            <p className="text-sm text-slate-400">Loading profile…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading profile…</p>
           ) : !profile ? (
-            <p className="text-sm text-slate-400">No profile data.</p>
+            <p className="text-sm text-[var(--color-muted)]">No profile data.</p>
           ) : (
             <>
               <div className={activeTab !== "profile" ? "hidden" : "space-y-4"}>
-                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
+                <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4 text-xs">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h2 className="text-sm font-semibold text-slate-200">Organization profile</h2>
+                    <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Organization profile</h2>
                     {profile.profile_last_updated_at && (
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-[var(--color-muted)]">
                         Last updated {formatDate(profile.profile_last_updated_at)}
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     Basic identity and profile status. Matching fields are saved with your other
                     profile settings.
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div>
-                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">Name</p>
-                      <p className="text-slate-200">{profile.name}</p>
+                      <p className="text-[var(--color-muted)] uppercase text-[10px] tracking-wide">Name</p>
+                      <p className="text-[var(--color-charcoal)]">{profile.name}</p>
                     </div>
                     <div>
-                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">Type</p>
-                      <p className="text-slate-200">{profile.type}</p>
+                      <p className="text-[var(--color-muted)] uppercase text-[10px] tracking-wide">Type</p>
+                      <p className="text-[var(--color-charcoal)]">{profile.type}</p>
                     </div>
                     <div>
-                      <p className="text-slate-500 uppercase text-[10px] tracking-wide">
+                      <p className="text-[var(--color-muted)] uppercase text-[10px] tracking-wide">
                         Organization status
                       </p>
-                      <p className="text-slate-200">{profile.status}</p>
+                      <p className="text-[var(--color-charcoal)]">{profile.status}</p>
                     </div>
                   </div>
-                  <label className="flex flex-wrap items-center gap-2 text-slate-300">
+                  <label className="flex flex-wrap items-center gap-2 text-[var(--color-slate)]">
                     Profile status (for matching)
                     <select
                       disabled={!canEditProfile}
                       value={profileStatus}
                       onChange={(e) => setProfileStatus(e.target.value)}
-                      className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                      className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1"
                     >
                       {PROFILE_STATUS_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -896,25 +896,25 @@ export default function AdvocateOrgPage() {
               </div>
 
               <div className={activeTab !== "services" ? "hidden" : "space-y-4"}>
-                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
-                  <h2 className="text-sm font-semibold text-slate-200">Services & languages</h2>
-                  <p className="text-[11px] text-slate-500">
+                <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Services & languages</h2>
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     Service types, languages, and how victims reach you.
                   </p>
               <div>
-                <p className="text-slate-400 mb-2">Service types</p>
+                <p className="text-[var(--color-muted)] mb-2">Service types</p>
                 <div className="flex flex-wrap gap-2">
                   {SERVICE_TYPE_OPTIONS.map((opt) => (
                     <label
                       key={opt}
-                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                      className="flex items-center gap-1.5 cursor-pointer text-[var(--color-slate)]"
                     >
                       <input
                         type="checkbox"
                         disabled={!canEditProfile}
                         checked={serviceTypes.includes(opt)}
                         onChange={() => toggleInSet(serviceTypes, opt, setServiceTypes)}
-                        className="rounded border-slate-600"
+                        className="rounded border-[var(--color-border)]"
                       />
                       {opt.replace(/_/g, " ")}
                     </label>
@@ -922,12 +922,12 @@ export default function AdvocateOrgPage() {
                 </div>
               </div>
               <div>
-                <p className="text-slate-400 mb-2">Languages (ISO-style, e.g. en, es)</p>
+                <p className="text-[var(--color-muted)] mb-2">Languages (ISO-style, e.g. en, es)</p>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {QUICK_LANG.map((code) => (
                     <label
                       key={code}
-                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                      className="flex items-center gap-1.5 cursor-pointer text-[var(--color-slate)]"
                     >
                       <input
                         type="checkbox"
@@ -936,7 +936,7 @@ export default function AdvocateOrgPage() {
                         onChange={() =>
                           toggleInSet(languagesQuick, code, setLanguagesQuick)
                         }
-                        className="rounded border-slate-600"
+                        className="rounded border-[var(--color-border)]"
                       />
                       {code}
                     </label>
@@ -948,23 +948,23 @@ export default function AdvocateOrgPage() {
                   placeholder="Other codes, comma-separated (e.g. pt, ht)"
                   value={languagesExtra}
                   onChange={(e) => setLanguagesExtra(e.target.value)}
-                  className="w-full max-w-xl rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                  className="w-full max-w-xl rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)]"
                 />
               </div>
               <div>
-                <p className="text-slate-400 mb-2">Intake methods</p>
+                <p className="text-[var(--color-muted)] mb-2">Intake methods</p>
                 <div className="flex flex-wrap gap-2">
                   {INTAKE_METHOD_OPTIONS.map((opt) => (
                     <label
                       key={opt}
-                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                      className="flex items-center gap-1.5 cursor-pointer text-[var(--color-slate)]"
                     >
                       <input
                         type="checkbox"
                         disabled={!canEditProfile}
                         checked={intakeMethods.includes(opt)}
                         onChange={() => toggleInSet(intakeMethods, opt, setIntakeMethods)}
-                        className="rounded border-slate-600"
+                        className="rounded border-[var(--color-border)]"
                       />
                       {opt.replace(/_/g, " ")}
                     </label>
@@ -975,29 +975,29 @@ export default function AdvocateOrgPage() {
               </div>
 
               <div className={activeTab !== "capacity" ? "hidden" : "space-y-4"}>
-                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
-                  <h2 className="text-sm font-semibold text-slate-200">Capacity & availability</h2>
-                  <p className="text-[11px] text-slate-500">
+                <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Capacity & availability</h2>
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     Whether you are accepting clients, response expectations, and coverage / hours.
                   </p>
               <div className="flex flex-wrap gap-6 items-center">
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer">
+                <label className="flex items-center gap-2 text-[var(--color-slate)] cursor-pointer">
                   <input
                     type="checkbox"
                     disabled={!canEditProfile}
                     checked={acceptingClients}
                     onChange={(e) => setAcceptingClients(e.target.checked)}
-                    className="rounded border-slate-600"
+                    className="rounded border-[var(--color-border)]"
                   />
                   Accepting clients
                 </label>
-                <label className="flex items-center gap-2 text-slate-300">
+                <label className="flex items-center gap-2 text-[var(--color-slate)]">
                   Capacity
                   <select
                     disabled={!canEditProfile}
                     value={capacityStatus}
                     onChange={(e) => setCapacityStatus(e.target.value)}
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                    className="rounded-lg border border-[var(--color-border)] bg-white px-2 py-1"
                   >
                     {CAPACITY_STATUS_OPTIONS.map((c) => (
                       <option key={c} value={c}>
@@ -1006,7 +1006,7 @@ export default function AdvocateOrgPage() {
                     ))}
                   </select>
                 </label>
-                <label className="flex items-center gap-2 text-slate-300">
+                <label className="flex items-center gap-2 text-[var(--color-slate)]">
                   Avg response (hours)
                   <input
                     type="number"
@@ -1016,29 +1016,29 @@ export default function AdvocateOrgPage() {
                     placeholder="—"
                     value={avgResponse}
                     onChange={(e) => setAvgResponse(e.target.value)}
-                    className="w-24 rounded-lg border border-slate-700 bg-slate-900 px-2 py-1"
+                    className="w-24 rounded-lg border border-[var(--color-border)] bg-white px-2 py-1"
                   />
                 </label>
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-slate-400 mb-1">Coverage area (JSON)</p>
+                  <p className="text-[var(--color-muted)] mb-1">Coverage area (JSON)</p>
                   <textarea
                     disabled={!canEditProfile}
                     value={coverageJson}
                     onChange={(e) => setCoverageJson(e.target.value)}
                     rows={6}
-                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                    className="w-full font-mono rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)]"
                   />
                 </div>
                 <div>
-                  <p className="text-slate-400 mb-1">Hours (JSON)</p>
+                  <p className="text-[var(--color-muted)] mb-1">Hours (JSON)</p>
                   <textarea
                     disabled={!canEditProfile}
                     value={hoursJson}
                     onChange={(e) => setHoursJson(e.target.value)}
                     rows={6}
-                    className="w-full font-mono rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100"
+                    className="w-full font-mono rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-[var(--color-navy)]"
                   />
                 </div>
               </div>
@@ -1046,25 +1046,25 @@ export default function AdvocateOrgPage() {
               </div>
 
               <div className={activeTab !== "accessibility" ? "hidden" : "space-y-4"}>
-                <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4 text-xs">
-                  <h2 className="text-sm font-semibold text-slate-200">Accessibility & populations</h2>
-                  <p className="text-[11px] text-slate-500">
+                <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4 text-xs">
+                  <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Accessibility & populations</h2>
+                  <p className="text-[11px] text-[var(--color-muted)]">
                     Populations you serve and accessibility accommodations you offer.
                   </p>
               <div>
-                <p className="text-slate-400 mb-2">Special populations</p>
+                <p className="text-[var(--color-muted)] mb-2">Special populations</p>
                 <div className="flex flex-wrap gap-2">
                   {SPECIAL_POPULATION_OPTIONS.map((opt) => (
                     <label
                       key={opt}
-                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                      className="flex items-center gap-1.5 cursor-pointer text-[var(--color-slate)]"
                     >
                       <input
                         type="checkbox"
                         disabled={!canEditProfile}
                         checked={specialPops.includes(opt)}
                         onChange={() => toggleInSet(specialPops, opt, setSpecialPops)}
-                        className="rounded border-slate-600"
+                        className="rounded border-[var(--color-border)]"
                       />
                       {opt.replace(/_/g, " ")}
                     </label>
@@ -1072,19 +1072,19 @@ export default function AdvocateOrgPage() {
                 </div>
               </div>
               <div>
-                <p className="text-slate-400 mb-2">Accessibility</p>
+                <p className="text-[var(--color-muted)] mb-2">Accessibility</p>
                 <div className="flex flex-wrap gap-2">
                   {ACCESSIBILITY_FEATURE_OPTIONS.map((opt) => (
                     <label
                       key={opt}
-                      className="flex items-center gap-1.5 cursor-pointer text-slate-300"
+                      className="flex items-center gap-1.5 cursor-pointer text-[var(--color-slate)]"
                     >
                       <input
                         type="checkbox"
                         disabled={!canEditProfile}
                         checked={accessibility.includes(opt)}
                         onChange={() => toggleInSet(accessibility, opt, setAccessibility)}
-                        className="rounded border-slate-600"
+                        className="rounded border-[var(--color-border)]"
                       />
                       {opt.replace(/_/g, " ")}
                     </label>
@@ -1095,7 +1095,7 @@ export default function AdvocateOrgPage() {
               </div>
 
               {["profile", "services", "capacity", "accessibility"].includes(activeTab) && (
-                <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
+                <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[var(--color-border-light)] pt-4">
                   <button
                     type="submit"
                     disabled={!canEditProfile || profileSaving}
@@ -1114,16 +1114,16 @@ export default function AdvocateOrgPage() {
         {inviteUrl && (
           <div className="rounded-lg border border-emerald-800/50 bg-emerald-950/30 px-4 py-3 text-sm">
             <p className="font-medium text-emerald-200">Invite created</p>
-            <p className="text-slate-300 mt-1 break-all">{inviteUrl}</p>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-[var(--color-slate)] mt-1 break-all">{inviteUrl}</p>
+            <p className="text-xs text-[var(--color-muted)] mt-1">
               Copy this link and send it to the invitee.
             </p>
           </div>
         )}
 
         {canManageMemberships && (
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">
             Invite member
           </h2>
           <form onSubmit={handleCreateInvite} className="flex flex-wrap gap-3">
@@ -1132,12 +1132,12 @@ export default function AdvocateOrgPage() {
               placeholder="Email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 w-64"
+              className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] w-64"
             />
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as OrgRole)}
-              className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+              className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-navy)]"
             >
               {ORG_SELF_SERVE_INVITE_ROLES.map((r) => (
                 <option key={r} value={r}>
@@ -1148,7 +1148,7 @@ export default function AdvocateOrgPage() {
             <button
               type="submit"
               disabled={submitting || !inviteEmail.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+              className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create invite"}
             </button>
@@ -1157,9 +1157,9 @@ export default function AdvocateOrgPage() {
         )}
 
         {invites.length === 0 && !loading && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-            <h2 className="text-sm font-semibold text-slate-200 mb-2">Pending invites</h2>
-            <p className="text-xs text-slate-500 mb-3">
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-2">Pending invites</h2>
+            <p className="text-xs text-[var(--color-muted)] mb-3">
               No pending invites. Invite staff or supervisors when you&apos;re ready to grow your
               team.
             </p>
@@ -1167,11 +1167,11 @@ export default function AdvocateOrgPage() {
         )}
 
         {invites.length > 0 && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-            <h2 className="text-sm font-semibold text-slate-200 mb-3">Pending invites</h2>
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Pending invites</h2>
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-slate-400 border-b border-slate-800">
+                <tr className="text-[var(--color-muted)] border-b border-[var(--color-border-light)]">
                   <th className="text-left py-2">Email</th>
                   <th className="text-left py-2">Role</th>
                   <th className="text-left py-2">Expires</th>
@@ -1180,10 +1180,10 @@ export default function AdvocateOrgPage() {
               </thead>
               <tbody>
                 {invites.map((inv) => (
-                  <tr key={inv.id} className="border-b border-slate-900">
-                    <td className="py-2 text-slate-200">{inv.email}</td>
-                    <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(inv.org_role)}</td>
-                    <td className="py-2 text-slate-400">{formatDate(inv.expires_at)}</td>
+                  <tr key={inv.id} className="border-b border-[var(--color-border-light)]">
+                    <td className="py-2 text-[var(--color-charcoal)]">{inv.email}</td>
+                    <td className="py-2 text-[var(--color-slate)]">{dbOrgRoleProductLabel(inv.org_role)}</td>
+                    <td className="py-2 text-[var(--color-muted)]">{formatDate(inv.expires_at)}</td>
                     <td className="py-2">
                       {canManageMemberships ? (
                         <button
@@ -1194,7 +1194,7 @@ export default function AdvocateOrgPage() {
                           Revoke
                         </button>
                       ) : (
-                        <span className="text-slate-600">—</span>
+                        <span className="text-[var(--color-slate)]">—</span>
                       )}
                     </td>
                   </tr>
@@ -1204,24 +1204,24 @@ export default function AdvocateOrgPage() {
           </section>
         )}
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5">
-          <h2 className="text-sm font-semibold text-slate-200 mb-3">Members</h2>
+        <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5">
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">Members</h2>
           {loading ? (
-            <p className="text-sm text-slate-400">Loading…</p>
+            <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : members.length === 0 ? (
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-[var(--color-muted)]">
               No members yet. When someone accepts an invite, they&apos;ll appear here.
             </p>
           ) : (
             <>
               {members.length === 1 && (
-                <p className="text-xs text-slate-500 mb-3">
+                <p className="text-xs text-[var(--color-muted)] mb-3">
                   You&apos;re the only member listed so far. Invite teammates to share the workload.
                 </p>
               )}
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="text-slate-400 border-b border-slate-800">
+                  <tr className="text-[var(--color-muted)] border-b border-[var(--color-border-light)]">
                     <th className="text-left py-2">Email / User</th>
                     <th className="text-left py-2">Role</th>
                     <th className="text-left py-2">Joined</th>
@@ -1230,12 +1230,12 @@ export default function AdvocateOrgPage() {
                 </thead>
                 <tbody>
                   {members.map((m) => (
-                    <tr key={m.id} className="border-b border-slate-900">
-                      <td className="py-2 text-slate-200">
+                    <tr key={m.id} className="border-b border-[var(--color-border-light)]">
+                      <td className="py-2 text-[var(--color-charcoal)]">
                         {m.email || m.user_id.slice(0, 8) + "…"}
                       </td>
-                      <td className="py-2 text-slate-300">{dbOrgRoleProductLabel(m.org_role)}</td>
-                      <td className="py-2 text-slate-400">{formatDate(m.created_at)}</td>
+                      <td className="py-2 text-[var(--color-slate)]">{dbOrgRoleProductLabel(m.org_role)}</td>
+                      <td className="py-2 text-[var(--color-muted)]">{formatDate(m.created_at)}</td>
                       <td className="py-2">
                         {canManageMemberships ? (
                           <button
@@ -1246,7 +1246,7 @@ export default function AdvocateOrgPage() {
                             Revoke
                           </button>
                         ) : (
-                          <span className="text-slate-600">—</span>
+                          <span className="text-[var(--color-slate)]">—</span>
                         )}
                       </td>
                     </tr>
@@ -1260,9 +1260,9 @@ export default function AdvocateOrgPage() {
         )}
 
         {canViewDesignation && activeTab === "designation" && (
-          <section className="rounded-2xl border border-teal-900/40 bg-slate-950/70 p-5 space-y-4">
+          <section className="rounded-2xl border border-teal-900/40 bg-[var(--color-warm-cream)]/85 p-5 space-y-4">
             <h2 className="text-sm font-semibold text-teal-200/90">Designation</h2>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+            <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
               {TRUST_MICROCOPY.designationNotRating} {TRUST_MICROCOPY.designationSmallSignal}
             </p>
             <p className="text-[11px]">
@@ -1282,19 +1282,19 @@ export default function AdvocateOrgPage() {
                     </span>
                   )}
                   {confidenceChipText(designation.designation_confidence) && (
-                    <span className="text-[10px] text-slate-500">
+                    <span className="text-[10px] text-[var(--color-muted)]">
                       {confidenceChipText(designation.designation_confidence)}
                     </span>
                   )}
                 </div>
                 {designation.designation_tier === "insufficient_data" && (
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs text-[var(--color-muted)] leading-relaxed">
                     {EMPTY_COPY.insufficientDataDesignation}
                   </p>
                 )}
                 {designationExplain && (
-                  <div className="mt-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
-                    <p className="font-medium text-slate-300">{designationExplain.headline}</p>
+                  <div className="mt-2 text-xs text-[var(--color-muted)] border-t border-[var(--color-border-light)] pt-3">
+                    <p className="font-medium text-[var(--color-slate)]">{designationExplain.headline}</p>
                     <ul className="list-disc list-inside mt-1 space-y-0.5">
                       {designationExplain.bullets.slice(0, 5).map((b, i) => (
                         <li key={i}>{b}</li>
@@ -1303,16 +1303,16 @@ export default function AdvocateOrgPage() {
                   </div>
                 )}
                 {designation.public_summary && (
-                  <p className="text-sm text-slate-300 leading-relaxed mt-2">
+                  <p className="text-sm text-[var(--color-slate)] leading-relaxed mt-2">
                     {designation.public_summary}
                   </p>
                 )}
                 {designationConfidenceNote && (
-                  <p className="text-xs text-slate-400 mt-2">{designationConfidenceNote}</p>
+                  <p className="text-xs text-[var(--color-muted)] mt-2">{designationConfidenceNote}</p>
                 )}
                 {designationHints.length > 0 && (
-                  <div className="mt-2 text-xs text-slate-400">
-                    <p className="font-medium text-slate-300">Improving reliability over time</p>
+                  <div className="mt-2 text-xs text-[var(--color-muted)]">
+                    <p className="font-medium text-[var(--color-slate)]">Improving reliability over time</p>
                     <ul className="list-disc list-inside mt-1 space-y-0.5">
                       {designationHints.slice(0, 4).map((h) => (
                         <li key={h}>{h}</li>
@@ -1322,7 +1322,7 @@ export default function AdvocateOrgPage() {
                 )}
               </>
             ) : (
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-[var(--color-muted)] leading-relaxed">
                 {designationMsg ?? EMPTY_COPY.noDesignationYet}
               </p>
             )}
@@ -1330,9 +1330,9 @@ export default function AdvocateOrgPage() {
         )}
 
         {canManageReviews && activeTab === "reviews" && (
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-5 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-200">Designation review requests</h2>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
+          <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4">
+            <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Designation review requests</h2>
+            <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">
               Use this form for formal clarification or correction requests. Staff respond in writing;
               numeric scores are not shared.{" "}
               <Link href={TRUST_LINK_HREF.designations} className="text-teal-400/90 hover:underline">
@@ -1354,7 +1354,7 @@ export default function AdvocateOrgPage() {
                 onChange={(e) =>
                   setReviewKind(e.target.value as "clarification" | "correction" | "data_update")
                 }
-                className="rounded border border-slate-700 bg-slate-900 px-2 py-1.5 w-full max-w-xs"
+                className="rounded border border-[var(--color-border)] bg-white px-2 py-1.5 w-full max-w-xs"
               >
                 <option value="clarification">Clarification</option>
                 <option value="correction">Correction</option>
@@ -1365,58 +1365,58 @@ export default function AdvocateOrgPage() {
                 placeholder="Short subject"
                 value={reviewSubject}
                 onChange={(e) => setReviewSubject(e.target.value)}
-                className="w-full max-w-lg rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+                className="w-full max-w-lg rounded border border-[var(--color-border)] bg-white px-2 py-1.5"
               />
               <textarea
                 placeholder="Describe your request (20+ characters)"
                 value={reviewBody}
                 onChange={(e) => setReviewBody(e.target.value)}
                 rows={4}
-                className="w-full rounded border border-slate-700 bg-slate-900 px-2 py-1.5"
+                className="w-full rounded border border-[var(--color-border)] bg-white px-2 py-1.5"
               />
               <button
                 type="submit"
                 disabled={reviewSubmitting}
-                className="rounded bg-slate-700 px-3 py-1.5 text-white hover:bg-slate-600 disabled:opacity-50"
+                className="rounded bg-[var(--color-teal-deep)] px-3 py-1.5 text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
               >
                 {reviewSubmitting ? "Submitting…" : "Submit request"}
               </button>
             </form>
             {reviewRequests.length === 0 && (
-              <p className="text-xs text-slate-500 mt-2 leading-relaxed">{EMPTY_COPY.noReviewRequests}</p>
+              <p className="text-xs text-[var(--color-muted)] mt-2 leading-relaxed">{EMPTY_COPY.noReviewRequests}</p>
             )}
 
             {reviewRequests.length > 0 && (
               <div className="mt-4 space-y-3">
-                <p className="text-[11px] font-medium text-slate-400 uppercase tracking-wide">
+                <p className="text-[11px] font-medium text-[var(--color-muted)] uppercase tracking-wide">
                   Request history
                 </p>
                 <ul className="space-y-3 text-xs">
                   {reviewRequests.map((r) => (
                     <li
                       key={r.id}
-                      className="border border-slate-800 rounded-lg p-3 sm:p-4 bg-slate-900/50 space-y-2"
+                      className="border border-[var(--color-border-light)] rounded-lg p-3 sm:p-4 bg-[var(--color-warm-cream)]/80 space-y-2"
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                         <div className="min-w-0 space-y-1">
-                          <p className="font-semibold text-slate-100 leading-snug">{r.subject}</p>
-                          <p className="text-[10px] text-slate-500">
+                          <p className="font-semibold text-[var(--color-navy)] leading-snug">{r.subject}</p>
+                          <p className="text-[10px] text-[var(--color-muted)]">
                             Submitted {formatDate(r.created_at)} · {r.request_kind.replace(/_/g, " ")}
                           </p>
                         </div>
-                        <span className="shrink-0 inline-flex rounded-full border border-slate-600 px-2 py-0.5 text-[10px] font-medium text-slate-300">
+                        <span className="shrink-0 inline-flex rounded-full border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-slate)]">
                           {formatReviewStatusLabel(r.status)}
                         </span>
                       </div>
-                      <p className="text-slate-400 whitespace-pre-wrap text-[11px] leading-relaxed border-t border-slate-800/80 pt-2">
+                      <p className="text-[var(--color-muted)] whitespace-pre-wrap text-[11px] leading-relaxed border-t border-[var(--color-border-light)] pt-2">
                         {r.body}
                       </p>
                       {r.admin_response_org_visible && (
-                        <div className="rounded-md border border-slate-700/80 bg-slate-950/60 px-3 py-2">
-                          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wide mb-1">
+                        <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2">
+                          <p className="text-[10px] font-medium text-[var(--color-muted)] uppercase tracking-wide mb-1">
                             Staff response (visible to your org)
                           </p>
-                          <p className="text-slate-300 whitespace-pre-wrap text-[11px] leading-relaxed">
+                          <p className="text-[var(--color-slate)] whitespace-pre-wrap text-[11px] leading-relaxed">
                             {r.admin_response_org_visible}
                           </p>
                         </div>

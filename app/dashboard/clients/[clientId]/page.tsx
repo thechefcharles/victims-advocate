@@ -174,15 +174,15 @@ export default function ClientCasesPage() {
   }, [clientId, clientDisplayName, router]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-6 py-10">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">
               My clients
             </p>
             <h1 className="text-2xl font-semibold">{clientDisplayName}</h1>
-            <p className="text-[11px] text-slate-400">Cases shared with you</p>
+            <p className="text-[11px] text-[var(--color-muted)]">Cases shared with you</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 justify-end">
@@ -190,7 +190,7 @@ export default function ClientCasesPage() {
               type="button"
               onClick={fetchCases}
               disabled={loading || !clientId}
-              className="text-[11px] rounded-full border border-slate-700 px-3 py-1.5 hover:bg-slate-900/60 disabled:opacity-50"
+              className="text-[11px] rounded-full border border-[var(--color-border)] px-3 py-1.5 hover:bg-[var(--color-warm-cream)]/85 disabled:opacity-50"
             >
               {loading ? "Refreshing…" : "Refresh"}
             </button>
@@ -215,11 +215,11 @@ export default function ClientCasesPage() {
         {!clientId ? (
           <p className="text-[11px] text-red-300">Missing client id in URL.</p>
         ) : loading ? (
-          <p className="text-[11px] text-slate-400">Loading…</p>
+          <p className="text-[11px] text-[var(--color-muted)]">Loading…</p>
         ) : err ? (
           <p className="text-[11px] text-red-300">{err}</p>
         ) : cases.length === 0 ? (
-          <p className="text-[11px] text-slate-400">No cases shared with you yet.</p>
+          <p className="text-[11px] text-[var(--color-muted)]">No cases shared with you yet.</p>
         ) : (
           <div className="grid gap-3">
             {cases.map((c) => {
@@ -240,14 +240,14 @@ export default function ClientCasesPage() {
                 <Link
                   key={c.id}
                   href={`/compensation/intake?case=${c.id}`}
-                  className="rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 hover:bg-slate-900/40 transition"
+                  className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 px-4 py-3 hover:bg-[var(--color-warm-cream)]/75 transition"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="space-y-1">
-                      <div className="text-xs font-semibold text-slate-100">
+                      <div className="text-xs font-semibold text-[var(--color-navy)]">
                         {victimName ? victimName : `Case ${c.id.slice(0, 8)}…`}
                       </div>
-                      <div className="text-[11px] text-slate-400">
+                      <div className="text-[11px] text-[var(--color-muted)]">
                         Status: {status} • Created: {created}
                       </div>
                     </div>
@@ -257,12 +257,12 @@ export default function ClientCasesPage() {
                         className={`text-[10px] rounded-full border px-2 py-1 ${
                           canEdit
                             ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
-                            : "border-slate-700 bg-slate-900/60 text-slate-300"
+                            : "border-[var(--color-border)] bg-[var(--color-warm-cream)]/85 text-[var(--color-slate)]"
                         }`}
                       >
                         {accessLabel}
                       </span>
-                      <span className="text-[11px] text-slate-300">Open →</span>
+                      <span className="text-[11px] text-[var(--color-slate)]">Open →</span>
                     </div>
                   </div>
                 </Link>

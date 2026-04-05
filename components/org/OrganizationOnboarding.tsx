@@ -450,7 +450,7 @@ export function OrganizationOnboarding({
 
   const ownershipClaimPanel =
     existingOrgId && directoryOrgOwnerCount === 0 ? (
-      <div className="space-y-3 rounded-lg border border-blue-500/40 bg-blue-950/30 px-4 py-3">
+      <div className="space-y-3 rounded-lg border border-[var(--color-teal)]/40 bg-blue-950/30 px-4 py-3">
         <p className="text-sm text-blue-100">
           <span className="font-medium">{existingOrgName}</span> already has a workspace, but it does not
           have an organization owner yet. Submit an ownership request for platform administrator review.
@@ -459,7 +459,7 @@ export function OrganizationOnboarding({
           type="button"
           onClick={() => void handleRequestOwnership()}
           disabled={claimOwnershipLoading || !profileIsOrg}
-          className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+          className="rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
         >
           {claimOwnershipLoading ? "Submitting…" : "Request Ownership (Admin Review)"}
         </button>
@@ -479,18 +479,18 @@ export function OrganizationOnboarding({
       )}
 
       {initialOrgNameHint?.trim() && (
-        <div className="rounded-xl border border-slate-700 bg-slate-900/50 px-4 py-3 text-sm text-slate-300">
-          <p className="font-medium text-slate-200">From your signup</p>
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm text-[var(--color-slate)]">
+          <p className="font-medium text-[var(--color-charcoal)]">From your signup</p>
           <p className="mt-1">
-            Organization name: <span className="text-slate-100">{initialOrgNameHint.trim()}</span>
+            Organization name: <span className="text-[var(--color-navy)]">{initialOrgNameHint.trim()}</span>
             {initialLeaderTitleHint?.trim() ? (
               <>
                 {" "}
-                · Your title: <span className="text-slate-100">{initialLeaderTitleHint.trim()}</span>
+                · Your title: <span className="text-[var(--color-navy)]">{initialLeaderTitleHint.trim()}</span>
               </>
             ) : null}
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
             We use this to prefill search and forms only—it does not create or join anything automatically.
           </p>
         </div>
@@ -573,11 +573,11 @@ export function OrganizationOnboarding({
 
       <section
         id="onboarding-find"
-        className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
+        className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">1. Find My Organization</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">1. Find My Organization</h2>
+          <p className="text-sm text-[var(--color-muted)] mt-1">
             Search the Illinois Crime Victim Assistance Services directory. If your agency already has a
             workspace, use Request To Join. If not, you can set one up from this verified listing.
           </p>
@@ -594,11 +594,11 @@ export function OrganizationOnboarding({
           />
 
           {catalogId != null && dirLookupLoading && (
-            <p className="text-xs text-slate-500">Checking whether this listing already has a workspace…</p>
+            <p className="text-xs text-[var(--color-muted)]">Checking whether this listing already has a workspace…</p>
           )}
 
           {selectedProgram && !existingOrgId && (
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-[var(--color-muted)] leading-relaxed">
               Selected: #{selectedProgram.id} · {selectedProgram.organization} — {selectedProgram.programType}
             </p>
           )}
@@ -608,8 +608,8 @@ export function OrganizationOnboarding({
             !dirLookupLoading &&
             !claimComplete &&
             !claimReviewPending && (
-            <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 px-4 py-3 text-sm text-slate-300 space-y-2">
-              <p className="text-slate-200 font-medium">Verified directory listing</p>
+            <div className="rounded-lg border border-[var(--color-teal)]/30 bg-[var(--color-teal)]/5 px-4 py-3 text-sm text-[var(--color-slate)] space-y-2">
+              <p className="text-[var(--color-charcoal)] font-medium">Verified directory listing</p>
               <p>
                 This program is listed in the verified Illinois directory. If no workspace exists for it yet,
                 you can create your organization from this listing.{" "}
@@ -628,7 +628,7 @@ export function OrganizationOnboarding({
               <button
                 type="submit"
                 disabled={claimLoading || !profileIsOrg || claimComplete || claimReviewPending}
-                className="mt-2 w-full sm:w-auto rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500 disabled:opacity-50"
+                className="mt-2 w-full sm:w-auto rounded-lg bg-[var(--color-teal-deep)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[var(--color-teal)] disabled:opacity-50"
               >
                 {claimLoading ? "Working…" : "Set Up Organization From This Listing"}
               </button>
@@ -648,21 +648,21 @@ export function OrganizationOnboarding({
 
       <section
         id="onboarding-join"
-        className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
+        className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">2. Request To Join</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">2. Request To Join</h2>
+          <p className="text-sm text-[var(--color-muted)] mt-1">
             If your agency already has a NxtStps workspace, select it in{" "}
-            <span className="text-slate-300">Find My Organization</span>—we&apos;ll show Request To Join when
+            <span className="text-[var(--color-slate)]">Find My Organization</span>—we&apos;ll show Request To Join when
             that&apos;s the case. You don&apos;t need to try Set Up first.
           </p>
         </div>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-[var(--color-muted)]">
           We&apos;ll notify people who manage that organization (or an administrator). This never creates a
           duplicate organization.
         </p>
-        <p className="text-xs text-slate-600">
+        <p className="text-xs text-[var(--color-slate)]">
           The Request To Join button appears in section 1 as soon as we detect an existing workspace for your
           directory selection.
         </p>
@@ -670,11 +670,11 @@ export function OrganizationOnboarding({
 
       <section
         id="onboarding-proposal"
-        className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-sm space-y-4"
+        className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 shadow-sm space-y-4"
       >
         <div>
-          <h2 className="text-lg font-semibold text-slate-50">3. My Organization Is Not Listed</h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">3. My Organization Is Not Listed</h2>
+          <p className="text-sm text-[var(--color-muted)] mt-1">
             Tell us about your agency. We&apos;ll review your request before creating a new organization—nothing
             goes live immediately.
           </p>
@@ -688,7 +688,7 @@ export function OrganizationOnboarding({
 
         <form onSubmit={handleProposalSubmit} className="space-y-4">
           <div>
-            <label htmlFor="onb-org-name" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-org-name" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Organization name *
             </label>
             <input
@@ -697,13 +697,13 @@ export function OrganizationOnboarding({
               required
               value={addNewForm.name}
               onChange={(e) => setAddNewForm((p) => ({ ...p, name: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="e.g. Safe Harbor Advocacy Center"
             />
           </div>
 
           <div>
-            <label htmlFor="onb-org-type" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-org-type" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Type *
             </label>
             <select
@@ -715,7 +715,7 @@ export function OrganizationOnboarding({
                   type: e.target.value as (typeof ORG_TYPES)[number]["value"],
                 }))
               }
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
             >
               {ORG_TYPES.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -726,7 +726,7 @@ export function OrganizationOnboarding({
           </div>
 
           <div>
-            <label htmlFor="onb-address" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-address" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Address
             </label>
             <input
@@ -734,13 +734,13 @@ export function OrganizationOnboarding({
               type="text"
               value={addNewForm.address}
               onChange={(e) => setAddNewForm((p) => ({ ...p, address: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="Street, city, state, ZIP"
             />
           </div>
 
           <div>
-            <label htmlFor="onb-phone" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-phone" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Phone
             </label>
             <input
@@ -748,12 +748,12 @@ export function OrganizationOnboarding({
               type="tel"
               value={addNewForm.phone}
               onChange={(e) => setAddNewForm((p) => ({ ...p, phone: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
             />
           </div>
 
           <div>
-            <label htmlFor="onb-website" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-website" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Website
             </label>
             <input
@@ -763,13 +763,13 @@ export function OrganizationOnboarding({
               autoComplete="url"
               value={addNewForm.website}
               onChange={(e) => setAddNewForm((p) => ({ ...p, website: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
               placeholder="example.org or https://…"
             />
           </div>
 
           <div>
-            <label htmlFor="onb-program-type" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-program-type" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Program type (e.g. domestic violence, CAC)
             </label>
             <input
@@ -777,12 +777,12 @@ export function OrganizationOnboarding({
               type="text"
               value={addNewForm.program_type}
               onChange={(e) => setAddNewForm((p) => ({ ...p, program_type: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
             />
           </div>
 
           <div>
-            <label htmlFor="onb-notes" className="block text-xs font-medium text-slate-400 mb-1">
+            <label htmlFor="onb-notes" className="block text-xs font-medium text-[var(--color-muted)] mb-1">
               Additional notes (optional)
             </label>
             <textarea
@@ -790,7 +790,7 @@ export function OrganizationOnboarding({
               rows={3}
               value={addNewForm.notes}
               onChange={(e) => setAddNewForm((p) => ({ ...p, notes: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-50"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)]"
             />
           </div>
 
@@ -803,7 +803,7 @@ export function OrganizationOnboarding({
           <button
             type="submit"
             disabled={proposalLoading || !profileIsOrg}
-            className="w-full rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-900 hover:bg-white disabled:opacity-50"
+            className="w-full rounded-lg bg-[var(--color-light-sand)] px-4 py-2.5 text-sm font-semibold text-[var(--color-navy)] hover:bg-white disabled:opacity-50"
           >
             {proposalLoading ? "Submitting…" : "Submit For Admin Review"}
           </button>

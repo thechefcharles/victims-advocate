@@ -100,34 +100,34 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+      <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
         <div className="max-w-5xl mx-auto">Loading users…</div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-50 px-4 sm:px-8 py-8">
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="space-y-2">
-          <p className="text-xs tracking-[0.25em] uppercase text-slate-400">
+          <p className="text-xs tracking-[0.25em] uppercase text-[var(--color-muted)]">
             Admin · User security
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold">Users</h1>
-          <p className="text-sm text-slate-400 max-w-xl">
+          <p className="text-sm text-[var(--color-muted)] max-w-xl">
             Enable or disable accounts. New accounts are created through your normal signup flow.
           </p>
-          <div className="flex flex-wrap gap-3 text-sm text-slate-400 pt-1">
-            <Link href="/admin/cases" className="hover:text-slate-200">
+          <div className="flex flex-wrap gap-3 text-sm text-[var(--color-muted)] pt-1">
+            <Link href="/admin/cases" className="hover:text-[var(--color-charcoal)]">
               Cases
             </Link>
-            <Link href="/admin/audit" className="hover:text-slate-200">
+            <Link href="/admin/audit" className="hover:text-[var(--color-charcoal)]">
               Audit
             </Link>
-            <Link href="/admin/orgs" className="hover:text-slate-200">
+            <Link href="/admin/orgs" className="hover:text-[var(--color-charcoal)]">
               Organizations
             </Link>
-            <Link href="/admin/policies" className="hover:text-slate-200">
+            <Link href="/admin/policies" className="hover:text-[var(--color-charcoal)]">
               Policies
             </Link>
             <Link href="/admin/ecosystem" className="hover:text-teal-400">
@@ -135,7 +135,7 @@ export default function AdminUsersPage() {
             </Link>
             <Link
               href="/admin/grading"
-              className="inline-flex items-center rounded-md bg-slate-700 px-2.5 py-1 text-sm font-medium text-white hover:bg-slate-600"
+              className="inline-flex items-center rounded-md bg-[var(--color-teal-deep)] px-2.5 py-1 text-sm font-medium text-white hover:bg-[var(--color-teal)]"
             >
               CBO grading
             </Link>
@@ -148,12 +148,12 @@ export default function AdminUsersPage() {
             placeholder="Filter by email"
             value={filterEmail}
             onChange={(e) => setFilterEmail(e.target.value)}
-            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 w-48"
+            className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] w-48"
           />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-sm text-slate-100"
+            className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-1.5 text-sm text-[var(--color-navy)]"
           >
             <option value="">All statuses</option>
             <option value="active">Active</option>
@@ -162,10 +162,10 @@ export default function AdminUsersPage() {
           </select>
         </div>
 
-        <section className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden">
+        <section className="bg-[var(--color-warm-cream)]/90 border border-[var(--color-border-light)] rounded-2xl overflow-hidden">
           <table className="w-full border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/80">
+              <tr className="border-b border-[var(--color-border-light)] text-[var(--color-muted)] bg-white/92">
                 <th className="text-left py-2 px-3 font-normal">Email</th>
                 <th className="text-left py-2 px-3 font-normal">Role</th>
                 <th className="text-left py-2 px-3 font-normal">Status</th>
@@ -175,9 +175,9 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {filtered.map((u) => (
-                <tr key={u.id} className="border-b border-slate-800/80 hover:bg-slate-800/40">
-                  <td className="py-2 px-3 text-slate-200">{u.email ?? "—"}</td>
-                  <td className="py-2 px-3 text-slate-300">{u.role}</td>
+                <tr key={u.id} className="border-b border-[var(--color-border-light)] hover:bg-[var(--color-light-sand)]/65">
+                  <td className="py-2 px-3 text-[var(--color-charcoal)]">{u.email ?? "—"}</td>
+                  <td className="py-2 px-3 text-[var(--color-slate)]">{u.role}</td>
                   <td className="py-2 px-3">
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 ${
@@ -189,7 +189,7 @@ export default function AdminUsersPage() {
                       {u.account_status}
                     </span>
                   </td>
-                  <td className="py-2 px-3 text-slate-400">{formatDate(u.created_at)}</td>
+                  <td className="py-2 px-3 text-[var(--color-muted)]">{formatDate(u.created_at)}</td>
                   <td className="py-2 px-3">
                     {u.account_status === "active" ? (
                       <button
@@ -217,9 +217,9 @@ export default function AdminUsersPage() {
           </table>
         </section>
         {filtered.length === 0 && (
-          <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-400">
-            <p className="font-medium text-slate-300">No users match.</p>
-            <p className="mt-2 text-xs text-slate-500">
+          <div className="rounded-lg border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/70 px-4 py-6 text-sm text-[var(--color-muted)]">
+            <p className="font-medium text-[var(--color-slate)]">No users match.</p>
+            <p className="mt-2 text-xs text-[var(--color-muted)]">
               Clear filters to see all accounts, or adjust email and status filters.
             </p>
           </div>
