@@ -77,10 +77,25 @@ export type I18nDict = {
   };
 
   signup: {
-    /** Victim signup: how we address them (saved to account profile). */
+    /** Applicant path: how we address them (saved to account profile). */
     preferredNameLabel: string;
     preferredNamePlaceholder: string;
     preferredNameHelp: string;
+    pageEyebrow: string;
+    pageTitle: string;
+    pageSubtitle: string;
+    backHome: string;
+    accountTypeLabel: string;
+    typeApplicant: string;
+    typeAdvocate: string;
+    typeOrganization: string;
+    hintApplicant: string;
+    hintAdvocate: string;
+    hintOrganization: string;
+    orgSignupBefore: string;
+    orgSignupAfter: string;
+    signInPrompt: string;
+    signInLink: string;
   };
 
   victimDashboard: {
@@ -705,7 +720,6 @@ export type I18nDict = {
     passwordPlaceholder: string;
     loggingIn: string;
     createAccount: string;
-    createAdvocateAccount: string;
     forgotPassword: string;
     tooManyAttempts: string;
   };

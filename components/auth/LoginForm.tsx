@@ -133,12 +133,9 @@ export default function LoginForm() {
         {loading ? t("loginForm.loggingIn") : t("loginForm.submit")}
       </button>
 
-      <div className="text-sm opacity-80 flex gap-4">
+      <div className="text-sm opacity-80 flex flex-wrap gap-4">
         <Link className="underline" href="/signup">
           {t("loginForm.createAccount")}
-        </Link>
-        <Link className="underline" href="/signup?intent=advocate">
-          {t("loginForm.createAdvocateAccount")}
         </Link>
         <Link className="underline" href="/forgot-password">
           {t("loginForm.forgotPassword")}
