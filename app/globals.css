@@ -44,3 +44,62 @@ body {
     animation: none;
   }
 }
+
+/* —— NxtStps marketing homepage (Brand Kit V2) —— */
+.marketing-home-root {
+  scroll-behavior: smooth;
+  --color-teal-deep: #0c5f72;
+  --color-teal: #1a8ba6;
+  --color-teal-soft: #4aaec7;
+  --color-teal-light: #e4f4f8;
+  --color-sage-deep: #2e6b48;
+  --color-sage: #3d8a5f;
+  --color-sage-light: #e8f5ee;
+  --color-gold: #c49820;
+  --color-gold-light: #fdf6e0;
+  --color-rose: #8b4f6a;
+  --color-rose-light: #f5ecf1;
+  --color-navy: #0f2840;
+  --color-charcoal: #1a2e3d;
+  --color-slate: #4a5c6a;
+  --color-muted: #8a9ba8;
+  --color-warm-white: #fafaf8;
+  --color-warm-cream: #f2efe8;
+  --color-light-sand: #e8e4da;
+  --color-border-light: #d8d4ca;
+  --color-border: #c4bfb4;
+  --color-success: #2a7a52;
+  --color-warning: #c47e12;
+  --color-error: #b83228;
+  --color-info: #1a6b8a;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow-card: 0 12px 40px rgba(15, 40, 64, 0.08);
+  --shadow-modal: 0 20px 50px rgba(15, 40, 64, 0.12);
+
+  background-color: var(--color-warm-white);
+  color: var(--color-charcoal);
+  font-family: var(--font-marketing-sans), system-ui, sans-serif;
+}
+
+.marketing-serif {
+  font-family: var(--font-marketing-serif), Georgia, "Times New Roman", serif;
+}
+
+.marketing-home-root :where(a, button):focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-home-root {
+    scroll-behavior: auto !important;
+  }
+  .marketing-home-root * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

@@ -146,6 +146,11 @@ export default function TopNav() {
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";
 
+  /** Marketing homepage (`/`) uses its own light-theme nav + exit flow. */
+  if (pathname === "/") {
+    return null;
+  }
+
   const languageSelect = (
     <label className="flex items-center gap-2 rounded-md border border-slate-700/80 px-2 py-1">
       <span className="text-[11px] text-slate-500">{t("nav.language")}</span>
