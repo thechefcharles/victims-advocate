@@ -560,6 +560,11 @@ export function MarketingHomePage() {
                     </Link>
                   </li>
                   <li>
+                    <Link href="/data-deletion" className="text-white/90 hover:underline">
+                      Data Deletion Policy
+                    </Link>
+                  </li>
+                  <li>
                     <Link href={ROUTES.help} className="text-white/90 hover:underline">
                       {t("home.mkt.footerMkt.linkHelp")}
                     </Link>

@@ -6,6 +6,7 @@ import { RequireAuth } from "@/components/auth/RequireAuth";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { getDashboardPath } from "@/lib/dashboardRoutes";
+import { getPrivacyPolicyEmail } from "@/lib/legal/platformLegalConfig";
 import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliationForm";
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
 import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
@@ -26,8 +27,22 @@ export default function AccountPage() {
     advocatePersonalInfo,
     organizationName,
     refetchMe,
+    deletionRequested,
+    deletionRequestedAt,
   } = useAuth();
   const { t } = useI18n();
+  const privacyEmail = getPrivacyPolicyEmail();
+
+  const deletionDateLabel = useMemo(() => {
+    if (!deletionRequestedAt) return null;
+    const d = new Date(deletionRequestedAt);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, [deletionRequestedAt]);
 
   useEffect(() => {
     void refetchMe();
@@ -50,6 +65,40 @@ export default function AccountPage() {
           {t("nav.accountPlaceholderTitle")}
         </h1>
 
+        {deletionRequested ? (
+          <section
+            className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/90 p-6 space-y-4"
+            aria-live="polite"
+          >
+            <h2 className="text-lg font-semibold text-[var(--color-navy)]">Account deletion</h2>
+            <p className="text-sm leading-relaxed text-[var(--color-charcoal)]">
+              Deletion requested{deletionDateLabel ? ` — ${deletionDateLabel}` : ""}. Processing within 30
+              days.
+            </p>
+            <p className="text-sm text-[var(--color-slate)]">
+              We&apos;ve received your request and will take care of it. If you have questions, contact{" "}
+              <a className="font-medium underline hover:text-[var(--color-navy)]" href={`mailto:${privacyEmail}`}>
+                {privacyEmail}
+              </a>
+              .
+            </p>
+            <p className="text-sm text-[var(--color-slate)]">
+              <Link href="/data-deletion" className="font-medium underline hover:text-[var(--color-navy)]">
+                User Data Deletion Policy
+              </Link>{" "}
+              — what we delete and what may be retained.
+            </p>
+            <Link
+              href={getDashboardPath({ isAdmin, orgId, orgRole, role })}
+              className="inline-block text-sm text-teal-400 hover:text-teal-300"
+            >
+              {t("common.backToWorkspace")}
+            </Link>
+          </section>
+        ) : null}
+
+        {!deletionRequested ? (
+          <>
         {/* Onboarding intent: org-leader signup path without membership yet */}
         {role === "organization" && !orgId && (
           <div className="rounded-2xl border border-amber-500/35 bg-amber-950/25 px-5 py-4 space-y-2">
@@ -133,6 +182,29 @@ export default function AccountPage() {
             Only an organization owner can change which directory program this agency uses.
           </p>
         )}
+
+        <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-2)]/60 p-6 space-y-4">
+          <h2 className="text-lg font-semibold text-[var(--color-navy)]">Privacy &amp; data</h2>
+          <p className="text-sm text-[var(--color-slate)] leading-relaxed">
+            Learn how we delete data and what may be kept for legal reasons.
+          </p>
+          <Link
+            href="/data-deletion"
+            className="inline-flex min-h-[44px] items-center text-sm font-medium text-[var(--color-teal-deep)] underline-offset-2 hover:underline"
+          >
+            User Data Deletion Policy
+          </Link>
+          <div className="pt-2 border-t border-[var(--color-border-light)]">
+            <Link
+              href="/account/delete"
+              className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-2)] px-4 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]"
+            >
+              Delete My Account
+            </Link>
+          </div>
+        </section>
+          </>
+        ) : null}
       </main>
     </RequireAuth>
   );
