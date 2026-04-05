@@ -75,6 +75,9 @@ export function MarketingNav() {
           <a href="#how-it-works" className={navLinkClass}>
             {t("home.mkt.nav.howItWorks")}
           </a>
+          <a href="#interactive-demo" className={navLinkClass}>
+            {t("home.mkt.nav.tryInteractiveDemo")}
+          </a>
           <a href="#for-advocates" className={navLinkClass}>
             {t("home.mkt.nav.forAdvocates")}
           </a>
@@ -138,6 +141,9 @@ export function MarketingNav() {
           <div className="flex flex-col gap-3">
             <a href="#how-it-works" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
               {t("home.mkt.nav.howItWorks")}
+            </a>
+            <a href="#interactive-demo" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
+              {t("home.mkt.nav.tryInteractiveDemo")}
             </a>
             <a href="#for-advocates" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
               {t("home.mkt.nav.forAdvocates")}

@@ -21,6 +21,8 @@ import { getDashboardPath, type DashboardMe } from "@/lib/dashboardRoutes";
 import { ROUTES } from "@/lib/routes/pageRegistry";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
+import { MarketingHomeInteractiveDemo } from "@/components/marketing/MarketingHomeInteractiveDemo";
+import { MarketingHomeAudiences } from "@/components/marketing/MarketingHomeAudiences";
 
 const SCHEDULE_URL = process.env.NEXT_PUBLIC_MEETING_URL ?? "";
 
@@ -112,16 +114,16 @@ export function MarketingHomePage() {
 
               <div className="mt-10 grid grid-cols-1 gap-4 border-y border-[var(--color-border-light)] py-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--color-border-light)]">
                 <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-navy)]">{t("home.mkt.hero.stat1Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-warning)] font-medium">{t("home.mkt.hero.stat1Label")}</div>
+                  <div className="text-4xl font-bold text-[var(--color-warning)]">{t("home.mkt.hero.stat1Num")}</div>
+                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat1Label")}</div>
                 </div>
                 <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-navy)]">{t("home.mkt.hero.stat2Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-warning)]">{t("home.mkt.hero.stat2Label")}</div>
+                  <div className="text-4xl font-bold text-[var(--color-warning)]">{t("home.mkt.hero.stat2Num")}</div>
+                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat2Label")}</div>
                 </div>
                 <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-navy)]">{t("home.mkt.hero.stat3Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-teal-deep)]">{t("home.mkt.hero.stat3Label")}</div>
+                  <div className="text-4xl font-bold text-[var(--color-teal-deep)]">{t("home.mkt.hero.stat3Num")}</div>
+                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat3Label")}</div>
                 </div>
               </div>
               <p className="mt-3 text-center text-[11px] text-[var(--color-muted)] sm:text-left">{t("home.mkt.hero.source")}</p>
@@ -145,7 +147,7 @@ export function MarketingHomePage() {
                       {t("home.mkt.hero.ctaPrimary")}
                     </Link>
                     <a
-                      href="#demo"
+                      href="#interactive-demo"
                       className="inline-flex h-[52px] min-h-[48px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-8 text-base font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors"
                     >
                       {t("home.mkt.hero.ctaDemo")}
@@ -199,18 +201,15 @@ export function MarketingHomePage() {
           </div>
         </section>
 
-        {/* Demo / video */}
-        <section id="demo" className="scroll-mt-28 border-b border-[var(--color-border-light)] py-16 sm:py-24">
-          <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
-            <span className="inline-block rounded-full bg-[var(--color-teal-light)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-teal)]">
-              {t("home.mkt.demo.label")}
-            </span>
-            <h2 className="mt-4 text-3xl font-bold text-[var(--color-navy)] sm:text-4xl">{t("home.mkt.demo.title")}</h2>
-            <p className="mx-auto mt-3 max-w-xl text-lg text-[var(--color-slate)]">{t("home.mkt.demo.subtitle")}</p>
-            <p className="mt-2 text-sm font-medium text-[var(--color-teal-deep)]">{t("home.mkt.demo.disclaimer")}</p>
-            <p className="mt-1 text-sm text-[var(--color-muted)]">{t("home.mkt.demo.walkthroughSoon")}</p>
+        <MarketingHomeInteractiveDemo />
+
+        {/* Video tour (secondary to interactive demo) */}
+        <section id="demo-video" className="scroll-mt-28 border-b border-[var(--color-border-light)] bg-[var(--color-surface)]/40 py-[var(--space-7)] sm:py-[var(--space-8)]">
+          <div className="mx-auto max-w-3xl px-[var(--space-4)] text-center sm:px-[var(--space-6)]">
+            <h2 className="text-2xl font-bold text-[var(--color-navy)] sm:text-3xl">{t("home.mkt.videoTour.title")}</h2>
+            <p className="mx-auto mt-3 max-w-xl text-base text-[var(--color-slate)]">{t("home.mkt.videoTour.intro")}</p>
           </div>
-          <div className="mx-auto mt-8 w-full max-w-3xl px-4 sm:px-6">
+          <div className="mx-auto mt-8 w-full max-w-3xl px-[var(--space-4)] sm:px-[var(--space-6)]">
             <video
               className="w-full rounded-[var(--radius-xl)] border border-[var(--color-border-light)] bg-black object-contain shadow-[var(--shadow-card)] max-h-[min(70vh,520px)]"
               controls
@@ -222,8 +221,8 @@ export function MarketingHomePage() {
           </div>
         </section>
 
-        {/* Problem */}
-        <section id="problem" className="scroll-mt-28 bg-[var(--color-navy)] py-16 text-white sm:py-24">
+        {/* Problem — dark band uses teal-deep (primary brand), not navy background (Brand Kit: navy for text) */}
+        <section id="problem" className="scroll-mt-28 bg-[var(--color-teal-deep)] py-16 text-white sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-teal-soft)]">
               {t("home.mkt.problem.label")}
@@ -254,7 +253,13 @@ export function MarketingHomePage() {
                   className="rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.06] p-6"
                 >
                   <p className="text-xs font-medium uppercase tracking-wide text-white/60">{c.eyebrow}</p>
-                  <p className="mt-2 text-5xl font-bold text-[var(--color-teal-soft)]">{c.stat}</p>
+                  <p
+                    className={`mt-2 text-5xl font-bold ${
+                      i === 0 || i === 1 ? "text-[var(--color-gold-light)]" : "text-[var(--color-teal-soft)]"
+                    }`}
+                  >
+                    {c.stat}
+                  </p>
                   <p className="mt-3 text-[15px] leading-snug text-white/75">{c.desc}</p>
                 </div>
               ))}
@@ -299,6 +304,56 @@ export function MarketingHomePage() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        <MarketingHomeAudiences />
+
+        {/* Denial prevention */}
+        <section
+          id="denial-prevention"
+          className="scroll-mt-28 border-b border-[var(--color-border-light)] bg-[var(--color-surface)] py-[var(--space-7)] sm:py-[var(--space-8)]"
+        >
+          <div className="mx-auto max-w-6xl px-[var(--space-4)] sm:px-[var(--space-6)]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-teal)]">
+              {t("home.mkt.denial.label")}
+            </p>
+            <h2 className="mt-3 max-w-3xl text-[28px] font-bold leading-tight text-[var(--color-navy)] sm:text-4xl">
+              {t("home.mkt.denial.title")}
+            </h2>
+            <p className="mt-4 max-w-[680px] text-lg text-[var(--color-slate)]">{t("home.mkt.denial.body")}</p>
+            <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {(
+                [
+                  ["d1Reason", "d1Fix", "d1Tag"],
+                  ["d2Reason", "d2Fix", "d2Tag"],
+                  ["d3Reason", "d3Fix", "d3Tag"],
+                  ["d4Reason", "d4Fix", "d4Tag"],
+                  ["d5Reason", "d5Fix", "d5Tag"],
+                  ["d6Reason", "d6Fix", "d6Tag"],
+                ] as const
+              ).map(([rk, fk, tk], idx) => (
+                <div
+                  key={idx}
+                  className="relative rounded-[var(--radius-lg)] border border-[var(--color-border-light)] bg-white p-[var(--space-5)] pl-6 shadow-[var(--shadow-subtle)]"
+                >
+                  <span
+                    className="absolute left-0 top-0 h-full w-1 rounded-l-[var(--radius-lg)] bg-[var(--color-teal-deep)]"
+                    aria-hidden
+                  />
+                  <p className="text-[13px] font-medium text-[var(--color-slate)]">{t(`home.mkt.denial.${rk}`)}</p>
+                  <p className="mt-2 text-base font-semibold text-[var(--color-navy)]">{t(`home.mkt.denial.${fk}`)}</p>
+                  <span className="mt-3 inline-block rounded-[var(--radius-pill)] bg-[var(--color-sage-light)] px-3 py-1 text-xs font-medium text-[var(--color-sage-deep)]">
+                    {t(`home.mkt.denial.${tk}`)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-sm text-[var(--color-teal)]">
+              <Link href={ROUTES.help} className="font-medium underline underline-offset-2 hover:text-[var(--color-teal-deep)]">
+                {t("home.mkt.denial.docHint")}
+              </Link>
+            </p>
           </div>
         </section>
 
@@ -584,6 +639,11 @@ export function MarketingHomePage() {
                   <li>
                     <a href="#convert" className="text-white/90 hover:underline">
                       {t("home.mkt.footerMkt.linkPilot")}
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#about" className="text-white/90 hover:underline">
+                      {t("home.mkt.footerMkt.linkAbout")}
                     </a>
                   </li>
                 </ul>
