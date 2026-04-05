@@ -1,6 +1,6 @@
 import {
-  CURRENT_BETA_PLATFORM_ACK_VERSION,
   CURRENT_LIABILITY_WAIVER_VERSION,
+  CURRENT_PILOT_ACK_VERSION,
   CURRENT_PRIVACY_POLICY_VERSION,
   CURRENT_TERMS_VERSION,
   getPlatformStatus,
@@ -17,6 +17,10 @@ export type ProfileLegalConsentFields = {
   liability_waiver_version: string | null;
   beta_platform_ack_at: string | null;
   beta_platform_ack_version: string | null;
+  /** User Data Deletion Policy — optional on same profiles row as legal consent. */
+  deletion_requested?: boolean | null;
+  deletion_requested_at?: string | null;
+  deletion_type?: string | null;
 };
 
 export function getLegalConsentNextPath(
@@ -37,7 +41,7 @@ export function getLegalConsentNextPath(
   if (status !== "production") {
     if (
       !p.beta_platform_ack_at ||
-      p.beta_platform_ack_version !== CURRENT_BETA_PLATFORM_ACK_VERSION
+      p.beta_platform_ack_version !== CURRENT_PILOT_ACK_VERSION
     ) {
       return "/signup/consent/beta";
     }

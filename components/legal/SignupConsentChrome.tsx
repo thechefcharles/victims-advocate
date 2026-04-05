@@ -9,10 +9,11 @@ import type { ConsentFlowStepMeta } from "@/lib/legal/platformLegalConfig";
 type Props = {
   steps: ConsentFlowStepMeta[];
   activeStepId: ConsentFlowStepMeta["id"];
+  completedStepIds?: ConsentFlowStepMeta["id"][];
   children: React.ReactNode;
 };
 
-export function SignupConsentChrome({ steps, activeStepId, children }: Props) {
+export function SignupConsentChrome({ steps, activeStepId, completedStepIds, children }: Props) {
   const { user, accessToken } = useAuth();
 
   return (
@@ -32,7 +33,11 @@ export function SignupConsentChrome({ steps, activeStepId, children }: Props) {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6">
-        <ConsentFlowProgress steps={steps} activeStepId={activeStepId} />
+        <ConsentFlowProgress
+          steps={steps}
+          activeStepId={activeStepId}
+          completedStepIds={completedStepIds}
+        />
         {children}
       </div>
     </main>

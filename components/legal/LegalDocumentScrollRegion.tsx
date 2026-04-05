@@ -9,13 +9,20 @@ type Props = {
   /** Called when user has scrolled to bottom (within threshold). */
   onReachedEnd: (reached: boolean) => void;
   className?: string;
+  /** Accessible name for the scrollable document region. */
+  regionAriaLabel?: string;
 };
 
 /**
  * Scroll-locked legal document panel. Fires onReachedEnd(true) when
  * scrollTop + clientHeight >= scrollHeight - END_THRESHOLD_PX.
  */
-export function LegalDocumentScrollRegion({ children, onReachedEnd, className }: Props) {
+export function LegalDocumentScrollRegion({
+  children,
+  onReachedEnd,
+  className,
+  regionAriaLabel = "Terms and legal document. Scroll to read the full document.",
+}: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [hintVisible, setHintVisible] = useState(true);
   const onReachedEndRef = useRef(onReachedEnd);
@@ -49,7 +56,7 @@ export function LegalDocumentScrollRegion({ children, onReachedEnd, className }:
         ref={ref}
         tabIndex={0}
         role="region"
-        aria-label="Terms and legal document. Scroll to read the full document."
+        aria-label={regionAriaLabel}
         className={
           className ??
           "max-h-[min(420px,55vh)] overflow-y-auto rounded-xl border border-[var(--color-border-light)] bg-white/90 p-4 shadow-inner focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-teal-deep)]"

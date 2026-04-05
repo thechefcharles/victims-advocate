@@ -7,6 +7,7 @@ import { SkipToMainLink } from "@/components/SkipToMainLink";
 import TopNav from "@/components/TopNav";
 import { ApplicantPathChrome } from "@/components/applicant/ApplicantPathChrome";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { PilotProgramFeedbackLauncher } from "@/components/pilot/PilotProgramFeedbackLauncher";
 import { I18nProvider } from "@/components/i18n/i18nProvider";
 import { StateProvider } from "@/components/state/StateProvider";
 
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {children}
               </div>
               <ApplicantPathChrome />
+              <PilotProgramFeedbackLauncher />
             </I18nProvider>
           </StateProvider>
         </AuthProvider>

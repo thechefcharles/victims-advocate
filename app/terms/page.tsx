@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LegalFooterLinks } from "@/components/legal/LegalFooterLinks";
 import { TermsOfUseV2Document } from "@/components/legal/documents/TermsOfUseV2Document";
 
 export const metadata = {
@@ -19,18 +20,23 @@ export default function TermsPage() {
           <Link href="/waiver" className="hover:text-[var(--color-charcoal)]">
             Liability Waiver
           </Link>
+          <Link href="/data-deletion" className="hover:text-[var(--color-charcoal)]">
+            Data Deletion
+          </Link>
         </div>
         <header className="space-y-2">
           <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">Legal</p>
-          <h1 className="text-3xl font-bold">NXTSTPS – TERMS OF USE</h1>
+          <h1 className="text-3xl font-bold">NxtStps, LLC — Terms of Use</h1>
           <p className="text-sm text-[var(--color-slate)]">
-            Version 2.0 · Effective April 2026
+            Version 2.0 · Effective April 5, 2026
           </p>
         </header>
 
         <section className="max-w-none space-y-6 text-[var(--color-charcoal)]">
           <TermsOfUseV2Document />
         </section>
+
+        <LegalFooterLinks />
       </div>
     </main>
   );

@@ -8,8 +8,8 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiFail, apiFailFromError, apiOk, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import {
-  CURRENT_BETA_PLATFORM_ACK_VERSION,
   CURRENT_LIABILITY_WAIVER_VERSION,
+  CURRENT_PILOT_ACK_VERSION,
   CURRENT_PRIVACY_POLICY_VERSION,
   CURRENT_TERMS_VERSION,
   getPlatformStatus,
@@ -214,6 +214,14 @@ export async function POST(req: Request) {
         profile.privacy_policy_version === CURRENT_PRIVACY_POLICY_VERSION &&
         profile.privacy_policy_accepted_at
       ) {
+        if (!profile.terms_accepted_at || profile.terms_version !== CURRENT_TERMS_VERSION) {
+          return apiFail(
+            "VALIDATION_ERROR",
+            "Your Terms of Use acceptance is incomplete. Please complete Step 1 first.",
+            undefined,
+            422
+          );
+        }
         return apiOk({ ok: true, step: "privacy", idempotent: true });
       }
       const agree = (body as { agreePrivacy?: boolean }).agreePrivacy === true;
@@ -241,10 +249,32 @@ export async function POST(req: Request) {
         .update({
           privacy_policy_accepted_at: nowIso,
           privacy_policy_version: CURRENT_PRIVACY_POLICY_VERSION,
+          privacy_policy_accept_ip: ip,
+          privacy_policy_accept_user_agent: userAgent,
           updated_at: nowIso,
         })
         .eq("id", ctx.userId);
       if (upErr) throw new Error(upErr.message);
+
+      const { data: verifyPrivacy } = await supabase
+        .from("profiles")
+        .select("terms_accepted_at, terms_version, privacy_policy_accepted_at, privacy_policy_version")
+        .eq("id", ctx.userId)
+        .maybeSingle();
+
+      if (
+        !verifyPrivacy?.terms_accepted_at ||
+        verifyPrivacy.terms_version !== CURRENT_TERMS_VERSION ||
+        !verifyPrivacy.privacy_policy_accepted_at ||
+        verifyPrivacy.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION
+      ) {
+        return apiFail(
+          "INTERNAL",
+          "We could not confirm your consent was saved. Please try again or contact support.",
+          undefined,
+          500
+        );
+      }
 
       const privPolicy = await getActivePolicyDocument({
         docType: "privacy_policy",
@@ -267,6 +297,14 @@ export async function POST(req: Request) {
     }
 
     if (step === "waiver") {
+      if (!profile.terms_accepted_at || profile.terms_version !== CURRENT_TERMS_VERSION) {
+        return apiFail(
+          "VALIDATION_ERROR",
+          "Complete the Terms of Use step before the Liability Waiver.",
+          undefined,
+          422
+        );
+      }
       if (
         !profile.privacy_policy_accepted_at ||
         profile.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION
@@ -282,6 +320,25 @@ export async function POST(req: Request) {
         profile.liability_waiver_version === CURRENT_LIABILITY_WAIVER_VERSION &&
         profile.liability_waiver_accepted_at
       ) {
+        if (!profile.terms_accepted_at || profile.terms_version !== CURRENT_TERMS_VERSION) {
+          return apiFail(
+            "VALIDATION_ERROR",
+            "Your Terms of Use acceptance is incomplete. Please complete Step 1 first.",
+            undefined,
+            422
+          );
+        }
+        if (
+          !profile.privacy_policy_accepted_at ||
+          profile.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION
+        ) {
+          return apiFail(
+            "VALIDATION_ERROR",
+            "Your Privacy Policy acceptance is incomplete. Please complete Step 2 first.",
+            undefined,
+            422
+          );
+        }
         return apiOk({ ok: true, step: "waiver", idempotent: true });
       }
       const agree = (body as { agreeWaiver?: boolean }).agreeWaiver === true;
@@ -309,14 +366,59 @@ export async function POST(req: Request) {
         .update({
           liability_waiver_accepted_at: nowIso,
           liability_waiver_version: CURRENT_LIABILITY_WAIVER_VERSION,
+          liability_waiver_accept_ip: ip,
+          liability_waiver_accept_user_agent: userAgent,
           updated_at: nowIso,
         })
         .eq("id", ctx.userId);
       if (upErr) throw new Error(upErr.message);
 
+      const { data: verifyWaiver } = await supabase
+        .from("profiles")
+        .select(
+          "terms_accepted_at, terms_version, privacy_policy_accepted_at, privacy_policy_version, liability_waiver_accepted_at, liability_waiver_version"
+        )
+        .eq("id", ctx.userId)
+        .maybeSingle();
+
+      if (
+        !verifyWaiver?.terms_accepted_at ||
+        verifyWaiver.terms_version !== CURRENT_TERMS_VERSION ||
+        !verifyWaiver.privacy_policy_accepted_at ||
+        verifyWaiver.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION ||
+        !verifyWaiver.liability_waiver_accepted_at ||
+        verifyWaiver.liability_waiver_version !== CURRENT_LIABILITY_WAIVER_VERSION
+      ) {
+        return apiFail(
+          "INTERNAL",
+          "We could not confirm your consent was saved. Please try again or contact support.",
+          undefined,
+          500
+        );
+      }
+
       return apiOk({ ok: true, step: "waiver" });
     }
 
+    if (!profile.terms_accepted_at || profile.terms_version !== CURRENT_TERMS_VERSION) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Complete the Terms of Use step before the pilot acknowledgment.",
+        undefined,
+        422
+      );
+    }
+    if (
+      !profile.privacy_policy_accepted_at ||
+      profile.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION
+    ) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        "Complete the Privacy Policy step before the pilot acknowledgment.",
+        undefined,
+        422
+      );
+    }
     if (
       !profile.liability_waiver_accepted_at ||
       profile.liability_waiver_version !== CURRENT_LIABILITY_WAIVER_VERSION
@@ -328,10 +430,41 @@ export async function POST(req: Request) {
         422
       );
     }
+
     if (
-      profile.beta_platform_ack_version === CURRENT_BETA_PLATFORM_ACK_VERSION &&
+      profile.beta_platform_ack_version === CURRENT_PILOT_ACK_VERSION &&
       profile.beta_platform_ack_at
     ) {
+      if (!profile.terms_accepted_at || profile.terms_version !== CURRENT_TERMS_VERSION) {
+        return apiFail(
+          "VALIDATION_ERROR",
+          "Your Terms of Use acceptance is incomplete. Please complete Step 1 first.",
+          undefined,
+          422
+        );
+      }
+      if (
+        !profile.privacy_policy_accepted_at ||
+        profile.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION
+      ) {
+        return apiFail(
+          "VALIDATION_ERROR",
+          "Your Privacy Policy acceptance is incomplete. Please complete Step 2 first.",
+          undefined,
+          422
+        );
+      }
+      if (
+        !profile.liability_waiver_accepted_at ||
+        profile.liability_waiver_version !== CURRENT_LIABILITY_WAIVER_VERSION
+      ) {
+        return apiFail(
+          "VALIDATION_ERROR",
+          "Your Liability Waiver acceptance is incomplete. Please complete Step 3 first.",
+          undefined,
+          422
+        );
+      }
       return apiOk({ ok: true, step: "beta", idempotent: true });
     }
 
@@ -342,8 +475,8 @@ export async function POST(req: Request) {
 
     const { error: auditErr } = await supabase.from("legal_consent_audit").insert({
       user_id: ctx.userId,
-      document_type: "beta_platform_ack",
-      version: CURRENT_BETA_PLATFORM_ACK_VERSION,
+      document_type: "beta_pilot_acknowledgment",
+      version: CURRENT_PILOT_ACK_VERSION,
       accepted_at: nowIso,
       ip,
       user_agent: userAgent,
@@ -359,11 +492,39 @@ export async function POST(req: Request) {
       .from("profiles")
       .update({
         beta_platform_ack_at: nowIso,
-        beta_platform_ack_version: CURRENT_BETA_PLATFORM_ACK_VERSION,
+        beta_platform_ack_version: CURRENT_PILOT_ACK_VERSION,
+        beta_platform_ack_accept_ip: ip,
+        beta_platform_ack_accept_user_agent: userAgent,
         updated_at: nowIso,
       })
       .eq("id", ctx.userId);
     if (upErr) throw new Error(upErr.message);
+
+    const { data: verifyPilot } = await supabase
+      .from("profiles")
+      .select(
+        "terms_accepted_at, terms_version, privacy_policy_accepted_at, privacy_policy_version, liability_waiver_accepted_at, liability_waiver_version, beta_platform_ack_at, beta_platform_ack_version"
+      )
+      .eq("id", ctx.userId)
+      .maybeSingle();
+
+    if (
+      !verifyPilot?.terms_accepted_at ||
+      verifyPilot.terms_version !== CURRENT_TERMS_VERSION ||
+      !verifyPilot.privacy_policy_accepted_at ||
+      verifyPilot.privacy_policy_version !== CURRENT_PRIVACY_POLICY_VERSION ||
+      !verifyPilot.liability_waiver_accepted_at ||
+      verifyPilot.liability_waiver_version !== CURRENT_LIABILITY_WAIVER_VERSION ||
+      !verifyPilot.beta_platform_ack_at ||
+      verifyPilot.beta_platform_ack_version !== CURRENT_PILOT_ACK_VERSION
+    ) {
+      return apiFail(
+        "INTERNAL",
+        "We could not confirm your consent was saved. Please try again or contact support.",
+        undefined,
+        500
+      );
+    }
 
     return apiOk({ ok: true, step: "beta" });
   } catch (err) {

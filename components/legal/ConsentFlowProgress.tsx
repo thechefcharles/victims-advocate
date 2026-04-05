@@ -7,10 +7,13 @@ type Props = {
   steps: ConsentFlowStepMeta[];
   /** Matches `step.id` of the active screen */
   activeStepId: ConsentFlowStepMeta["id"];
+  /** Steps the user has already completed (shown with a checkmark). */
+  completedStepIds?: ConsentFlowStepMeta["id"][];
 };
 
-export function ConsentFlowProgress({ steps, activeStepId }: Props) {
+export function ConsentFlowProgress({ steps, activeStepId, completedStepIds = [] }: Props) {
   const total = getConsentProgressStepCount();
+  const completed = new Set(completedStepIds);
 
   return (
     <nav
@@ -20,17 +23,21 @@ export function ConsentFlowProgress({ steps, activeStepId }: Props) {
       <ol className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
         {steps.map((s) => {
           const isCurrent = s.id === activeStepId;
+          const isDone = completed.has(s.id);
           return (
             <li
               key={s.id}
               className={`text-sm ${isCurrent ? "font-semibold text-[var(--color-navy)]" : "text-[var(--color-slate)]"}`}
             >
               <span className="sr-only">
+                {isDone ? "Completed. " : ""}
                 {isCurrent ? "Current step: " : "Step "}
               </span>
               <span aria-current={isCurrent ? "step" : undefined}>
-                Step {s.stepNumber} of {total} — {s.label}
-                {isCurrent ? " (active — current)" : ""}
+                Step {s.stepNumber} of {total}
+                {isDone ? " ✓ " : " — "}
+                {s.label}
+                {isCurrent ? " (active — current)" : isDone ? " (complete)" : ""}
               </span>
             </li>
           );

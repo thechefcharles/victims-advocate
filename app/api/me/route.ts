@@ -134,7 +134,7 @@ export async function GET(req: Request) {
       const { data: lp } = await supabase
         .from("profiles")
         .select(
-          "terms_accepted_at, terms_version, privacy_policy_accepted_at, privacy_policy_version, liability_waiver_accepted_at, liability_waiver_version, beta_platform_ack_at, beta_platform_ack_version"
+          "terms_accepted_at, terms_version, privacy_policy_accepted_at, privacy_policy_version, liability_waiver_accepted_at, liability_waiver_version, beta_platform_ack_at, beta_platform_ack_version, deletion_requested, deletion_requested_at, deletion_type"
         )
         .eq("id", ctx.userId)
         .maybeSingle();
@@ -166,6 +166,18 @@ export async function GET(req: Request) {
       platformStatus: getPlatformStatus(),
       termsVersionAccepted: legalProfile?.terms_version ?? null,
       termsAcceptedAt: legalProfile?.terms_accepted_at ?? null,
+      privacyPolicyVersionAccepted: legalProfile?.privacy_policy_version ?? null,
+      privacyPolicyAcceptedAt: legalProfile?.privacy_policy_accepted_at ?? null,
+      liabilityWaiverVersionAccepted: legalProfile?.liability_waiver_version ?? null,
+      liabilityWaiverAcceptedAt: legalProfile?.liability_waiver_accepted_at ?? null,
+      pilotAckVersionAccepted: legalProfile?.beta_platform_ack_version ?? null,
+      pilotAckAcceptedAt: legalProfile?.beta_platform_ack_at ?? null,
+      deletionRequested: legalProfile?.deletion_requested === true,
+      deletionRequestedAt: legalProfile?.deletion_requested_at ?? null,
+      deletionType:
+        legalProfile?.deletion_type === "safety" || legalProfile?.deletion_type === "standard"
+          ? legalProfile.deletion_type
+          : null,
     });
   } catch (err) {
     const appErr = toAppError(err);
