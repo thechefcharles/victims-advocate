@@ -65,7 +65,12 @@ export default function AdminDesignationReviewsPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to load"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't load designation reviews. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     const json = await res.json();
@@ -114,7 +119,12 @@ export default function AdminDesignationReviewsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(getApiErrorMessage(json, "Update failed"));
+        alert(
+          getApiErrorMessage(
+            json,
+            "We couldn't save that review. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setSelected(null);

@@ -44,6 +44,7 @@ import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
 import { ROUTES, victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
+import { GroundingPauseBanner } from "@/components/applicant/GroundingPauseBanner";
 import {
   applicantSectionComplete,
   victimSectionComplete,
@@ -267,6 +268,8 @@ const { t, tf, lang } = useI18n();
 const [savingCase, setSavingCase] = useState(false); // ✅ shows "Saving..."
 const [saveToast, setSaveToast] = useState<string | null>(null);
 const [saveNowLoading, setSaveNowLoading] = useState(false);
+  const [autoSaveIssue, setAutoSaveIssue] = useState(false);
+  const [autoSaveFlash, setAutoSaveFlash] = useState(false);
 const creatingCaseRef = useRef(false);
 
   /** Loaded from GET /api/compensation/cases/:id — used for next-action on summary */
@@ -603,13 +606,19 @@ useEffect(() => {
 
       if (!res.ok) {
         console.error("PATCH case save failed:", await res.text());
+        setAutoSaveIssue(true);
+      } else {
+        setAutoSaveIssue(false);
+        setAutoSaveFlash(true);
+        window.setTimeout(() => setAutoSaveFlash(false), 1200);
       }
     } catch (err) {
       console.error("Failed to autosave case to Supabase", err);
+      setAutoSaveIssue(true);
     } finally {
       setSavingCase(false);
     }
-  }, 800); // debounce: prevents spam while typing
+  }, 800); // debounce: prevents spam while typing (Phase 3)
 
   return () => clearTimeout(timeout);
 }, [caseId, loadedFromStorage, canEdit, app, fieldState]);
@@ -859,20 +868,20 @@ alert(t("intake.pdf.summaryUnexpected"));
   }
 };
 
-const handleSaveNow = async () => {
+const handleSaveNow = async (options?: { showSavedToast?: boolean }): Promise<boolean> => {
   // If this user is viewing a case but can't edit, don't allow saving
   if (caseId && !canEdit) {
-setSaveToast(t("intake.save.viewOnly"));
+    setSaveToast(t("intake.save.viewOnly"));
     setTimeout(() => setSaveToast(null), 2000);
-    return;
+    return false;
   }
 
   // If there is no caseId (shouldn’t happen after “case created on start”),
   // you can either block or fallback. I’m blocking with a clear message:
   if (!caseId) {
-setSaveToast(t("intake.save.noCaseLoaded"));
+    setSaveToast(t("intake.save.noCaseLoaded"));
     setTimeout(() => setSaveToast(null), 2000);
-    return;
+    return false;
   }
 
   try {
@@ -895,12 +904,17 @@ setSaveToast(t("intake.save.noCaseLoaded"));
       throw new Error(await res.text());
     }
 
-setSaveToast(t("intake.save.saved"));
-    setTimeout(() => setSaveToast(null), 2000);
+    setAutoSaveIssue(false);
+    if (options?.showSavedToast !== false) {
+      setSaveToast(t("intake.save.saved"));
+      setTimeout(() => setSaveToast(null), 2000);
+    }
+    return true;
   } catch (e) {
     console.error("Save now failed:", e);
-setSaveToast(t("intake.save.failed"));
+    setSaveToast(t("intake.save.failed"));
     setTimeout(() => setSaveToast(null), 2500);
+    return false;
   } finally {
     setSaveNowLoading(false);
   }
@@ -1221,6 +1235,21 @@ const handleBack = () => {
 
         <p className="text-xs text-[var(--color-muted)] -mt-4">{t("intake.reassurance")}</p>
 
+        {autoSaveIssue && caseId && canEdit && (
+          <div
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-charcoal)]"
+            role="status"
+          >
+            {t("intake.pathwaySafety.autosaveTrouble")}
+          </div>
+        )}
+
+        {(step === "victim" || step === "crime") && !isReadOnly && (
+          <p className="text-[11px] text-[var(--color-muted)] -mt-2">
+            {t("intake.pathwaySafety.sensitiveSectionHint")}
+          </p>
+        )}
+
         {isReadOnly && (
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
             {t("intake.viewOnlyBanner")}
@@ -1323,11 +1352,20 @@ const handleBack = () => {
 )}
 
 {step === "victim" && (
-<VictimForm victim={victim} contact={contact} onChange={updateVictim} onContactChange={updateContact} stateCode={stateCode} isReadOnly={isReadOnly} />
+  <div className="nxt-sensitive-section">
+    <VictimForm
+      victim={victim}
+      contact={contact}
+      onChange={updateVictim}
+      onContactChange={updateContact}
+      stateCode={stateCode}
+      isReadOnly={isReadOnly}
+    />
+  </div>
 )}
 
 {step === "crime" && (
-  <>
+  <div className="nxt-sensitive-section space-y-8">
     <CrimeForm
       crime={crime}
       onChange={updateCrime}
@@ -1381,7 +1419,7 @@ const handleBack = () => {
       }}
     />
     <CourtForm court={court} onChange={updateCourt} stateCode={stateCode} isReadOnly={isReadOnly} />
-  </>
+  </div>
 )}
 
 {step === "losses" && (
@@ -1448,7 +1486,7 @@ const handleBack = () => {
 
   <button
     type="button"
-    onClick={handleSaveNow}
+    onClick={() => void handleSaveNow()}
     disabled={saveNowLoading || !caseId || !canEdit}
     className="text-xs rounded-lg border border-[var(--color-border)] px-3 py-1.5 hover:bg-white transition disabled:opacity-40 disabled:cursor-not-allowed"
 title={
@@ -1466,8 +1504,13 @@ title={
     <button
       type="button"
       onClick={async () => {
-        await handleSaveNow();
-        router.push(ROUTES.victimDashboard);
+        const ok = await handleSaveNow({ showSavedToast: false });
+        if (!ok) return;
+        setSaveToast(t("intake.pathwaySafety.saveReturnToast"));
+        window.setTimeout(() => {
+          setSaveToast(null);
+          router.push(ROUTES.victimDashboard);
+        }, 2200);
       }}
       disabled={saveNowLoading}
       className="text-xs rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[var(--color-charcoal)] hover:bg-white transition disabled:opacity-40"
@@ -1478,6 +1521,9 @@ title={
 
   {caseId && canEdit && savingCase && (
     <span className="text-[11px] text-[var(--color-muted)]">{t("intake.actions.autoSaving")}</span>
+  )}
+  {caseId && canEdit && autoSaveFlash && !savingCase && (
+    <span className="text-[11px] text-[var(--color-muted)]">{t("intake.pathwaySafety.autoSaved")}</span>
   )}
 </div>
 
@@ -1619,7 +1665,10 @@ title={
       </div>
 
             {/* NxtGuide chat widget (intake) */}
-      <div className="fixed bottom-4 right-4 z-40">
+      <div
+        className="fixed right-4 z-40"
+        style={{ bottom: "max(5.75rem, calc(4.75rem + env(safe-area-inset-bottom, 0px)))" }}
+      >
         {chatOpen ? (
           <div className="w-72 sm:w-80 rounded-2xl border border-[var(--color-border)] bg-[var(--color-warm-white)] shadow-lg shadow-[var(--shadow-modal)] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border-light)] bg-white">
@@ -1767,11 +1816,15 @@ placeholder={t("nxtGuide.placeholders.ask")}
       )}
 
       {saveToast && (
-  <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/95 px-4 py-2 text-xs text-[var(--color-navy)] shadow-lg">
-    {saveToast}
-  </div>
-)}
-      
+        <div
+          className="fixed left-1/2 z-50 max-w-[min(90vw,24rem)] -translate-x-1/2 rounded-full border border-[var(--color-border)] bg-[var(--color-warm-cream)]/95 px-4 py-2 text-center text-xs text-[var(--color-navy)] shadow-lg"
+          style={{ bottom: "max(8.5rem, calc(7.5rem + env(safe-area-inset-bottom, 0px)))" }}
+        >
+          {saveToast}
+        </div>
+      )}
+
+      <GroundingPauseBanner enabled={step === "victim" || step === "crime"} />
     </main>
   );
 }
@@ -5531,7 +5584,9 @@ const handleFiles = async (files: FileList | null) => {
           if (!res.ok) {
             const text = await res.text();
             console.error(`[UPLOAD] Failed for ${defaultDocType}`, text);
-            alert("There was an issue uploading that file. Please try again.");
+            alert(
+              "We couldn’t upload that file. The server may have rejected the format or size. Try a PDF, JPG, or PNG under the size limit, then upload again.",
+            );
             return;
           }
 
@@ -5539,7 +5594,9 @@ const handleFiles = async (files: FileList | null) => {
           console.log("[UPLOAD] Stored document:", json.document);
         } catch (err) {
           console.error("[UPLOAD] Error uploading document", err);
-          alert("Something went wrong uploading that file.");
+          alert(
+            "We couldn’t reach the server to upload that file. Check your connection, wait a moment, and try uploading again.",
+          );
         }
       })
     );

@@ -100,7 +100,7 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
     const organizationId =
       typeof (body as { organization_id?: unknown })?.organization_id === "string"

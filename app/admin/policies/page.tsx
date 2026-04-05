@@ -49,7 +49,12 @@ export default function AdminPoliciesPage() {
       });
       if (!res.ok) {
         const json = await res.json().catch(() => null);
-        setErr(getApiErrorMessage(json, "Failed to load policies"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load policies. Refresh the page and try again.",
+          ),
+        );
         setPolicies([]);
         return;
       }
@@ -76,7 +81,12 @@ export default function AdminPoliciesPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to activate"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't activate that policy version. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     setErr(null);
@@ -105,7 +115,12 @@ export default function AdminPoliciesPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to create"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't create that policy draft. Check required fields and try again.",
+          ),
+        );
         return;
       }
       setErr(null);

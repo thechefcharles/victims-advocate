@@ -53,7 +53,7 @@ export async function POST(req: Request, context: RouteParams) {
     const raw = await req.json().catch(() => ({}));
     const parsed = postCaseOrgReferralBodySchema.safeParse(raw);
     if (!parsed.success) {
-      return apiFail("VALIDATION_ERROR", "Invalid request body", parsed.error.flatten(), 422);
+      return apiFail("VALIDATION_ERROR", "Some referral fields need another look. Check the form and try again.", parsed.error.flatten(), 422);
     }
 
     const { to_organization_id, metadata } = parsed.data;

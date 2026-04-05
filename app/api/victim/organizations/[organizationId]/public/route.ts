@@ -29,7 +29,7 @@ export async function GET(
     const { organizationId: rawId } = await params;
     const organizationId = (rawId ?? "").trim();
     if (!organizationId || !UUID_RE.test(organizationId)) {
-      return apiFail("VALIDATION_ERROR", "Invalid organization id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
     }
 
     const supabase = getSupabaseAdmin();

@@ -76,7 +76,9 @@ export default function ComingSoonPage() {
             <p className="text-sm text-emerald-400">Thanks for subscribing.</p>
           )}
           {status === "error" && (
-            <p className="text-sm text-red-400">Something went wrong. Try again.</p>
+            <p className="text-sm text-red-400">
+              We couldn&apos;t subscribe you right now. Check your email and connection, then try again.
+            </p>
           )}
         </div>
 

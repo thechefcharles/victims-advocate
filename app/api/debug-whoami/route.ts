@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
     if (userError || !userData.user) {
       return NextResponse.json({
-        error: "Invalid token",
+        error: "That session token is not valid. Sign in again.",
         details: userError?.message,
       });
     }

@@ -173,7 +173,9 @@ export default function EligibilityCheckPage() {
   if (!caseId) {
     return (
       <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-6 py-10">
-        <div className="max-w-xl mx-auto text-red-300">Invalid case</div>
+        <div className="max-w-xl mx-auto text-[var(--color-error)]">
+          We couldn&apos;t open a case from that link. Go back to your dashboard and choose a case from your list.
+        </div>
         <Link href="/dashboard" className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] mt-4 inline-block">
           ← Back to dashboard
         </Link>

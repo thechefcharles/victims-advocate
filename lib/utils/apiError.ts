@@ -4,7 +4,7 @@
  */
 export function getApiErrorMessage(
   json: unknown,
-  fallback = "An error occurred"
+  fallback = "We couldn't complete that request. Check your connection, refresh the page, and try again."
 ): string {
   if (!json || typeof json !== "object") return fallback;
   const o = json as Record<string, unknown>;

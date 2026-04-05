@@ -119,7 +119,7 @@ export const en: I18nDict = {
     noCasesTitle: "No case yet",
     noCasesBody:
       "Tap the big green button above to start. We save your work as you go.",
-    loadError: "Couldn’t load your cases. Please try again.",
+    loadError: "We couldn’t load your cases. Check your connection, refresh the page, and try again.",
     sessionExpired: "Session expired. Please log in again.",
     continue: "Continue",
     more: "More",
@@ -269,7 +269,7 @@ export const en: I18nDict = {
       capacity: "Capacity",
       noOrgs:
         "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
-      loadError: "We couldn’t load organizations. Please try again.",
+      loadError: "We couldn’t load organizations. Check your connection, refresh the page, and try again.",
       privacyNote:
         "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
       sendReferral: "Send referral for review",
@@ -282,7 +282,7 @@ export const en: I18nDict = {
       learnMoreDialogTitle: "How we show organization quality",
       learnMoreDialogSubtitle:
         "Weighted areas and data points partners can complete over time. Scores and tiers summarize trust signals—not clinical or legal advice.",
-      learnMore: "Learn more",
+      learnMore: "How scores and tiers work",
       learnMoreClose: "Close",
       organizationProfile: "Organization Profile",
       visitWebsite: "Visit website",
@@ -323,7 +323,7 @@ export const en: I18nDict = {
       orgProfileBack: "← Back to organizations map",
       orgProfileSubtitle: "Information from this organization’s public profile.",
       orgProfileLoading: "Loading organization…",
-      orgProfileInvalid: "Invalid organization link.",
+      orgProfileInvalid: "That organization link doesn’t work. Go back to the map and choose an organization from the list.",
       orgProfileServices: "Services",
       orgProfileContact: "Contact",
       orgProfilePopulations: "Focus",
@@ -464,7 +464,7 @@ export const en: I18nDict = {
       "No organizations appear on the map yet. We list active partner records in NxtStps (including many that are still drafting their public profile). If you expected to see an agency, confirm in admin that the organization is marked active—or check back as partners are added.",
     noOrgsInState:
       "No organizations match this state filter right now. Organizations must be publicly active and matching-ready. Try “All states” or pick another state.",
-    loadError: "We couldn’t load organizations. Please try again.",
+    loadError: "We couldn’t load organizations. Check your connection, refresh the page, and try again.",
     privacyNote:
       "Distances are calculated in your browser. We do not send your GPS coordinates to our servers.",
     requestJoin: "Request to join",
@@ -551,6 +551,16 @@ export const en: I18nDict = {
     findOrgsFooterSuffix: "anytime after signing in.",
   },
 
+  /** /compensation/documents — local + server uploads */
+  compensationDocumentsPage: {
+    loginToUpload:
+      "Log in to upload documents. Files attach to your signed-in account so we can keep them with your case.",
+    uploadFailedGeneric:
+      "We couldn’t upload that file. Check the format and size, then try again.",
+    networkError:
+      "We couldn’t reach the server. Check your connection, wait a moment, and try again.",
+  },
+
   /* =========================
      ELIGIBILITY CHECK
   ========================== */
@@ -597,7 +607,7 @@ export const en: I18nDict = {
     },
     q4: {
       title: "Police report",
-      question: "Was the crime reported to law enforcement?",
+      question: "Was the incident reported to law enforcement?",
       helper:
         "The Attorney General's Office will request a police report to investigate the claim. If you don't have one now, you can still continue.",
       yes: "Yes",
@@ -692,49 +702,54 @@ export const en: I18nDict = {
       title: "Who is applying?",
       question: "Which option best describes you?",
       options: {
-        victim: "I am the victim of the crime",
-        surviving_spouse: "I am the surviving spouse of the victim",
-        dependent_child: "I am a dependent child of the victim",
+        victim: "I was directly harmed by what happened",
+        surviving_spouse: "I am the surviving spouse of the person who was harmed",
+        dependent_child: "I am a dependent child of the person who was harmed",
         none: "None of these / I'm not sure",
       },
-      helper: "Indiana law limits who can submit an application to victims, surviving spouses, or dependent children.",
+      helper:
+        "Indiana law limits who can submit an application to people who were harmed, surviving spouses, or dependent children.",
     },
     q2: {
-      title: "Location of crime",
-      question: "Did the crime occur in Indiana?",
-      helper: "The Indiana Violent Crime Victim Compensation Fund only covers crimes that occurred in Indiana.",
+      title: "Where it happened",
+      question: "Did the incident occur in Indiana?",
+      helper: "The Indiana Violent Crime Victim Compensation Fund only covers incidents that occurred in Indiana.",
       yes: "Yes",
       no: "No",
       notSure: "I'm not sure",
     },
     q3: {
       title: "Police report & cooperation",
-      question: "Was the crime reported to law enforcement within 72 hours, and are you willing to cooperate with law enforcement during the investigation and prosecution?",
-      helper: "Indiana requires the crime to be reported within 72 hours. Contact ICJI at 1-800-353-1484 if you have questions about this requirement.",
+      question:
+        "Was the incident reported to law enforcement within 72 hours, and are you willing to cooperate with law enforcement during the investigation and prosecution?",
+      helper:
+        "Indiana requires reporting within 72 hours for most cases. Contact ICJI at 1-800-353-1484 if you have questions about this requirement.",
       yes: "Yes",
       no: "No",
       notSure: "I'm not sure",
     },
     q4: {
       title: "Out-of-pocket expenses",
-      question: "Did the victim incur at least $100 in out-of-pocket expenses as a result of the crime?",
+      question:
+        "Did you or the person you’re applying for have at least $100 in out-of-pocket expenses because of the incident?",
       helper: "Medical bills, funeral costs, counseling, and other eligible expenses count toward the $100 minimum.",
       yes: "Yes",
       no: "No",
       notSure: "I'm not sure",
     },
     q5: {
-      title: "Victim conduct",
-      question: "Did the victim contribute to the crime or to their injury?",
-      helper: "If the victim contributed to the crime or their injury, they may not be eligible.",
-      yes: "No, the victim did not contribute",
-      no: "Yes, the victim contributed",
+      title: "Conduct",
+      question: "Did the person applying contribute to the incident or to their injury?",
+      helper: "If they contributed to the incident or injury, the fund may not pay — ICJI can explain how this rule applies.",
+      yes: "No, they did not contribute",
+      no: "Yes, they contributed",
       notSure: "I'm not sure",
     },
     q6: {
       title: "Filing deadline",
-      question: "Can the application be filed within 180 days of the date of the crime?",
-      helper: "Indiana requires applications within 180 days. Exceptions exist for exigent circumstances and victims of child sex crimes. Contact ICJI for details.",
+      question: "Can the application be filed within 180 days of the date of the incident?",
+      helper:
+        "Indiana usually requires applications within 180 days. Exceptions exist for exigent circumstances and child sex offenses. Contact ICJI for details.",
       yes: "Yes",
       no: "No",
       notSure: "I'm not sure",
@@ -760,7 +775,7 @@ export const en: I18nDict = {
       checklist: [
         "Confirm reporting within 72 hours and willingness to cooperate with law enforcement",
         "Verify at least $100 in out-of-pocket expenses",
-        "Ensure application will be filed within 180 days of the crime",
+        "Ensure the application will be filed within 180 days of the incident",
         "If under 18, arrange for parent or legal guardian to sign",
       ],
       ctaReady: "Continue Application",
@@ -768,10 +783,11 @@ export const en: I18nDict = {
     },
     resultNotEligible: {
       headline: "You may not be eligible under Indiana Violent Crime Victim Compensation rules.",
-      body: "Eligibility requires that you are a victim, surviving spouse, or dependent child; the crime occurred in Indiana; and other requirements are met. Contact ICJI at 1-800-353-1484 for questions.",
+      body:
+        "Eligibility usually requires that you are the person harmed, a surviving spouse, or a dependent child; that what happened occurred in Indiana; and that other program rules are met. Contact ICJI at 1-800-353-1484 with questions.",
       nextSteps: [
         "Contact the Indiana Criminal Justice Institute at 1-800-353-1484 for eligibility questions",
-        "If the crime occurred in another state, check that state's victim compensation program",
+        "If the incident occurred in another state, check that state’s crime victim compensation program",
       ],
       cta: "Find Other Support Options",
     },
@@ -842,7 +858,7 @@ export const en: I18nDict = {
     submit: "Update Password",
     updating: "Updating…",
     backToLogin: "← Back To Login",
-    invalidOrExpired: "Invalid or expired link",
+    invalidOrExpired: "This link expired or isn’t valid anymore.",
     invalidOrExpiredHint: "Password reset links expire after 1 hour. Request a new one below.",
     requestNewLink: "Request new reset link",
     successTitle: "Password updated",
@@ -875,7 +891,7 @@ export const en: I18nDict = {
       submitting: "…",
       subscribed: "Subscribed",
       thanks: "Thanks for subscribing.",
-      error: "Something went wrong. Try again.",
+      error: "We couldn’t add your email. Check the address and your connection, then try again.",
     },
 
     guidedPath: {
@@ -1217,9 +1233,9 @@ intake: {
   },
 
   steps: {
-    victim: "Victim",
+    victim: "Person harmed",
     applicant: "Applicant",
-    crime: "Crime & incident",
+    crime: "Incident & details",
     losses: "Losses & money",
     medical: "Medical & counseling",
     employment: "Work & income",
@@ -1257,6 +1273,26 @@ intake: {
       "Draft. Nothing is submitted to the state without your consent. You can save and come back anytime.",
   },
 
+  /** Phase 3 — trauma-informed applicant pathway (crisis strip, exit, autosave, grounding pause) */
+  pathwaySafety: {
+    supportResourcesLabel: "Support resources",
+    supportIntro: "If you need support right now:",
+    crisis988: "988 Suicide and Crisis Lifeline: call or text 988",
+    crisisText: "Crisis Text Line: text HOME to 741741",
+    crisis911: "Emergency: 911",
+    exitSafelyCta: "Exit Safely →",
+    autosaveTrouble:
+      "We’re having trouble saving your progress. Don’t worry — keep going and we’ll try again.",
+    saveReturnToast:
+      "Your progress is saved. Come back anytime — everything will be right where you left it.",
+    autoSaved: "Saved",
+    sensitiveSectionHint: "This section has a few questions. Take your time — you can skip items and return later.",
+    groundingBody:
+      "Take all the time you need. Your progress is saved. Support is available if you need it: call or text 988.",
+    groundingContinue: "Continue",
+    groundingNeedSupport: "I need support",
+  },
+
   summary: {
     alreadyFinalReview: "You’re already on the final review step.",
   },
@@ -1266,23 +1302,29 @@ intake: {
   started: "Application started",
 
   loadCase: {
-    failed: "Could not load that case (no access or not found).",
-    unexpected: "Something went wrong loading that case.",
+    failed:
+      "We couldn’t open that case — you may not have access, or the link is wrong. Go back to your dashboard and pick a case from your list.",
+    unexpected:
+      "We couldn’t load that case because something interrupted the request. Check your connection, refresh the page, and try again.",
   },
 
   save: {
     viewOnly: "View-only access. You can’t save changes.",
     noCaseLoaded: "No case loaded yet. Start the application first.",
     saved: "Application saved",
-    failed: "Couldn’t save. Try again.",
+    failed:
+      "We couldn’t save your application — the server may be busy. Wait a moment, refresh the page, and try again.",
   },
 
   pdf: {
-    summaryFailed: "There was an issue generating the PDF. Please try again.",
-    summaryUnexpected: "Something went wrong generating the PDF.",
+    summaryFailed:
+      "We couldn’t build the summary PDF — the server may have timed out. Wait a moment and try again, or download after you save.",
+    summaryUnexpected:
+      "We couldn’t finish the summary PDF. Check your connection, refresh the page, and try again.",
     officialFailed:
-      "There was an issue generating the official Illinois form. Please try again.",
-    officialUnexpected: "Something went wrong creating the official form.",
+      "We couldn’t build the official Illinois form PDF. Wait a moment and try again — if it keeps happening, contact support.",
+    officialUnexpected:
+      "We couldn’t finish the official form PDF. Check your connection, refresh the page, and try again.",
   },
 
   safeMode: {
@@ -1313,15 +1355,15 @@ intake: {
     applicantRequired:
       "Please finish the applicant and contact questions on this step before continuing (including language preference, and advocate details if you are working with someone).",
     victimRequired:
-      "Please fill in the victim's name, date of birth, and address before continuing.",
+      "Add the person harmed’s name, date of birth, and address before you continue.",
     completeApplicantFirst:
       "Complete the Applicant step first. After that, you can move through the rest of the form.",
     completeVictimBeforeOther:
-      "Complete the Victim step before opening Crime & incident or later sections.",
+      "Finish the Person harmed step before you open Incident & details or later sections.",
     crimeMinimumRequired:
-      "Please provide at least the date of the crime, where it happened, and which police department it was reported to.",
+      "Add at least the date of the incident, where it happened, and which police department you reported it to.",
     certificationRequired:
-      "Before saving this as a case, please review the certification section and add your name, date, and acknowledgements.",
+      "Before you save this as a case, open the certification section and add your name, date, and the checkboxes — they confirm you’ve reviewed the statements.",
   },
 
   requiredBeforeContinue: {
@@ -1342,26 +1384,26 @@ intake: {
     applicantFirstName: "Applicant first name",
     applicantLastName: "Applicant last name",
     applicantDateOfBirth: "Applicant date of birth",
-    applicantRelationship: "Relationship to victim",
+    applicantRelationship: "Relationship to the person harmed",
     applicantStreet: "Applicant street address",
     applicantCity: "Applicant city",
     applicantState: "Applicant state",
     applicantZip: "Applicant ZIP code",
     applicantLast4Ssn: "Applicant last 4 digits of SSN (Indiana)",
     applicantSeekingOwnExpenses: "Whether you’re seeking your own expenses (yes or no)",
-    victimFirstName: "Victim first name",
-    victimLastName: "Victim last name",
-    victimDateOfBirth: "Victim date of birth",
-    victimStreet: "Victim street address",
-    victimCity: "Victim city",
-    victimZip: "Victim ZIP code",
-    victimState: "Victim state",
-    victimLast4Ssn: "Victim last 4 digits of SSN (Indiana)",
+    victimFirstName: "Person harmed — first name",
+    victimLastName: "Person harmed — last name",
+    victimDateOfBirth: "Person harmed — date of birth",
+    victimStreet: "Person harmed — street address",
+    victimCity: "Person harmed — city",
+    victimZip: "Person harmed — ZIP code",
+    victimState: "Person harmed — state",
+    victimLast4Ssn: "Person harmed — last 4 digits of SSN (Indiana)",
     whoIsSubmitting: "Who is submitting the application (Indiana)",
-    crimeDate: "Date of crime",
-    crimeAddress: "Location / address where the crime occurred",
-    crimeCity: "City where the crime occurred",
-    reportingAgency: "Agency the crime was reported to",
+    crimeDate: "Date of incident",
+    crimeAddress: "Location / address where the incident occurred",
+    crimeCity: "City where the incident occurred",
+    reportingAgency: "Agency you reported the incident to",
     selectLossCategory:
       "Select at least one loss category, or confirm below that none apply",
     medicalProviderName: "Medical or counseling provider name (for the losses you selected)",
@@ -1381,9 +1423,12 @@ intake: {
   },
 
   saveCase: {
-    failed: "There was a problem saving your case. Please check the console.",
-    missingId: "Saved, but no case ID was returned. Check the API response.",
-    unexpected: "Something went wrong saving your case. See console for details.",
+    failed:
+      "We couldn’t save your case — something interrupted the server. Wait a moment, refresh the page, and try again. If it keeps happening, contact support.",
+    missingId:
+      "Your case may have saved, but we didn’t get an ID back. Refresh the page — if the case is missing, try saving again.",
+    unexpected:
+      "We couldn’t finish saving your case. Check your connection, refresh the page, and try again.",
   },
 },
 
@@ -1504,8 +1549,9 @@ intake: {
     },
 
     errors: {
-      generic: "Something went wrong. Please try again.",
-      network: "Network error. Please check your connection and try again.",
+      generic:
+        "We couldn’t finish that request—something interrupted it. Check your connection, refresh the page, and try again.",
+      network: "We couldn’t reach the server. Check your connection, wait a moment, and try again.",
       unauthorized: "You don’t have access to this.",
       notFound: "That item could not be found.",
     },
@@ -1534,14 +1580,14 @@ intake: {
     int: {
       whoIsSubmitting: "Who is submitting the claim?",
       whoOptions: {
-        victim: "Victim",
+        victim: "Person harmed",
         claimant: "Claimant",
         advocate: "Advocate",
       },
       last4SSN: "Last 4 digits of Social Security or Tax ID",
       autoAccident: "Is this an automobile accident?",
       autoInsuranceName: "Name of auto insurance",
-      physicalInjuries: "Does the victim have physical injuries?",
+      physicalInjuries: "Does the person harmed have physical injuries?",
       medicalFacilityName: "Name of medical facility for treatment",
       timeOfCrime: "Time crime occurred",
       crimeType: "Crime type",
@@ -1557,7 +1603,7 @@ intake: {
       otherDescribe: "Other (describe)",
     },
     victim: {
-      title: "Victim information",
+      title: "Information about the person harmed",
       description:
         "This section is about the person who was physically injured or killed. If you are that person and over 18, this is your information.",
       civilRightsNote:
@@ -1604,7 +1650,7 @@ intake: {
         counselingBills: "Counseling / therapy bills",
         funeralInvoices: "Funeral / burial invoices",
         wageProof: "Proof of lost wages (employer letter, pay stubs, etc.)",
-        idProof: "ID proof (victim/applicant)",
+        idProof: "ID proof (person harmed / applicant)",
       },
 
       otherEmpty: "No other documents added yet.",
@@ -1666,14 +1712,14 @@ intake: {
 applicant: {
   title: "Applicant information",
   description: "This is the person applying for compensation.",
-  isVictimAlsoApplicantLabel: "Is the victim also the applicant?",
+  isVictimAlsoApplicantLabel: "Is the person harmed also the applicant?",
   sameAsVictimNote:
-    "On the next step you’ll enter the victim’s details; we’ll copy them into the applicant section when you continue to Crime & incident.",
+    "On the next step you’ll enter details about the person harmed; we’ll copy them into the applicant section when you continue to Incident & details.",
 
   // NEW — add this
   options: {
-    victim: "I am the victim (we’ll match applicant details after you enter victim info)",
-    proxy: "I am applying on behalf of the victim (parent, spouse, other)",
+    victim: "I was harmed (we’ll match applicant details after you enter that information)",
+    proxy: "I’m applying for someone who was harmed (parent, spouse, other)",
   },
 
   // NEW — add this
@@ -1682,7 +1728,7 @@ applicant: {
   // NEW — add this
   legalGuardianship: {
     question:
-      "If the victim is a minor or an incapacitated adult, do you have legal guardianship for them?",
+      "If the person harmed is a minor or an incapacitated adult, do you have legal guardianship for them?",
     noNotSure: "No / Not sure",
   },
 
@@ -2012,8 +2058,8 @@ medical: {
   },
 
   questions: {
-    hasMedicalTreatment: "Did the victim receive medical treatment?",
-    hasCounseling: "Did the victim receive counseling / therapy?",
+    hasMedicalTreatment: "Did the person harmed receive medical treatment?",
+    hasCounseling: "Did the person harmed receive counseling / therapy?",
   },
 
   fields: {
@@ -2088,15 +2134,15 @@ crime: {
   sectionDescription:
     "This section is about what happened. You do not need to remember every detail.",
 
-  dateOfCrimeLabel: "Date of crime *",
-  dateReportedLabel: "Date crime was reported",
+  dateOfCrimeLabel: "Date of incident *",
+  dateReportedLabel: "Date the incident was reported",
 
-  crimeAddressLabel: "Where did the crime happen? (street address or location) *",
+  crimeAddressLabel: "Where did the incident happen? (street address or location) *",
 
   crimeCityLabel: "City *",
   crimeCountyLabel: "County",
 
-  reportingAgencyLabel: "Police department crime was reported to *",
+  reportingAgencyLabel: "Police department you reported the incident to *",
   reportingAgencyPlaceholder: "e.g. Chicago Police Department",
 
   policeReportNumberHelp: "Police report number (if you have it)",
@@ -2113,7 +2159,7 @@ crime: {
 
   offenderNamesLabel: "Offender name(s), if known",
 
-  offenderRelationshipLabel: "Relationship to victim, if any",
+  offenderRelationshipLabel: "Relationship to the person harmed, if any",
   offenderRelationshipPlaceholder: "Stranger, partner, family member, etc.",
 
   sexualAssaultKitQuestion:
@@ -2163,7 +2209,8 @@ summary: {
     applicationDetailsToggle: "Show full application details",
     documentsTitle: "Documents",
     documentsSubtitle: "Documents can help support your case.",
-    documentsEmpty: "No documents uploaded yet. You can add files from the documents step.",
+    documentsEmpty:
+      "No documents uploaded yet. Go to the documents step and upload files—we’ll list them here.",
     uploadDocuments: "Upload Documents",
     uploadMissingDocuments: "Upload Missing Documents",
     messagesTitle: "Messages",
@@ -2215,8 +2262,8 @@ summary: {
     results: {
       saveCaseFirst:
         "Save this as a case first so we can generate a secure invite link.",
-      mustBeLoggedIn: "You must be logged in to invite an advocate.",
-      unexpected: "Unexpected error inviting advocate.",
+      mustBeLoggedIn: "Log in to invite an advocate.",
+      unexpected: "We couldn’t send that invite. Refresh the page and try again.",
       accessGranted:
         "✅ Access granted.\nShare this link with the advocate:\n{url}",
     },
@@ -2225,8 +2272,8 @@ summary: {
     errors: {
       saveCaseFirst:
         "Save this as a case first so we can generate a secure invite link.",
-      mustBeLoggedIn: "You must be logged in to invite an advocate.",
-      unexpected: "Unexpected error inviting advocate.",
+      mustBeLoggedIn: "Log in to invite an advocate.",
+      unexpected: "We couldn’t send that invite. Refresh the page and try again.",
     },
     success: {
       accessGranted:
@@ -2235,13 +2282,13 @@ summary: {
   },
 
   snapshots: {
-    victimTitle: "Victim",
+    victimTitle: "Person harmed",
     applicantTitle: "Applicant",
-    applicantSamePerson: "Victim and applicant are the same person.",
+    applicantSamePerson: "The person harmed and the applicant are the same person.",
 
-    crimeTitle: "Crime snapshot",
+    crimeTitle: "Incident snapshot",
     crime: {
-      dateOfCrime: "Date of crime",
+      dateOfCrime: "Date of incident",
       location: "Location",
       cityCounty: "City / County",
       reportedTo: "Reported to",
@@ -2282,15 +2329,15 @@ approxBillAmount: "Approx. bill amount",
 
   // Aliases (some components expect these top-level blocks)
   crime: {
-    title: "Crime snapshot",
+    title: "Incident snapshot",
     // Aliases for flat keys used in SummaryView (forms.summary.crime.*)
-    dateOfCrime: "Date of crime",
+    dateOfCrime: "Date of incident",
     location: "Location",
     cityCounty: "City / County",
     reportedTo: "Reported to",
     policeReportNumber: "Police report #",
     fields: {
-      dateOfCrime: "Date of crime",
+      dateOfCrime: "Date of incident",
       location: "Location",
       cityCounty: "City / County",
       reportedTo: "Reported to",
@@ -2386,9 +2433,9 @@ approxBillAmount: "Approx. bill amount",
   },
 
   sections: {
-    victim: "Victim",
+    victim: "Person harmed",
     applicant: "Applicant",
-    crime: "Crime / incident",
+    crime: "Incident / details",
     losses: "Losses requested",
     medical: "Medical & counseling",
     employment: "Employment",
@@ -2403,8 +2450,8 @@ approxBillAmount: "Approx. bill amount",
     phone: "Phone",
     email: "Email",
     address: "Address",
-    isVictimAlsoApplicant: "Is victim also applicant",
-    relationshipToVictim: "Relationship to victim",
+    isVictimAlsoApplicant: "Person harmed is also applicant",
+    relationshipToVictim: "Relationship to person harmed",
     date: "Date",
     time: "Time",
     location: "Location",

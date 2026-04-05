@@ -51,10 +51,15 @@ export default function VerifyEmailPage() {
       if (res.ok && json.data?.sent) {
         setResendMsg("Verification email sent. Check your inbox.");
       } else {
-        setResendMsg(json?.error?.message || "Could not send. Try again later.");
+        setResendMsg(
+          json?.error?.message ||
+            "We couldn't resend the verification email. Wait a minute and try again.",
+        );
       }
     } catch {
-      setResendMsg("Something went wrong.");
+      setResendMsg(
+        "We couldn't reach the server to resend verification. Check your connection and try again.",
+      );
     } finally {
       setResending(false);
     }

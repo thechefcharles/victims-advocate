@@ -87,7 +87,12 @@ export default function AdvocateOrgSearchPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not search organizations"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't search organizations. Check your filters and try again.",
+          ),
+        );
         setResults([]);
         return;
       }

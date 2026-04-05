@@ -287,7 +287,12 @@ export default function AdvocateOrgPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setReviewMsg(getApiErrorMessage(json, "Could not submit request"));
+        setReviewMsg(
+          getApiErrorMessage(
+            json,
+            "We couldn't send that designation review request. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setReviewSubject("");
@@ -317,7 +322,12 @@ export default function AdvocateOrgPage() {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      throw new Error(getApiErrorMessage(json, "Failed to load members"));
+      throw new Error(
+        getApiErrorMessage(
+          json,
+          "We couldn't load organization members. Refresh the page and try again.",
+        ),
+      );
     }
     const json = await res.json();
     return (json.data?.members ?? []) as Member[];
@@ -355,7 +365,11 @@ export default function AdvocateOrgPage() {
         }
         setErr(null);
       } catch (e) {
-        setErr(e instanceof Error ? e.message : "Failed to load");
+        setErr(
+          e instanceof Error
+            ? e.message
+            : "We couldn't load organization members. Refresh the page and try again.",
+        );
         setMembers([]);
         setInvites([]);
       } finally {
@@ -377,7 +391,12 @@ export default function AdvocateOrgPage() {
         });
         const json = await res.json().catch(() => null);
         if (!res.ok) {
-          throw new Error(getApiErrorMessage(json, "Failed to load org profile"));
+          throw new Error(
+            getApiErrorMessage(
+              json,
+              "We couldn't load your organization profile. Refresh the page and try again.",
+            ),
+          );
         }
         const p = json.data?.profile as OrgProfile | undefined;
         if (p) {
@@ -407,7 +426,11 @@ export default function AdvocateOrgPage() {
           setHoursJson(JSON.stringify(p.hours ?? {}, null, 2));
         }
       } catch (e) {
-        setProfileMsg(e instanceof Error ? e.message : "Profile load failed");
+        setProfileMsg(
+          e instanceof Error
+            ? e.message
+            : "We couldn't load your organization profile. Refresh the page and try again.",
+        );
       } finally {
         setProfileLoading(false);
       }
@@ -432,7 +455,12 @@ export default function AdvocateOrgPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setActivationMsg(getApiErrorMessage(json, "Could not submit for review"));
+        setActivationMsg(
+          getApiErrorMessage(
+            json,
+            "We couldn't submit your profile for review. Fix any highlighted fields and try again.",
+          ),
+        );
         return;
       }
       const p = json.data?.profile as OrgProfile | undefined;
@@ -514,7 +542,12 @@ export default function AdvocateOrgPage() {
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setProfileMsg(getApiErrorMessage(json, "Save failed"));
+        setProfileMsg(
+          getApiErrorMessage(
+            json,
+            "We couldn't save your organization profile. Check required fields and try again.",
+          ),
+        );
         return;
       }
       const p = json.data?.profile as OrgProfile | undefined;
@@ -544,7 +577,12 @@ export default function AdvocateOrgPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to create invite"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't create that invite. Check the email address and try again.",
+          ),
+        );
         return;
       }
       const url = json.data?.invite?.accept_url;
@@ -572,7 +610,12 @@ export default function AdvocateOrgPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to revoke invite"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't revoke that invite. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     setInvites((prev) => prev.filter((i) => i.id !== inviteId));
@@ -593,7 +636,12 @@ export default function AdvocateOrgPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to revoke"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't remove that member. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     const m = members.filter((x) => x.id !== membershipId);

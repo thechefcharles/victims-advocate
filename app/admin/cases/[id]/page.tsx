@@ -475,7 +475,10 @@ export default function CaseDetailPage() {
         }
       } else {
         const err = await res.json();
-        alert(err?.error?.message ?? "Failed to add note.");
+        alert(
+          err?.error?.message ??
+            "We couldn't add that note — the server may be busy. Wait a moment and try again.",
+        );
       }
     } finally {
       setNoteActioning(null);
@@ -503,7 +506,10 @@ export default function CaseDetailPage() {
         );
       } else {
         const err = await res.json();
-        alert(err?.error?.message ?? "Failed to update note.");
+        alert(
+          err?.error?.message ??
+            "We couldn't save that note. Check your connection, refresh the page, and try again.",
+        );
       }
     } finally {
       setNoteActioning(null);
@@ -524,7 +530,10 @@ export default function CaseDetailPage() {
       if (res.ok) setNotes((prev) => prev.filter((n) => n.id !== noteId));
       else {
         const err = await res.json();
-        alert(err?.error?.message ?? "Failed to delete note.");
+        alert(
+          err?.error?.message ??
+            "We couldn't delete that note. Refresh the page and try again — if it still shows, contact engineering.",
+        );
       }
     } finally {
       setNoteActioning(null);
@@ -537,7 +546,7 @@ export default function CaseDetailPage() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
-        alert("Please log in again.");
+        alert("Your session expired. Sign in again, then reopen this case.");
         return;
       }
       const res = await fetch("/api/documents/access-url", {
@@ -547,7 +556,10 @@ export default function CaseDetailPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        alert(json?.error?.message ?? "Could not open document.");
+        alert(
+          json?.error?.message ??
+            "We couldn't open that document — you may not have access, or the link expired. Try again from the documents list.",
+        );
         return;
       }
       const url = json.data?.url ?? json.url;
@@ -566,7 +578,9 @@ export default function CaseDetailPage() {
       }
     } catch (err) {
       console.error("Document access error", err);
-      alert("Something went wrong opening the document.");
+      alert(
+        "We couldn't open that document because something interrupted the request. Check your connection and try again.",
+      );
     } finally {
       setDocumentActioning(null);
     }
@@ -585,7 +599,11 @@ export default function CaseDetailPage() {
         body: JSON.stringify({ document_id: docId }),
       });
       if (res.ok) reloadCase();
-      else alert((await res.json())?.error?.message ?? "Failed to delete.");
+      else
+        alert(
+          (await res.json())?.error?.message ??
+            "We couldn't delete that document. Refresh the page and try again.",
+        );
     } finally {
       setDocumentActioning(null);
     }
@@ -604,7 +622,11 @@ export default function CaseDetailPage() {
         body: JSON.stringify(restrict ? { document_id: docId } : { document_id: docId }),
       });
       if (res.ok) reloadCase();
-      else alert((await res.json())?.error?.message ?? "Failed to update.");
+      else
+        alert(
+          (await res.json())?.error?.message ??
+            "We couldn't update document visibility. Refresh the page and try again.",
+        );
     } finally {
       setDocumentActioning(null);
     }
@@ -622,7 +644,9 @@ export default function CaseDetailPage() {
       });
 
       if (!res.ok) {
-        alert("There was an issue generating the PDF. Please try again.");
+        alert(
+          "We couldn't build the summary PDF — the server may have timed out. Wait a moment and try again.",
+        );
         return;
       }
 
@@ -637,7 +661,9 @@ export default function CaseDetailPage() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error downloading summary PDF", err);
-      alert("Something went wrong generating the PDF.");
+      alert(
+        "We couldn't finish the summary PDF. Check your connection, refresh the page, and try again.",
+      );
     }
   };
 
@@ -754,7 +780,10 @@ export default function CaseDetailPage() {
         }
       } else {
         const err = await res.json().catch(() => ({}));
-        alert(err?.error?.message ?? "Could not update status.");
+        alert(
+          err?.error?.message ??
+            "We couldn't update case status. Refresh the page and try again — check the timeline for the current value.",
+        );
       }
     } finally {
       setStatusSaving(false);
@@ -1154,7 +1183,10 @@ export default function CaseDetailPage() {
                         }
                       } else {
                         const err = await res.json();
-                        alert(err?.error?.message ?? "Routing failed");
+                        alert(
+                          err?.error?.message ??
+                            "Routing didn't finish — the server may be busy. Wait a moment and run it again.",
+                        );
                       }
                     } finally {
                       setRoutingLoading(false);
@@ -1199,7 +1231,10 @@ export default function CaseDetailPage() {
                         }
                       } else {
                         const err = await res.json();
-                        alert(err?.error?.message ?? "Completeness evaluation failed");
+                        alert(
+                          err?.error?.message ??
+                            "Completeness check didn't finish. Wait a moment and run it again.",
+                        );
                       }
                     } finally {
                       setCompletenessLoading(false);
@@ -1243,7 +1278,10 @@ export default function CaseDetailPage() {
                         }
                       } else {
                         const err = await res.json().catch(() => ({}));
-                        alert(err?.error?.message ?? "Organization matching failed");
+                        alert(
+                          err?.error?.message ??
+                            "Organization matching didn't finish. Wait a moment and run it again.",
+                        );
                       }
                     } finally {
                       setOrgMatchingRunLoading(false);
@@ -1311,7 +1349,7 @@ export default function CaseDetailPage() {
         >
           <h2 className="text-sm font-semibold text-[var(--color-navy)]">Crime</h2>
           <p className="text-[var(--color-slate)]">
-            Date of crime: {crime.dateOfCrime || "—"}
+            Date of incident: {crime.dateOfCrime || "—"}
           </p>
           <p className="text-[var(--color-slate)]">
             Location: {crime.crimeAddress || "—"}, {crime.crimeCity || "—"}
@@ -1855,7 +1893,9 @@ export default function CaseDetailPage() {
           Uploads, statuses, secure access, and per-document OCR review.
         </p>
         {docs.length === 0 ? (
-          <p className="text-[var(--color-slate)]">No documents attached.</p>
+          <p className="text-[var(--color-slate)]">
+            No documents are attached to this case yet. They will appear here after someone uploads files on the applicant side or staff adds them.
+          </p>
         ) : (
           <>
             <p className="text-[var(--color-slate)]">
@@ -1975,10 +2015,15 @@ export default function CaseDetailPage() {
                                   setOcrByDocId((prev) => ({ ...prev, [d.id]: g.run ? { run: g.run, fields: g.fields ?? [], inconsistencies: g.inconsistencies ?? [], warnings: g.warnings ?? [], type_mismatch: g.type_mismatch } : null }));
                                   setOcrExpandedDocId(d.id);
                                 } else {
-                                  alert(data?.error?.message ?? "OCR failed");
+                                  alert(
+                                    data?.error?.message ??
+                                      "We couldn't run OCR on that file. Try again — if it keeps failing, the scan may be unreadable.",
+                                  );
                                 }
                               } catch (e) {
-                                alert("OCR request failed");
+                                alert(
+                                  "We couldn't reach the OCR service. Check your connection and try again.",
+                                );
                               } finally {
                                 setOcrLoadingDocId(null);
                               }

@@ -44,7 +44,12 @@ function AcceptContent() {
 
         if (!res.ok) {
           setStatus("error");
-          setMessage(getApiErrorMessage(json, "Failed to accept invite"));
+          setMessage(
+            getApiErrorMessage(
+              json,
+              "We couldn't accept that invite — it may have expired. Ask your organization to send a new one.",
+            ),
+          );
           return;
         }
 
@@ -56,7 +61,11 @@ function AcceptContent() {
         setMessage(`You’ve joined the organization as ${label}.`);
       } catch (e) {
         setStatus("error");
-        setMessage(e instanceof Error ? e.message : "Failed to accept invite");
+        setMessage(
+          e instanceof Error
+            ? e.message
+            : "We couldn't accept that invite — check your connection and try again.",
+        );
       }
     };
 

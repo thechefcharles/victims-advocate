@@ -216,7 +216,9 @@ export default function NotificationsPage() {
       }
       await handleDismiss(notificationId);
     } catch {
-      setActionError("Something went wrong. Please try again.");
+      setActionError(
+        "We couldn't update that request — the connection dropped. Check your network and try again.",
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -257,7 +259,9 @@ export default function NotificationsPage() {
       }
       await handleDismiss(notificationId);
     } catch {
-      setActionError("Something went wrong. Please try again.");
+      setActionError(
+        "We couldn't update that connection — the request was interrupted. Try again in a moment.",
+      );
     } finally {
       setUpdatingId(null);
     }
@@ -275,7 +279,12 @@ export default function NotificationsPage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setActionError(getApiErrorMessage(json, "Could not mark as read."));
+        setActionError(
+          getApiErrorMessage(
+            json,
+            "We couldn't mark that notification as read. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       await load();

@@ -70,7 +70,7 @@ export async function PATCH(req: Request, context: RouteParams) {
     try {
       body = await req.json();
     } catch {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 400);
     }
 
     const b = body as Record<string, unknown>;

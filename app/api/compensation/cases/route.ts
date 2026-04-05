@@ -81,7 +81,7 @@ export async function POST(req: Request) {
     const supabaseAdmin = getSupabaseAdmin();
 
     const body = (await req.json().catch(() => null)) as CreateCaseBody | null;
-    if (!body) return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
+    if (!body) return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 400);
 
     // Accept either:
     // 1) { application: <app>, status?: ..., state_code?: ... }
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
 
     const application = normalizeApplication(rawApp);
     if (!application) {
-      return apiFail("VALIDATION_ERROR", "Invalid application payload (must be JSON object)", undefined, 400);
+      return apiFail("VALIDATION_ERROR", "We couldn't read your application data. Refresh the page and try again.", undefined, 400);
     }
 
     const status =

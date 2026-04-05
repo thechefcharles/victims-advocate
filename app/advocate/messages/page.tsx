@@ -155,7 +155,9 @@ function AdvocateMessagesContent() {
       setItems(queue);
     } catch (e) {
       console.error(e);
-      setErr("Something went wrong loading messages.");
+      setErr(
+        "We couldn't load your messages — the request was interrupted. Refresh the page and try again.",
+      );
       setItems([]);
     } finally {
       setLoading(false);

@@ -82,7 +82,7 @@ export async function POST(req: Request) {
 
     const body = (await req.json().catch(() => null)) as RequestBody | null;
     if (!body) {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 400);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 400);
     }
 
     // ——— Phase 9: "Explain this" path ———
@@ -248,7 +248,7 @@ export async function POST(req: Request) {
     if (targetLang !== "en" && targetLang !== "es") {
       return apiFail(
         "VALIDATION_ERROR",
-        "Invalid targetLang. Expected \"en\" or \"es\".",
+        "Choose English (en) or Spanish (es) for translation.",
         undefined,
         400
       );

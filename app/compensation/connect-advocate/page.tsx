@@ -147,7 +147,12 @@ function ConnectAdvocateForm() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setEmailErr(getApiErrorMessage(json, "Failed to send connection request"));
+        setEmailErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't send that connection request. Check the email and try again.",
+          ),
+        );
         return;
       }
 

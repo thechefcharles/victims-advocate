@@ -75,7 +75,12 @@ export async function createOrganizationForUser(
     const fromCatalog = orgRowFromCatalogEntry(Number(catalogEntryId));
     if (!fromCatalog) {
       return {
-        error: new AppError("VALIDATION_ERROR", "Invalid catalog_entry_id (not in directory)", undefined, 422),
+        error: new AppError(
+          "VALIDATION_ERROR",
+          "That directory entry isn't available for signup. Choose another organization.",
+          undefined,
+          422,
+        ),
       };
     }
 

@@ -225,8 +225,9 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 </button>
               </div>
               <p className="text-[11px] text-[var(--color-muted)]">
-                {accountType === "victim" && "Personal tools and compensation guidance for victims."}
-                {accountType === "advocate" && "Case tools for victim advocates."}
+                {accountType === "victim" &&
+                  "Personal tools and step-by-step help when you’re applying for crime victim compensation."}
+                {accountType === "advocate" && "Case tools for advocates who support applicants."}
                 {accountType === "organization" &&
                   "For people who represent an agency. You&apos;ll link or propose your organization after email verification and agreements—not during signup."}
               </p>

@@ -71,7 +71,12 @@ function ConsentContent() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to record acceptance"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't save your consent choice. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       router.replace(searchParams.get("redirect") || "/dashboard");

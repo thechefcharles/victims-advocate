@@ -94,7 +94,11 @@ export function ExplainThisButton({
 
       if (!res.ok) {
         setState("error");
-        setErrorMessage(json?.error?.message ?? json?.message ?? "Something went wrong.");
+        setErrorMessage(
+          json?.error?.message ??
+            json?.message ??
+            "We couldn't get an explanation right now. Wait a moment and try again.",
+        );
         return;
       }
 
@@ -108,7 +112,11 @@ export function ExplainThisButton({
       }
     } catch (err) {
       setState("error");
-      setErrorMessage(err instanceof Error ? err.message : "Something went wrong.");
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "We couldn't reach the explanation service. Check your connection and try again.",
+      );
     }
   }, [sourceText, contextType, workflowKey, fieldKey, programKey, stateCode, router, pathname]);
 
@@ -166,7 +174,9 @@ export function ExplainThisButton({
                 </>
               )}
               {state === "error" && (
-                <p className="text-amber-200">{errorMessage ?? "Something went wrong."}</p>
+                <p className="text-amber-200">
+                  {errorMessage ?? "We couldn't load an explanation. Try again in a moment."}
+                </p>
               )}
             </div>
           </div>

@@ -56,7 +56,12 @@ export default function AdminDesignationsPage() {
     const res = await fetch("/api/admin/orgs", { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to load orgs"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't load organizations for designation. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     const json = await res.json();
@@ -124,7 +129,12 @@ export default function AdminDesignationsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Designation run failed"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "Designation didn't finish — the server may be busy. Wait a moment and run it again.",
+          ),
+        );
         return;
       }
       await loadDesignation(orgId);

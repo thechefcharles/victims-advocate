@@ -36,7 +36,10 @@ export async function POST(req: Request) {
   } catch (e) {
     console.error("Newsletter signup error:", e);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      {
+        error:
+          "We couldn't finish signup right now. Check your connection and try again in a moment.",
+      },
       { status: 500 }
     );
   }

@@ -121,7 +121,12 @@ export async function POST(req: Request) {
       typeof body?.organization_id === "string" ? body.organization_id.trim() : "";
 
     if (!organizationId || !UUID_RE.test(organizationId)) {
-      return apiFail("VALIDATION_ERROR", "organization_id must be a valid UUID", undefined, 422);
+      return apiFail(
+        "VALIDATION_ERROR",
+        "We couldn't read that organization link. Go back to the map and choose Connect again.",
+        undefined,
+        422,
+      );
     }
 
     const helpNeeds = normalizeOrganizationConnectHelpNeeds(body?.help_needs);

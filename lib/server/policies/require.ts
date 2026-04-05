@@ -55,7 +55,7 @@ export async function requireAcceptedPolicies(params: RequireAcceptedPoliciesPar
 
     throw new AppError(
       "CONSENT_REQUIRED",
-      "You must accept the required policies to continue",
+      "Accept the policies below to continue. They explain how we handle your information and this application.",
       {
         missing: missing.map((m) => ({
           doc_type: m.doc_type,

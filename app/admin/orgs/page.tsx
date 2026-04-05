@@ -122,7 +122,12 @@ export default function AdminOrgsPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to load organizations"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't load organizations. Refresh the page and try again.",
+        ),
+      );
       setOrgs([]);
       return;
     }
@@ -287,7 +292,12 @@ export default function AdminOrgsPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to create organization"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't create that organization. Check the name and try again.",
+          ),
+        );
         return;
       }
       setCreateName("");
@@ -419,7 +429,12 @@ export default function AdminOrgsPage() {
                             if (res.ok) await load();
                             else {
                               const json = await res.json().catch(() => ({}));
-                              setErr(getApiErrorMessage(json, "Could not approve"));
+                              setErr(
+                                getApiErrorMessage(
+                                  json,
+                                  "We couldn't approve that request. Refresh the page and try again.",
+                                ),
+                              );
                             }
                           } finally {
                             setActingId(null);
@@ -449,7 +464,12 @@ export default function AdminOrgsPage() {
                             if (res.ok) await load();
                             else {
                               const json = await res.json().catch(() => ({}));
-                              setErr(getApiErrorMessage(json, "Could not reject"));
+                              setErr(
+                                getApiErrorMessage(
+                                  json,
+                                  "We couldn't reject that ownership claim. Refresh the page and try again.",
+                                ),
+                              );
                             }
                           } finally {
                             setActingId(null);
@@ -516,7 +536,12 @@ export default function AdminOrgsPage() {
                             if (res.ok) await load();
                             else {
                               const json = await res.json().catch(() => ({}));
-                              setErr(getApiErrorMessage(json, "Could not approve"));
+                              setErr(
+                                getApiErrorMessage(
+                                  json,
+                                  "We couldn't approve that join request. Refresh the page and try again.",
+                                ),
+                              );
                             }
                           } finally {
                             setActingId(null);
@@ -542,7 +567,12 @@ export default function AdminOrgsPage() {
                             if (res.ok) await load();
                             else {
                               const json = await res.json().catch(() => ({}));
-                              setErr(getApiErrorMessage(json, "Could not decline"));
+                              setErr(
+                                getApiErrorMessage(
+                                  json,
+                                  "We couldn't decline that join request. Refresh the page and try again.",
+                                ),
+                              );
                             }
                           } finally {
                             setActingId(null);
@@ -614,7 +644,12 @@ export default function AdminOrgsPage() {
                               if (res.ok) await load();
                               else {
                                 const json = await res.json().catch(() => ({}));
-                                setErr(getApiErrorMessage(json, "Could not activate"));
+                                setErr(
+                                  getApiErrorMessage(
+                                    json,
+                                    "We couldn't activate that organization. Refresh the page and try again.",
+                                  ),
+                                );
                               }
                             } finally {
                               setActingId(null);
@@ -644,7 +679,12 @@ export default function AdminOrgsPage() {
                               if (res.ok) await load();
                               else {
                                 const json = await res.json().catch(() => ({}));
-                                setErr(getApiErrorMessage(json, "Could not reject"));
+                                setErr(
+                                  getApiErrorMessage(
+                                    json,
+                                    "We couldn't return that activation to draft. Refresh the page and try again.",
+                                  ),
+                                );
                               }
                             } finally {
                               setActingId(null);
@@ -730,7 +770,12 @@ export default function AdminOrgsPage() {
                               if (res.ok) await load();
                               else {
                                 const json = await res.json().catch(() => ({}));
-                                setErr(getApiErrorMessage(json, "Could not approve"));
+                                setErr(
+                                  getApiErrorMessage(
+                                    json,
+                                    "We couldn't approve that proposal. Refresh the page and try again.",
+                                  ),
+                                );
                               }
                             } finally {
                               setActingId(null);
@@ -756,7 +801,12 @@ export default function AdminOrgsPage() {
                               if (res.ok) await load();
                               else {
                                 const json = await res.json().catch(() => ({}));
-                                setErr(getApiErrorMessage(json, "Could not decline"));
+                                setErr(
+                                  getApiErrorMessage(
+                                    json,
+                                    "We couldn't decline that proposal. Refresh the page and try again.",
+                                  ),
+                                );
                               }
                             } finally {
                               setActingId(null);

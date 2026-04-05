@@ -21,12 +21,12 @@ export async function PATCH(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
 
     const parsed = personalInfoPatchSchema.safeParse(body);
     if (!parsed.success) {
-      return apiFail("VALIDATION_ERROR", parsed.error.flatten().formErrors.join("; ") || "Invalid fields", undefined, 422);
+      return apiFail("VALIDATION_ERROR", parsed.error.flatten().formErrors.join("; ") || "Some fields need another look. Check the form and try again.", undefined, 422);
     }
 
     const supabase = getSupabaseAdmin();

@@ -12,6 +12,8 @@ import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import { clearSensitiveLocalState } from "@/lib/client/safety/quickExit";
 import { ROUTES } from "@/lib/routes/pageRegistry";
 import { hasActiveOrgLeadership } from "@/lib/auth/simpleOrgRole";
+import { isApplicantFacingPath } from "@/lib/applicant/isApplicantFacingPath";
+import { exitSafelyImmediate } from "@/lib/client/safety/exitSafelyImmediate";
 
 /** Nav pills — secondary (slate); avoid competing with page primary CTAs */
 const NAV_PRIMARY =
@@ -19,9 +21,13 @@ const NAV_PRIMARY =
 /** Secondary — plain text (browse, utilities) */
 const NAV_TEXT =
   "text-xs text-[var(--color-slate)] hover:text-[var(--color-navy)] px-1.5 py-1 rounded-md hover:bg-[var(--color-warm-cream)]/75 transition";
-/** Quick exit — compact rose X (top right; distinct from primary actions) */
+/** Quick exit — compact rose X (non–applicant-pathway screens only) */
 const NAV_QUICK_EXIT =
   "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-500/70 bg-rose-950/50 text-rose-100 hover:bg-rose-900/55 hover:text-white disabled:opacity-50 transition";
+
+/** Exit Safely — neutral, Phase 3 applicant pathway */
+const NAV_EXIT_SAFELY =
+  "inline-flex shrink-0 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--color-slate)] hover:bg-[var(--color-surface)] hover:text-[var(--color-charcoal)] transition";
 
 export default function TopNav() {
   const router = useRouter();
@@ -145,6 +151,7 @@ export default function TopNav() {
   const showOrgNavForOrgRole = role === "organization" && orgLeadershipMembership;
   const isVictim = role === "victim";
   const isAdvocate = role === "advocate";
+  const applicantChrome = isApplicantFacingPath(pathname);
 
   /** Marketing homepage (`/`) uses its own light-theme nav + exit flow. */
   if (pathname === "/") {
@@ -343,42 +350,97 @@ export default function TopNav() {
                 )}
               </Link>
 
-              <button
-                type="button"
-                onClick={handleQuickExit}
-                disabled={quickExitLoading}
-                className={NAV_QUICK_EXIT}
-                aria-label={
-                  strictPreviews ? "Quick Exit" : "Quick Exit — clears local state and redirects"
-                }
-                title={
-                  strictPreviews ? "Quick Exit" : "Quick Exit (clears local state and redirects)"
-                }
-              >
-                {quickExitLoading ? (
-                  <span
-                    className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-rose-300/80 border-t-transparent"
-                    aria-hidden
-                  />
-                ) : (
+              {applicantChrome ? (
+                <button
+                  type="button"
+                  onClick={() =>
+                    exitSafelyImmediate({ userId: user?.id ?? null, accessToken: accessToken ?? null })
+                  }
+                  className={NAV_EXIT_SAFELY}
+                  aria-label={t("intake.pathwaySafety.exitSafelyCta")}
+                >
+                  <span>{t("intake.pathwaySafety.exitSafelyCta")}</span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
+                    width="14"
+                    height="14"
                     viewBox="0 0 24 24"
-                    strokeWidth={2}
+                    fill="none"
                     stroke="currentColor"
-                    className="h-5 w-5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     aria-hidden
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
                   </svg>
-                )}
-              </button>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleQuickExit}
+                  disabled={quickExitLoading}
+                  className={NAV_QUICK_EXIT}
+                  aria-label={
+                    strictPreviews ? "Quick Exit" : "Quick Exit — clears local state and redirects"
+                  }
+                  title={
+                    strictPreviews ? "Quick Exit" : "Quick Exit (clears local state and redirects)"
+                  }
+                >
+                  {quickExitLoading ? (
+                    <span
+                      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-rose-300/80 border-t-transparent"
+                      aria-hidden
+                    />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                      className="h-5 w-5"
+                      aria-hidden
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </button>
+              )}
             </>
           ) : (
-            <Link href={ROUTES.login} className={NAV_TEXT}>
-              {t("nav.login")}
-            </Link>
+            <>
+              {applicantChrome && (
+                <button
+                  type="button"
+                  onClick={() => exitSafelyImmediate()}
+                  className={NAV_EXIT_SAFELY}
+                  aria-label={t("intake.pathwaySafety.exitSafelyCta")}
+                >
+                  <span>{t("intake.pathwaySafety.exitSafelyCta")}</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M5 12h14" />
+                    <path d="m12 5 7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+              <Link href={ROUTES.login} className={NAV_TEXT}>
+                {t("nav.login")}
+              </Link>
+            </>
           )}
         </div>
       </div>

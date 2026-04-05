@@ -1,39 +1,106 @@
 @import "tailwindcss";
 
-/* —— NxtStps Brand Kit V2 — global tokens (all surfaces) —— */
+/*
+ * NxtStps — Brand Kit V2 / Cursor Phase 1: Visual foundation
+ * Single source of truth for color, space, type tokens, elevation, motion.
+ * Use var(--token) in components; do not add ad-hoc hex for brand surfaces.
+ */
+
 :root {
+  /* PRIMARY — TEAL (H=196°) */
   --color-teal-deep: #0c5f72;
   --color-teal: #1a8ba6;
   --color-teal-soft: #4aaec7;
   --color-teal-light: #e4f4f8;
+
+  /* SECONDARY — SAGE */
   --color-sage-deep: #2e6b48;
   --color-sage: #3d8a5f;
   --color-sage-light: #e8f5ee;
+
+  /* ACCENT — GOLD */
   --color-gold: #c49820;
   --color-gold-light: #fdf6e0;
+
+  /* SENSITIVE CONTENT — ROSE */
   --color-rose: #8b4f6a;
   --color-rose-light: #f5ecf1;
+
+  /* NEUTRAL ANCHOR */
   --color-navy: #0f2840;
   --color-charcoal: #1a2e3d;
   --color-slate: #4a5c6a;
   --color-muted: #8a9ba8;
-  --color-warm-white: #fafaf8;
-  --color-warm-cream: #f2efe8;
-  --color-light-sand: #e8e4da;
+
+  /* NEUTRAL SURFACES (canonical names + legacy aliases) */
+  --color-bg: #fafaf8;
+  --color-surface: #f2efe8;
+  --color-surface-2: #e8e4da;
+  --color-warm-white: var(--color-bg);
+  --color-warm-cream: var(--color-surface);
+  --color-light-sand: var(--color-surface-2);
+
   --color-border-light: #d8d4ca;
   --color-border: #c4bfb4;
+
+  /* FUNCTIONAL */
   --color-success: #2a7a52;
   --color-warning: #c47e12;
   --color-error: #b83228;
   --color-info: #1a6b8a;
+
+  /* Radius — no sharp corners on user-facing UI */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-  --shadow-card: 0 12px 40px rgba(15, 40, 64, 0.08);
-  --shadow-modal: 0 20px 50px rgba(15, 40, 64, 0.12);
+  --radius-pill: 999px;
 
-  --background: var(--color-warm-white);
+  /* Spacing — Fibonacci-inspired scale */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 10px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+  --space-7: 64px;
+  --space-8: 104px;
+
+  /* Typography scale (reference — use in custom CSS or arbitrary values) */
+  --text-display: 700 52px/1.15 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-display-tracking: -0.02em;
+  --text-h1: 700 40px/1.2 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-h1-tracking: -0.015em;
+  --text-h2: 600 32px/1.25 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-h2-tracking: -0.01em;
+  --text-h3: 600 24px/1.35 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-h4: 500 20px/1.4 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-body-lg: 400 18px/1.618 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-body: 400 16px/1.618 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-body-sm: 400 14px/1.5 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-label: 500 13px/1.4 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-label-tracking: 0.01em;
+  --text-caption: 400 12px/1.4 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-micro: 500 11px/1.3 var(--font-marketing-sans), system-ui, sans-serif;
+  --text-micro-tracking: 0.03em;
+
+  /* Elevation — restrained */
+  --shadow-none: none;
+  --shadow-subtle: 0 1px 3px rgba(15, 40, 64, 0.06);
+  --shadow-card: 0 4px 12px rgba(15, 40, 64, 0.1);
+  --shadow-modal: 0 8px 24px rgba(15, 40, 64, 0.14);
+  --shadow-focus: 0 0 0 3px rgba(26, 139, 166, 0.35);
+
+  /* Motion — calm, purposeful */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 250ms;
+  --duration-slower: 400ms;
+  --ease-standard: ease-in-out;
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: ease-in;
+
+  --background: var(--color-bg);
   --foreground: var(--color-charcoal);
 }
 
@@ -44,13 +111,149 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-body {
-  background: var(--color-warm-white);
-  color: var(--color-charcoal);
+html {
   font-family: var(--font-marketing-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.618;
+  color: var(--color-charcoal);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Victim dashboard funnel progress — shimmer sweep across the fill */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-charcoal);
+  font-family: inherit;
+}
+
+/* ═══ Phase 4 — Accessibility (WCAG 2.2 AA target) ═══ */
+
+/* Focus: visible for keyboard only; outline works in Windows High Contrast (not box-shadow-only). */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-teal);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* Skip link — first in tab order; visible when focused */
+.nxt-skip-link {
+  position: absolute;
+  top: -2.75rem;
+  left: 0;
+  z-index: 9999;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-teal-deep);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-md) 0;
+  transition: top var(--duration-fast) var(--ease-standard);
+}
+
+.nxt-skip-link:focus,
+.nxt-skip-link:focus-visible {
+  top: 0;
+}
+
+/* Wrapper for route content — skip target; pages keep their own <main> inside */
+.nxt-main-content-region {
+  min-height: 0;
+}
+
+/* Touch targets — NxtStps applicant standard ≥ 44px (WCAG 2.5.8 exceeds 24px). 
+   Inline sentence links stay compact; opt out with .nxt-touch-target-inline on anchors if needed. */
+button,
+[type="button"],
+[type="submit"],
+[type="reset"],
+[role="button"] {
+  min-height: 2.75rem;
+  box-sizing: border-box;
+}
+
+button.nxt-touch-target-inline,
+[role="button"].nxt-touch-target-inline {
+  min-height: unset;
+}
+
+input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+select,
+textarea {
+  min-height: 2.75rem;
+  box-sizing: border-box;
+}
+
+/* Form patterns — use with labels, aria-describedby, aria-invalid (see .cursor/rules) */
+.nxt-form-field__label {
+  display: block;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  color: var(--color-charcoal);
+  margin-bottom: var(--space-2);
+}
+
+.nxt-form-field__helper {
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  margin-top: var(--space-2);
+}
+
+.nxt-form-field__error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  margin-top: var(--space-2);
+}
+
+.nxt-form-field__error[hidden] {
+  display: none;
+}
+
+.nxt-required {
+  color: var(--color-error);
+  font-weight: 600;
+}
+
+/* Phase 3 — applicant pathway: space for fixed crisis strip */
+body.applicant-path-chrome-active {
+  padding-bottom: max(5.25rem, calc(4.75rem + env(safe-area-inset-bottom, 0px)));
+}
+
+/* Sensitive blocks — incident / injury narrative (Phase 3 + rose semantics from Phase 1) */
+.nxt-sensitive-section {
+  border-radius: var(--radius-lg);
+  background-color: var(--color-rose-light);
+  border-left: 3px solid var(--color-rose);
+  padding: var(--space-5);
+}
+
+.nxt-sensitive-section :where(p, li, label) {
+  line-height: 1.8;
+}
+
+/* Reading width caps (body / narrative / form help) */
+.nxt-reading {
+  max-width: 42.5rem; /* 680px */
+}
+
+.nxt-reading-form {
+  max-width: 35rem; /* 560px */
+}
+
+/* Narrative blocks only — Source Serif 4 (variable set in layout) */
+.nxt-prose-narrative {
+  font-family: var(--font-marketing-serif), Georgia, "Times New Roman", serif;
+  max-width: 42.5rem;
+  font-size: 1.125rem;
+  line-height: 1.618;
+}
+
+/* Victim dashboard funnel — shimmer (disabled when prefers-reduced-motion) */
 @keyframes funnel-progress-shimmer {
   0% {
     transform: translateX(-120%) skewX(-12deg);
@@ -61,16 +264,10 @@ body {
 }
 
 .funnel-progress-fill-shimmer {
-  animation: funnel-progress-shimmer 2.8s ease-in-out infinite;
+  animation: funnel-progress-shimmer 2.8s var(--ease-standard) infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .funnel-progress-fill-shimmer {
-    animation: none;
-  }
-}
-
-/* Marketing homepage extras */
+/* Marketing homepage */
 .marketing-home-root {
   scroll-behavior: smooth;
 }
@@ -79,18 +276,24 @@ body {
   font-family: var(--font-marketing-serif), Georgia, "Times New Roman", serif;
 }
 
-.marketing-home-root :where(a, button):focus-visible {
-  outline: 2px solid var(--color-teal);
-  outline-offset: 2px;
-}
+/* Focus ring inherited from global :focus-visible (Phase 4) */
 
+/* Reduced motion — mandatory (WCAG / vestibular safety) */
 @media (prefers-reduced-motion: reduce) {
-  .marketing-home-root {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
-  .marketing-home-root * {
+
+  .funnel-progress-fill-shimmer {
+    animation: none !important;
+  }
+
+  .marketing-home-root {
     scroll-behavior: auto !important;
-    transition-duration: 0.001ms !important;
-    animation-duration: 0.001ms !important;
   }
 }

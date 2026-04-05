@@ -36,7 +36,12 @@ export default function AdvocateConnectionRequestsPage() {
         return;
       }
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to load connection requests"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load connection requests. Refresh the page and try again.",
+          ),
+        );
         setRequests([]);
         return;
       }
@@ -62,7 +67,12 @@ export default function AdvocateConnectionRequestsPage() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to accept"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't accept that connection. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setRequests((prev) => prev.filter((r) => r.id !== id));
@@ -82,7 +92,12 @@ export default function AdvocateConnectionRequestsPage() {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to decline"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't decline that connection. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setRequests((prev) => prev.filter((r) => r.id !== id));

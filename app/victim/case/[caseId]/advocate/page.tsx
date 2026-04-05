@@ -37,7 +37,12 @@ export default function VictimCaseAdvocateManagePage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Failed to load"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load advocate details for this case. Refresh the page and try again.",
+          ),
+        );
         setTeam(null);
         return;
       }

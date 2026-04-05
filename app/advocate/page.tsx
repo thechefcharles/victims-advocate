@@ -82,13 +82,20 @@ export default function AdvocateDashboardPage() {
         });
         const json = await res.json().catch(() => null);
         if (!res.ok) {
-          setCcMsg(getApiErrorMessage(json, "Could not load your case work queue."));
+          setCcMsg(
+            getApiErrorMessage(
+              json,
+              "We couldn't load your case work queue. Refresh the page and try again.",
+            ),
+          );
           setCommandCenter(null);
           return;
         }
         setCommandCenter(json as CommandCenterResponse);
       } catch {
-        setCcMsg("Could not load your case work queue.");
+        setCcMsg(
+          "We couldn't load your case work queue — the request was interrupted. Refresh the page and try again.",
+        );
         setCommandCenter(null);
       } finally {
         setCcLoading(false);

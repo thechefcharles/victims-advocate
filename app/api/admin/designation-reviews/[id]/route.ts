@@ -25,7 +25,7 @@ export async function PATCH(req: Request, { params }: RouteCtx) {
     const { id } = await params;
     const requestId = id?.trim();
     if (!requestId) {
-      return apiFail("VALIDATION_ERROR", "Invalid id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "That link or ID doesn't look right. Go back and try again.", undefined, 422);
     }
 
     const existing = await getDesignationReviewRequestById(requestId);

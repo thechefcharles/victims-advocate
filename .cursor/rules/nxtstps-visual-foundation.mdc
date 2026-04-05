@@ -1,0 +1,43 @@
+---
+description: NxtStps Phase 1 visual foundation — tokens, semantics, accessibility
+alwaysApply: true
+---
+
+# NxtStps — Visual foundation (Phase 1)
+
+Trauma-informed GovTech: **trust, calm, clarity, credibility**. Prefer design tokens in `app/globals.css` (`:root`); avoid ad-hoc brand hex in components.
+
+## Color semantics (non-negotiable)
+
+- **`--color-error`**: genuine errors only — never backgrounds, warnings, or sensitive content.
+- **`--color-rose` / `--color-rose-light`**: trauma / sensitive narrative blocks only — not errors or general UI.
+- **`--color-gold`**: next steps, step indicators, incomplete items, deadlines — not errors or decoration without meaning.
+- **`--color-sage`**: completion / success / “done” — users should read it as positive progress.
+- **`--color-navy`**: primary **text** — not large decorative backgrounds.
+
+Surfaces: **`--color-bg`**, **`--color-surface`**, **`--color-surface-2`** (legacy aliases: `warm-white`, `warm-cream`, `light-sand`). Rough visual balance: ~62% neutrals, ~24% teal family for structure/CTAs, ~15% sage/gold/rose as accents.
+
+## Typography
+
+- **UI**: Poppins (`--font-marketing-sans`) — forms, nav, dashboards, labels.
+- **Narrative only**: Source Serif 4 — mission copy, “what this means for you” before legal content; class **`.nxt-prose-narrative`** when needed.
+- Task-critical copy **≥16px**. Cap body line length: **`.nxt-reading`** (680px), form help **`.nxt-reading-form`** (560px).
+
+## Spacing, radius, elevation, motion
+
+- Use **`--space-1` … `--space-8`** (Fibonacci scale) for padding/margin in custom CSS; match rhythm in Tailwind layouts.
+- Radius: **`--radius-sm` … `--radius-xl`**, **`--radius-pill`** — avoid 0px on user-facing chrome; avoid >16px on large panels.
+- Shadows: **`--shadow-subtle`**, **`--shadow-card`**, **`--shadow-modal`**, **`--shadow-focus`** (teal ring) — restrained.
+- Durations: **`--duration-fast`** … **`--duration-slower`**; easing **`--ease-standard`**, **`--ease-entrance`**, **`--ease-exit`**. **No** autoplay/loop/pulse/parallax for new work; **`prefers-reduced-motion`** is already global in `globals.css` — do not bypass it.
+
+## Icons (Lucide)
+
+Every icon needs a **visible text label** or **`aria-label`**. Never icon-only meaning for primary actions.
+
+## Contrast
+
+Pairings must meet **WCAG 2.2 AA** (4.5:1 body, 3:1 large/UI). Verify non-standard pairs with [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/).
+
+## New global CSS classes
+
+Prefer **`nxt-*`** prefix for non-Tailwind utility layers (e.g. `.nxt-reading`, `.nxt-button` patterns) to avoid collisions.

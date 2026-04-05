@@ -69,7 +69,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
-      return apiFail("VALIDATION_ERROR", "Invalid JSON body", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
 
     const entryKey = typeof body.entry_key === "string" ? body.entry_key.trim() : "";

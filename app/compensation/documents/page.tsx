@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useI18n } from "@/components/i18n/i18nProvider";
 
 type DocumentType =
   | "police_report"
@@ -25,6 +26,7 @@ interface UploadedDoc {
 const DOCS_STORAGE_KEY = "nxtstps_docs_v1";
 
 export default function DocumentsPage() {
+  const { t } = useI18n();
   const [docs, setDocs] = useState<UploadedDoc[]>([]);
   const [selectedType, setSelectedType] = useState<DocumentType>("police_report");
   const [description, setDescription] = useState("");
@@ -56,7 +58,7 @@ const handleFiles = async (files: FileList | null) => {
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData.session?.access_token;
   if (!token) {
-    alert("Please log in to upload documents.");
+    alert(t("compensationDocumentsPage.loginToUpload"));
     return;
   }
 
@@ -88,7 +90,10 @@ const handleFiles = async (files: FileList | null) => {
       .then(async (res) => {
         const json = await res.json().catch(() => ({}));
         if (!res.ok) {
-          const msg = json?.error?.message ?? json?.message ?? "Upload failed";
+          const msg =
+            json?.error?.message ??
+            json?.message ??
+            t("compensationDocumentsPage.uploadFailedGeneric");
           alert(msg);
           return;
         }
@@ -99,7 +104,7 @@ const handleFiles = async (files: FileList | null) => {
       })
       .catch((err) => {
         console.error("Error uploading document", err);
-        alert("Network error. Please try again.");
+        alert(t("compensationDocumentsPage.networkError"));
       });
   });
 

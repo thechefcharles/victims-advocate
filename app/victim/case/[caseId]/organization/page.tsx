@@ -60,7 +60,12 @@ export default function VictimCaseOrganizationManagePage() {
 
       const teamJson = await teamRes.json().catch(() => ({}));
       if (!teamRes.ok) {
-        setErr(getApiErrorMessage(teamJson, "Failed to load"));
+        setErr(
+          getApiErrorMessage(
+            teamJson,
+            "We couldn't load your organization team for this case. Refresh the page and try again.",
+          ),
+        );
         setTeam(null);
       } else {
         const d = (teamJson?.data ?? teamJson) as SupportTeamPayload;

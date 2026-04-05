@@ -541,6 +541,12 @@ export type I18nDict = {
     findOrgsFooterSuffix: string;
   };
 
+  compensationDocumentsPage: {
+    loginToUpload: string;
+    uploadFailedGeneric: string;
+    networkError: string;
+  };
+
   eligibility: {
     introQualify: string;
     purposeText: string;
@@ -1056,6 +1062,22 @@ export type I18nDict = {
 
     footer: {
       draftDisclaimer: string;
+    };
+
+    pathwaySafety: {
+      supportResourcesLabel: string;
+      supportIntro: string;
+      crisis988: string;
+      crisisText: string;
+      crisis911: string;
+      exitSafelyCta: string;
+      autosaveTrouble: string;
+      saveReturnToast: string;
+      autoSaved: string;
+      sensitiveSectionHint: string;
+      groundingBody: string;
+      groundingContinue: string;
+      groundingNeedSupport: string;
     };
 
     summary: {

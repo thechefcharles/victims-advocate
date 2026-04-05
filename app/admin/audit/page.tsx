@@ -44,7 +44,12 @@ export default function AuditLogPage() {
 
         if (!res.ok) {
           const json = await res.json().catch(() => null);
-          setErr(getApiErrorMessage(json, "Failed to load audit logs"));
+          setErr(
+            getApiErrorMessage(
+              json,
+              "We couldn't load audit logs. Refresh the page and try again.",
+            ),
+          );
           setLogs([]);
           return;
         }
@@ -53,7 +58,9 @@ export default function AuditLogPage() {
         setLogs(json.logs ?? []);
         setErr(null);
       } catch (e) {
-        setErr("Failed to load audit logs");
+        setErr(
+          "We couldn't load audit logs — the request was interrupted. Check your connection and try again.",
+        );
         setLogs([]);
       } finally {
         setLoading(false);

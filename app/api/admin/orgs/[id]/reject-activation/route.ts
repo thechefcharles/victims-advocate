@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id: raw } = await params;
     const orgId = raw?.trim();
     if (!orgId || !UUID_RE.test(orgId)) {
-      return apiFail("VALIDATION_ERROR", "Invalid organization id", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
     }
 
     const body = await req.json().catch(() => ({}));

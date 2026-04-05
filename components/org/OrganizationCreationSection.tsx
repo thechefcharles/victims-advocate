@@ -81,7 +81,12 @@ export function OrganizationCreationSection({
           setExistingOrgId(json.meta.organization_id);
           setExistingOrgName(json.meta.organization_name ?? "this organization");
         } else {
-          setErr(getApiErrorMessage(json, "Could not create organization"));
+          setErr(
+            getApiErrorMessage(
+              json,
+              "We couldn't create that organization. Check required fields and try again.",
+            ),
+          );
         }
         return;
       }
@@ -116,7 +121,12 @@ export function OrganizationCreationSection({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not submit request"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't submit that request. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       setSuccessMsg(
@@ -162,7 +172,12 @@ export function OrganizationCreationSection({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Could not submit proposal"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't submit that proposal. Check required fields and try again.",
+          ),
+        );
         return;
       }
       setSuccessMsg(

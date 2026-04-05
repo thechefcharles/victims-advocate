@@ -94,7 +94,12 @@ export default function AdminEcosystemPage() {
 
       if (!ovRes.ok) {
         const json = await ovRes.json().catch(() => null);
-        setErr(getApiErrorMessage(json, "Failed to load ecosystem overview"));
+        setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't load the ecosystem overview. Refresh the page and try again.",
+        ),
+      );
         setOverview(null);
         setOrgs([]);
         return;

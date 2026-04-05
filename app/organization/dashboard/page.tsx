@@ -85,7 +85,12 @@ export default function OrganizationDashboardPage() {
         const errs: string[] = [];
         if (!advRes.ok) {
           setAdvocates([]);
-          errs.push(getApiErrorMessage(advJson, "Could not load team"));
+          errs.push(
+            getApiErrorMessage(
+              advJson,
+              "We couldn't load your organization's advocate team. Refresh the page and try again.",
+            ),
+          );
         } else {
           const list = advJson.data?.advocates ?? advJson.advocates ?? [];
           if (!cancelled) setAdvocates(Array.isArray(list) ? list : []);
@@ -93,7 +98,12 @@ export default function OrganizationDashboardPage() {
 
         if (!vicRes.ok) {
           setVictims([]);
-          errs.push(getApiErrorMessage(vicJson, "Could not load victims"));
+          errs.push(
+            getApiErrorMessage(
+              vicJson,
+              "We couldn't load people connected to your organization. Refresh the page and try again.",
+            ),
+          );
         } else {
           const list = vicJson.data?.victims ?? vicJson.victims ?? [];
           if (!cancelled) setVictims(Array.isArray(list) ? list : []);
@@ -148,7 +158,12 @@ export default function OrganizationDashboardPage() {
         return;
       }
       if (!res.ok) {
-        setRefErr(getApiErrorMessage(json, "Could not load referrals"));
+        setRefErr(
+          getApiErrorMessage(
+            json,
+            "We couldn't load referrals. Refresh the page and try again.",
+          ),
+        );
         setReferrals([]);
         setRefForbidden(false);
         return;
@@ -179,7 +194,14 @@ export default function OrganizationDashboardPage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setRefErr(getApiErrorMessage(json, `Could not ${action} referral`));
+        setRefErr(
+          getApiErrorMessage(
+            json,
+            action === "accept"
+              ? "We couldn't accept that referral. Refresh the page and try again."
+              : "We couldn't decline that referral. Refresh the page and try again.",
+          ),
+        );
         return;
       }
       await loadReferrals();
@@ -190,7 +212,7 @@ export default function OrganizationDashboardPage() {
 
   const maskVictimLabel = (name: string, userId: string) => {
     if (!strictPreviews) return name || "Unknown";
-    return `Victim ${userId.slice(0, 8)}…`;
+    return `Person ${userId.slice(0, 8)}…`;
   };
 
   if (!consentReady) {

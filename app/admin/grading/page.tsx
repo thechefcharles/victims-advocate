@@ -86,7 +86,12 @@ export default function AdminGradingPage() {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => null);
-      setErr(getApiErrorMessage(json, "Failed to load orgs"));
+      setErr(
+        getApiErrorMessage(
+          json,
+          "We couldn't load organizations for grading. Refresh the page and try again.",
+        ),
+      );
       return;
     }
     const json = await res.json();
@@ -172,7 +177,12 @@ export default function AdminGradingPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Grading failed"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "Grading didn't finish — the server may be busy. Wait a moment and run it again.",
+          ),
+        );
         return;
       }
       await loadScore(orgId);
@@ -199,7 +209,12 @@ export default function AdminGradingPage() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, "Batch grading failed"));
+        setErr(
+          getApiErrorMessage(
+            json,
+            "Batch grading didn't finish. Try a smaller batch or wait and run it again.",
+          ),
+        );
         return;
       }
       if (orgId) {

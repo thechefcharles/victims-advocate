@@ -43,7 +43,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => null);
     if (!body) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+      return NextResponse.json({ error: "We couldn't read that request. Refresh the page and try again." }, { status: 400 });
     }
 
     const messages = (body.messages || []) as ChatMessage[];
