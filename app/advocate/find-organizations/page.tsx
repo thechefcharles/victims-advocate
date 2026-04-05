@@ -11,8 +11,18 @@ import { AdvocateConnectOrganizationsSection } from "@/app/advocate/find-organiz
 import { normalizeUsStateCode } from "@/lib/geo/usStates";
 
 export default function AdvocateFindOrganizationsPage() {
-  const { accessToken, advocatePersonalInfo } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, ROUTES.advocateFindOrganizations);
+  const {
+    accessToken,
+    advocatePersonalInfo,
+    loading: authLoading,
+    legalConsentNextPath,
+  } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    ROUTES.advocateFindOrganizations,
+    authLoading,
+    legalConsentNextPath
+  );
   const { t } = useI18n();
 
   const initialState = normalizeUsStateCode(advocatePersonalInfo?.work_state ?? null);

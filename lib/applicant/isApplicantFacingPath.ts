@@ -12,5 +12,6 @@ export function isApplicantFacingPath(pathname: string | null): boolean {
   if (pathname.startsWith("/compensation/connect-advocate")) return true;
   if (pathname.startsWith("/start")) return true;
   if (pathname === "/consent") return true;
+  if (pathname.startsWith("/signup/consent")) return true;
   return false;
 }

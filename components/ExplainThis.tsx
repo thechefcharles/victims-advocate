@@ -5,9 +5,10 @@
  * Requires AI disclaimer (workflow=translator). Safe logging on server; no raw text stored.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import { useModalFocusTrap } from "@/lib/client/a11y/useModalFocusTrap";
 
 export type ExplainContextType =
   | "intake_question"
@@ -52,6 +53,19 @@ export function ExplainThisButton({
   const [explanation, setExplanation] = useState<string | null>(null);
   const [disclaimer, setDisclaimer] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  const closeModal = useCallback(() => {
+    setOpen(false);
+  }, []);
+
+  useModalFocusTrap({
+    open,
+    rootRef: dialogRef,
+    triggerRef,
+    onClose: closeModal,
+  });
 
   const fetchExplanation = useCallback(async () => {
     const text = (sourceText ?? "").trim();
@@ -88,7 +102,7 @@ export function ExplainThisButton({
       if (res.status === 403 && json?.error?.code === "CONSENT_REQUIRED") {
         const redirect = encodeURIComponent(pathname ?? "/");
         router.replace(`/consent?workflow=translator&redirect=${redirect}`);
-        setOpen(false);
+        closeModal();
         return;
       }
 
@@ -118,7 +132,17 @@ export function ExplainThisButton({
           : "We couldn't reach the explanation service. Check your connection and try again.",
       );
     }
-  }, [sourceText, contextType, workflowKey, fieldKey, programKey, stateCode, router, pathname]);
+  }, [
+    sourceText,
+    contextType,
+    workflowKey,
+    fieldKey,
+    programKey,
+    stateCode,
+    router,
+    pathname,
+    closeModal,
+  ]);
 
   const triggerClass =
     variant === "link"
@@ -128,21 +152,24 @@ export function ExplainThisButton({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={fetchExplanation}
         className={`${triggerClass} ${className}`.trim()}
         aria-label={label}
+        aria-haspopup="dialog"
       >
         {label}
       </button>
 
       {open && (
         <div
+          ref={dialogRef}
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
           role="dialog"
           aria-modal="true"
           aria-label="Explanation"
-          onClick={() => setOpen(false)}
+          onClick={closeModal}
         >
           <div
             className="bg-white border border-[var(--color-border)] rounded-xl shadow-xl max-w-md w-full max-h-[80vh] overflow-hidden flex flex-col"
@@ -152,7 +179,7 @@ export function ExplainThisButton({
               <span className="text-sm font-medium text-[var(--color-charcoal)]">Explanation</span>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeModal}
                 className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] p-1"
                 aria-label="Close"
               >

@@ -63,6 +63,12 @@ type AuthState = {
   organizationName: string | null;
   /** Pending or most recent rejected platform ownership claim (no org membership). */
   orgOwnershipClaim: OrgOwnershipClaim | null;
+  /** Next signup legal consent path when onboarding is incomplete (null if complete or unknown). */
+  legalConsentNextPath: string | null;
+  /** User Data Deletion Policy — request submitted via account settings. */
+  deletionRequested: boolean;
+  deletionRequestedAt: string | null;
+  deletionType: "standard" | "safety" | null;
   /** Refetch /api/me and update role (e.g. after admin "view as" change). */
   refetchMe: () => Promise<void>;
 };
@@ -88,6 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
   const [organizationName, setOrganizationName] = useState<string | null>(null);
   const [orgOwnershipClaim, setOrgOwnershipClaim] = useState<OrgOwnershipClaim | null>(null);
+  const [legalConsentNextPath, setLegalConsentNextPath] = useState<string | null>(null);
+  const [deletionRequested, setDeletionRequested] = useState(false);
+  const [deletionRequestedAt, setDeletionRequestedAt] = useState<string | null>(null);
+  const [deletionType, setDeletionType] = useState<"standard" | "safety" | null>(null);
   /** Copy signup `preferred_name` from user_metadata into profiles.personal_info once. */
   const signupPreferredNameSyncedRef = useRef(false);
   /** Reset /api/me state only when user id changes — not on every token refresh (was clearing role and hiding victim UI). */
@@ -165,6 +175,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setAdvocatePersonalInfo(null);
       setOrganizationName(null);
     }
+
+    const nextLegal =
+      typeof d?.legalConsentNextPath === "string" && d.legalConsentNextPath.startsWith("/")
+        ? d.legalConsentNextPath
+        : null;
+    setLegalConsentNextPath(nextLegal);
+
+    setDeletionRequested(d?.deletionRequested === true);
+    setDeletionRequestedAt(typeof d?.deletionRequestedAt === "string" ? d.deletionRequestedAt : null);
+    const dt = d?.deletionType;
+    setDeletionType(dt === "standard" || dt === "safety" ? dt : null);
   }, []);
 
   const role = roleFromApi ?? roleFromMetadata;
@@ -181,6 +202,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAdvocatePersonalInfo(null);
     setOrganizationName(null);
     setOrgOwnershipClaim(null);
+    setLegalConsentNextPath(null);
+    setDeletionRequested(false);
+    setDeletionRequestedAt(null);
+    setDeletionType(null);
   }, []);
 
   const refetchMe = useCallback(async () => {
@@ -303,6 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOrganizationCatalogEntryId(null);
         setPersonalInfo(null);
         setOrgOwnershipClaim(null);
+        setLegalConsentNextPath(null);
       }
       setLoading(false);
     });
@@ -323,6 +349,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setOrgId(null);
       setOrgRole(null);
       setOrgOwnershipClaim(null);
+      setLegalConsentNextPath(null);
+      setDeletionRequested(false);
+      setDeletionRequestedAt(null);
+      setDeletionType(null);
     }
 
     setEmailVerified(!!sess?.user?.email_confirmed_at);
@@ -410,6 +440,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       advocatePersonalInfo,
       organizationName,
       orgOwnershipClaim,
+      legalConsentNextPath,
+      deletionRequested,
+      deletionRequestedAt,
+      deletionType,
       refetchMe,
     };
   }, [
@@ -431,6 +465,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     advocatePersonalInfo,
     organizationName,
     orgOwnershipClaim,
+    legalConsentNextPath,
+    deletionRequested,
+    deletionRequestedAt,
+    deletionType,
     refetchMe,
   ]);
 

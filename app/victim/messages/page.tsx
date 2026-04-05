@@ -179,8 +179,13 @@ function VictimMessagesContent() {
 }
 
 export default function VictimMessagesPage() {
-  const { accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, ROUTES.victimMessages);
+  const { accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    ROUTES.victimMessages,
+    authLoading,
+    legalConsentNextPath
+  );
 
   if (!consentReady) {
     return (

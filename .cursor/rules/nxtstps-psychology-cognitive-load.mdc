@@ -1,0 +1,84 @@
+---
+description: NxtStps Phase 5 — psychology, cognitive load, Miller/Hick/Fitts, peak-end, Gestalt
+alwaysApply: true
+---
+
+# NxtStps — Psychology & cognitive load (Phase 5)
+
+**Version 1.0 · Brand Kit V2.0 · Last updated: 2026-04-06**
+
+Use this when deciding **layout, density, screen structure, and flow**. It explains *why* Phases 1–4 rules exist; use it for judgment calls the other prompts do not spell out.
+
+**Sources (deep dives):** [NN/g psychology study guide](https://www.nngroup.com/articles/psychology-study-guide/) · [Minimize cognitive load](https://www.nngroup.com/articles/minimize-cognitive-load/) · [Mental models](https://www.nngroup.com/articles/mental-models/)
+
+## Governing idea
+
+**Cognitive load** = mental effort to operate the UI. For NxtStps applicants, **baseline load is already high** (trauma + complex admin). **Extraneous** load from bad design competes with the real task and drives **abandonment** — which can mean someone does not get compensation they are entitled to.
+
+| Load type | Meaning | Our job |
+|-----------|---------|---------|
+| **Intrinsic** | Real complexity of CVC / intake | Make it **manageable**, not pretend it is trivial |
+| **Extraneous** | Clutter, inconsistency, unclear nav/labels | **Eliminate** |
+| **Germane** | Progress, checklists, summaries that build a mental model | **Keep**; make it obvious |
+
+**Decision test:** Does this add *extraneous* or *germane* load? Extraneous → remove or simplify. Germane → keep and clarify.
+
+## Miller’s law (working memory ~5–9; stress → ~5)
+
+- **Applicant intake:** aim for **≤5 fields per screen** (primary inputs; helpers like “Explain this” are not counted as separate memory chunks if visually subordinate).
+- **Lists without pagination:** **≤7** visible items; otherwise paginate, collapse, or chunk.
+- **Primary nav:** **≤5** items.
+- **Dropdowns / radio groups:** **≤7** options before **search**, **progressive disclosure**, or **chunking** (labeled groups of 3–5, not one flat mega-list).
+
+## Hick’s law (more choices → slower decisions)
+
+- **One primary action** per screen; secondaries are smaller, quieter, less saturated.
+- **Never two equally loud CTAs.** Exception: **Back** + **Continue** — opposite direction, different visual weight.
+- **Provider / resource discovery:** surface **3–5** best matches first; **“See all”** stays secondary.
+
+## Fitts’s law (size & distance)
+
+- **Primary CTA** (Save, Continue, Upload, Submit) = **largest** control on the screen; place it **after** the content block the user just completed (natural reading end).
+- **Mobile:** favor primary actions in the **lower third** (thumb reach).
+- **Destructive** actions: small, secondary styling, **confirm**; keep away from the primary to avoid slips.
+- **Exit Safely:** reachable and edge-adjacent but **neutral** styling (Phase 3) — not a loud CTA.
+
+## Peak–end rule (memory = peak + end)
+
+- **Submission / confirmation** is the **end** that defines memory of the whole flow. It must:
+  - Name **what they accomplished** and **why it matters** (not only “Submitted”).
+  - Be **warm, specific**, with **clear next steps** and **realistic timelines**.
+  - Keep **crisis / support** access visible.
+  - **Reference number** is supplementary, not the only message.
+- After **hard sections** (e.g. incident narrative), a short **acknowledgment** line is appropriate: e.g. that was the hardest part; what comes next is lighter.
+
+## Zeigarnik effect (open tasks stick)
+
+- Show **progress from step one** (e.g. “1 of 7” beats hiding totals until the end).
+- **Completeness meters** (documents X of Y) beat vague “you still need files.”
+- **Save-and-return** comms should cite **concrete progress** (“4 of 7 steps”).
+- Dashboard **incomplete** work should stay visible until resolved; **done** should read as clearly completed.
+
+## Recognition over recall (Nielsen #6)
+
+- **Do not** make users remember prior screens; **re-show** relevant answers, doc names, thumbnails on upload/review flows.
+- **Review before submit:** show values in full.
+- **Pre-fill** from profile, prior sections, OCR when safe.
+- Prefer **finite choice** (e.g. county dropdown) over free recall when the set is known.
+
+## Gestalt (layout reduces extraneous load)
+
+- **Proximity:** related fields **closer** than unrelated groups — e.g. tighter gap within a field group than between groups (align with `--space-3` vs `--space-5` in Phase 1).
+- **Similarity:** primary buttons share one pattern; secondaries another; errors another — **don’t one-off** without reason.
+- **Figure/ground:** inputs must read as **inputs** (border or distinct surface vs page bg) — never invisible “flat” fields.
+- **Continuation:** visual flow **heading → context → task → action**; avoid orphan blocks that break scan path.
+- **Errors:** tie messages **to the field** (adjacent / `aria-describedby`), not only a distant banner.
+
+## Aesthetic–usability effect
+
+- Phase 1 **tokens, spacing, alignment, and color discipline** are **functional**: sloppy visuals read as **unreliable** — unacceptable for compliance-adjacent infrastructure.
+
+## Mental models & Jakob’s Law
+
+- Users import expectations from **benefits portals, tax prep, banking, attachments**. **Prefer established patterns**; put product novelty in **logic**, not novel interaction chrome.
+- If you **must** diverge, add a **one-line** “here’s how this works” to reset the model.

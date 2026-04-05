@@ -44,8 +44,13 @@ type ReferralInboxRow = {
 };
 
 export default function OrganizationDashboardPage() {
-  const { accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, "/organization/dashboard");
+  const { accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    "/organization/dashboard",
+    authLoading,
+    legalConsentNextPath
+  );
   const { strictPreviews } = useSafetySettings(accessToken);
 
   const [advocates, setAdvocates] = useState<AdvocateRow[]>([]);

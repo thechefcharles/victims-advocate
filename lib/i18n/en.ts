@@ -71,6 +71,24 @@ export const en: I18nDict = {
     preferredNamePlaceholder: "e.g. Alex or Alex Martinez",
     preferredNameHelp:
       "We use your name to personalize your dashboard and messages. You can add more detail in account settings later.",
+    pageEyebrow: "Get started",
+    pageTitle: "Create your account",
+    pageSubtitle:
+      "Set up a personal account first. If you lead an agency, choose Organization Leader—you’ll connect or propose your organization after you sign in, not during this step.",
+    backHome: "← Back to home",
+    accountTypeLabel: "How will you use NxtStps?",
+    typeApplicant: "Applicant",
+    typeAdvocate: "Advocate",
+    typeOrganization: "Organization Leader",
+    hintApplicant:
+      "Personal tools and guided steps while you work on a compensation application or other support.",
+    hintAdvocate: "Case tools for professionals who support applicants.",
+    hintOrganization:
+      "For people who represent an agency. You’ll link or propose your organization after email verification and agreements—not during signup.",
+    orgSignupBefore: "Represent an organization? Choose",
+    orgSignupAfter: "above—you’ll complete organization steps after you sign in.",
+    signInPrompt: "Already have an account?",
+    signInLink: "Sign in",
   },
 
   victimDashboard: {
@@ -833,7 +851,6 @@ export const en: I18nDict = {
     passwordPlaceholder: "Password",
     loggingIn: "Logging in…",
     createAccount: "Create account",
-    createAdvocateAccount: "Create Victim Advocate account",
     forgotPassword: "Forgot password",
     tooManyAttempts: "Too many failed attempts. Try again later.",
   },

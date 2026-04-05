@@ -1,5 +1,5 @@
 // app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import { Poppins, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -7,6 +7,7 @@ import { SkipToMainLink } from "@/components/SkipToMainLink";
 import TopNav from "@/components/TopNav";
 import { ApplicantPathChrome } from "@/components/applicant/ApplicantPathChrome";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { PilotProgramFeedbackLauncher } from "@/components/pilot/PilotProgramFeedbackLauncher";
 import { I18nProvider } from "@/components/i18n/i18nProvider";
 import { StateProvider } from "@/components/state/StateProvider";
 
@@ -34,6 +35,13 @@ export const metadata: Metadata = {
   description: "Trauma-informed victim services infrastructure — Illinois Crime Victims Compensation and more.",
 };
 
+/** Phase 7 — never block zoom (accessibility); safe-area for notched devices */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const fontVars = `${poppins.variable} ${sourceSerif.variable} ${geistMono.variable}`;
   return (
@@ -48,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {children}
               </div>
               <ApplicantPathChrome />
+              <PilotProgramFeedbackLauncher />
             </I18nProvider>
           </StateProvider>
         </AuthProvider>

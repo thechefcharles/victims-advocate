@@ -271,8 +271,13 @@ function AdvocateMessagesContent() {
 }
 
 export default function AdvocateMessagesPage() {
-  const { accessToken } = useAuth();
-  const consentReady = useConsentRedirect(accessToken, ROUTES.advocateMessages);
+  const { accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
+  const consentReady = useConsentRedirect(
+    accessToken,
+    ROUTES.advocateMessages,
+    authLoading,
+    legalConsentNextPath
+  );
 
   if (!consentReady) {
     return (

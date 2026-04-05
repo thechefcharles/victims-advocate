@@ -8,6 +8,8 @@ import { logAuthEvent } from "@/lib/auditClient";
 import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { PublicBottomCta } from "@/components/public/PublicBottomCta";
 
 export type SignupAccountType = "victim" | "advocate" | "organization";
 
@@ -167,77 +169,89 @@ export function SignupPageClient({ initialAccountType }: Props) {
     !agreePrototype ||
     !nameOk;
 
+  const accountHint =
+    accountType === "victim"
+      ? t("signup.hintApplicant")
+      : accountType === "advocate"
+        ? t("signup.hintAdvocate")
+        : t("signup.hintOrganization");
+
   return (
-    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 py-12">
-      <div className="max-w-md mx-auto space-y-8">
-        <div className="text-center space-y-2">
-          <Link href="/" className="inline-flex items-center gap-2 text-[var(--color-muted)] hover:text-[var(--color-charcoal)] text-sm">
-            ← Back to home
+    <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8 sm:py-10">
+      <div className="max-w-3xl mx-auto space-y-8">
+        <div>
+          <Link
+            href="/"
+            className="text-xs text-[var(--color-muted)] hover:text-[var(--color-charcoal)] inline-block mb-4"
+          >
+            {t("signup.backHome")}
           </Link>
+          <PageHeader
+            eyebrow={t("signup.pageEyebrow")}
+            title={t("signup.pageTitle")}
+            subtitle={t("signup.pageSubtitle")}
+          />
         </div>
 
-        <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 sm:p-8 space-y-6">
-          <header>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[var(--color-muted)] mb-1">NxtStps</p>
-            <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Create your account</h1>
-            <p className="text-sm text-[var(--color-muted)] mt-2">
-              Create your personal account first. If you lead an organization, you&apos;ll find or set up that
-              organization after you sign in—we don&apos;t create it during this step.
-            </p>
-          </header>
+        <section className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/75 px-4 py-3 text-sm text-[var(--color-slate)]">
+          <p>
+            <strong className="text-[var(--color-charcoal)]">If you&apos;re in immediate danger,</strong> call{" "}
+            <a href="tel:911" className="text-teal-400 hover:underline">
+              911
+            </a>
+            . If you need someone to talk with right now, call or text{" "}
+            <a href="tel:988" className="text-[#FF9B9B] font-medium hover:underline">
+              988
+            </a>{" "}
+            (Suicide &amp; Crisis Lifeline).
+          </p>
+        </section>
+
+        <section aria-label={t("signup.accountTypeLabel")}>
+          <h2 className="text-sm font-semibold text-[var(--color-charcoal)] mb-3">{t("signup.accountTypeLabel")}</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setAccountType("victim")}
+              className={`rounded-xl border border-[var(--color-border)] bg-white p-4 text-left text-sm transition hover:border-[var(--color-teal)]/50 hover:bg-[var(--color-light-sand)]/40 ${
+                accountType === "victim" ? "ring-2 ring-[var(--color-teal)]/40 border-[var(--color-teal)]" : ""
+              }`}
+            >
+              <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">{t("signup.typeApplicant")}</p>
+              <p className="text-[var(--color-charcoal)] font-medium leading-snug">{t("signup.hintApplicant")}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("advocate")}
+              className={`rounded-xl border border-[var(--color-border)] bg-white p-4 text-left text-sm transition hover:border-[var(--color-teal)]/50 hover:bg-[var(--color-light-sand)]/40 ${
+                accountType === "advocate" ? "ring-2 ring-[var(--color-teal)]/40 border-[var(--color-teal)]" : ""
+              }`}
+            >
+              <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">{t("signup.typeAdvocate")}</p>
+              <p className="text-[var(--color-charcoal)] font-medium leading-snug">{t("signup.hintAdvocate")}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("organization")}
+              className={`rounded-xl border border-[var(--color-border)] bg-white p-4 text-left text-sm transition hover:border-[var(--color-teal)]/50 hover:bg-[var(--color-light-sand)]/40 ${
+                accountType === "organization" ? "ring-2 ring-[var(--color-teal)]/40 border-[var(--color-teal)]" : ""
+              }`}
+            >
+              <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">{t("signup.typeOrganization")}</p>
+              <p className="text-[var(--color-charcoal)] font-medium leading-snug">{t("signup.hintOrganization")}</p>
+            </button>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-[var(--color-border)] bg-white p-5 sm:p-6 space-y-5 shadow-sm shadow-black/25">
+          <p className="text-[11px] text-[var(--color-muted)] leading-relaxed">{accountHint}</p>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <span className="text-[11px] text-[var(--color-muted)] block">Account type *</span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAccountType("victim")}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
-                    accountType === "victim"
-                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
-                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
-                  }`}
-                >
-                  Victim
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccountType("advocate")}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition ${
-                    accountType === "advocate"
-                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
-                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
-                  }`}
-                >
-                  Advocate
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAccountType("organization")}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition leading-snug ${
-                    accountType === "organization"
-                      ? "border-[var(--color-teal)] bg-[var(--color-teal-deep)]/20 text-[var(--color-navy)]"
-                      : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border)] hover:text-[var(--color-slate)]"
-                  }`}
-                >
-                  Organization Leader
-                </button>
-              </div>
-              <p className="text-[11px] text-[var(--color-muted)]">
-                {accountType === "victim" &&
-                  "Personal tools and step-by-step help when you’re applying for crime victim compensation."}
-                {accountType === "advocate" && "Case tools for advocates who support applicants."}
-                {accountType === "organization" &&
-                  "For people who represent an agency. You&apos;ll link or propose your organization after email verification and agreements—not during signup."}
-              </p>
-            </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block space-y-1">
                 <span className="text-[11px] text-[var(--color-muted)]">First name *</span>
                 <input
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                   placeholder="First name"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -249,7 +263,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
               <label className="block space-y-1">
                 <span className="text-[11px] text-[var(--color-muted)]">Last name *</span>
                 <input
-                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                  className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                   placeholder="Last name"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -265,7 +279,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 {accountType === "organization" ? "Work email *" : "Email *"}
               </span>
               <input
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                 placeholder={accountType === "organization" ? "you@agency.org" : "you@example.com"}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -278,7 +292,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
             <label className="block space-y-1">
               <span className="text-[11px] text-[var(--color-muted)]">Password *</span>
               <input
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                 placeholder="At least 8 characters"
                 type="password"
                 value={password}
@@ -294,8 +308,8 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 <label className="block space-y-1">
                   <span className="text-[11px] text-[var(--color-muted)]">Job title (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
-                    placeholder="e.g. Victim advocate"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                    placeholder="e.g. Advocate or coordinator"
                     value={jobTitle}
                     onChange={(e) => setJobTitle(e.target.value)}
                     type="text"
@@ -304,7 +318,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 </label>
                 <ProgramCatalogSelect
                   id="advocate-program"
-                  label="Your Illinois victim assistance program (optional)"
+                  label="Your affiliated Illinois program (optional)"
                   required={false}
                   value={advocateCatalogId}
                   onChange={(id) => setAdvocateCatalogId(id)}
@@ -320,7 +334,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 <label className="block space-y-1">
                   <span className="text-[11px] text-[var(--color-muted)]">Organization name (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                     placeholder="Agency or program name (for context only)"
                     value={orgNameHint}
                     onChange={(e) => setOrgNameHint(e.target.value)}
@@ -331,7 +345,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
                 <label className="block space-y-1">
                   <span className="text-[11px] text-[var(--color-muted)]">Your title at the organization (optional)</span>
                   <input
-                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
+                    className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-warm-white)] px-3 py-2.5 text-sm text-[var(--color-navy)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)] focus:border-transparent"
                     placeholder="e.g. Executive director"
                     value={orgLeaderTitle}
                     onChange={(e) => setOrgLeaderTitle(e.target.value)}
@@ -424,7 +438,7 @@ export function SignupPageClient({ initialAccountType }: Props) {
             </button>
           </form>
 
-          <p className="text-xs text-[var(--color-muted)]">
+          <p className="text-xs text-[var(--color-muted)] pt-1">
             Also see our{" "}
             <Link href="/privacy" className="underline hover:text-[var(--color-slate)]">
               Privacy Policy
@@ -435,22 +449,24 @@ export function SignupPageClient({ initialAccountType }: Props) {
             </Link>
             .
           </p>
-        </div>
+        </section>
 
         <p className="text-center text-sm text-[var(--color-muted)]">
-          Represent an organization? Choose{" "}
+          {t("signup.orgSignupBefore")}{" "}
           <Link href="/signup?intent=organization" className="underline hover:text-[var(--color-charcoal)]">
-            Organization Leader
+            {t("signup.typeOrganization")}
           </Link>{" "}
-          above—you&apos;ll complete organization steps after you sign in.
+          {t("signup.orgSignupAfter")}
         </p>
 
         <p className="text-center text-sm text-[var(--color-muted)]">
-          Already have an account?{" "}
+          {t("signup.signInPrompt")}{" "}
           <Link href="/login" className="underline hover:text-[var(--color-charcoal)]">
-            Sign in
+            {t("signup.signInLink")}
           </Link>
         </p>
+
+        <PublicBottomCta />
       </div>
     </main>
   );

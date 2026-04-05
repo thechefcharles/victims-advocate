@@ -36,12 +36,26 @@ type CommandCenterResponse = {
 
 /** Advocate home at `/advocate` — client list → client cases → case (view/edit in intake). */
 export default function AdvocateDashboardPage() {
-  const { accessToken, orgId, orgRole, organizationName, user, advocatePersonalInfo } = useAuth();
+  const {
+    accessToken,
+    loading: authLoading,
+    legalConsentNextPath,
+    orgId,
+    orgRole,
+    organizationName,
+    user,
+    advocatePersonalInfo,
+  } = useAuth();
   const showOrgLink = Boolean(orgId);
   const advocateOrgWorkspaceHref = hasActiveOrgLeadership(orgId, orgRole)
     ? ROUTES.organizationSettings
     : ROUTES.advocateOrg;
-  const consentReady = useConsentRedirect(accessToken, "/advocate");
+  const consentReady = useConsentRedirect(
+    accessToken,
+    "/advocate",
+    authLoading,
+    legalConsentNextPath
+  );
   const { t, tf } = useI18n();
   const [commandCenter, setCommandCenter] = useState<CommandCenterResponse | null>(null);
   const [ccLoading, setCcLoading] = useState(true);
