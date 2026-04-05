@@ -160,7 +160,7 @@ export default function TopNav() {
 
   const languageSelect = (
     <label className="flex items-center gap-2 rounded-md border border-[var(--color-border)] px-2 py-1">
-      <span className="text-[11px] text-[var(--color-muted)]">{t("nav.language")}</span>
+      <span className="text-[11px] text-[var(--color-slate)]">{t("nav.language")}</span>
       <select
         value={lang}
         onChange={(e) => setLang(e.target.value as "en" | "es")}
@@ -182,7 +182,7 @@ export default function TopNav() {
             </div>
             <div className="text-sm">
               <div className="font-semibold uppercase tracking-[0.14em] text-[var(--color-charcoal)]">NxtStps</div>
-              <div className="text-[11px] text-[var(--color-muted)]">{t("nav.brandTagline")}</div>
+              <div className="text-[11px] text-[var(--color-slate)]">{t("nav.brandTagline")}</div>
             </div>
           </Link>
 
@@ -192,7 +192,7 @@ export default function TopNav() {
             aria-label="Main navigation"
           >
             {loading ? (
-              <span className="text-[11px] text-[var(--color-muted)]">{t("common.loading")}</span>
+              <span className="text-[11px] text-[var(--color-slate)]">{t("common.loading")}</span>
             ) : !user ? (
               <Link href={ROUTES.help} className={NAV_PRIMARY}>
                 {t("nav.help")}
@@ -271,10 +271,10 @@ export default function TopNav() {
                   aria-haspopup="menu"
                   aria-label="Account menu"
                 >
-                  <span className="text-[11px] text-[var(--color-muted)]">{t("nav.accountNav")}</span>
+                  <span className="text-[11px] text-[var(--color-slate)]">{t("nav.accountNav")}</span>
                   <span className="truncate text-[11px] text-[var(--color-navy)]">{user.email ?? "—"}</span>
                   <span
-                    className={`shrink-0 text-[10px] text-[var(--color-muted)] transition ${accountMenuOpen ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-[10px] text-[var(--color-slate)] transition ${accountMenuOpen ? "rotate-180" : ""}`}
                     aria-hidden
                   >
                     ▾
@@ -286,7 +286,7 @@ export default function TopNav() {
                     role="menu"
                   >
                     <div className="border-b border-[var(--color-border)] px-3 py-2">
-                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-muted)]">Signed in</p>
+                      <p className="text-[10px] uppercase tracking-wide text-[var(--color-slate)]">Signed in</p>
                       <p className="truncate text-xs text-[var(--color-charcoal)]" title={user.email ?? undefined}>
                         {user.email ?? "—"}
                       </p>

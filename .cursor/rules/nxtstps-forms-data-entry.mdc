@@ -1,0 +1,73 @@
+---
+description: NxtStps Phase 6 — forms, validation, progress, uploads, consent form patterns
+alwaysApply: true
+---
+
+# NxtStps — Forms & data entry (Phase 6)
+
+**Version 1.0 · Brand Kit V2.0 · Last updated: 2026-04-06**
+
+Apply to **applicant intake**, **consent**, and **advocate / agency** data entry. Forms are the product; every field choice is a product decision.
+
+**Research anchor:** Luke Wroblewski — *Web Form Design: Filling in the Blanks* (single column, top labels, progress, inline validation, fewer optional fields → better completion).
+
+## Layout
+
+1. **Single column** for applicant intake. Multi-column breaks scan order and mobile. **Exception:** paired fields (first/last name, start/end date) **side-by-side on `md+` only**, **stacked below 640px**.
+2. **Top-aligned labels always** — never placeholder-as-label. Use `.nxt-form-field__label` and tokens from `app/globals.css` (see Phase 4 form utilities).
+3. **Miller (Phase 5):** **≤5 visible primary fields** per applicant screen; **≤8 fields per section** for advocate/agency power users.
+4. **Group related fields** with spacing, border, or surface — each group has a **section title** (“Your contact information”). Chunk **3–5** fields per group; no flat 15-field lists.
+5. **Sensitive sections** (incident, injury, trauma docs): prefer **one primary question per screen** when pacing matters, even if under the 5-field quota (trauma-informed).
+
+## Field anatomy & states
+
+Order: **label** (+ required) → **helper** (optional) → **input** → **inline error** → **character count** (if limited).
+
+- **Default:** `1.5px solid var(--color-border)`, `var(--radius-md)`, padding `var(--space-3) var(--space-4)`, bg `var(--color-bg)`, body type Poppins / `--text-body`.
+- **Hover:** border → `var(--color-slate)`, transition `var(--duration-fast)`.
+- **Focus:** border → `var(--color-teal)`. **Do not rely on box-shadow alone** for focus visibility — **Phase 4** global `:focus-visible` outline still applies (Windows High Contrast).
+- **Valid / filled:** revert to default border — **no green** “success” borders on every field (noise).
+- **Error:** border `var(--color-error)`, light error tint background (`#fff8f8` or token), **trailing error indicator**, message **below** field + **`aria-live="assertive"`** / `role="alert"` per Phase 4.
+- **Disabled:** `var(--color-surface-2)` bg, muted border/text, `cursor: not-allowed`, ~0.7 opacity.
+
+**Helper:** between label and input; `--text-body-sm`, `var(--color-slate)`; **one sentence** max — longer → tooltip or “Why we ask.”
+
+**Character count:** below field, right-aligned; live update; switch toward **`var(--color-error)`** when **under 20** chars left.
+
+## Validation
+
+- **Validate on `blur`**, not every keystroke. **Exceptions:** live character count; confirm-email matches on **blur of second field**.
+- **Before final submit:** full pass on a **pre-review** step — list issues in **plain language**, links to fields, optional “submit anyway” where policy allows.
+- **Errors:** **per-field** below control; **never toast-only** for field errors. Multi-error: **polite** summary at top (“3 things need attention”) with **in-page anchors** to each field + per-field messages.
+- **Pre-fill:** when data is known (profile, prior step, OCR), use **subtle tint** (e.g. `var(--color-teal-light)`), **editable**, with **short disclosure** (“Pre-filled from your profile”).
+- **Smart defaults:** IL state, USD, language from browser — always changeable.
+
+## Progress (≥3 steps)
+
+- Required for multi-step flows; ties to **Zeigarnik** (Phase 5).
+- Show **“Step 3 of 7 — Your expenses”** (number **and** step meaning).
+- Completed: check + **`var(--color-sage)`**; active: **`var(--color-teal)`** emphasis; upcoming: **`var(--color-muted)`**.
+- **Document bar:** horizontal fill; **gold** while incomplete → **sage** at 100%; label “X of Y uploaded”; below — **specific** “Still needed: …”. Animate fill `var(--duration-slower)` **`ease-in-out`**, respect **`prefers-reduced-motion`**.
+- **Dynamic step counts** when steps are skipped — don’t show “3 of 7” if the path is now 6 steps.
+
+## Document upload
+
+- **Zone:** dashed `var(--color-border)`, `var(--radius-lg)`, icon (teal), primary “Upload [type]”, helper for **types + max size**, DnD desktop, tap mobile.
+- **Types:** PDF, JPG, PNG, HEIC, TIFF; **25MB** max per file (align with API if different).
+- **Uploading:** progress, %, name, cancel.
+- **Success:** thumb/icon, name, size, sage check, **Remove** as text link → **confirm** before delete.
+- **Error:** zone border error + **specific** copy + retry.
+- **Alternatives:** “Don’t have it on this device?” / “Get instructions” / defer — **don’t hard-block** the whole flow on one missing file when policy allows follow-up.
+
+## Consent & legal (Phase 3 + this phase)
+
+- **Scroll-to-enable:** checkbox/submit disabled until near bottom (`scrollHeight - clientHeight - 50px`). Show **“Scroll to continue reading →”** until met; **no** scroll progress bar on consent.
+- **Checkbox copy:** first person + **read** + agree, e.g. “I have read and agree to the NxtStps Terms of Use.”
+- **Button labels:** ToU / Privacy / Waiver / Beta ack per **Phase 3** spec (“I Agree and Continue”, pilot vs production wording).
+
+## Cross-references
+
+- **Trauma-informed consent UI:** Phase 3 rule.
+- **Labels, `aria-*`, live regions, focus:** Phase 4.
+- **Chunking, primary CTA, cognitive load:** Phase 5.
+- **Tokens / spacing / color semantics:** Phase 1 (`app/globals.css`).

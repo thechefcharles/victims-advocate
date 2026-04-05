@@ -1,0 +1,75 @@
+---
+description: NxtStps Phase 7 — mobile-first, breakpoints, touch, thumb zone, performance, 320px reflow
+alwaysApply: true
+---
+
+# NxtStps — Mobile & responsive (Phase 7)
+
+**Version 1.0 · Brand Kit V2.0 · Last updated: 2026-04-06**
+
+**Mobile is the default applicant experience** — not a shrunk desktop. Design **mobile first**; enhance for larger viewports. Desktop-first CSS overrides are technical debt.
+
+**Source:** [NN/g mobile UX study guide](https://www.nngroup.com/articles/mobile-ux-study-guide/)
+
+## Assumptions (applicant)
+
+5–7″ screen, **one-handed**, **3G/4G**, **2018–2021-class** devices, distracted or distressed environments. If it fails here, it is not done.
+
+## Breakpoints (tokens in `app/globals.css`)
+
+Mobile-first base; use **`min-width`** only:
+
+| Token | Width | Typical |
+|-------|-------|---------|
+| `--bp-sm` | 480px | Large phone / landscape |
+| `--bp-md` | 768px | Tablet |
+| `--bp-lg` | 1024px | Small laptop / tablet landscape |
+| `--bp-xl` | 1280px | Desktop |
+| `--bp-2xl` | 1536px | Large desktop |
+
+Example: `@media (min-width: 768px) { … }` or `min-width: var(--bp-md)` where supported.
+
+## Touch
+
+- **WCAG 2.2:** ≥24px; **NxtStps applicant pathway:** **≥44px** — see global rules in `globals.css` (Phase 4). Use **`.nxt-icon-button`** when the glyph is small; pad to a 44px hit box.
+- **≥8px gap** between adjacent targets (`--nxt-touch-target-gap`) — use **`.nxt-touch-cluster`** for row/wrap toolbars; prevents mis-taps (including near **Exit Safely**).
+
+## Thumb zone & navigation
+
+- **Primary CTA** on mobile: **bottom of the viewport** — prefer **`.nxt-form-actions-mobile`** (sticky bar + safe-area) for long forms, not only the end of scroll.
+- **Applicant primary nav:** prefer **bottom bar (≤5 items)**; **top bar** for title + back; **hamburger** only for secondary/tertiary — not primary applicant IA.
+- **Exit Safely:** **top-right**, intentional exception (harder to hit accidentally) — Phase 3.
+
+## Performance (accessibility)
+
+Slow 3G / low-end hardware excludes people who need the product most. **Targets:** FCP &lt;1.5s, TTI &lt;3.5s, LCP &lt;2.5s, CLS &lt;0.1 on throttled mobile (directional).
+
+- **Images:** dimensions / `next/image`, lazy below fold, no text-as-image.
+- **Fonts:** `display: "swap"` (see `layout.tsx`); subset Latin; extend for Spanish as needed.
+- **JS:** route-level splitting; no blocking third-party on applicant paths.
+- **CSS:** rely on Tailwind purge in production; avoid shipping huge unused CSS.
+
+## Layout & type
+
+- **&lt;768px:** full-width content, horizontal padding **`var(--space-4)`**; don’t over-constrain &lt;480px.
+- **320px:** single column, **no horizontal page scroll** (WCAG 1.4.10) — verify before ship.
+- **Body:** **≥16px** on mobile — never shrink body text for small screens. Heading steps may scale down vs desktop (see Phase 6 / marketing tokens).
+
+## Modals & tables
+
+- **&lt;768px:** prefer **full-screen** dialogs or **bottom sheets** for confirmations — not tiny centered modals.
+- **Tables** (advocate/agency): responsive — simple tables → horizontal scroll + sticky first column; complex → stacked label:value rows. **No** whole-page horizontal scroll from tables.
+
+## Forms on mobile (with Phase 6)
+
+- **`type` + `inputmode`** for correct keyboards (`tel`, `email`, `numeric`, `decimal`, `date`).
+- **autocorrect / autocapitalize / spellcheck** per field type (names vs IDs vs narrative).
+- **Viewport:** `width=device-width`, `initial-scale=1`, **`viewport-fit=cover`** — **never** `maximum-scale=1` or `user-scalable=no` (root **`viewport` export** in `app/layout.tsx`).
+
+## Testing (before deploy)
+
+Real **Android mid-range** + **iPhone-class** device passes preferred over DevTools-only. Checklist: full applicant path on phone only; targets + spacing; keyboard doesn’t cover focused field; Exit Safely always reachable; throttled network submit; background/restore; Dynamic Type / TalkBack / VoiceOver on critical flows.
+
+## Cross-references
+
+- **Touch 44px, focus:** Phase 4 · **Forms:** Phase 6 · **Cognitive load / Miller:** Phase 5 · **Tokens:** Phase 1 · **Applicant chrome:** Phase 3

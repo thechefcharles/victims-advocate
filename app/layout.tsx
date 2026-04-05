@@ -1,5 +1,5 @@
 // app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import { Poppins, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
@@ -32,6 +32,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "NxtStps",
   description: "Trauma-informed victim services infrastructure — Illinois Crime Victims Compensation and more.",
+};
+
+/** Phase 7 — never block zoom (accessibility); safe-area for notched devices */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

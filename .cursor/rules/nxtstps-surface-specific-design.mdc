@@ -1,0 +1,129 @@
+---
+description: NxtStps Phase 8 — four surfaces (applicant, advocate, agency, platform admin) priorities & patterns
+alwaysApply: true
+---
+
+# NxtStps — Surface-specific design (Phase 8)
+
+**Version 1.0 · Brand Kit V2.0 · Last updated: 2026-04-06**
+
+Before building or refactoring a **named surface**, identify which of the **four contexts** applies. **Same tokens and components — different density, nav, and priorities.** Reusing one surface’s layout patterns everywhere is a common multi-tenant mistake.
+
+**Sources:** [NN/g IA study guide](https://www.nngroup.com/topic/information-architecture/) · [Enterprise / intranet UX](https://www.nngroup.com/topic/intranet-design/) · [Service design](https://www.nngroup.com/topic/service-design/)
+
+---
+
+## Surface 1 — Applicant pathway
+
+**Users:** Applicants, family, caregivers — possibly children, older adults, disabilities, LEP, distress, low digital literacy.
+
+**Mental model:** Guided flow (benefits portal, TurboTax-style steps, hospital intake).
+
+**Usage:** Mostly **once**; every screen must work for a **first-time** user.
+
+**Priorities (order):** 1) **Safety** (Exit Safely, crisis, non-alarming UI) 2) **Clarity** (one task, plain language, obvious next step) 3) **Reassurance** (progress, save state) 4) **Accessibility** (WCAG 2.2 AA, mobile-first, touch) 5) **Completeness** (checklists, meters, clear submit).
+
+**Density:** **Low** — ≤5 fields/screen, single column, **one primary CTA**, no sidebars, no metrics tables, no jargon.
+
+**Nav:** **Linear** step indicator + **Back**; **target:** minimal chrome during intake — persistent **Exit Safely**, **progress**, **crisis strip** (Phase 3/7). Hamburger not primary IA here.
+
+**Color:** Teal CTAs; sage done; rose **only** sensitive blocks; gold incomplete / next-step; **warm white** base (`--color-bg`). No heavy dark shells.
+
+**Type:** Body **≥16px**; headlines approachable (24–32px range); helpers ≤14px; **Grade ~7** copy where feasible.
+
+**Persistent (every screen):** Exit Safely (top-right); crisis resources (bottom, visible without scroll); auto-save signal; progress (top or sticky).
+
+**Includes:** Consent, discovery, intake, uploads, pre-review, confirmation, status, messaging, resource hub.
+
+---
+
+## Surface 2 — Advocate & provider dashboard
+
+**Users:** Advocates, program staff, org owners — **daily**, high volume.
+
+**Mental model:** CRM / case management — dense data, fast paths, keyboard efficiency.
+
+**Priorities:** 1) **Efficiency** 2) **Density** 3) **Clarity** (status, ownership) 4) **Actions** (obvious next step per case) 5) **Compliance** (audit, escalation visible).
+
+**Density:** **Medium–high** — multi-column OK, **tables** with sort/filter, sidebar nav, metrics; **≤8 fields/section** for internal notes.
+
+**Nav:** Persistent **sidebar** (collapsible), top bar (search, notifications, account), **breadcrumbs** in deep records; document shortcuts in help.
+
+**Status colors (always + text label):** Teal active · Gold needs action · Sage complete · Rose flagged/sensitive · Muted archived. **Never color-only.**
+
+**Type:** **14px+** body in tables; headers ~13px/500; key metrics 32–40px/700 as needed.
+
+**Command center patterns:** Sortable/filterable case list; bulk actions when selected; **row height ≥56px** (touch); detail = summary column (~30%) + main work (~70%); sticky case header (ID, name, status, primary action); task feed by urgency with non–dead-end empty states; **AI flags** = visible disclosure + “AI flagged” + never final — **Override** + note; advocate judgment explicit.
+
+**Escalation:** Dedicated **Needs Review** queue; plain-language trigger, assignee, dwell time, review notes. Align with Human Escalation Protocol (legal cluster).
+
+**Includes:** Org profile, staff/roles, case list/detail, tasks, documents, messages, referrals, scheduling, reporting, funder exports.
+
+---
+
+## Surface 3 — Administering agency portal
+
+**Users:** State/program oversight — **aggregate** view, not casework.
+
+**Mental model:** Analytics / compliance / government reporting.
+
+**Usage:** Weekly–monthly for some; **overview → drill-down** must be obvious.
+
+**Priorities:** 1) **Overview first** 2) **Drill-down** (aggregate → provider) 3) **Export** 4) **Comparison** & benchmarks 5) **Compliance** visibility.
+
+**Density:** **High** — many metrics, charts, comparison tables, export on views.
+
+**Nav:** **Top** sections (Overview, Providers, Reports, Compliance, Settings) — not a linear sidebar workflow.
+
+**Charts:** Titles describe **insight** (“Completion rate by organization — last 90 days”), not widget type; **labeled values** (not hover-only); **table alternative** for SR; **NxtStps palette** only.
+
+**Governance:** Agencies **never** see applicant identities — aggregated/anonymized only. **UI must not expose** identifying columns/fields even if empty. Enforce with API + UI (Data Governance / Master Spec § administering agency).
+
+**Includes:** Network view, provider drilldown, compliance, report review, requirements, agency↔provider comms, analytics export.
+
+---
+
+## Surface 4 — Platform admin (`/admin/*`)
+
+**Users:** NxtStps operations — **power users**, full system context.
+
+**Mental model:** Admin console / CMS / config — internal tool.
+
+**Usage:** Mixed frequency; favor **efficiency** over first-run hand-holding.
+
+**Priorities:** 1) **Precision** (clear consequences) 2) **Audit trail** (attributable) 3) **Safety** on destructive ops 4) **Efficiency** 5) **Transparency** (system state visible).
+
+**Density:** **Very high** — wide tables, dense config, full audit lines; function over decorative padding.
+
+**Destructive actions:** Modal with plain **what/who/reversible?**; **type-to-confirm** (e.g. `DELETE`); **Cancel** as safer default weight; danger button smaller/error-colored; **audit before execute**; success shows **who/when**.
+
+**Access:** `/admin/*` = **platform_admin** at **middleware** (not UI-only). Config changes (rules, scoring, affiliation) need **downstream effect** summary + confirm. Major platform status changes need description, affected features, confirm, audit, notify founders.
+
+**Version management (consent/docs):** Admin UI for version strings — current version, last change, actor, summary, users per version, preview of re-accept flow if bumped — **not** hardcoded in app code long-term.
+
+**Includes:** Health, audit log, users, orgs, scoring, eligibility, consent versions, i18n/content, templates, support, trust/disputes, feature flags.
+
+---
+
+## Cross-surface consistency (non-negotiable)
+
+1. **Color tokens** — same CSS variables; status semantics identical everywhere.  
+2. **Typography** — Poppins + shared scale; surfaces differ by **which token**, not new fonts.  
+3. **Spacing** — Fibonacci scale everywhere; admin may use tighter steps from the **same** scale.  
+4. **Naming** — `nxt-*` / shared components.  
+5. **Accessibility** — **WCAG 2.2 AA on all surfaces**, including admin.  
+6. **AI disclosure** — same component/behavior wherever AI is active; copy may vary by feature.  
+7. **Audit** — mutating actions log server-side; UI shows success only after **confirmed** write (no premature “Success”).
+
+---
+
+## Quick routing
+
+| You are editing… | Surface |
+|------------------|---------|
+| Intake, consent, applicant chrome, victim routes | **1** |
+| Advocate dashboard, org staff tools, case lists | **2** |
+| Future state agency oversight UI | **3** |
+| `app/admin/**` | **4** |
+
+When in doubt, match **mental model** (guided vs CRM vs analytics vs console) before copying layout from another surface.
