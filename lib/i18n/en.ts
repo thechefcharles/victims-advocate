@@ -1179,6 +1179,11 @@ export const en: I18nDict = {
       videoTour: {
         title: "Video walkthrough",
         intro: "Prefer to watch first? This recording shows the platform in action — same trauma-informed design as the live product.",
+        noHtml5: "Your browser does not support embedded video. Use the link below to open the file.",
+        loadError: "We couldn’t play the video in the browser.",
+        missingFileHint:
+          "Add public/mvp-demo.mp4, or set NEXT_PUBLIC_MARKETING_DEMO_VIDEO_URL to an HTTPS MP4 URL. For iPhone, use H.264/AAC and fast start (moov at the beginning of the file).",
+        openDirect: "Open video in a new tab",
       },
       audiences: {
         title: "Built for everyone in the victim services ecosystem",
