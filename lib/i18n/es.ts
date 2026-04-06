@@ -1206,6 +1206,11 @@ export const es: I18nDict = {
             videoTour: {
                 title: "Recorrido en video",
                 intro: "¿Prefieres mirar primero? Esta grabación muestra la plataforma en acción.",
+                noHtml5: "Tu navegador no reproduce video incrustado. Usa el enlace para abrir el archivo.",
+                loadError: "No pudimos reproducir el video en el navegador.",
+                missingFileHint:
+                    "Añade public/mvp-demo.mp4 o define NEXT_PUBLIC_MARKETING_DEMO_VIDEO_URL con una URL HTTPS del MP4. En iPhone, usa H.264/AAC y “fast start” (moov al inicio).",
+                openDirect: "Abrir video en una pestaña nueva",
             },
             audiences: {
                 title: "Para todas las personas del ecosistema de servicios a víctimas",
