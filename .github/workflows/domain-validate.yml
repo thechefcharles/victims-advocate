@@ -1,0 +1,49 @@
+name: Domain Validation
+
+on:
+  push:
+    branches:
+      - "domain/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Tests
+        run: npm test
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+      - name: Trust signal isolation check
+        run: |
+          COUNT=0
+          for dir in lib/server/grading lib/server/trust; do
+            if [ -d "$dir" ]; then
+              COUNT=$((COUNT + $(grep -r "from('cases')\|from(\"cases\")" "$dir" 2>/dev/null | wc -l)))
+            fi
+          done
+          if [ "$COUNT" -gt "0" ]; then
+            echo "FAIL: Trust signal coupling violation"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Migration timestamp check
+        run: |
+          for f in $(git diff --name-only origin/main HEAD -- 'supabase/migrations/*.sql'); do
+            TS=$(basename $f | cut -c1-14)
+            if [ "$TS" -lt "20260501000000" ]; then
+              echo "FAIL: Migration $f timestamp before safe range"
+              exit 1
+            fi
+          done
+          echo "PASS"
