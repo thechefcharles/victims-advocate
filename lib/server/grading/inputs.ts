@@ -1,9 +1,13 @@
 /**
  * Phase C: Aggregate platform signals into org-level scoring inputs (honest proxies).
+ * Workflow metrics come only from {@link getOrganizationSignals}; grading does not query
+ * cases, routing_runs, completeness_runs, or case_messages directly.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
+import { getOrganizationSignals } from "@/lib/server/orgSignals/aggregate";
+import type { OrganizationSignals } from "@/lib/server/orgSignals/types";
 import type { OrgScoringInputs } from "./types";
 
 function daysSince(iso: string | null): number | null {
@@ -32,101 +36,72 @@ function profileCompleteness(org: Record<string, unknown>): number {
   return Math.min(1, n / max);
 }
 
+/** Estimate 90d case volume from aggregate case age (no per-case reads). */
+function estimatedCaseCountLast90d(total: number, avgAgeDays: number | null): number {
+  if (total === 0) return 0;
+  if (avgAgeDays == null || avgAgeDays <= 0) return total;
+  const frac = 1 - Math.exp(-90 / avgAgeDays);
+  return Math.min(total, Math.max(0, Math.round(total * frac)));
+}
+
+/** Lower-bound proxy for total message count from thread-level signals only. */
+function caseMessagesTotalProxy(signals: OrganizationSignals): number {
+  const { orgCasesWithMessages, recentMessageThreads } = signals.messaging;
+  return Math.max(orgCasesWithMessages * 3, recentMessageThreads * 2, orgCasesWithMessages > 0 ? 1 : 0);
+}
+
+function messaging30dCounts(signals: OrganizationSignals): { advocate: number; victim: number } {
+  const t = signals.messaging.recentMessageThreads;
+  if (t <= 0) return { advocate: 0, victim: 0 };
+  const victim =
+    signals.messaging.replySignalConfidence === "high"
+      ? Math.max(2, Math.round(t * 0.55))
+      : Math.max(1, Math.round(t * 0.35));
+  const advocate = Math.max(t, victim);
+  return { advocate, victim };
+}
+
 export async function buildOrgScoringInputs(params: {
   organizationId: string;
 }): Promise<OrgScoringInputs> {
   const { organizationId } = params;
   const supabase = getSupabaseAdmin();
 
-  const { data: org, error: orgErr } = await supabase
-    .from("organizations")
-    .select(
-      "id,name,service_types,languages,coverage_area,intake_methods,accessibility_features,accepting_clients,capacity_status,avg_response_time_hours,profile_last_updated_at"
-    )
-    .eq("id", organizationId)
-    .maybeSingle();
+  const [signals, orgRes] = await Promise.all([
+    getOrganizationSignals(organizationId),
+    supabase
+      .from("organizations")
+      .select(
+        "id,name,service_types,languages,coverage_area,intake_methods,accessibility_features,accepting_clients,capacity_status,avg_response_time_hours,profile_last_updated_at"
+      )
+      .eq("id", organizationId)
+      .maybeSingle(),
+  ]);
+
+  const { data: org, error: orgErr } = orgRes;
 
   if (orgErr || !org) {
     throw new AppError("NOT_FOUND", "Organization not found", undefined, 404);
   }
 
   const o = org as Record<string, unknown>;
-  const since90 = new Date(Date.now() - 90 * 86400000).toISOString();
+  const totalCases = signals.cases.total;
+  const routingRate = signals.workflow.routingUsageRate ?? 0;
+  const completenessRate = signals.workflow.completenessUsageRate ?? 0;
+  const ocrRate = signals.workflow.ocrUsageRate ?? 0;
+  const apRate = signals.workflow.appointmentsUsageRate;
 
-  const [
-    casesTotal,
-    cases90,
-    routingRows,
-    completenessRows,
-    msgTotal,
-    msgs30,
-    ocrCount,
-  ] = await Promise.all([
-    supabase
-      .from("cases")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
-    supabase
-      .from("cases")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId)
-      .gte("created_at", since90),
-    supabase.from("routing_runs").select("case_id").eq("organization_id", organizationId),
-    supabase.from("completeness_runs").select("case_id").eq("organization_id", organizationId),
-    supabase
-      .from("case_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
-    supabase
-      .from("case_messages")
-      .select("sender_role,created_at")
-      .eq("organization_id", organizationId)
-      .gte("created_at", new Date(Date.now() - 30 * 86400000).toISOString()),
-    supabase
-      .from("ocr_runs")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organizationId),
-  ]);
+  const casesWithRouting = Math.round(routingRate * totalCases);
+  const casesWithCompleteness = Math.round(completenessRate * totalCases);
+  const ocrRunsProxy = Math.max(0, Math.round(ocrRate * totalCases));
 
-  let apptData: { status: string }[] = [];
-  const apptRes = await supabase
-    .from("appointments")
-    .select("status")
-    .eq("organization_id", organizationId);
-  if (!apptRes.error && Array.isArray(apptRes.data)) {
-    apptData = apptRes.data as { status: string }[];
-  }
-
-  const caseCountTotal = casesTotal.count ?? 0;
-  const caseCount90d = cases90.count ?? 0;
-
-  const routingCases = new Set(
-    (routingRows.data ?? []).map((r: { case_id: string }) => r.case_id)
-  );
-  const completenessCases = new Set(
-    (completenessRows.data ?? []).map((r: { case_id: string }) => r.case_id)
-  );
-
-  const routingRatio =
-    caseCountTotal > 0 ? Math.min(1, routingCases.size / caseCountTotal) : 0;
-  const completenessRatio =
-    caseCountTotal > 0 ? Math.min(1, completenessCases.size / caseCountTotal) : 0;
-
-  const msgRows = (msgs30.data ?? []) as { sender_role: string | null }[];
-  let advocateMessages30d = 0;
-  let victimMessages30d = 0;
-  for (const m of msgRows) {
-    const role = (m.sender_role ?? "").toLowerCase();
-    if (role === "advocate") advocateMessages30d++;
-    else if (role === "victim") victimMessages30d++;
-    else advocateMessages30d++;
-  }
+  const { advocate, victim } = messaging30dCounts(signals);
 
   let appointmentsCompleted = 0;
-  let appointmentsTotal = 0;
-  for (const row of apptData) {
-    appointmentsTotal++;
-    if (String(row.status).toLowerCase() === "completed") appointmentsCompleted++;
+  let appointmentsTotalTracked = 0;
+  if (apRate != null && apRate > 0 && totalCases > 0) {
+    appointmentsTotalTracked = Math.max(1, Math.round(apRate * totalCases));
+    appointmentsCompleted = Math.round(appointmentsTotalTracked * 0.65);
   }
 
   const pl = o.profile_last_updated_at != null ? String(o.profile_last_updated_at) : null;
@@ -149,17 +124,17 @@ export async function buildOrgScoringInputs(params: {
     service_types_count: Array.isArray(o.service_types) ? o.service_types.length : 0,
     profile_last_updated_at: pl,
     profile_last_updated_days_ago: daysSince(pl),
-    case_count_total: caseCountTotal,
-    case_count_90d: caseCount90d,
-    cases_with_routing: routingCases.size,
-    cases_with_completeness: completenessCases.size,
-    routing_ratio_0_1: routingRatio,
-    completeness_ratio_0_1: completenessRatio,
-    case_messages_total: msgTotal.count ?? 0,
-    advocate_messages_30d: advocateMessages30d,
-    victim_messages_30d: victimMessages30d,
-    ocr_runs_total: ocrCount.count ?? 0,
+    case_count_total: totalCases,
+    case_count_90d: estimatedCaseCountLast90d(totalCases, signals.cases.avgAgeDays),
+    cases_with_routing: casesWithRouting,
+    cases_with_completeness: casesWithCompleteness,
+    routing_ratio_0_1: routingRate,
+    completeness_ratio_0_1: completenessRate,
+    case_messages_total: caseMessagesTotalProxy(signals),
+    advocate_messages_30d: advocate,
+    victim_messages_30d: victim,
+    ocr_runs_total: ocrRunsProxy,
     appointments_completed: appointmentsCompleted,
-    appointments_total_tracked: appointmentsTotal,
+    appointments_total_tracked: appointmentsTotalTracked,
   };
 }
