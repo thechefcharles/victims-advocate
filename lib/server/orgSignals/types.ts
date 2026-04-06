@@ -9,6 +9,15 @@ export type OrganizationSignals = {
     profileStage: string | null;
     lastProfileUpdate: string | null;
     completeness: SignalCompleteness;
+    name: string;
+    acceptingClients: boolean;
+    capacityStatus: string;
+    avgResponseTimeHours: number | null;
+    accessibilityFeaturesCount: number;
+    languagesCount: number;
+    intakeMethodsCount: number;
+    serviceTypesCount: number;
+    hasCoverage: boolean;
   };
   cases: {
     total: number;
