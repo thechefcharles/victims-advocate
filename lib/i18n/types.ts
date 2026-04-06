@@ -969,6 +969,10 @@ export type I18nDict = {
       videoTour: {
         title: string;
         intro: string;
+        noHtml5: string;
+        loadError: string;
+        missingFileHint: string;
+        openDirect: string;
       };
       audiences: {
         title: string;

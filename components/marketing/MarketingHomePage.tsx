@@ -23,6 +23,7 @@ import { useI18n } from "@/components/i18n/i18nProvider";
 import { MarketingNav } from "@/components/marketing/MarketingNav";
 import { MarketingHomeInteractiveDemo } from "@/components/marketing/MarketingHomeInteractiveDemo";
 import { MarketingHomeAudiences } from "@/components/marketing/MarketingHomeAudiences";
+import { MarketingDemoVideo } from "@/components/marketing/MarketingDemoVideo";
 
 const SCHEDULE_URL = process.env.NEXT_PUBLIC_MEETING_URL ?? "";
 
@@ -209,16 +210,7 @@ export function MarketingHomePage() {
             <h2 className="text-2xl font-bold text-[var(--color-navy)] sm:text-3xl">{t("home.mkt.videoTour.title")}</h2>
             <p className="mx-auto mt-3 max-w-xl text-base text-[var(--color-slate)]">{t("home.mkt.videoTour.intro")}</p>
           </div>
-          <div className="mx-auto mt-8 w-full max-w-3xl px-[var(--space-4)] sm:px-[var(--space-6)]">
-            <video
-              className="w-full rounded-[var(--radius-xl)] border border-[var(--color-border-light)] bg-black object-contain shadow-[var(--shadow-card)] max-h-[min(70vh,520px)]"
-              controls
-              playsInline
-              preload="metadata"
-            >
-              <source src="/mvp-demo.mp4" type="video/mp4" />
-            </video>
-          </div>
+          <MarketingDemoVideo />
         </section>
 
         {/* Problem — dark band uses teal-deep (primary brand), not navy background (Brand Kit: navy for text) */}

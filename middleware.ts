@@ -27,7 +27,9 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-// Apply to everything except static assets
+// Apply to everything except static assets and root public files (e.g. .mp4 needs clean Range responses for iOS)
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|[^/]+\\.(?:svg|png|jpg|jpeg|gif|webp|ico|mp4|webm|woff2?)$).*)",
+  ],
 };
