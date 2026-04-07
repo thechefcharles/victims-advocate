@@ -1,6 +1,13 @@
-import type { SessionContext, UserAccountStatus } from "@/lib/registry";
+import type { SessionContext, UserAccountStatus, ProviderRole } from "@/lib/registry";
 import type { AuthContext, AccountStatus } from "./context";
 import { resolveAccountType } from "./resolveAccountType";
+
+/** Domain 0.3: SimpleOrgRole → ProviderRole mapping (Decision 6). */
+const orgRoleMap: Record<string, ProviderRole> = {
+  owner: "org_owner",
+  supervisor: "supervisor",
+  advocate: "victim_advocate",
+};
 
 function mapAccountStatus(legacy: AccountStatus): UserAccountStatus {
   if (legacy === "active") return "active";
@@ -16,9 +23,9 @@ function mapAccountStatus(legacy: AccountStatus): UserAccountStatus {
  * New domain service layers accept SessionContext; this adapter converts
  * at the boundary so both can coexist.
  *
- * activeRole is null in this adapter — ProviderRole mapping is deferred
- * to Domain 0.3 (Permissions / Policy Engine) where the full role-to-policy
- * mapping is implemented.
+ * activeRole: maps legacy SimpleOrgRole → ProviderRole via orgRoleMap
+ * (Domain 0.3). "owner"→"org_owner", "supervisor"→"supervisor",
+ * "advocate"→"victim_advocate". AgencyRole support deferred to agency domain.
  */
 export function buildSessionContext(ctx: AuthContext): SessionContext {
   const accountType = resolveAccountType({ role: ctx.role, is_admin: ctx.isAdmin });
@@ -30,7 +37,7 @@ export function buildSessionContext(ctx: AuthContext): SessionContext {
     userId: ctx.userId,
     authenticated: true,
     accountType,
-    activeRole: null, // deferred: Domain 0.3 maps SimpleOrgRole → ProviderRole
+    activeRole: ctx.orgRole ? (orgRoleMap[ctx.orgRole] ?? null) : null,
     tenantType,
     tenantId: ctx.orgId,
     emailVerified: ctx.emailVerified,
