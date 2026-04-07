@@ -9,6 +9,9 @@ import { config } from "@/lib/config";
 import { AppError } from "@/lib/server/api";
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
+import type { AccountType } from "@/lib/registry";
+import { resolveAccountType } from "./resolveAccountType";
+import { logEvent } from "@/lib/server/audit/logEvent";
 
 export type ProfileRole = "victim" | "advocate" | "organization";
 
@@ -34,6 +37,10 @@ export type AuthContext = {
   isAdmin: boolean;
   emailVerified: boolean;
   accountStatus: AccountStatus;
+  /** 2.0 AccountType derived from legacy role + is_admin. */
+  accountType: AccountType;
+  /** True when the user's safety mode is active — suppresses notification content. */
+  safetyModeEnabled: boolean;
 };
 
 function getToken(req: Request): string | null {
@@ -111,10 +118,39 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
   const affiliatedCatalogEntryId =
     typeof rawAff === "number" && Number.isFinite(rawAff) ? rawAff : null;
 
+  const accountType = resolveAccountType({ role, is_admin: isAdmin });
+
+  const { data: safetySettings } = await supabaseAdmin
+    .from("user_safety_settings")
+    .select("safety_mode_enabled")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const safetyModeEnabled = safetySettings?.safety_mode_enabled ?? false;
+
   let effectiveRole = role;
   const viewAsActive = isAdmin && req ? parseViewAsRoleCookie(req) : null;
   if (viewAsActive === "victim" || viewAsActive === "advocate") {
     effectiveRole = viewAsActive;
+    void logEvent({
+      ctx: {
+        user: { id: userId, email: data.user.email ?? undefined },
+        userId,
+        role,
+        realRole: role,
+        orgId,
+        orgRole,
+        affiliatedCatalogEntryId,
+        organizationCatalogEntryId,
+        isAdmin,
+        emailVerified,
+        accountStatus,
+        accountType,
+        safetyModeEnabled,
+      },
+      action: "auth.view_as_activated",
+      severity: "security",
+      metadata: { real_role: role, view_as_role: viewAsActive, is_admin: isAdmin },
+    });
   }
 
   return {
@@ -130,6 +166,8 @@ export async function getAuthContext(req: Request): Promise<AuthContext | null> 
     isAdmin,
     emailVerified,
     accountStatus,
+    accountType,
+    safetyModeEnabled,
   };
 }
 

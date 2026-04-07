@@ -25,9 +25,55 @@ export type LockoutResult = {
 export async function checkLoginLockout(params: {
   email: string | null;
   ip?: string | null;
+  isAdmin?: boolean;
 }): Promise<LockoutResult> {
-  // Lockout disabled for non-admins (prototype phase). Admins are not rate-limited.
-  return { locked: false, lockedUntil: null };
+  if (params.isAdmin) return { locked: false, lockedUntil: null };
+
+  const supabase = getSupabaseAdmin();
+  const now = new Date();
+  const email = params.email?.trim().toLowerCase() ?? null;
+  const ip = params.ip != null ? parseInet(String(params.ip)) : null;
+
+  const checks: Promise<LockoutResult>[] = [];
+
+  if (email) {
+    checks.push(
+      Promise.resolve(
+        supabase
+          .from("auth_rate_limits")
+          .select("locked_until")
+          .eq("email", email)
+          .eq("action", ACTION_LOGIN)
+          .maybeSingle()
+      ).then(({ data }) => {
+        const lockedUntil = (data as { locked_until?: string | null } | null)?.locked_until ?? null;
+        const locked = lockedUntil ? new Date(lockedUntil) > now : false;
+        return { locked, lockedUntil: locked ? lockedUntil : null };
+      })
+    );
+  }
+
+  if (ip) {
+    checks.push(
+      Promise.resolve(
+        supabase
+          .from("auth_rate_limits")
+          .select("locked_until")
+          .eq("ip", ip)
+          .eq("action", ACTION_LOGIN)
+          .maybeSingle()
+      ).then(({ data }) => {
+        const lockedUntil = (data as { locked_until?: string | null } | null)?.locked_until ?? null;
+        const locked = lockedUntil ? new Date(lockedUntil) > now : false;
+        return { locked, lockedUntil: locked ? lockedUntil : null };
+      })
+    );
+  }
+
+  if (checks.length === 0) return { locked: false, lockedUntil: null };
+
+  const results = await Promise.all(checks);
+  return results.find((r) => r.locked) ?? { locked: false, lockedUntil: null };
 }
 
 async function upsertAndIncrement(params: {
@@ -56,9 +102,8 @@ async function upsertAndIncrement(params: {
     const isNewWindow = now.getTime() - windowStart.getTime() > windowMs;
     const failureCount = isNewWindow ? 1 : (row?.failure_count ?? 0) + 1;
     const newWindowStart = isNewWindow ? now : windowStart;
-    // Lockout disabled for non-admins (prototype phase). Never set locked_until.
-    const locked = false;
-    const lockedUntil = null;
+    const locked = failureCount >= MAX_FAILURES;
+    const lockedUntil = locked ? new Date(now.getTime() + lockoutMs).toISOString() : null;
 
     const payload = {
       email: key === "email" ? params.email : null,

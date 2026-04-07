@@ -61,6 +61,7 @@ export type AuditAction =
   | "auth.email_verification_required"
   | "auth.email_verification_resent"
   | "auth.email_verified"
+  | "auth.view_as_activated"
   | "auth.login_failed"
   | "auth.locked"
   | "auth.login_rate_limited"
