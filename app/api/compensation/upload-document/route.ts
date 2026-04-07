@@ -130,7 +130,9 @@ export async function POST(req: Request) {
       userId: ctx.userId,
       documentId: docId,
     });
-    return NextResponse.json({ document: data });
+    // Strip storage_path before returning to client (SOC 2 / Domain 1.4 serializer rule).
+    const { storage_path: _sp, ...safeDoc } = (data as Record<string, unknown>);
+    return NextResponse.json({ document: safeDoc });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("compensation.upload_document.error", {

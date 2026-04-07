@@ -120,7 +120,19 @@ export type AppointmentStatus =
   | "no_show";
 
 // ---------------------------------------------------------------------------
-// Domain 2.1 — ConsentGrant
+// Domain 1.4 — Documents
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by Domain 1.4 Documents. Canonical lifecycle states.
+ * [DB-CONFIRMED] After migration 20260502200000_documents_consent_domain.sql.
+ * deleted and restricted remain as operational statuses in DB but are not
+ * exposed through the Domain 1.4 serializers.
+ */
+export type DocumentStatus = "active" | "locked" | "archived";
+
+// ---------------------------------------------------------------------------
+// Domain 1.4 — ConsentGrant
 // ---------------------------------------------------------------------------
 
 /**
@@ -128,13 +140,8 @@ export type AppointmentStatus =
  * [CONFIRMED domain number — CODING_CONTEXT.md: "1.4 Documents + Consent"]
  * ConsentGrant is the VOCA/VAWA enforcement mechanism for victim-identifying
  * data disclosure. See CODING_CONTEXT.md Part 2 — VOCA/VAWA Confidentiality.
- * [INFERRED values] Confirm against Notion domain 1.4 spec before execution pass.
  */
-export type ConsentGrantStatus =
-  | "pending"
-  | "granted"
-  | "revoked"
-  | "expired";
+export type ConsentGrantStatus = "active" | "revoked" | "expired";
 
 // ---------------------------------------------------------------------------
 // Domain 2.2 — TrustedHelper

@@ -291,8 +291,33 @@ async function evalDocument(
 
   const consentDenial = checkConsent(context);
 
+  // Status gate helpers
+  const isLocked = resource.status === "locked";
+  const isArchived = resource.status === "archived";
+
   switch (action) {
-    case "document:upload":
+    case "document:upload": {
+      // Archived/locked documents cannot receive new uploads (would create a new doc anyway
+      // but guard here for completeness — replace is the correct path for locked docs, denied below).
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived.");
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this document.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role for document access.");
+        }
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Advocates can only access documents on cases assigned to them.");
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
     case "document:view": {
       if (actor.accountType === "applicant") {
         if (resource.ownerId !== actor.userId) {
@@ -305,17 +330,73 @@ async function evalDocument(
           return deny("INSUFFICIENT_ROLE", "Insufficient organization role for document access.");
         }
         if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
-          return deny(
-            "INSUFFICIENT_ROLE",
-            "Advocates can only access documents on cases assigned to them.",
-          );
+          return deny("INSUFFICIENT_ROLE", "Advocates can only access documents on cases assigned to them.");
         }
         return consentDenial ?? allow();
       }
       return deny("INSUFFICIENT_ROLE", "Access denied.");
     }
 
+    case "document:download": {
+      // Same permissions as view; separate action for SOC 2 audit trail.
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived.");
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this document.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role to download documents.");
+        }
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Advocates can only access documents on cases assigned to them.");
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
+    case "document:replace": {
+      // Replace requires status === 'active'; locked and archived deny.
+      if (isLocked) return deny("INSUFFICIENT_ROLE", "This document is locked and cannot be replaced.");
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived and cannot be replaced.");
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this document.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role to replace documents.");
+        }
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Advocates can only access documents on cases assigned to them.");
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
+    case "document:lock": {
+      // CASE_LEADERSHIP only; status must be active.
+      if (isLocked) return deny("INSUFFICIENT_ROLE", "Document is already locked.");
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived.");
+      if (
+        actor.accountType !== "provider" ||
+        !actor.activeRole ||
+        !CASE_LEADERSHIP.has(actor.activeRole)
+      ) {
+        return deny("INSUFFICIENT_ROLE", "Organization leadership required to lock documents.");
+      }
+      return consentDenial ?? allow();
+    }
+
     case "document:share": {
+      // CASE_LEADERSHIP + status gate (archived = deny; locked = allow read-only sharing).
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived and cannot be shared.");
       if (
         actor.accountType !== "provider" ||
         !actor.activeRole ||
@@ -323,12 +404,12 @@ async function evalDocument(
       ) {
         return deny("INSUFFICIENT_ROLE", "Organization leadership required to share documents.");
       }
+      // Full ConsentGrant check is done in documentService.shareDocument() via isSharingAllowed().
       return consentDenial ?? allow();
     }
 
     case "document:restrict":
     case "document:unrestrict": {
-      // Decision 2: victim_advocate, org_owner, supervisor
       if (
         actor.accountType !== "provider" ||
         !actor.activeRole ||
@@ -343,6 +424,8 @@ async function evalDocument(
     }
 
     case "document:delete": {
+      if (isLocked) return deny("INSUFFICIENT_ROLE", "This document is locked and cannot be deleted.");
+      if (isArchived) return deny("INSUFFICIENT_ROLE", "This document is archived and cannot be deleted.");
       if (actor.accountType === "applicant" && resource.ownerId === actor.userId) {
         return consentDenial ?? allow();
       }
@@ -360,6 +443,74 @@ async function evalDocument(
       return deny(
         "RESOURCE_NOT_FOUND",
         `Action '${action}' is not valid for resource type 'document'.`,
+      );
+  }
+}
+
+async function evalConsent(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // Consent grants are cross-tenant by design (applicant → org).
+  // Do NOT call assertSameTenant here. Access is governed by ownership and role.
+
+  const consentDenial = checkConsent(context);
+
+  // Agency actors are explicitly denied all consent actions.
+  if (actor.tenantType === "agency") {
+    return deny("INSUFFICIENT_ROLE", "Agency accounts cannot perform consent operations.");
+  }
+
+  switch (action) {
+    case "consent:create": {
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only applicants can create consent grants.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "consent:view": {
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this consent grant.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role to view consent grants.");
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
+    case "consent:revoke": {
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only the applicant owner can revoke a consent grant.");
+      }
+      if (resource.ownerId !== actor.userId) {
+        return deny("INSUFFICIENT_ROLE", "Only the applicant owner can revoke a consent grant.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "consent:request": {
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role to request consent.");
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Provider role required to request consent.");
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for resource type 'consent'.`,
       );
   }
 }
@@ -727,6 +878,9 @@ export async function can(
       break;
     case "support_request":
       decision = await evalSupportRequest(action, actor, resource, context);
+      break;
+    case "consent":
+      decision = await evalConsent(action, actor, resource, context);
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);

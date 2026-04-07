@@ -25,6 +25,12 @@
  * case_response_time    — avg hours from case open to first provider action (Domain 1.2)
  * case_time_to_resolution — avg hours from case open to closed (Domain 1.2)
  * message_response_latency — hours from applicant message to first provider reply (Domain 1.3)
+ * document_submission_latency — days from case open to first document uploaded (Domain 1.4)
+ * document_completion_rate — fraction of required document types uploaded (0–1) (Domain 1.4)
+ * document_request_fulfillment_time — days from document request to fulfillment (Domain 1.4)
+ * consent_grant_rate — fraction of cases where applicant granted consent (0–1) (Domain 1.4)
+ * consent_revocation_rate — fraction of active consent grants revoked (0–1) (Domain 1.4)
+ * consent_request_response_time — hours from provider consent request to applicant response (Domain 1.4)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -38,7 +44,13 @@ export type TrustSignalType =
   | "profile_completeness"
   | "case_response_time"
   | "case_time_to_resolution"
-  | "message_response_latency";
+  | "message_response_latency"
+  | "document_submission_latency"
+  | "document_completion_rate"
+  | "document_request_fulfillment_time"
+  | "consent_grant_rate"
+  | "consent_revocation_rate"
+  | "consent_request_response_time";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -54,6 +66,12 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "case_response_time",
   "case_time_to_resolution",
   "message_response_latency",
+  "document_submission_latency",
+  "document_completion_rate",
+  "document_request_fulfillment_time",
+  "consent_grant_rate",
+  "consent_revocation_rate",
+  "consent_request_response_time",
 ]);
 
 /** Read model for a row in trust_signal_events. */

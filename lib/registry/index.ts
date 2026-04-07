@@ -17,6 +17,7 @@ export type {
   IntakeSessionStatus,
   ReferralStatus,
   AppointmentStatus,
+  DocumentStatus,
   ConsentGrantStatus,
   TrustedHelperStatus,
   ScoreMethodologyStatus,

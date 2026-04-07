@@ -56,6 +56,7 @@ export type PolicyResourceType =
   | "message_thread"
   | "org"
   | "support_request"
+  | "consent"
   | "admin";
 
 /**

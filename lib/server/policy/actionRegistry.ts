@@ -94,6 +94,24 @@ export const POLICY_ACTIONS = [
   "document:unrestrict",
   /** Delete a document. Applicant (owner) or provider leadership. */
   "document:delete",
+  /** Replace a document (new file, preserve same document id). Applicant (own, active) or CASE_STAFF. */
+  "document:replace",
+  /** Download a document — issues a signed URL. Separate SOC 2 audit trail from view. */
+  "document:download",
+  /** Lock a document (immutable). CASE_LEADERSHIP only. */
+  "document:lock",
+
+  // -------------------------------------------------------------------------
+  // Consent actions (Domain 1.4)
+  // -------------------------------------------------------------------------
+  /** Create a consent grant. Applicant only. */
+  "consent:create",
+  /** View a consent grant. Applicant (own), Provider (CASE_STAFF), Platform Admin. */
+  "consent:view",
+  /** Revoke a consent grant. Applicant only (own grant). */
+  "consent:revoke",
+  /** Request consent from an applicant. Provider (CASE_STAFF) or Platform Admin. */
+  "consent:request",
 
   // -------------------------------------------------------------------------
   // Message thread actions (Domain 1.3)
