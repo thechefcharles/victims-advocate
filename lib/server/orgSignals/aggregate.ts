@@ -37,7 +37,7 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
   const { data: org, error: orgErr } = await supabase
     .from("organizations")
     .select(
-      "id,profile_status,profile_stage,last_profile_update,profile_last_updated_at,service_types,languages,coverage_area,capacity_status,intake_methods"
+      "id,name,profile_status,profile_stage,last_profile_update,profile_last_updated_at,service_types,languages,coverage_area,capacity_status,intake_methods,accessibility_features,accepting_clients,avg_response_time_hours"
     )
     .eq("id", organizationId)
     .maybeSingle();
@@ -214,6 +214,14 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
   }
   if (appointmentsNotAvailable) flags.push("appointments_not_available");
 
+  const serviceTypesCount = Array.isArray(org.service_types) ? org.service_types.length : 0;
+  const languagesCount = Array.isArray(org.languages) ? org.languages.length : 0;
+  const intakeMethodsCount = Array.isArray(org.intake_methods) ? org.intake_methods.length : 0;
+  const accessibilityFeaturesCount = Array.isArray(org.accessibility_features)
+    ? org.accessibility_features.length
+    : 0;
+  const capacityStatus = String(org.capacity_status ?? "unknown");
+
   return {
     organizationId,
     computedAt,
@@ -222,12 +230,24 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
       profileStage: org.profile_stage != null ? String(org.profile_stage) : null,
       lastProfileUpdate,
       completeness: profileCompletenessBucket({
-        serviceTypesCount: Array.isArray(org.service_types) ? org.service_types.length : 0,
-        languagesCount: Array.isArray(org.languages) ? org.languages.length : 0,
+        serviceTypesCount,
+        languagesCount,
         hasCoverage,
-        hasCapacity: String(org.capacity_status ?? "unknown").toLowerCase() !== "unknown",
-        hasIntakeMethods: Array.isArray(org.intake_methods) && org.intake_methods.length > 0,
+        hasCapacity: capacityStatus.toLowerCase() !== "unknown",
+        hasIntakeMethods: intakeMethodsCount > 0,
       }),
+      name: String(org.name ?? ""),
+      acceptingClients: org.accepting_clients === true,
+      capacityStatus,
+      avgResponseTimeHours:
+        org.avg_response_time_hours != null && org.avg_response_time_hours !== ""
+          ? Number(org.avg_response_time_hours)
+          : null,
+      accessibilityFeaturesCount,
+      languagesCount,
+      intakeMethodsCount,
+      serviceTypesCount,
+      hasCoverage,
     },
     cases: {
       total: totalCases,

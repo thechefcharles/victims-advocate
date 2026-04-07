@@ -1,11 +1,9 @@
 /**
  * Phase C: Aggregate platform signals into org-level scoring inputs (honest proxies).
  * Workflow metrics come only from {@link getOrganizationSignals}; grading does not query
- * cases, routing_runs, completeness_runs, or case_messages directly.
+ * cases, routing_runs, completeness_runs, case_messages, or organizations directly.
  */
 
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { AppError } from "@/lib/server/api";
 import { getOrganizationSignals } from "@/lib/server/orgSignals/aggregate";
 import type { OrganizationSignals } from "@/lib/server/orgSignals/types";
 import type { OrgScoringInputs } from "./types";
@@ -17,22 +15,17 @@ function daysSince(iso: string | null): number | null {
   return Math.floor((Date.now() - t) / 86400000);
 }
 
-function profileCompleteness(org: Record<string, unknown>): number {
+function profileCompleteness(profile: OrganizationSignals["profile"]): number {
   let n = 0;
   const max = 7;
-  if (Array.isArray(org.service_types) && org.service_types.length > 0) n++;
-  if (Array.isArray(org.languages) && org.languages.length > 0) n++;
-  if (
-    org.coverage_area &&
-    typeof org.coverage_area === "object" &&
-    Object.keys(org.coverage_area as object).length > 0
-  )
-    n++;
-  if (Array.isArray(org.intake_methods) && org.intake_methods.length > 0) n++;
-  if (org.capacity_status && String(org.capacity_status) !== "unknown") n++;
-  if (org.accepting_clients === true) n++;
-  if (org.avg_response_time_hours != null && org.avg_response_time_hours !== "") n++;
-  if (Array.isArray(org.accessibility_features) && org.accessibility_features.length > 0) n++;
+  if (profile.serviceTypesCount > 0) n++;
+  if (profile.languagesCount > 0) n++;
+  if (profile.hasCoverage) n++;
+  if (profile.intakeMethodsCount > 0) n++;
+  if (profile.capacityStatus !== "unknown") n++;
+  if (profile.acceptingClients) n++;
+  if (profile.avgResponseTimeHours != null) n++;
+  if (profile.accessibilityFeaturesCount > 0) n++;
   return Math.min(1, n / max);
 }
 
@@ -65,26 +58,10 @@ export async function buildOrgScoringInputs(params: {
   organizationId: string;
 }): Promise<OrgScoringInputs> {
   const { organizationId } = params;
-  const supabase = getSupabaseAdmin();
 
-  const [signals, orgRes] = await Promise.all([
-    getOrganizationSignals(organizationId),
-    supabase
-      .from("organizations")
-      .select(
-        "id,name,service_types,languages,coverage_area,intake_methods,accessibility_features,accepting_clients,capacity_status,avg_response_time_hours,profile_last_updated_at"
-      )
-      .eq("id", organizationId)
-      .maybeSingle(),
-  ]);
+  const signals = await getOrganizationSignals(organizationId);
 
-  const { data: org, error: orgErr } = orgRes;
-
-  if (orgErr || !org) {
-    throw new AppError("NOT_FOUND", "Organization not found", undefined, 404);
-  }
-
-  const o = org as Record<string, unknown>;
+  const { profile } = signals;
   const totalCases = signals.cases.total;
   const routingRate = signals.workflow.routingUsageRate ?? 0;
   const completenessRate = signals.workflow.completenessUsageRate ?? 0;
@@ -104,26 +81,19 @@ export async function buildOrgScoringInputs(params: {
     appointmentsCompleted = Math.round(appointmentsTotalTracked * 0.65);
   }
 
-  const pl = o.profile_last_updated_at != null ? String(o.profile_last_updated_at) : null;
-
   return {
     organization_id: organizationId,
-    org_name: String(o.name ?? ""),
-    profile_completeness_0_1: profileCompleteness(o),
-    accepting_clients: Boolean(o.accepting_clients),
-    capacity_status: String(o.capacity_status ?? "unknown"),
-    avg_response_time_hours:
-      o.avg_response_time_hours != null && o.avg_response_time_hours !== ""
-        ? Number(o.avg_response_time_hours)
-        : null,
-    languages_count: Array.isArray(o.languages) ? o.languages.length : 0,
-    accessibility_count: Array.isArray(o.accessibility_features)
-      ? o.accessibility_features.length
-      : 0,
-    intake_methods_count: Array.isArray(o.intake_methods) ? o.intake_methods.length : 0,
-    service_types_count: Array.isArray(o.service_types) ? o.service_types.length : 0,
-    profile_last_updated_at: pl,
-    profile_last_updated_days_ago: daysSince(pl),
+    org_name: profile.name,
+    profile_completeness_0_1: profileCompleteness(profile),
+    accepting_clients: profile.acceptingClients,
+    capacity_status: profile.capacityStatus,
+    avg_response_time_hours: profile.avgResponseTimeHours,
+    languages_count: profile.languagesCount,
+    accessibility_count: profile.accessibilityFeaturesCount,
+    intake_methods_count: profile.intakeMethodsCount,
+    service_types_count: profile.serviceTypesCount,
+    profile_last_updated_at: profile.lastProfileUpdate,
+    profile_last_updated_days_ago: daysSince(profile.lastProfileUpdate),
     case_count_total: totalCases,
     case_count_90d: estimatedCaseCountLast90d(totalCases, signals.cases.avgAgeDays),
     cases_with_routing: casesWithRouting,
