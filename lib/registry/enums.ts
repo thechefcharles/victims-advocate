@@ -46,12 +46,20 @@ export type SupportRequestStatus =
 /**
  * Owned by: Domain 1.2 Case
  * [DB-CONFIRMED] Matches `cases.status` CHECK constraint in migration
- * 20250127000003_tenant_isolation.sql. Do not change without a new migration.
+ * 20260502000000_case_status_12state.sql. Do not change without a new migration.
  */
 export type CaseStatus =
-  | "draft"
-  | "ready_for_review"
+  | "open"
+  | "assigned"
+  | "in_progress"
+  | "awaiting_applicant"
+  | "awaiting_provider"
+  | "ready_for_submission"
   | "submitted"
+  | "under_review"
+  | "approved"
+  | "denied"
+  | "appeal_in_progress"
   | "closed";
 
 // ---------------------------------------------------------------------------

@@ -42,15 +42,30 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
   ],
 
   /**
-   * cases.status
-   * draft → ready_for_review → submitted → closed
-   * Write routes are deferred to Domain 1.2 (Case).
-   * Engine is ready; no callers yet.
+   * cases.status (Domain 1.2 — 12-state graph)
+   * open → assigned → in_progress ↔ awaiting_applicant / awaiting_provider
+   * in_progress | awaiting_* → ready_for_submission → submitted → under_review
+   * under_review → approved | denied
+   * approved | denied → closed
+   * denied → appeal_in_progress → closed
    */
   case_status: [
-    ["draft", "ready_for_review"],
-    ["ready_for_review", "submitted"],
-    ["submitted", "closed"],
+    ["open", "assigned"],
+    ["assigned", "in_progress"],
+    ["in_progress", "awaiting_applicant"],
+    ["awaiting_applicant", "in_progress"],
+    ["awaiting_provider", "in_progress"],
+    ["in_progress", "ready_for_submission"],
+    ["awaiting_applicant", "ready_for_submission"],
+    ["awaiting_provider", "ready_for_submission"],
+    ["ready_for_submission", "submitted"],
+    ["submitted", "under_review"],
+    ["under_review", "approved"],
+    ["under_review", "denied"],
+    ["approved", "closed"],
+    ["denied", "closed"],
+    ["denied", "appeal_in_progress"],
+    ["appeal_in_progress", "closed"],
   ],
 
   /**

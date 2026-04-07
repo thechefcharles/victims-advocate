@@ -120,7 +120,7 @@ describe("Category 1: Valid transitions", () => {
     const firstEdges: Record<WorkflowEntityType, [string, string]> = {
       org_profile_status: ["draft", "pending_review"],
       org_lifecycle: ["seeded", "managed"],
-      case_status: ["draft", "ready_for_review"],
+      case_status: ["open", "assigned"],
       advocate_connection: ["pending", "accepted"],
       referral: ["pending", "accepted"],
       support_request: ["draft", "submitted"],
@@ -167,9 +167,9 @@ describe("Category 3/9: Invalid fromState → STATE_INVALID (no DB call)", () =>
 
   it("rejects an edge where fromState and toState are swapped but reverse not listed", async () => {
     const supabase = makeSuccessSupabase();
-    // submitted → ready_for_review is not in VALID_TRANSITIONS
+    // assigned → open is not in VALID_TRANSITIONS (reverse is not listed)
     const result = await transition(
-      makeParams({ entityType: "case_status", fromState: "submitted", toState: "ready_for_review" }),
+      makeParams({ entityType: "case_status", fromState: "assigned", toState: "open" }),
       supabase,
     );
     expect(result.success).toBe(false);

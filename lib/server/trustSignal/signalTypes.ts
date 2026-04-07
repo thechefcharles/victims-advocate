@@ -22,6 +22,8 @@
  * ocr_coverage          — fraction of cases with an OCR run (0–1)
  * appointment_coverage  — fraction of cases with an appointment (0–1)
  * profile_completeness  — completeness bucket score (0–1) for the org profile
+ * case_response_time    — avg hours from case open to first provider action (Domain 1.2)
+ * case_time_to_resolution — avg hours from case open to closed (Domain 1.2)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -32,7 +34,9 @@ export type TrustSignalType =
   | "messaging_recency_30d"
   | "ocr_coverage"
   | "appointment_coverage"
-  | "profile_completeness";
+  | "profile_completeness"
+  | "case_response_time"
+  | "case_time_to_resolution";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -45,6 +49,8 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "ocr_coverage",
   "appointment_coverage",
   "profile_completeness",
+  "case_response_time",
+  "case_time_to_resolution",
 ]);
 
 /** Read model for a row in trust_signal_events. */

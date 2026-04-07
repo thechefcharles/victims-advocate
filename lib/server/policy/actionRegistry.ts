@@ -34,6 +34,24 @@ export const POLICY_ACTIONS = [
   "case:update_status",
   /** View the case timeline / audit trail. */
   "case:view_timeline",
+  /** Create a case from an accepted support request. CASE_LEADERSHIP only. */
+  "case:create_from_support_request",
+  /** Reassign a case to a different advocate. CASE_LEADERSHIP only. */
+  "case:reassign",
+  /** Create a case note. CASE_STAFF only. */
+  "case:note_create",
+  /** View case notes. CASE_STAFF or applicant owner. */
+  "case:note_view",
+  /** View case next-steps panel. CASE_STAFF or applicant owner. */
+  "case:next_steps_view",
+  /** Mark case ready for submission. CASE_LEADERSHIP or assigned advocate. */
+  "case:mark_ready",
+  /** Submit case to state program. CASE_LEADERSHIP only. */
+  "case:submit",
+  /** Record outcome (approved/denied). CASE_LEADERSHIP only. */
+  "case:record_outcome",
+  /** Start appeal on a denied case. Applicant owner only. */
+  "case:appeal_start",
 
   // -------------------------------------------------------------------------
   // Support request actions

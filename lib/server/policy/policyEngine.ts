@@ -78,13 +78,14 @@ function fireAuditOnDeny(
 /** All provider roles that can access case/document content. */
 const CASE_STAFF = new Set<string>([
   "org_owner",
+  "program_manager",
   "supervisor",
   "victim_advocate",
   "intake_specialist",
 ]);
 
-/** Provider roles with write/leadership authority. */
-const CASE_LEADERSHIP = new Set<string>(["org_owner", "supervisor"]);
+/** Provider roles with write/leadership authority (Domain 1.2 Decision: program_manager added). */
+const CASE_LEADERSHIP = new Set<string>(["org_owner", "program_manager", "supervisor"]);
 
 /**
  * Roles permitted to accept, decline, assign, and close support requests.
@@ -199,6 +200,77 @@ async function evalCase(
       }
       if (resource.ownerId !== actor.userId) {
         return deny("INSUFFICIENT_ROLE", "Only the case owner can delete this case.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "case:create_from_support_request":
+    case "case:reassign":
+    case "case:submit":
+    case "case:record_outcome": {
+      // CASE_LEADERSHIP only (Domain 1.2 Decision)
+      if (
+        actor.accountType !== "provider" ||
+        !actor.activeRole ||
+        !CASE_LEADERSHIP.has(actor.activeRole)
+      ) {
+        return deny("INSUFFICIENT_ROLE", "Organization leadership required.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "case:mark_ready": {
+      // CASE_LEADERSHIP or the assigned advocate
+      if (actor.accountType !== "provider" || !actor.activeRole) {
+        return deny("INSUFFICIENT_ROLE", "Provider role required to mark a case ready.");
+      }
+      if (CASE_LEADERSHIP.has(actor.activeRole)) {
+        return consentDenial ?? allow();
+      }
+      if (actor.activeRole === "victim_advocate" && resource.assignedTo === actor.userId) {
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Leadership or the assigned advocate can mark a case ready.");
+    }
+
+    case "case:note_create": {
+      // Any CASE_STAFF provider
+      if (
+        actor.accountType !== "provider" ||
+        !actor.activeRole ||
+        !CASE_STAFF.has(actor.activeRole)
+      ) {
+        return deny("INSUFFICIENT_ROLE", "Provider staff role required to create notes.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "case:note_view":
+    case "case:next_steps_view": {
+      // CASE_STAFF or applicant owner
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this case.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (
+        actor.accountType === "provider" &&
+        actor.activeRole &&
+        CASE_STAFF.has(actor.activeRole)
+      ) {
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Insufficient role for this case action.");
+    }
+
+    case "case:appeal_start": {
+      // Applicant owner only
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only the case owner can start an appeal.");
+      }
+      if (resource.ownerId !== actor.userId) {
+        return deny("INSUFFICIENT_ROLE", "Only the case owner can start an appeal.");
       }
       return consentDenial ?? allow();
     }

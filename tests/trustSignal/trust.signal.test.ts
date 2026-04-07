@@ -101,7 +101,7 @@ describe("Category 1: Valid emitSignal inserts a trust_signal_events row", () =>
     expect(s.from).toHaveBeenCalledWith("trust_signal_events");
   });
 
-  it("all 9 canonical signal types emit successfully", async () => {
+  it("all canonical signal types emit successfully", async () => {
     for (const signalType of TRUST_SIGNAL_TYPES) {
       const s = makeSupabase({ data: { id: `event-${signalType}` }, error: null });
       const result = await emitSignal(
@@ -385,8 +385,8 @@ describe("Trust Law regression: grading/ must not query workflow tables directly
 // ---------------------------------------------------------------------------
 
 describe("TRUST_SIGNAL_TYPES canonical set", () => {
-  it("contains exactly 9 canonical types", () => {
-    expect(TRUST_SIGNAL_TYPES.size).toBe(9);
+  it("contains exactly 11 canonical types", () => {
+    expect(TRUST_SIGNAL_TYPES.size).toBe(11);
   });
 
   const expected: TrustSignalType[] = [
@@ -399,6 +399,8 @@ describe("TRUST_SIGNAL_TYPES canonical set", () => {
     "ocr_coverage",
     "appointment_coverage",
     "profile_completeness",
+    "case_response_time",
+    "case_time_to_resolution",
   ];
 
   for (const type of expected) {
