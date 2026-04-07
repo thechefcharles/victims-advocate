@@ -74,7 +74,7 @@ function makeThread(overrides: Partial<CaseConversationRow> = {}): CaseConversat
 function makeSupabase(opts: {
   insertResult?: { data: unknown; error: unknown };
   queryResult?: { data: unknown; error: unknown };
-  updateResult?: { error: unknown };
+  updateResult?: { data: unknown; error: unknown };
 } = {}): SupabaseClient {
   const { insertResult, queryResult, updateResult } = opts;
 
@@ -98,7 +98,7 @@ function makeSupabase(opts: {
 
   const insertQueryBuilder = makeQueryBuilder(insertResult ?? { data: makeMessageRow(), error: null });
   const selectQueryBuilder = makeQueryBuilder(queryResult ?? { data: [], error: null });
-  const updateQueryBuilder = makeQueryBuilder(updateResult ?? { error: null });
+  const updateQueryBuilder = makeQueryBuilder(updateResult ?? { data: null, error: null });
 
   const from = vi.fn().mockImplementation((_table: string) => ({
     insert: vi.fn().mockReturnValue(insertQueryBuilder),
