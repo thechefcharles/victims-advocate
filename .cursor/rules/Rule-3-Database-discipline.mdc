@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+All schema changes are additive by default. Never destructive without explicit migration reasoning. Never modify the existing 52 migrations — only add new ones with timestamp after 20260430250000. RLS is a backstop, not the primary authorization layer.
