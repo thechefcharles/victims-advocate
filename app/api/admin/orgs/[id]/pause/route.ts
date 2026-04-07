@@ -7,6 +7,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { transition, isValidTransition } from "@/lib/server/workflow";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -49,6 +50,43 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         public_profile_status: "paused",
         already_paused: true,
       });
+    }
+
+    // Workflow engine validates the transition edge (fixes missing "must be active" guard).
+    // Only active → paused is registered; draft/pending_review will be rejected here.
+    if (!isValidTransition("org_profile_status", pub, "paused")) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        `Cannot pause an organization with public profile status '${pub}'.`,
+        undefined,
+        409,
+      );
+    }
+
+    const supabase2 = supabase; // alias for clarity — same client instance
+    const workflowResult = await transition(
+      {
+        entityType: "org_profile_status",
+        entityId: orgId,
+        fromState: pub,
+        toState: "paused",
+        actorUserId: ctx.userId,
+        actorAccountType: ctx.accountType ?? "platform_admin",
+        tenantId: orgId,
+        metadata: { name: org.name },
+      },
+      supabase2,
+    );
+
+    if (!workflowResult.success) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        workflowResult.reason === "STATE_INVALID"
+          ? `Transition from '${pub}' to 'paused' is not permitted.`
+          : "Failed to record state transition. Please try again.",
+        undefined,
+        workflowResult.reason === "STATE_INVALID" ? 409 : 500,
+      );
     }
 
     const { error: upErr } = await supabase

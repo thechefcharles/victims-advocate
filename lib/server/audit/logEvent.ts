@@ -146,7 +146,8 @@ export type AuditAction =
   | "referral.created"
   | "referral.accepted"
   | "referral.declined"
-  | "org.permission_denied";
+  | "org.permission_denied"
+  | "workflow.state_transition";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
