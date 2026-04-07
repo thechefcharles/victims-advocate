@@ -22,7 +22,10 @@ import type { PolicyActor, PolicyResource, PolicyDecision } from "./policyTypes"
  */
 export function isSameTenant(actor: PolicyActor, resource: PolicyResource): boolean {
   if (!resource.tenantId) return true; // no tenant constraint on resource
-  if (!actor.tenantId) return false;   // actor has no tenant, resource requires one
+  // Applicants have no org tenant — their access is governed by ownership checks
+  // in the resource handler, not by tenant scope. Do not block them here.
+  if (actor.accountType === "applicant") return true;
+  if (!actor.tenantId) return false;   // non-applicant actor has no tenant, resource requires one
   return actor.tenantId === resource.tenantId;
 }
 

@@ -509,10 +509,12 @@ export async function can(
     return d;
   }
 
-  // 2. Platform admin bypass (not in supportMode)
-  //    Admins in supportMode go through the normal handler so their
-  //    effective persona role is validated, not bypassed.
-  if (actor.isAdmin && !actor.supportMode) {
+  // 2. Platform admin bypass — all admins (including supportMode) get through.
+  //    Tenant isolation for supportMode admins is handled by assertSameTenant
+  //    returning null (bypass). Role validation is not meaningful for
+  //    platform_admin accountType — ownership/resource checks are the guard.
+  //    auditRequired: true is always set for admin ALLOWs (Decision 5).
+  if (actor.isAdmin) {
     return adminAllow();
   }
 
@@ -545,12 +547,6 @@ export async function can(
   // 4. Audit on DENY (Decision 5)
   if (!decision.allowed) {
     fireAuditOnDeny(action, actor, resource, decision);
-  }
-
-  // 5. Ensure all admin ALLOWs are audited (Decision 5)
-  //    Handles supportMode admins who went through the normal handler.
-  if (decision.allowed && actor.isAdmin) {
-    return { ...decision, auditRequired: true };
   }
 
   return decision;
