@@ -4,6 +4,16 @@
 
 ---
 
+## Shell Environment
+
+Non-interactive shells (including Claude Code) may not include Homebrew on `PATH`, so `gh` and other CLI tools can be missing. Run this at the start of a session when needed (or ensure the host profile exports it):
+
+```bash
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+```
+
+---
+
 ## Universal Rules (apply to all projects)
 
 1. Never skip the Analysis stage. No code without analysis first.
