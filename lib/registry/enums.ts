@@ -25,15 +25,19 @@
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 1.1 SupportRequest
- * [INFERRED] Confirm values against Notion spec before execution pass.
+ * Owned by Domain 1.1 SupportRequest. 8 canonical states.
+ * [DB-CONFIRMED] Matches support_requests.status CHECK constraint in
+ * migration 20260501500000_support_requests.sql.
  */
 export type SupportRequestStatus =
-  | "pending"
-  | "in_progress"
-  | "resolved"
-  | "closed"
-  | "cancelled";
+  | "draft"
+  | "submitted"
+  | "pending_review"
+  | "accepted"
+  | "declined"
+  | "transferred"
+  | "withdrawn"
+  | "closed";
 
 // ---------------------------------------------------------------------------
 // Domain 1.2 — Case

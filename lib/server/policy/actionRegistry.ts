@@ -40,16 +40,26 @@ export const POLICY_ACTIONS = [
   // -------------------------------------------------------------------------
   /** Create a new support request. Applicant only. */
   "support_request:create",
+  /** View a support request. Applicant (own), provider (org-scoped), admin. */
+  "support_request:view",
+  /** Update mutable fields on a draft request. Applicant (owner, draft only). */
+  "support_request:update_self",
   /** Submit a support request for review. Applicant (owner) only. */
   "support_request:submit",
-  /** Accept an incoming support request. Provider staff. */
+  /** Accept an incoming support request. ACCEPT_LEADERSHIP only. */
   "support_request:accept",
-  /** Decline a support request. Provider staff. */
+  /** Decline a support request. ACCEPT_LEADERSHIP only. */
   "support_request:decline",
-  /** Withdraw a pending support request. Applicant (owner) only. */
-  "support_request:withdraw",
+  /** Assign a request to an advocate. ACCEPT_LEADERSHIP only. */
+  "support_request:assign",
   /** Transfer a support request to another org. Leadership only. */
   "support_request:transfer",
+  /** Withdraw a pending support request. Applicant (owner) only. */
+  "support_request:withdraw",
+  /** Close a terminal support request. ACCEPT_LEADERSHIP only. */
+  "support_request:close",
+  /** View the status reason (decline_reason) on a request. Applicant (own), provider (org-scoped). */
+  "support_request:view_status_reason",
 
   // -------------------------------------------------------------------------
   // Document actions

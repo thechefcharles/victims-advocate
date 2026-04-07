@@ -70,6 +70,26 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
     ["pending", "accepted"],
     ["pending", "declined"],
   ],
+
+  /**
+   * support_requests.status (Domain 1.1 SupportRequest)
+   * draft → submitted → pending_review → accepted | declined | transferred
+   * draft | submitted → withdrawn
+   * accepted | declined | transferred | withdrawn → closed
+   */
+  support_request: [
+    ["draft", "submitted"],
+    ["submitted", "pending_review"],
+    ["pending_review", "accepted"],
+    ["pending_review", "declined"],
+    ["pending_review", "transferred"],
+    ["draft", "withdrawn"],
+    ["submitted", "withdrawn"],
+    ["accepted", "closed"],
+    ["declined", "closed"],
+    ["transferred", "closed"],
+    ["withdrawn", "closed"],
+  ],
 };
 
 /**

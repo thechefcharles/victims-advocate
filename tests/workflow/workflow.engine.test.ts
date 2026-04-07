@@ -123,6 +123,7 @@ describe("Category 1: Valid transitions", () => {
       case_status: ["draft", "ready_for_review"],
       advocate_connection: ["pending", "accepted"],
       referral: ["pending", "accepted"],
+      support_request: ["draft", "submitted"],
     };
 
     for (const [entityType, [fromState, toState]] of Object.entries(firstEdges) as [

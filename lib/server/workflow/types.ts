@@ -13,7 +13,8 @@ export type WorkflowEntityType =
   | "org_lifecycle"
   | "case_status"
   | "advocate_connection"
-  | "referral";
+  | "referral"
+  | "support_request";
 
 /** A valid edge in a state graph: fromState → toState for a given action label. */
 export interface WorkflowTransition<TFrom extends string = string, TTo extends string = string> {

@@ -86,6 +86,13 @@ const CASE_STAFF = new Set<string>([
 /** Provider roles with write/leadership authority. */
 const CASE_LEADERSHIP = new Set<string>(["org_owner", "supervisor"]);
 
+/**
+ * Roles permitted to accept, decline, assign, and close support requests.
+ * victim_advocate is explicitly excluded — they get view-only access.
+ * Domain 1.1 Decision 3.
+ */
+const ACCEPT_LEADERSHIP = new Set<string>(["org_owner", "program_manager", "supervisor"]);
+
 /** Roles permitted to restrict/unrestrict documents (Decision 2). */
 const DOC_RESTRICT_ROLES = new Set<string>([
   "org_owner",
@@ -410,8 +417,12 @@ async function evalSupportRequest(
   resource: PolicyResource,
   context?: PolicyContext,
 ): Promise<PolicyDecision> {
-  const tenantDenial = assertSameTenant(actor, resource);
-  if (tenantDenial) return tenantDenial;
+  // For create, tenant isolation is not applicable (resource has no tenant yet).
+  // For all other actions, enforce same-tenant scoping.
+  if (action !== "support_request:create") {
+    const tenantDenial = assertSameTenant(actor, resource);
+    if (tenantDenial) return tenantDenial;
+  }
 
   const consentDenial = checkConsent(context);
 
@@ -419,6 +430,31 @@ async function evalSupportRequest(
     case "support_request:create": {
       if (actor.accountType !== "applicant") {
         return deny("INSUFFICIENT_ROLE", "Only applicants can create support requests.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "support_request:view":
+    case "support_request:view_status_reason": {
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this request.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        // Same-tenant check already done above. Any active org member may view.
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
+    case "support_request:update_self": {
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only the applicant owner can update this request.");
+      }
+      if (resource.ownerId !== actor.userId) {
+        return deny("INSUFFICIENT_ROLE", "Only the applicant owner can update this request.");
       }
       return consentDenial ?? allow();
     }
@@ -435,13 +471,19 @@ async function evalSupportRequest(
     }
 
     case "support_request:accept":
-    case "support_request:decline": {
+    case "support_request:decline":
+    case "support_request:assign":
+    case "support_request:close": {
+      // victim_advocate is explicitly excluded — view-only by default (Domain 1.1 Decision 3).
       if (
         actor.accountType !== "provider" ||
         !actor.activeRole ||
-        !CASE_STAFF.has(actor.activeRole)
+        !ACCEPT_LEADERSHIP.has(actor.activeRole)
       ) {
-        return deny("INSUFFICIENT_ROLE", "Organization case staff required.");
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Organization leadership required for this action.",
+        );
       }
       return consentDenial ?? allow();
     }
@@ -450,7 +492,7 @@ async function evalSupportRequest(
       if (
         actor.accountType !== "provider" ||
         !actor.activeRole ||
-        !CASE_LEADERSHIP.has(actor.activeRole)
+        !ACCEPT_LEADERSHIP.has(actor.activeRole)
       ) {
         return deny("INSUFFICIENT_ROLE", "Organization leadership required to transfer requests.");
       }
