@@ -10,6 +10,12 @@
 --   Decision 5: Visibility gate enforced by application code (canOrganizationAppearInSearch).
 --   Decision 6: Coordinates derived by computeOrgMapPoint() before upsert.
 --
+-- search_vector note:
+--   GENERATED ALWAYS AS fails for to_tsvector() because it is not marked IMMUTABLE
+--   in PostgreSQL (the text search configuration can change at runtime).
+--   Fix: plain tsvector column + BEFORE INSERT OR UPDATE trigger that computes it.
+--   indexSync.ts does NOT set search_vector in the upsert payload; the trigger handles it.
+--
 -- PostGIS is not pre-installed on this Supabase project.
 -- EXTENSION must come first — location column depends on it.
 
@@ -19,7 +25,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- provider_search_index
 -- ---------------------------------------------------------------------------
 -- Single denormalized table for all provider discovery queries.
--- search_vector: GENERATED ALWAYS AS tsvector for full-text search (GIN index).
+-- search_vector: plain tsvector, populated by trigger on every upsert.
 -- location: geography(Point,4326) for PostGIS ST_DWithin geo radius queries (GIST index).
 -- approximate: true when coords come from state centroid fallback.
 --   approximate orgs appear in text search but NOT in geo radius queries.
@@ -53,17 +59,8 @@ CREATE TABLE IF NOT EXISTS provider_search_index (
   location             geography(Point, 4326),        -- NULL when approximate=true
   approximate          boolean      NOT NULL DEFAULT false,
 
-  -- Full-text search vector (GENERATED — do not set in application code)
-  search_vector        tsvector GENERATED ALWAYS AS (
-    to_tsvector(
-      'english',
-      coalesce(name, '') || ' ' ||
-      coalesce(description, '') || ' ' ||
-      coalesce(array_to_string(service_tags, ' '), '') || ' ' ||
-      coalesce(array_to_string(state_codes, ' '), '') || ' ' ||
-      coalesce(array_to_string(languages, ' '), '')
-    )
-  ) STORED,
+  -- Full-text search vector (set by trigger — do NOT set in application upsert)
+  search_vector        tsvector,
 
   -- Index management
   is_active            boolean      NOT NULL DEFAULT true,
@@ -73,10 +70,38 @@ CREATE TABLE IF NOT EXISTS provider_search_index (
 );
 
 -- ---------------------------------------------------------------------------
+-- search_vector trigger
+-- ---------------------------------------------------------------------------
+-- Computes to_tsvector('english', ...) from name, description, service_tags,
+-- state_codes, and languages on every INSERT or UPDATE.
+-- This is the correct approach: to_tsvector is STABLE (not IMMUTABLE) so it
+-- cannot be used in GENERATED ALWAYS AS columns, but triggers have no such restriction.
+-- ---------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION provider_search_index_set_search_vector()
+RETURNS trigger AS $$
+BEGIN
+  NEW.search_vector := to_tsvector(
+    'english',
+    coalesce(NEW.name, '') || ' ' ||
+    coalesce(NEW.description, '') || ' ' ||
+    coalesce(array_to_string(NEW.service_tags, ' '), '') || ' ' ||
+    coalesce(array_to_string(NEW.state_codes, ' '), '') || ' ' ||
+    coalesce(array_to_string(NEW.languages, ' '), '')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_search_vector_update
+  BEFORE INSERT OR UPDATE ON provider_search_index
+  FOR EACH ROW EXECUTE FUNCTION provider_search_index_set_search_vector();
+
+-- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------
 
--- Full-text search (GIN on tsvector generated column)
+-- Full-text search (GIN on tsvector column — populated by trigger)
 CREATE INDEX IF NOT EXISTS idx_search_vector
   ON provider_search_index USING GIN (search_vector);
 

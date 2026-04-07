@@ -435,7 +435,7 @@ describe("8. syncOrgToIndex — upserts provider_search_index for eligible org",
     );
   });
 
-  it("upsert does NOT include search_vector (generated column)", async () => {
+  it("upsert does NOT include search_vector (trigger-computed, not app-set)", async () => {
     const { syncOrgToIndex } = await import("@/lib/server/search");
     const upsertSpy = vi.fn().mockResolvedValue({ data: null, error: null });
 

@@ -135,7 +135,9 @@ export async function syncOrgToIndex(
   const locationValue = approximate ? null : `POINT(${lng} ${lat})`;
 
   // Step 6: Upsert into provider_search_index ON CONFLICT (org_id).
-  // search_vector is a GENERATED ALWAYS AS column — do not set it explicitly.
+  // search_vector is computed by the trg_search_vector_update trigger (BEFORE INSERT OR UPDATE).
+  // Do NOT include it in the payload — the trigger derives it from name/service_tags/state_codes/languages.
+  // (GENERATED ALWAYS AS cannot use to_tsvector() because it is STABLE not IMMUTABLE.)
   const { error: upsertErr } = await supabase.from("provider_search_index").upsert(
     {
       org_id: row.id,
