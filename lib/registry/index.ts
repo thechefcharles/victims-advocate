@@ -13,6 +13,7 @@ export type {
   // Workflow status enums (enums.ts)
   SupportRequestStatus,
   CaseStatus,
+  MessageThreadStatus,
   IntakeSessionStatus,
   ReferralStatus,
   AppointmentStatus,

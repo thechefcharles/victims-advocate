@@ -364,6 +364,58 @@ async function evalDocument(
   }
 }
 
+async function evalMessageThread(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  const tenantDenial = assertSameTenant(actor, resource);
+  if (tenantDenial) return tenantDenial;
+
+  const consentDenial = checkConsent(context);
+
+  switch (action) {
+    case "message_thread:create_workflow":
+    case "message_thread:archive":
+    case "message_thread:set_read_only": {
+      // CASE_LEADERSHIP only
+      if (
+        actor.accountType !== "provider" ||
+        !actor.activeRole ||
+        !CASE_LEADERSHIP.has(actor.activeRole)
+      ) {
+        return deny("INSUFFICIENT_ROLE", "Organization leadership required for thread management.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "message_thread:view": {
+      // Applicant (owner) or any CASE_STAFF provider
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: not a participant in this thread.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (
+        actor.accountType === "provider" &&
+        actor.activeRole &&
+        CASE_STAFF.has(actor.activeRole)
+      ) {
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Insufficient role to view this thread.");
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for resource type 'message_thread'.`,
+      );
+  }
+}
+
 async function evalMessage(
   action: PolicyAction,
   actor: PolicyActor,
@@ -378,9 +430,19 @@ async function evalMessage(
   switch (action) {
     case "message:send":
     case "message:read": {
+      // Thread status gate — resource.status carries the thread's current status.
+      // Callers must pre-fetch the thread and pass status in the resource.
+      if (action === "message:send") {
+        if (resource.status && resource.status !== "active") {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "This conversation is not accepting new messages.",
+          );
+        }
+      }
+
       if (actor.accountType === "applicant") {
-        // Applicant must own the case (ownerId) or be the assigned party
-        if (resource.ownerId !== actor.userId && resource.assignedTo !== actor.userId) {
+        if (resource.ownerId !== actor.userId) {
           return deny("INSUFFICIENT_ROLE", "Access denied: not a participant in this conversation.");
         }
         return consentDenial ?? allow();
@@ -388,6 +450,13 @@ async function evalMessage(
       if (actor.accountType === "provider") {
         if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
           return deny("INSUFFICIENT_ROLE", "Insufficient organization role for messaging.");
+        }
+        // Decision 8: advocates can only message on cases assigned to them
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "Advocates can only message on cases assigned to them.",
+          );
         }
         return consentDenial ?? allow();
       }
@@ -407,6 +476,11 @@ async function evalMessage(
         return consentDenial ?? allow();
       }
       return deny("INSUFFICIENT_ROLE", "Insufficient role to delete this message.");
+    }
+
+    case "message:attachment_upload": {
+      // Deferred (Domain 1.4) — deny with a clear reason
+      return deny("INSUFFICIENT_ROLE", "Attachment upload is not yet available.");
     }
 
     default:
@@ -641,6 +715,9 @@ export async function can(
       break;
     case "document":
       decision = await evalDocument(action, actor, resource, context);
+      break;
+    case "message_thread":
+      decision = await evalMessageThread(action, actor, resource, context);
       break;
     case "message":
       decision = await evalMessage(action, actor, resource, context);

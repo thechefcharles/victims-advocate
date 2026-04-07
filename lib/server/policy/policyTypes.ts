@@ -53,6 +53,7 @@ export type PolicyResourceType =
   | "case"
   | "document"
   | "message"
+  | "message_thread"
   | "org"
   | "support_request"
   | "admin";

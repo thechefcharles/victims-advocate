@@ -61,8 +61,12 @@ export function CaseMessagesPanel({
         setErr(getApiErrorMessage(json, "Couldn’t load messages."));
         return;
       }
-      setMessages((json.messages ?? []) as Message[]);
+      setMessages((json.data ?? json.messages ?? []) as Message[]);
       setUnreadCount(Number(json.unread_count ?? 0));
+      // canSendMessage from thread view — only override when not using canSendOverride
+      if (canSendOverride === undefined && typeof json.canSendMessage === "boolean") {
+        setCanSendMessages(json.canSendMessage);
+      }
     } catch (e) {
       console.error(e);
       setErr("Couldn’t load messages.");

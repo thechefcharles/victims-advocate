@@ -63,6 +63,18 @@ export type CaseStatus =
   | "closed";
 
 // ---------------------------------------------------------------------------
+// Domain 1.3 — Messaging
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by: Domain 1.3 Messaging
+ * [DB-CONFIRMED] Matches case_conversations.status CHECK constraint in
+ * migration 20260503000000_messaging_thread_v2.sql.
+ * "read_only" replaces the legacy "closed" value (data-migrated).
+ */
+export type MessageThreadStatus = "active" | "read_only" | "archived";
+
+// ---------------------------------------------------------------------------
 // Domain 1.3 — IntakeSession
 // ---------------------------------------------------------------------------
 

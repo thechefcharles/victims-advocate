@@ -24,6 +24,7 @@
  * profile_completeness  — completeness bucket score (0–1) for the org profile
  * case_response_time    — avg hours from case open to first provider action (Domain 1.2)
  * case_time_to_resolution — avg hours from case open to closed (Domain 1.2)
+ * message_response_latency — hours from applicant message to first provider reply (Domain 1.3)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -36,7 +37,8 @@ export type TrustSignalType =
   | "appointment_coverage"
   | "profile_completeness"
   | "case_response_time"
-  | "case_time_to_resolution";
+  | "case_time_to_resolution"
+  | "message_response_latency";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -51,6 +53,7 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "profile_completeness",
   "case_response_time",
   "case_time_to_resolution",
+  "message_response_latency",
 ]);
 
 /** Read model for a row in trust_signal_events. */

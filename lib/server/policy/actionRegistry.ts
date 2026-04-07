@@ -96,6 +96,18 @@ export const POLICY_ACTIONS = [
   "document:delete",
 
   // -------------------------------------------------------------------------
+  // Message thread actions (Domain 1.3)
+  // -------------------------------------------------------------------------
+  /** Create a workflow-bound message thread. CASE_LEADERSHIP only. */
+  "message_thread:create_workflow",
+  /** View a message thread (metadata + status). Participant or CASE_STAFF. */
+  "message_thread:view",
+  /** Archive a message thread. CASE_LEADERSHIP only. */
+  "message_thread:archive",
+  /** Set a thread to read_only. Internal — triggered by workflow state changes. */
+  "message_thread:set_read_only",
+
+  // -------------------------------------------------------------------------
   // Message actions
   // -------------------------------------------------------------------------
   /** Send a message in a case conversation. */
@@ -104,6 +116,8 @@ export const POLICY_ACTIONS = [
   "message:read",
   /** Delete a message. Own messages or provider leadership. */
   "message:delete",
+  /** Upload an attachment to a message thread. Deferred: requires Domain 1.4. */
+  "message:attachment_upload",
 
   // -------------------------------------------------------------------------
   // Org actions
