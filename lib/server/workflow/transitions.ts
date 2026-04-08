@@ -115,6 +115,15 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
     ["draft", "active"],
     ["active", "deprecated"],
   ],
+
+  /**
+   * cvc_form_templates.status (Domain 2.3)
+   * draft → active (publish) → deprecated (terminal)
+   */
+  cvc_form_template_status: [
+    ["draft", "active"],
+    ["active", "deprecated"],
+  ],
 };
 
 /**

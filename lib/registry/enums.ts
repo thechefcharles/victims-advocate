@@ -105,6 +105,29 @@ export type IntakeSessionStatus = "draft" | "submitted" | "locked";
 export type StateWorkflowConfigStatus = "draft" | "active" | "deprecated";
 
 // ---------------------------------------------------------------------------
+// Domain 2.3 — CvcFormTemplate / OutputGenerationJob
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by: Domain 2.3 CVC Form Processing & Alignment Engine
+ * [DB-CONFIRMED] Matches cvc_form_templates.status CHECK constraint in
+ * migration 20260506000000_cvc_form_processing.sql.
+ */
+export type CvcFormTemplateStatus = "draft" | "active" | "deprecated";
+
+/**
+ * Owned by: Domain 2.3 CVC Form Processing & Alignment Engine
+ * [DB-CONFIRMED] Matches output_generation_jobs.status CHECK constraint in
+ * migration 20260506000000_cvc_form_processing.sql.
+ *
+ * pending    — job created but not yet started.
+ * processing — render in progress.
+ * completed  — PDF generated and stored via documentService.
+ * failed     — render or storage failed; failure_reason populated.
+ */
+export type OutputGenerationJobStatus = "pending" | "processing" | "completed" | "failed";
+
+// ---------------------------------------------------------------------------
 // Domain 1.4 — Referral
 // ---------------------------------------------------------------------------
 

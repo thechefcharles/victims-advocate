@@ -170,6 +170,38 @@ export const POLICY_ACTIONS = [
   "state_workflow:resolve_active_config",
 
   // -------------------------------------------------------------------------
+  // CVC form template actions (Domain 2.3 — admin only)
+  // -------------------------------------------------------------------------
+  /** Create a new draft CVC form template. Platform Admin only. */
+  "cvc_template:create",
+  /** View a single CVC form template (admin context). Platform Admin only. */
+  "cvc_template:view",
+  /** List CVC form templates (admin context). Platform Admin only. */
+  "cvc_template:list",
+  /** Upload the source PDF file for a draft template. Platform Admin only. */
+  "cvc_template:upload_source",
+  /** Mutate metadata on a draft template (status must be 'draft'). Platform Admin only. */
+  "cvc_template:update",
+  /** Activate a draft template — runs alignment validation first. Platform Admin only. */
+  "cvc_template:activate",
+  /** Deprecate an active template. Platform Admin only. */
+  "cvc_template:deprecate",
+  /** Create or update field/mapping rows on a draft template. Platform Admin only. */
+  "cvc_template:map_fields",
+  /** Run alignment validation as a preview (does not change status). Platform Admin only. */
+  "cvc_template:validate_alignment",
+
+  // -------------------------------------------------------------------------
+  // CVC form runtime actions (Domain 2.3)
+  // -------------------------------------------------------------------------
+  /** Preview generation readiness for a case. CASE_STAFF in tenant scope. */
+  "cvc_form:preview",
+  /** Generate the CVC PDF for a case (creates output_generation_jobs row). CASE_STAFF in tenant scope. */
+  "cvc_form:generate",
+  /** Download the most recent generated CVC PDF for a case. CASE_STAFF in tenant scope. */
+  "cvc_form:download",
+
+  // -------------------------------------------------------------------------
   // Org actions
   // -------------------------------------------------------------------------
   /** Manage (add, remove, change role) org members. org_owner, supervisor. */

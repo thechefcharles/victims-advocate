@@ -60,6 +60,8 @@ export type PolicyResourceType =
   | "intake_session"
   | "intake_submission"
   | "state_workflow_config"
+  | "cvc_form_template"
+  | "output_generation_job"
   | "admin";
 
 /**

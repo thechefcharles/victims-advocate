@@ -1023,6 +1023,147 @@ async function evalStateWorkflow(
   }
 }
 
+async function evalCvcTemplate(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // CVC form templates are platform-wide; no tenant scope. Agency accounts denied.
+  if (actor.tenantType === "agency") {
+    return deny("INSUFFICIENT_ROLE", "Agency accounts cannot perform CVC template operations.");
+  }
+  const consentDenial = checkConsent(context);
+
+  // Runtime actions: cvc_form:* — allowed for CASE_STAFF in tenant scope.
+  // Tenant + assignment + status checks happen against the case resource the
+  // caller passes in (resource.tenantId = case.organization_id, resource.assignedTo
+  // = case.assigned_advocate_id, resource.status = case.status).
+  if (
+    action === "cvc_form:preview" ||
+    action === "cvc_form:generate" ||
+    action === "cvc_form:download"
+  ) {
+    if (resource.tenantId) {
+      const tenantDenial = assertSameTenant(actor, resource);
+      if (tenantDenial) return tenantDenial;
+    }
+    if (actor.accountType === "applicant") {
+      return deny("INSUFFICIENT_ROLE", "Applicants cannot generate CVC forms in v1.");
+    }
+    if (actor.accountType !== "provider") {
+      return deny("INSUFFICIENT_ROLE", "Provider role required to generate CVC forms.");
+    }
+    if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+      return deny("INSUFFICIENT_ROLE", "Insufficient organization role for CVC generation.");
+    }
+    if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Advocates can only generate CVC forms on cases assigned to them.",
+      );
+    }
+    // generate has an additional case-state gate: cannot generate on closed cases
+    if (action === "cvc_form:generate" && resource.status === "closed") {
+      return deny("INSUFFICIENT_ROLE", "Cannot generate CVC output on a closed case.");
+    }
+    return consentDenial ?? allow();
+  }
+
+  // Admin actions — handled via the global isAdmin bypass in can(). Reaching
+  // these cases means the actor is not an admin → deny.
+  switch (action) {
+    case "cvc_template:create":
+    case "cvc_template:view":
+    case "cvc_template:list":
+    case "cvc_template:upload_source":
+    case "cvc_template:map_fields":
+    case "cvc_template:validate_alignment": {
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required for CVC template management.",
+      );
+    }
+
+    case "cvc_template:update": {
+      if (resource.status && resource.status !== "draft") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "CVC form templates can only be edited while in draft status.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to update CVC templates.",
+      );
+    }
+
+    case "cvc_template:activate": {
+      if (resource.status && resource.status !== "draft") {
+        return deny("INSUFFICIENT_ROLE", "Only draft CVC templates can be activated.");
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to activate CVC templates.",
+      );
+    }
+
+    case "cvc_template:deprecate": {
+      if (resource.status && resource.status !== "active") {
+        return deny("INSUFFICIENT_ROLE", "Only active CVC templates can be deprecated.");
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to deprecate CVC templates.",
+      );
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for resource type 'cvc_form_template'.`,
+      );
+  }
+}
+
+async function evalOutputGenerationJob(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // Output jobs inherit the case's tenant + assignment context. Same gates as
+  // the runtime cvc_form:* actions but applied to the job resource directly.
+  if (resource.tenantId) {
+    const tenantDenial = assertSameTenant(actor, resource);
+    if (tenantDenial) return tenantDenial;
+  }
+  const consentDenial = checkConsent(context);
+
+  if (actor.tenantType === "agency") {
+    return deny("INSUFFICIENT_ROLE", "Agency accounts cannot view CVC generation jobs.");
+  }
+
+  // The only action targeting this resource type today is cvc_form:preview
+  // (used to read the latest job status). Applicants are denied in v1.
+  if (actor.accountType === "applicant") {
+    return deny("INSUFFICIENT_ROLE", "Applicants cannot view CVC generation jobs in v1.");
+  }
+  if (actor.accountType !== "provider") {
+    return deny("INSUFFICIENT_ROLE", "Provider role required.");
+  }
+  if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+    return deny("INSUFFICIENT_ROLE", "Insufficient organization role.");
+  }
+  if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+    return deny(
+      "INSUFFICIENT_ROLE",
+      "Advocates can only view CVC jobs on cases assigned to them.",
+    );
+  }
+  return consentDenial ?? allow();
+}
+
 async function evalAdmin(
   action: PolicyAction,
   actor: PolicyActor,
@@ -1107,6 +1248,12 @@ export async function can(
       break;
     case "state_workflow_config":
       decision = await evalStateWorkflow(action, actor, resource, context);
+      break;
+    case "cvc_form_template":
+      decision = await evalCvcTemplate(action, actor, resource, context);
+      break;
+    case "output_generation_job":
+      decision = await evalOutputGenerationJob(action, actor, resource, context);
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);

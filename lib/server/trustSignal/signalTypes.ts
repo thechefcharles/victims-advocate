@@ -1,7 +1,7 @@
 /**
  * Domain 0.5 — Trust Signal Infrastructure: canonical types.
  *
- * TrustSignalType: the 31 canonical signal categories the engine recognizes.
+ * TrustSignalType: the 35 canonical signal categories the engine recognizes.
  * SignalEvent:     shape of a trust_signal_events row (read model).
  * SignalAggregate: shape of a trust_signal_aggregates row (read model).
  * EmitSignalParams / EmitSignalResult: emitSignal() I/O contract.
@@ -44,6 +44,10 @@
  * schema_version_changed — emitted when an intake_schema row is published in a new config version (Domain 2.2)
  * eligibility_rules_changed — emitted when an eligibility_rule_set is published in a new config version (Domain 2.2)
  * document_requirements_changed — emitted when a document_requirement_set is published in a new config version (Domain 2.2)
+ * cvc_template_activated — emitted when a cvc_form_template transitions draft → active (Domain 2.3)
+ * cvc_template_deprecated — emitted when a cvc_form_template transitions active → deprecated (Domain 2.3)
+ * cvc_form_generated — emitted when an output_generation_job completes successfully (Domain 2.3)
+ * cvc_form_generation_failed — emitted when an output_generation_job fails (Domain 2.3)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -76,7 +80,11 @@ export type TrustSignalType =
   | "state_config_updated"
   | "schema_version_changed"
   | "eligibility_rules_changed"
-  | "document_requirements_changed";
+  | "document_requirements_changed"
+  | "cvc_template_activated"
+  | "cvc_template_deprecated"
+  | "cvc_form_generated"
+  | "cvc_form_generation_failed";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -111,6 +119,10 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "schema_version_changed",
   "eligibility_rules_changed",
   "document_requirements_changed",
+  "cvc_template_activated",
+  "cvc_template_deprecated",
+  "cvc_form_generated",
+  "cvc_form_generation_failed",
 ]);
 
 /** Read model for a row in trust_signal_events. */

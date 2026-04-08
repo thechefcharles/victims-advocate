@@ -125,6 +125,7 @@ describe("Category 1: Valid transitions", () => {
       referral: ["pending", "accepted"],
       support_request: ["draft", "submitted"],
       state_workflow_config_status: ["draft", "active"],
+      cvc_form_template_status: ["draft", "active"],
     };
 
     for (const [entityType, [fromState, toState]] of Object.entries(firstEdges) as [

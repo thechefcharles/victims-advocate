@@ -16,6 +16,8 @@ export type {
   MessageThreadStatus,
   IntakeSessionStatus,
   StateWorkflowConfigStatus,
+  CvcFormTemplateStatus,
+  OutputGenerationJobStatus,
   ReferralStatus,
   AppointmentStatus,
   DocumentStatus,
