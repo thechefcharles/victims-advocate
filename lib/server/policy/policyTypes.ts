@@ -57,6 +57,8 @@ export type PolicyResourceType =
   | "org"
   | "support_request"
   | "consent"
+  | "intake_session"
+  | "intake_submission"
   | "admin";
 
 /**

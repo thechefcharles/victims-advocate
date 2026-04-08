@@ -138,6 +138,22 @@ export const POLICY_ACTIONS = [
   "message:attachment_upload",
 
   // -------------------------------------------------------------------------
+  // Intake actions (Domain 2.1)
+  // -------------------------------------------------------------------------
+  /** Start a new intake session. Applicant only (own session). */
+  "intake:start",
+  /** Save draft mutations to an intake session. Applicant only (own, draft only). */
+  "intake:save_draft",
+  /** Submit an intake session — produces an immutable intake_submissions row. */
+  "intake:submit",
+  /** View an intake session or submission. Applicant (own), CASE_STAFF (case-linked), Platform Admin. */
+  "intake:view",
+  /** Amend an intake submission after-the-fact. CASE_STAFF / Platform Admin only in v1. */
+  "intake:amend_after_submission",
+  /** Lock an intake session against further edits. Platform Admin (support mode) only. */
+  "intake:lock_from_silent_edits",
+
+  // -------------------------------------------------------------------------
   // Org actions
   // -------------------------------------------------------------------------
   /** Manage (add, remove, change role) org members. org_owner, supervisor. */

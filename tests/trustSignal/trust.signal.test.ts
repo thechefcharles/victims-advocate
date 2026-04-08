@@ -385,8 +385,8 @@ describe("Trust Law regression: grading/ must not query workflow tables directly
 // ---------------------------------------------------------------------------
 
 describe("TRUST_SIGNAL_TYPES canonical set", () => {
-  it("contains exactly 18 canonical types", () => {
-    expect(TRUST_SIGNAL_TYPES.size).toBe(18);
+  it("contains exactly 25 canonical types", () => {
+    expect(TRUST_SIGNAL_TYPES.size).toBe(25);
   });
 
   const expected: TrustSignalType[] = [
@@ -408,6 +408,13 @@ describe("TRUST_SIGNAL_TYPES canonical set", () => {
     "consent_grant_rate",
     "consent_revocation_rate",
     "consent_request_response_time",
+    "intake_started",
+    "intake_completed",
+    "intake_abandoned",
+    "intake_completion_rate",
+    "intake_field_completion_rate",
+    "intake_validation_failure_rate",
+    "intake_time_to_complete",
   ];
 
   for (const type of expected) {

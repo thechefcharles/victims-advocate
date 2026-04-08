@@ -836,6 +836,115 @@ async function evalSupportRequest(
   }
 }
 
+async function evalIntake(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // Tenant scope (only enforced when the resource has a tenantId — pre-link sessions skip this).
+  if (resource.tenantId) {
+    const tenantDenial = assertSameTenant(actor, resource);
+    if (tenantDenial) return tenantDenial;
+  }
+
+  const consentDenial = checkConsent(context);
+
+  // Agency accounts are explicitly denied all intake actions.
+  if (actor.tenantType === "agency") {
+    return deny("INSUFFICIENT_ROLE", "Agency accounts cannot perform intake operations.");
+  }
+
+  switch (action) {
+    case "intake:start": {
+      // Applicant only — owns the session being created.
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only applicants can start an intake session.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "intake:save_draft": {
+      // Applicant only, must own session, status must be draft.
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only the session owner can save draft changes.");
+      }
+      if (resource.ownerId !== actor.userId) {
+        return deny("INSUFFICIENT_ROLE", "Only the session owner can save draft changes.");
+      }
+      if (resource.status && resource.status !== "draft") {
+        return deny("INSUFFICIENT_ROLE", "This intake session is no longer editable.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "intake:submit": {
+      if (actor.accountType !== "applicant") {
+        return deny("INSUFFICIENT_ROLE", "Only the session owner can submit this intake.");
+      }
+      if (resource.ownerId !== actor.userId) {
+        return deny("INSUFFICIENT_ROLE", "Only the session owner can submit this intake.");
+      }
+      if (resource.status && resource.status !== "draft") {
+        return deny("INSUFFICIENT_ROLE", "This intake session has already been submitted.");
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "intake:view": {
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny("INSUFFICIENT_ROLE", "Access denied: you do not own this intake.");
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny("INSUFFICIENT_ROLE", "Insufficient organization role for intake access.");
+        }
+        // Advocates only see intakes for cases assigned to them.
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "Advocates can only view intakes for cases assigned to them.",
+          );
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
+    }
+
+    case "intake:amend_after_submission": {
+      // v1: CASE_STAFF only (advocate/program_manager/owner/supervisor) — applicant self-amend deferred to v2.
+      if (actor.accountType !== "provider") {
+        return deny("INSUFFICIENT_ROLE", "Provider role required to amend an intake submission.");
+      }
+      if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+        return deny("INSUFFICIENT_ROLE", "Insufficient organization role to amend intake submissions.");
+      }
+      if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Advocates can only amend intake submissions on cases assigned to them.",
+        );
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "intake:lock_from_silent_edits": {
+      // Platform admin only — handled via the global isAdmin bypass in can().
+      // If we reach this case it means the actor is not an admin → deny.
+      return deny("INSUFFICIENT_ROLE", "Platform administrator access required to lock intake sessions.");
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for resource type 'intake_session' or 'intake_submission'.`,
+      );
+  }
+}
+
 async function evalAdmin(
   action: PolicyAction,
   actor: PolicyActor,
@@ -913,6 +1022,10 @@ export async function can(
       break;
     case "consent":
       decision = await evalConsent(action, actor, resource, context);
+      break;
+    case "intake_session":
+    case "intake_submission":
+      decision = await evalIntake(action, actor, resource, context);
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);

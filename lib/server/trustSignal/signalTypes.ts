@@ -1,7 +1,7 @@
 /**
  * Domain 0.5 — Trust Signal Infrastructure: canonical types.
  *
- * TrustSignalType: the 9 canonical signal categories the engine recognizes.
+ * TrustSignalType: the 25 canonical signal categories the engine recognizes.
  * SignalEvent:     shape of a trust_signal_events row (read model).
  * SignalAggregate: shape of a trust_signal_aggregates row (read model).
  * EmitSignalParams / EmitSignalResult: emitSignal() I/O contract.
@@ -31,6 +31,13 @@
  * consent_grant_rate — fraction of cases where applicant granted consent (0–1) (Domain 1.4)
  * consent_revocation_rate — fraction of active consent grants revoked (0–1) (Domain 1.4)
  * consent_request_response_time — hours from provider consent request to applicant response (Domain 1.4)
+ * intake_started — emitted when an applicant opens a new intake session (Domain 2.1)
+ * intake_completed — emitted when an intake session is submitted (Domain 2.1)
+ * intake_abandoned — emitted when a draft session is detected idle past abandonment threshold (Domain 2.1)
+ * intake_completion_rate — fraction of started sessions that reach submitted state (0–1) (Domain 2.1)
+ * intake_field_completion_rate — fraction of fields with non-skipped responses on submission (0–1) (Domain 2.1)
+ * intake_validation_failure_rate — count of validation failures per session/step (Domain 2.1)
+ * intake_time_to_complete — minutes from intake_started to intake_completed (Domain 2.1)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -50,7 +57,14 @@ export type TrustSignalType =
   | "document_request_fulfillment_time"
   | "consent_grant_rate"
   | "consent_revocation_rate"
-  | "consent_request_response_time";
+  | "consent_request_response_time"
+  | "intake_started"
+  | "intake_completed"
+  | "intake_abandoned"
+  | "intake_completion_rate"
+  | "intake_field_completion_rate"
+  | "intake_validation_failure_rate"
+  | "intake_time_to_complete";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -72,6 +86,13 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "consent_grant_rate",
   "consent_revocation_rate",
   "consent_request_response_time",
+  "intake_started",
+  "intake_completed",
+  "intake_abandoned",
+  "intake_completion_rate",
+  "intake_field_completion_rate",
+  "intake_validation_failure_rate",
+  "intake_time_to_complete",
 ]);
 
 /** Read model for a row in trust_signal_events. */

@@ -75,19 +75,19 @@ export type CaseStatus =
 export type MessageThreadStatus = "active" | "read_only" | "archived";
 
 // ---------------------------------------------------------------------------
-// Domain 1.3 — IntakeSession
+// Domain 2.1 — IntakeSession
 // ---------------------------------------------------------------------------
 
 /**
  * Owned by: Domain 2.1 Intake
- * [CONFIRMED domain number — CODING_CONTEXT.md] [INFERRED values]
- * Confirm values against Notion domain 2.1 spec before execution pass.
+ * [DB-CONFIRMED] Matches intake_sessions.status CHECK constraint in
+ * migration 20260504000000_intake_sessions_submissions.sql.
+ *
+ * draft     — mutable, autosave active.
+ * submitted — immutable snapshot created (intake_submissions row), amendments allowed by CASE_STAFF.
+ * locked    — no further changes; only platform admin (support mode) may relift.
  */
-export type IntakeSessionStatus =
-  | "in_progress"
-  | "completed"
-  | "abandoned"
-  | "expired";
+export type IntakeSessionStatus = "draft" | "submitted" | "locked";
 
 // ---------------------------------------------------------------------------
 // Domain 1.4 — Referral
