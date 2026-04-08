@@ -74,6 +74,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 - `lib/pdfMaps/in_cvc_coords.ts` — frozen, legal document
 - `lib/compensationSchema.ts` — frozen, legally significant
 - `lib/eligibilitySchemaIN.ts` — frozen, legally significant
+- `lib/eligibilitySchema.ts` — IL eligibility computation (163 lines). Legally significant. Seed into DB only. DO NOT modify under any circumstances.
 - `lib/server/matching/evaluate.ts` — calibrated algorithm, preserve logic
 - `lib/server/designations/evaluate.ts` — calibrated pipeline
 - `lib/server/ocr/` — complete pipeline, do not rewrite

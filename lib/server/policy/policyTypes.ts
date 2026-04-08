@@ -59,6 +59,7 @@ export type PolicyResourceType =
   | "consent"
   | "intake_session"
   | "intake_submission"
+  | "state_workflow_config"
   | "admin";
 
 /**

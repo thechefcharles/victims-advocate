@@ -945,6 +945,84 @@ async function evalIntake(
   }
 }
 
+async function evalStateWorkflow(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // State workflow config is platform-wide; no tenant scope.
+  // Agency accounts are explicitly denied for all mutations and admin reads;
+  // they may still resolve the active config (read-only public surface).
+  const consentDenial = checkConsent(context);
+
+  switch (action) {
+    case "state_workflow:resolve_active_config": {
+      // Allowed for any authenticated user (already auth-checked in can()).
+      return consentDenial ?? allow();
+    }
+
+    case "state_workflow:view":
+    case "state_workflow:list": {
+      // Admin-only read of draft/deprecated configs and full metadata.
+      // Platform admins are short-circuited via the can() admin bypass; reaching
+      // this case means the actor is not an admin → deny.
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to read state workflow configs in admin context.",
+      );
+    }
+
+    case "state_workflow:update_config": {
+      // Mutations require platform admin (handled via the can() admin bypass).
+      // Reaching this case means the actor is not an admin OR the resource status
+      // is not 'draft'. Surface a clear status-gate denial when applicable.
+      if (resource.status && resource.status !== "draft") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "State workflow configs can only be edited while in draft status.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to update state workflow configs.",
+      );
+    }
+
+    case "state_workflow:publish_version": {
+      if (resource.status && resource.status !== "draft") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Only draft state workflow configs can be published.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to publish state workflow configs.",
+      );
+    }
+
+    case "state_workflow:deprecate_version": {
+      if (resource.status && resource.status !== "active") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Only active state workflow configs can be deprecated.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to deprecate state workflow configs.",
+      );
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for resource type 'state_workflow_config'.`,
+      );
+  }
+}
+
 async function evalAdmin(
   action: PolicyAction,
   actor: PolicyActor,
@@ -1026,6 +1104,9 @@ export async function can(
     case "intake_session":
     case "intake_submission":
       decision = await evalIntake(action, actor, resource, context);
+      break;
+    case "state_workflow_config":
+      decision = await evalStateWorkflow(action, actor, resource, context);
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);

@@ -23,6 +23,8 @@ export type IntakeSessionRecord = {
   status: IntakeSessionStatus;
   draft_payload: Record<string, unknown>;
   intake_schema_version: string;
+  /** Domain 2.2 — UUID FK to state_workflow_configs.id. Nullable until populated by intakeService.startIntake. */
+  state_workflow_config_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,6 +38,8 @@ export type IntakeSubmissionRecord = {
   owner_user_id: string;
   submitted_payload: Record<string, unknown>;
   intake_schema_version: string;
+  /** Domain 2.2 — copied from the linked session at submission time. */
+  state_workflow_config_id: string | null;
   state_code: "IL" | "IN";
   submitted_at: string;
   submitted_by_user_id: string | null;

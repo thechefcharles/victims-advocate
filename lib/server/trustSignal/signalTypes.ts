@@ -1,7 +1,7 @@
 /**
  * Domain 0.5 — Trust Signal Infrastructure: canonical types.
  *
- * TrustSignalType: the 25 canonical signal categories the engine recognizes.
+ * TrustSignalType: the 31 canonical signal categories the engine recognizes.
  * SignalEvent:     shape of a trust_signal_events row (read model).
  * SignalAggregate: shape of a trust_signal_aggregates row (read model).
  * EmitSignalParams / EmitSignalResult: emitSignal() I/O contract.
@@ -38,6 +38,12 @@
  * intake_field_completion_rate — fraction of fields with non-skipped responses on submission (0–1) (Domain 2.1)
  * intake_validation_failure_rate — count of validation failures per session/step (Domain 2.1)
  * intake_time_to_complete — minutes from intake_started to intake_completed (Domain 2.1)
+ * state_config_published — emitted when a state_workflow_config transitions draft → active (Domain 2.2)
+ * state_config_deprecated — emitted when a state_workflow_config transitions active → deprecated (Domain 2.2)
+ * state_config_updated — emitted when a draft state_workflow_config is mutated (Domain 2.2)
+ * schema_version_changed — emitted when an intake_schema row is published in a new config version (Domain 2.2)
+ * eligibility_rules_changed — emitted when an eligibility_rule_set is published in a new config version (Domain 2.2)
+ * document_requirements_changed — emitted when a document_requirement_set is published in a new config version (Domain 2.2)
  */
 export type TrustSignalType =
   | "case_volume"
@@ -64,7 +70,13 @@ export type TrustSignalType =
   | "intake_completion_rate"
   | "intake_field_completion_rate"
   | "intake_validation_failure_rate"
-  | "intake_time_to_complete";
+  | "intake_time_to_complete"
+  | "state_config_published"
+  | "state_config_deprecated"
+  | "state_config_updated"
+  | "schema_version_changed"
+  | "eligibility_rules_changed"
+  | "document_requirements_changed";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -93,6 +105,12 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "intake_field_completion_rate",
   "intake_validation_failure_rate",
   "intake_time_to_complete",
+  "state_config_published",
+  "state_config_deprecated",
+  "state_config_updated",
+  "schema_version_changed",
+  "eligibility_rules_changed",
+  "document_requirements_changed",
 ]);
 
 /** Read model for a row in trust_signal_events. */

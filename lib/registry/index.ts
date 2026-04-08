@@ -15,6 +15,7 @@ export type {
   CaseStatus,
   MessageThreadStatus,
   IntakeSessionStatus,
+  StateWorkflowConfigStatus,
   ReferralStatus,
   AppointmentStatus,
   DocumentStatus,

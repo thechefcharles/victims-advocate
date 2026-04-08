@@ -67,7 +67,12 @@ export async function getSessionsByOwner(
 
 export async function insertSession(
   supabase: SupabaseClient,
-  input: CreateIntakeSessionInput & { owner_user_id: string },
+  input: CreateIntakeSessionInput & {
+    owner_user_id: string;
+    /** Domain 2.2 — UUID FK to state_workflow_configs.id. Optional at insert time;
+     *  intakeService.startIntake() resolves and patches it after the row is created. */
+    state_workflow_config_id?: string | null;
+  },
 ): Promise<IntakeSessionRecord> {
   const { data, error } = await supabase
     .from(SESSIONS_TABLE)
@@ -80,12 +85,35 @@ export async function insertSession(
       status: "draft",
       draft_payload: {},
       intake_schema_version: "v1",
+      state_workflow_config_id: input.state_workflow_config_id ?? null,
     })
     .select("*")
     .single();
 
   if (error || !data) throw new Error(`insertSession: ${error?.message ?? "no row returned"}`);
   return data as IntakeSessionRecord;
+}
+
+/**
+ * Domain 2.2 — Patches state_workflow_config_id onto an existing session.
+ * Used by intakeService.startIntake() after resolving the active config.
+ * Best-effort: errors are logged but not thrown — the session row is the
+ * source of truth and can be linked later.
+ */
+export async function setSessionWorkflowConfig(
+  supabase: SupabaseClient,
+  id: string,
+  configId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({ state_workflow_config_id: configId })
+    .eq("id", id);
+  if (error) {
+    console.warn(
+      `[intakeRepository.setSessionWorkflowConfig] failed for session ${id}: ${error.message}`,
+    );
+  }
 }
 
 /**
@@ -158,6 +186,8 @@ export async function insertSubmission(
     owner_user_id: string;
     submitted_payload: Record<string, unknown>;
     intake_schema_version: string;
+    /** Domain 2.2 — copied from the parent session row when present. */
+    state_workflow_config_id?: string | null;
     state_code: "IL" | "IN";
     submitted_by_user_id: string | null;
   },

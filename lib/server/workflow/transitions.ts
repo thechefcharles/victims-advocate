@@ -105,6 +105,16 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
     ["transferred", "closed"],
     ["withdrawn", "closed"],
   ],
+
+  /**
+   * state_workflow_configs.status (Domain 2.2)
+   * draft → active (publish) → deprecated (terminal)
+   * No path from deprecated back to active — a new draft must be created.
+   */
+  state_workflow_config_status: [
+    ["draft", "active"],
+    ["active", "deprecated"],
+  ],
 };
 
 /**

@@ -154,6 +154,22 @@ export const POLICY_ACTIONS = [
   "intake:lock_from_silent_edits",
 
   // -------------------------------------------------------------------------
+  // State workflow config actions (Domain 2.2)
+  // -------------------------------------------------------------------------
+  /** View a single state_workflow_config (admin context). Platform Admin only. */
+  "state_workflow:view",
+  /** List state_workflow_configs (admin context). Platform Admin only. */
+  "state_workflow:list",
+  /** Publish a draft state_workflow_config — transitions draft → active. Platform Admin only. */
+  "state_workflow:publish_version",
+  /** Deprecate an active state_workflow_config — transitions active → deprecated. Platform Admin only. */
+  "state_workflow:deprecate_version",
+  /** Mutate a draft state_workflow_config (status must be 'draft'). Platform Admin only. */
+  "state_workflow:update_config",
+  /** Resolve the active config for a state at runtime. Allowed for any authenticated user. */
+  "state_workflow:resolve_active_config",
+
+  // -------------------------------------------------------------------------
   // Org actions
   // -------------------------------------------------------------------------
   /** Manage (add, remove, change role) org members. org_owner, supervisor. */

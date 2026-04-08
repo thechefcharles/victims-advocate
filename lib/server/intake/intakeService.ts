@@ -37,7 +37,9 @@ import {
   getSubmissionBySessionId,
   insertAmendment,
   listAmendmentsBySubmission,
+  setSessionWorkflowConfig,
 } from "./intakeRepository";
+import { resolveActiveStateWorkflowConfig } from "@/lib/server/stateWorkflows/resolvers";
 import { validateSubmissionReadiness, validateIntakeStep } from "./intakeValidation";
 import { buildSearchAttributesFromIntake } from "./buildSearchAttributesFromIntake";
 import { serializeForApplicant, serializeForProvider } from "./intakeSerializer";
@@ -111,6 +113,28 @@ export async function startIntake(
     support_request_id: input.support_request_id ?? null,
     organization_id: input.organization_id ?? null,
   });
+
+  // Domain 2.2 — best-effort version linkage. Resolve the active state workflow
+  // config for this state and patch the session row. If no active config exists
+  // (e.g. seed has not run), log a warning and continue — the session is the
+  // canonical record and can be linked later.
+  try {
+    const activeConfig = await resolveActiveStateWorkflowConfig(supabase, input.state_code);
+    if (activeConfig) {
+      await setSessionWorkflowConfig(supabase, session.id, activeConfig.id);
+      session.state_workflow_config_id = activeConfig.id;
+    } else {
+      console.warn(
+        `[intakeService.startIntake] no active state_workflow_config for ${input.state_code} — session ${session.id} unlinked`,
+      );
+    }
+  } catch (err) {
+    console.warn(
+      `[intakeService.startIntake] state_workflow_config resolution failed for session ${session.id}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
 
   // Trust signal — only emit when an org is already linked (Decision 9).
   if (session.organization_id) {
@@ -214,6 +238,8 @@ export async function submitIntake(
     owner_user_id: session.owner_user_id,
     submitted_payload: session.draft_payload,
     intake_schema_version: session.intake_schema_version,
+    // Domain 2.2 — preserve the version this submission was made against.
+    state_workflow_config_id: session.state_workflow_config_id ?? null,
     state_code: session.state_code,
     submitted_by_user_id: ctx.userId,
   });

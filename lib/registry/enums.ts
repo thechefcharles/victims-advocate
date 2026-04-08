@@ -90,6 +90,21 @@ export type MessageThreadStatus = "active" | "read_only" | "archived";
 export type IntakeSessionStatus = "draft" | "submitted" | "locked";
 
 // ---------------------------------------------------------------------------
+// Domain 2.2 — StateWorkflowConfig
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by: Domain 2.2 State Workflows
+ * [DB-CONFIRMED] Matches state_workflow_configs.status CHECK constraint in
+ * migration 20260505000000_state_workflow_configs.sql.
+ *
+ * draft      — config under construction; mutable; cannot be resolved at runtime.
+ * active     — published and resolvable; one active row per state at any time.
+ * deprecated — superseded by a newer active version; still resolvable for historical records.
+ */
+export type StateWorkflowConfigStatus = "draft" | "active" | "deprecated";
+
+// ---------------------------------------------------------------------------
 // Domain 1.4 — Referral
 // ---------------------------------------------------------------------------
 
