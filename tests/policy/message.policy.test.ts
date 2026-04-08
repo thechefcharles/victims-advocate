@@ -414,15 +414,69 @@ describe("message:delete", () => {
 });
 
 // ---------------------------------------------------------------------------
-// message:attachment_upload — always denied (deferred to Domain 1.4)
+// message:attachment_upload — enabled in Domain 1.4
+// Mirrors message:send permission shape (CASE_STAFF + applicant owner,
+// advocate-on-assigned only, active-thread gate).
 // ---------------------------------------------------------------------------
 
-describe("message:attachment_upload deferred denial", () => {
-  it("attachment upload denied for all roles", async () => {
-    const roles = ["org_owner", "supervisor", "victim_advocate", "intake_specialist"] as const;
+describe("message:attachment_upload enabled (Domain 1.4)", () => {
+  it("allows org_owner, program_manager, supervisor, intake_specialist", async () => {
+    const roles = [
+      "org_owner",
+      "program_manager",
+      "supervisor",
+      "intake_specialist",
+    ] as const;
     for (const role of roles) {
       const actor = makeActor({ activeRole: role });
       const d = await can("message:attachment_upload", actor, makeMessageResource());
+      expect(d.allowed).toBe(true);
+    }
+  });
+
+  it("allows victim_advocate when assigned to the case", async () => {
+    const actor = makeActor({ activeRole: "victim_advocate", userId: "advocate-1" });
+    const resource = makeMessageResource({ assignedTo: "advocate-1" });
+    const d = await can("message:attachment_upload", actor, resource);
+    expect(d.allowed).toBe(true);
+  });
+
+  it("denies victim_advocate when not assigned to the case", async () => {
+    const actor = makeActor({ activeRole: "victim_advocate", userId: "advocate-1" });
+    const resource = makeMessageResource({ assignedTo: "other-advocate" });
+    const d = await can("message:attachment_upload", actor, resource);
+    expect(d.allowed).toBe(false);
+    expect(d.reason).toBe("INSUFFICIENT_ROLE");
+  });
+
+  it("allows applicant owner of the thread", async () => {
+    const actor = makeActor({
+      accountType: "applicant",
+      activeRole: undefined,
+      userId: "applicant-user",
+    });
+    const d = await can("message:attachment_upload", actor, makeMessageResource());
+    expect(d.allowed).toBe(true);
+  });
+
+  it("denies applicant non-owner", async () => {
+    const actor = makeActor({
+      accountType: "applicant",
+      activeRole: undefined,
+      userId: "other-applicant",
+    });
+    const d = await can("message:attachment_upload", actor, makeMessageResource());
+    expect(d.allowed).toBe(false);
+  });
+
+  it("denies upload on non-active threads", async () => {
+    const actor = makeActor({ activeRole: "org_owner" });
+    for (const status of ["read_only", "archived"] as const) {
+      const d = await can(
+        "message:attachment_upload",
+        actor,
+        makeMessageResource({ status }),
+      );
       expect(d.allowed).toBe(false);
     }
   });

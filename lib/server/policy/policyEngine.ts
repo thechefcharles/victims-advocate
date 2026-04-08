@@ -630,8 +630,40 @@ async function evalMessage(
     }
 
     case "message:attachment_upload": {
-      // Deferred (Domain 1.4) — deny with a clear reason
-      return deny("INSUFFICIENT_ROLE", "Attachment upload is not yet available.");
+      // Domain 1.4: enable attachment upload on active threads.
+      // Mirrors message:send permissions — applicant owner OR CASE_STAFF
+      // (advocates restricted to assigned cases).
+      if (resource.status && resource.status !== "active") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "This conversation is not accepting new attachments.",
+        );
+      }
+      if (actor.accountType === "applicant") {
+        if (resource.ownerId !== actor.userId) {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "Access denied: not a participant in this conversation.",
+          );
+        }
+        return consentDenial ?? allow();
+      }
+      if (actor.accountType === "provider") {
+        if (!actor.activeRole || !CASE_STAFF.has(actor.activeRole)) {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "Insufficient organization role to upload attachments.",
+          );
+        }
+        if (actor.activeRole === "victim_advocate" && resource.assignedTo !== actor.userId) {
+          return deny(
+            "INSUFFICIENT_ROLE",
+            "Advocates can only upload attachments on cases assigned to them.",
+          );
+        }
+        return consentDenial ?? allow();
+      }
+      return deny("INSUFFICIENT_ROLE", "Access denied.");
     }
 
     default:
