@@ -70,6 +70,58 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
     Enforcement: every analysis and execution prompt session begins with this check as Step 0. The check is the architect's responsibility at claude.ai (before issuing the prompt) AND Claude Code's responsibility (before running it). Failure to merge first has caused 4 friction events across Phase 2 (1.x→2.1, 2.1→2.2, 2.2→2.3, 2.3→2.4).
 
+    As of Auto Pipeline 2.0, this check is automated by `scripts/preflight.js` — it walks every locked domain branch and merges any that have unmerged commits before creating the next domain branch.
+
+---
+
+## Automated Pipeline — Trigger Phrases
+
+When told **"start domain X.Y"** or **"start phase N"**:
+
+1. Run: `node scripts/preflight.js --domain X.Y`
+   If it fails, stop and report the error. Do not proceed.
+2. Run: `node scripts/fetch-prompt.js --domain X.Y --stage analysis`
+3. Read the prompt output. Run the full analysis.
+4. Run: `node scripts/write-artifact.js --domain X.Y --type analysis` *(FUTURE)*
+5. Run: `node scripts/post-notion-output.js [analysisOutputPageId]` with the analysis output
+6. Run: `node scripts/generate-execution-prompt.js --domain X.Y` *(FUTURE)*
+7. Confirm: "Analysis and review complete. Running execution."
+8. Run: `node scripts/fetch-prompt.js --domain X.Y --stage execution`
+9. Read the prompt output. Run full execution.
+10. Run: `node scripts/validate.js --domain X.Y` *(FUTURE)*
+11. If validation fails: write escalation packet and stop.
+12. Run: `node scripts/post-notion-output.js [implementationNotesPageId]` with implementation output
+13. Run: `node scripts/commit-and-pr.js --domain X.Y` *(FUTURE)*
+14. Run: `node scripts/notion-closeout.js --domain X.Y --pr-url [url]` *(FUTURE)*
+15. Check `config/domain-order.json` for the next unblocked domain. Start it.
+
+When told **"escalate domain X.Y"**:
+
+1. Write `artifacts/domain-X.Y-escalation.md`.
+2. Post to the Notion escalation page.
+3. Stop. Wait for human resolution.
+
+When told **"continue domain X.Y with escalation resolved"**:
+
+1. Read the resolution from Notion.
+2. Continue from the stage that escalated.
+
+### Pipeline Identity
+
+You are the sole AI in a single-agent pipeline. Notion is your shared state; artifacts are your local state. All handoffs go through Notion pages and artifacts. Never proceed past a scope boundary — escalate instead.
+
+### Future scripts (not yet built)
+
+The following scripts are referenced above but do NOT exist yet. They are planned for future infrastructure sessions and the trigger-phrase flow above will be incomplete until they ship:
+
+- `scripts/write-artifact.js` — persists analysis/implementation output to `artifacts/domain-X.Y-*.md`
+- `scripts/generate-execution-prompt.js` — calls the Anthropic API with the analysis to produce the execution prompt (replaces the claude.ai architect step)
+- `scripts/validate.js` — runs all validation gates (TSC, tests, build, grep checks from `domain-pages.json`)
+- `scripts/commit-and-pr.js` — stages changes, commits, pushes, and opens a GitHub PR via `gh`
+- `scripts/notion-closeout.js` — runs all 13 Notion close-out steps (registry update, mission control, lock checklist, deferred items, etc.)
+
+What works today (post-this-session): preflight + fetch-prompt + the existing post-notion-output. That's enough to do "one command for the data fetching" but not yet "one command end-to-end."
+
 ---
 
 ## Base Truths (never change these files)
