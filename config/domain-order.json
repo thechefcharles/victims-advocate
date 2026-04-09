@@ -185,6 +185,23 @@
           "status": "pending"
         }
       ]
+    },
+    "5": {
+      "name": "Extended Applicant",
+      "buildOrder": [
+        {
+          "domain": "5.1",
+          "dependsOn": [],
+          "status": "pending"
+        },
+        {
+          "domain": "5.2",
+          "dependsOn": [
+            "5.1"
+          ],
+          "status": "pending"
+        }
+      ]
     }
   }
 }
