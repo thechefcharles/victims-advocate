@@ -302,6 +302,16 @@ export const POLICY_ACTIONS = [
   "applicant_bookmark:delete",
   /** Reorder own bookmarks. Applicant only. */
   "applicant_bookmark:reorder",
+
+  // -------------------------------------------------------------------------
+  // Domain 3.3 — Program Domain actions
+  // -------------------------------------------------------------------------
+  /** Create, update, activate, and archive program definitions. Platform Admin only. */
+  "admin:manage_programs",
+  /** Link organization to an IL directory catalog entry. org_owner, supervisor. */
+  "org:link_catalog_entry",
+  /** Set the applicant's program affiliation in their profile. Any authenticated user. */
+  "profile:set_affiliation",
 ] as const;
 
 /** Union of all valid policy action strings. */

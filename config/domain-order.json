@@ -129,7 +129,7 @@
           "dependsOn": [
             "3.2"
           ],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "3.4",

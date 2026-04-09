@@ -1,24 +1,28 @@
 /**
- * Org admins: update which Illinois Crime Victim Assistance directory row this org represents.
- * Updates name, type, metadata, and catalog_entry_id to stay in sync with the directory.
+ * Domain 3.3 — Org: link to IL directory catalog entry.
+ * Auth via can("org:link_catalog_entry"). Logic delegated to programService.
  */
 
-import { getAuthContext, requireAuth, requireActiveAccount, isOrgManagement } from "@/lib/server/auth";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
-import { getCatalogProgramById } from "@/lib/catalog/loadCatalog";
-import { orgRowFromCatalogEntry } from "@/lib/server/org/catalogOrgFields";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
+import { linkOrgCatalogEntry, CatalogEntryNotFoundError, CatalogEntryDuplicateError } from "@/lib/server/programs";
 
 export async function PATCH(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
-    requireActiveAccount(ctx, req);
+    requireFullAccess(ctx, req);
 
-    if (!ctx.orgId || !isOrgManagement(ctx.orgRole)) {
-      return apiFail("FORBIDDEN", "Only an organization admin can update the agency directory link.", undefined, 403);
+    if (!ctx.orgId) {
+      return apiFail("FORBIDDEN", "Organization membership required.", undefined, 403);
     }
+
+    const actor = buildActor(ctx);
+    const orgResource = { type: "org" as const, id: ctx.orgId, ownerId: ctx.orgId };
+    const decision = await can("org:link_catalog_entry", actor, orgResource);
+    if (!decision.allowed) return apiFail("FORBIDDEN", decision.message ?? "Organization owner or supervisor required.", undefined, 403);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -34,76 +38,22 @@ export async function PATCH(req: Request) {
     } else if (typeof raw === "string" && /^\d+$/.test(raw.trim())) {
       catalogEntryId = parseInt(raw.trim(), 10);
     } else {
-      return apiFail("VALIDATION_ERROR", "catalog_entry_id must be a number or null", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "catalog_entry_id must be a number or null.", undefined, 422);
     }
 
-    if (catalogEntryId != null && !getCatalogProgramById(catalogEntryId)) {
-      return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id", undefined, 422);
-    }
+    await linkOrgCatalogEntry(ctx.orgId, catalogEntryId, ctx);
 
-    const supabase = getSupabaseAdmin();
-
-    const { data: orgRow, error: orgFetchErr } = await supabase
-      .from("organizations")
-      .select("id, metadata")
-      .eq("id", ctx.orgId)
-      .maybeSingle();
-
-    if (orgFetchErr || !orgRow) {
-      logger.error("org.program_catalog.fetch", { message: orgFetchErr?.message });
-      return apiFail("INTERNAL", "Could not load organization", undefined, 500);
-    }
-
-    const existingMeta =
-      orgRow.metadata && typeof orgRow.metadata === "object" && !Array.isArray(orgRow.metadata)
-        ? { ...(orgRow.metadata as Record<string, unknown>) }
-        : {};
-
-    let patch: Record<string, unknown>;
-
-    if (catalogEntryId != null) {
-      const row = orgRowFromCatalogEntry(catalogEntryId);
-      if (!row) {
-        return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id", undefined, 422);
-      }
-      const { data: existingOrg } = await supabase
-        .from("organizations")
-        .select("id")
-        .eq("catalog_entry_id", catalogEntryId)
-        .neq("id", ctx.orgId)
-        .maybeSingle();
-      if (existingOrg) {
-        return apiFail(
-          "VALIDATION_ERROR",
-          "This directory program is already linked to another organization.",
-          undefined,
-          409
-        );
-      }
-      patch = {
-        name: row.name,
-        type: row.type,
-        catalog_entry_id: row.catalog_entry_id,
-        metadata: row.metadata,
-      };
-    } else {
-      delete existingMeta.catalog_program;
-      patch = {
-        catalog_entry_id: null,
-        metadata: existingMeta,
-      };
-    }
-
-    const { error: updErr } = await supabase.from("organizations").update(patch).eq("id", ctx.orgId);
-
-    if (updErr) {
-      logger.error("org.program_catalog.update", { message: updErr.message });
-      return apiFail("INTERNAL", "Could not update organization", undefined, 500);
-    }
-
+    logger.info("org.program_catalog.linked", { orgId: ctx.orgId, catalogEntryId, userId: ctx.userId });
     return apiOk({ organizationCatalogEntryId: catalogEntryId });
   } catch (err) {
+    if (err instanceof CatalogEntryNotFoundError) {
+      return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id.", undefined, 422);
+    }
+    if (err instanceof CatalogEntryDuplicateError) {
+      return apiFail("CONFLICT", "This directory program is already linked to another organization.", undefined, 409);
+    }
     const appErr = toAppError(err);
+    logger.error("org.program_catalog.error", { code: appErr.code, message: appErr.message });
     return apiFailFromError(appErr);
   }
 }

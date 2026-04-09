@@ -156,7 +156,10 @@ export type AuditAction =
   | "referral.declined"
   | "org.permission_denied"
   | "workflow.state_transition"
-  | "trust.signal_emitted";
+  | "trust.signal_emitted"
+  // Domain 3.3 — Program Domain
+  | "program.catalog_entry_linked"
+  | "profile.affiliation_updated";
 
 export type AuditSeverity = "info" | "warning" | "security";
 
