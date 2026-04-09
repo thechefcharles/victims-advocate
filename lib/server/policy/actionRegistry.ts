@@ -390,6 +390,16 @@ export const POLICY_ACTIONS = [
   // -------------------------------------------------------------------------
   /** Browse the provider discovery map and search index. Any authenticated user. */
   "provider_search:browse",
+
+  // -------------------------------------------------------------------------
+  // Domain 5.2 — Recommendations actions
+  // -------------------------------------------------------------------------
+  /** Generate a fresh recommendation set. Applicant (own), provider (non-personalized). */
+  "recommendation:generate",
+  /** View an existing recommendation set. Applicant (own), provider, admin. */
+  "recommendation:view",
+  /** Force regeneration of a recommendation set, bypassing cache. */
+  "recommendation:refresh",
 ] as const;
 
 /** Union of all valid policy action strings. */
