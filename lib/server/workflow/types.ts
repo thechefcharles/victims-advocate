@@ -16,7 +16,8 @@ export type WorkflowEntityType =
   | "referral"
   | "support_request"
   | "state_workflow_config_status"
-  | "cvc_form_template_status";
+  | "cvc_form_template_status"
+  | "translation_mapping_set_status";
 
 /** A valid edge in a state graph: fromState → toState for a given action label. */
 export interface WorkflowTransition<TFrom extends string = string, TTo extends string = string> {

@@ -38,8 +38,10 @@ import {
   insertAmendment,
   listAmendmentsBySubmission,
   setSessionWorkflowConfig,
+  setSessionTranslationMappingSet,
 } from "./intakeRepository";
 import { resolveActiveStateWorkflowConfig } from "@/lib/server/stateWorkflows/resolvers";
+import { resolveActiveTranslationMappingSet } from "@/lib/server/translation";
 import { validateSubmissionReadiness, validateIntakeStep } from "./intakeValidation";
 import { buildSearchAttributesFromIntake } from "./buildSearchAttributesFromIntake";
 import { serializeForApplicant, serializeForProvider } from "./intakeSerializer";
@@ -131,6 +133,29 @@ export async function startIntake(
   } catch (err) {
     console.warn(
       `[intakeService.startIntake] state_workflow_config resolution failed for session ${session.id}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+
+  // Domain 2.4 — best-effort translation mapping set linkage. Same pattern as
+  // the state_workflow_config linkage above. Failures are warning-level only.
+  try {
+    const activeMappingSet = await resolveActiveTranslationMappingSet(
+      input.state_code,
+      supabase,
+    );
+    if (activeMappingSet) {
+      await setSessionTranslationMappingSet(supabase, session.id, activeMappingSet.id);
+      session.translation_mapping_set_id = activeMappingSet.id;
+    } else {
+      console.warn(
+        `[intakeService.startIntake] no active translation_mapping_set for ${input.state_code} — session ${session.id} unlinked`,
+      );
+    }
+  } catch (err) {
+    console.warn(
+      `[intakeService.startIntake] translation_mapping_set resolution failed for session ${session.id}: ${
         err instanceof Error ? err.message : String(err)
       }`,
     );
@@ -240,6 +265,8 @@ export async function submitIntake(
     intake_schema_version: session.intake_schema_version,
     // Domain 2.2 — preserve the version this submission was made against.
     state_workflow_config_id: session.state_workflow_config_id ?? null,
+    // Domain 2.4 — preserve the translation mapping set version too.
+    translation_mapping_set_id: session.translation_mapping_set_id ?? null,
     state_code: session.state_code,
     submitted_by_user_id: ctx.userId,
   });

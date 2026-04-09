@@ -124,6 +124,15 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
     ["draft", "active"],
     ["active", "deprecated"],
   ],
+
+  /**
+   * translation_mapping_sets_v2.status (Domain 2.4)
+   * draft → active (publish) → deprecated (terminal)
+   */
+  translation_mapping_set_status: [
+    ["draft", "active"],
+    ["active", "deprecated"],
+  ],
 };
 
 /**

@@ -202,6 +202,24 @@ export const POLICY_ACTIONS = [
   "cvc_form:download",
 
   // -------------------------------------------------------------------------
+  // Translation / i18n actions (Domain 2.4)
+  // -------------------------------------------------------------------------
+  /** View a translation_mapping_set in admin context. Platform Admin only. */
+  "translation_mapping_set:view",
+  /** Mutate a draft translation_mapping_set. Platform Admin only. */
+  "translation_mapping_set:update",
+  /** Publish a draft translation_mapping_set — transitions draft → active. Platform Admin only. */
+  "translation_mapping_set:publish",
+  /** Resolve a canonical value for a source value at runtime. Any authenticated user. */
+  "translation_mapping:resolve",
+  /** Use the Explain This feature. Any authenticated user (applicant + provider + agency). */
+  "translation:explain_text",
+  /** View the persistent explanation_requests audit log. Platform Admin only. */
+  "translation:explanation_view_log",
+  /** Update own locale_preferences row. Owner only (any authenticated user). */
+  "locale_preference:update",
+
+  // -------------------------------------------------------------------------
   // Org actions
   // -------------------------------------------------------------------------
   /** Manage (add, remove, change role) org members. org_owner, supervisor. */

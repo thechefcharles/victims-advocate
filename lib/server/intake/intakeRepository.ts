@@ -72,6 +72,8 @@ export async function insertSession(
     /** Domain 2.2 — UUID FK to state_workflow_configs.id. Optional at insert time;
      *  intakeService.startIntake() resolves and patches it after the row is created. */
     state_workflow_config_id?: string | null;
+    /** Domain 2.4 — UUID FK to translation_mapping_sets_v2.id. Same best-effort pattern. */
+    translation_mapping_set_id?: string | null;
   },
 ): Promise<IntakeSessionRecord> {
   const { data, error } = await supabase
@@ -86,6 +88,7 @@ export async function insertSession(
       draft_payload: {},
       intake_schema_version: "v1",
       state_workflow_config_id: input.state_workflow_config_id ?? null,
+      translation_mapping_set_id: input.translation_mapping_set_id ?? null,
     })
     .select("*")
     .single();
@@ -112,6 +115,26 @@ export async function setSessionWorkflowConfig(
   if (error) {
     console.warn(
       `[intakeRepository.setSessionWorkflowConfig] failed for session ${id}: ${error.message}`,
+    );
+  }
+}
+
+/**
+ * Domain 2.4 — Patches translation_mapping_set_id onto an existing session.
+ * Same best-effort pattern as setSessionWorkflowConfig.
+ */
+export async function setSessionTranslationMappingSet(
+  supabase: SupabaseClient,
+  id: string,
+  mappingSetId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from(SESSIONS_TABLE)
+    .update({ translation_mapping_set_id: mappingSetId })
+    .eq("id", id);
+  if (error) {
+    console.warn(
+      `[intakeRepository.setSessionTranslationMappingSet] failed for session ${id}: ${error.message}`,
     );
   }
 }
@@ -188,6 +211,8 @@ export async function insertSubmission(
     intake_schema_version: string;
     /** Domain 2.2 — copied from the parent session row when present. */
     state_workflow_config_id?: string | null;
+    /** Domain 2.4 — copied from the parent session row when present. */
+    translation_mapping_set_id?: string | null;
     state_code: "IL" | "IN";
     submitted_by_user_id: string | null;
   },
