@@ -238,46 +238,45 @@ export type BookmarkTargetType =
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 5.1 ScoreMethodology
- * [INFERRED] Adjacent to `org_quality_scores.status` (current/superseded/draft)
- * but target enum uses `active` not `current`. Confirm against Notion spec.
+ * Owned by: Domain 6.1 Trust / Transparency / Scoring
+ * Canonical values from the 6.1 prompt — supersedes the prior inferred stub.
+ * Single-active enforcement is at the DB level (partial unique index).
  */
 export type ScoreMethodologyStatus =
   | "draft"
   | "active"
-  | "superseded";
+  | "deprecated";
 
 // ---------------------------------------------------------------------------
-// Domain 5.2 — ScoreDispute
+// Domain 6.1 — ScoreDispute
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 5.2 ScoreDispute
- * [DB-CONFIRMED] Mirrors `org_designation_review_requests.status` CHECK
- * constraint in migration 20260317200000_org_designation_review_requests.sql.
- * This is the dispute mechanism for the grading/scoring system.
+ * Owned by: Domain 6.1 Trust / Transparency / Scoring
+ * Canonical values from the 6.1 prompt — supersedes the prior stub which
+ * mirrored the designations review_requests CHECK (a different system).
+ * Score disputes target a ProviderScoreSnapshot, not a designation.
  */
 export type ScoreDisputeStatus =
-  | "pending"
-  | "in_review"
-  | "resolved_affirmed"
-  | "resolved_recomputed"
-  | "resolved_declined"
-  | "withdrawn";
+  | "open"
+  | "under_review"
+  | "resolved"
+  | "closed";
 
 // ---------------------------------------------------------------------------
-// Domain 3.1 — ProviderAffiliation
+// Domain 6.1 — ProviderAffiliation
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 3.1 ProviderAffiliation
- * [INFERRED] Confirm values against Notion spec before execution pass.
+ * Owned by: Domain 6.1 Trust / Transparency / Scoring
+ * Canonical values from the 6.1 prompt — supersedes the prior inferred stub.
+ * Platform Admin controls affiliation; providers cannot self-set.
  */
 export type ProviderAffiliationStatus =
-  | "pending"
-  | "active"
-  | "inactive"
-  | "terminated";
+  | "pending_review"
+  | "affiliated"
+  | "not_affiliated"
+  | "suspended";
 
 // ---------------------------------------------------------------------------
 // Domain 4.1 — ChangeRequest
