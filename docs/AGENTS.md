@@ -95,7 +95,28 @@ When told **"start domain X.Y"**:
     The PR URL is auto-read from `artifacts/domain-X.Y-pr.txt` if `--pr-url` is omitted.
 12. Check `config/domain-order.json` for the next unblocked domain. If one exists and the human has not asked you to stop, start it.
 
-When told **"start phase N"**: same as "start domain X.Y" for the first unblocked domain in phase N, then automatically chain to subsequent domains in build order until the phase is complete.
+When told **"start phase N"**:
+
+1. Run: `node scripts/run-phase.js --phase N`
+   This computes dependency waves, skips already-locked domains, and runs the
+   full pipeline for each pending domain in the correct order (sequential waves,
+   parallel within a wave when multiple domains share the same wave).
+2. For AI-required steps (analysis, execution, implementation notes), Claude Code
+   performs them inline when the phase runner emits an `ACTION REQUIRED` checkpoint.
+3. If an escalation artifact is detected, the phase runner stops and prints the
+   blocker. Resolve it, then re-run with `--resume`.
+
+When told **"start phase N --resume"**:
+
+1. Run: `node scripts/run-phase.js --phase N --resume`
+   Same as above but explicitly skips any domains already marked "locked" in
+   `config/domain-order.json` and continues from the first pending domain.
+
+When told **"dry run phase N"** or **"phase N --dry-run"**:
+
+1. Run: `node scripts/run-phase.js --phase N --dry-run`
+   Prints the wave plan (which domains run in which order, sequential vs parallel)
+   without executing anything.
 
 When told **"escalate domain X.Y"**:
 
@@ -123,6 +144,7 @@ You are the sole AI in a single-agent pipeline. Notion is your shared state; art
 | `scripts/validate.js` | Runs all validation gates: clears `.next`, TSC, tests, build, and per-domain grepChecks from `config/domain-pages.json`. JSDoc/comment lines auto-excluded from grep matches to avoid false positives. |
 | `scripts/commit-and-pr.js` | Stages, commits, pushes, opens GitHub PR via `gh`, writes PR URL to `artifacts/domain-X.Y-pr.txt` |
 | `scripts/notion-closeout.js` | Runs the 13-item close-out: implementation-notes read, lock checklist write, domain-order.json status update, validation/PR confirmation, phase-complete check. Best-effort items are explicitly skipped with a clear reason rather than silently no-oping. |
+| `scripts/run-phase.js` | Full-phase automation. Computes dependency waves, skips locked domains, runs each domain's complete pipeline (preflight → analysis → generate → execution → validate → commit → closeout), supports `--dry-run`, `--resume`, parallel waves, and escalation detection. |
 
 ### Required environment variables
 
