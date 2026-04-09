@@ -27,6 +27,7 @@ import { evalApplicantDomain } from "@/lib/server/applicant/evalApplicantProfile
 import { evalReferral } from "@/lib/server/referrals/referralPolicy";
 import { evalAppointment } from "@/lib/server/appointments/appointmentPolicy";
 import { evalEvent } from "@/lib/server/events/eventPolicy";
+import { evalTrustedHelper } from "@/lib/server/trustedHelper/trustedHelperPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1453,10 +1454,13 @@ export async function can(
     case "applicant_profile":
     case "applicant_preference":
     case "safety_preference":
-    case "trusted_helper_access":
     case "applicant_bookmark":
     case "provider_search":
       decision = await evalApplicantDomain(action, actor, resource, context);
+      break;
+    case "trusted_helper_access":
+    case "trusted_helper":
+      decision = await evalTrustedHelper(action, actor, resource, context);
       break;
     case "referral":
       decision = await evalReferral(action, actor, resource, context);
