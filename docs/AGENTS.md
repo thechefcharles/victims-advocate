@@ -66,6 +66,10 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 24. SOC 2 Type I target is Month 9 post-funding. Domains 0.2, 0.3, 0.5, 1.4, and 7.1 must be locked before that audit.
 
+25. Integration Branch Law: before issuing or executing a domain prompt (analysis OR execution), the previous domain's branch MUST be merged into `NXTSTPS2.0-V1`. Check with: `git log NXTSTPS2.0-V1..domain/<previous-domain> --oneline | wc -l`. If result > 0, merge the previous domain first, push `NXTSTPS2.0-V1`, then proceed.
+
+    Enforcement: every analysis and execution prompt session begins with this check as Step 0. The check is the architect's responsibility at claude.ai (before issuing the prompt) AND Claude Code's responsibility (before running it). Failure to merge first has caused 4 friction events across Phase 2 (1.x→2.1, 2.1→2.2, 2.2→2.3, 2.3→2.4).
+
 ---
 
 ## Base Truths (never change these files)
