@@ -332,6 +332,26 @@ export const POLICY_ACTIONS = [
   "referral:share_package.view",
   /** Prepare a referral share package. Source-org leadership only. */
   "referral:share_package.prepare",
+
+  // -------------------------------------------------------------------------
+  // Domain 4.2 — Appointment actions
+  // -------------------------------------------------------------------------
+  /** Create a new appointment. Provider staff in the org only. */
+  "appointment:create",
+  /** View a single appointment. Applicant (own case), provider (org-scoped), admin. */
+  "appointment:view",
+  /** Update mutable metadata on an appointment (notes, staff, service type). */
+  "appointment:update",
+  /** Reschedule an appointment — creates new slot, marks original as rescheduled. */
+  "appointment:reschedule",
+  /** Cancel an appointment. Provider staff or applicant (own case). */
+  "appointment:cancel",
+  /** Mark an appointment as completed (terminal). Provider staff only. */
+  "appointment:complete",
+  /** List appointments. Provider (org-scoped), applicant (own), admin. */
+  "appointment:list",
+  /** View availability rules for scheduling context. Provider or applicant. */
+  "appointment:availability.view",
 ] as const;
 
 /** Union of all valid policy action strings. */
