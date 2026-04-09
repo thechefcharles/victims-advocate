@@ -71,6 +71,8 @@ export type PolicyResourceType =
   | "safety_preference"
   | "trusted_helper_access"
   | "applicant_bookmark"
+  | "referral"
+  | "appointment"
   | "provider_search";
 
 /**

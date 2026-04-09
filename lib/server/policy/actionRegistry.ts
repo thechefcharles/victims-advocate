@@ -314,6 +314,46 @@ export const POLICY_ACTIONS = [
   "profile:set_affiliation",
 
   // -------------------------------------------------------------------------
+  // Domain 4.1 — Referral actions
+  // -------------------------------------------------------------------------
+  /** Create a referral (draft). Source-org leadership only. */
+  "referral:create",
+  /** View a referral. Source org, target org (scoped), or applicant (own). */
+  "referral:view",
+  /** Accept a referral (pending_acceptance → accepted). Target-org leadership only. */
+  "referral:accept",
+  /** Reject a referral (pending_acceptance → rejected). Target-org leadership only. */
+  "referral:reject",
+  /** Cancel a referral (any non-closed status → cancelled). Source-org leadership. */
+  "referral:cancel",
+  /** Close a referral (accepted/rejected/cancelled → closed). Source-org leadership. */
+  "referral:close",
+  /** View a referral share package. Provider only (source or target org). */
+  "referral:share_package.view",
+  /** Prepare a referral share package. Source-org leadership only. */
+  "referral:share_package.prepare",
+
+  // -------------------------------------------------------------------------
+  // Domain 4.2 — Appointment actions
+  // -------------------------------------------------------------------------
+  /** Create a new appointment. Provider staff in the org only. */
+  "appointment:create",
+  /** View a single appointment. Applicant (own case), provider (org-scoped), admin. */
+  "appointment:view",
+  /** Update mutable metadata on an appointment (notes, staff, service type). */
+  "appointment:update",
+  /** Reschedule an appointment — creates new slot, marks original as rescheduled. */
+  "appointment:reschedule",
+  /** Cancel an appointment. Provider staff or applicant (own case). */
+  "appointment:cancel",
+  /** Mark an appointment as completed (terminal). Provider staff only. */
+  "appointment:complete",
+  /** List appointments. Provider (org-scoped), applicant (own), admin. */
+  "appointment:list",
+  /** View availability rules for scheduling context. Provider or applicant. */
+  "appointment:availability.view",
+
+  // -------------------------------------------------------------------------
   // Domain 3.4 — Provider Discovery actions
   // -------------------------------------------------------------------------
   /** Browse the provider discovery map and search index. Any authenticated user. */

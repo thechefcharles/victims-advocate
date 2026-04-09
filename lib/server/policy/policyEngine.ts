@@ -24,6 +24,8 @@ import type { PolicyActor, PolicyResource, PolicyContext, PolicyDecision } from 
 import type { PolicyAction } from "./actionRegistry";
 import { assertSameTenant } from "./tenantScope";
 import { evalApplicantDomain } from "@/lib/server/applicant/evalApplicantProfile";
+import { evalReferral } from "@/lib/server/referrals/referralPolicy";
+import { evalAppointment } from "@/lib/server/appointments/appointmentPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1454,6 +1456,12 @@ export async function can(
     case "applicant_bookmark":
     case "provider_search":
       decision = await evalApplicantDomain(action, actor, resource, context);
+      break;
+    case "referral":
+      decision = await evalReferral(action, actor, resource, context);
+      break;
+    case "appointment":
+      decision = await evalAppointment(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");
