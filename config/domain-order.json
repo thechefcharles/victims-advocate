@@ -136,7 +136,7 @@
           "dependsOn": [
             "3.2"
           ],
-          "status": "pending"
+          "status": "locked"
         }
       ]
     }
