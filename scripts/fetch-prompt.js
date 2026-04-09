@@ -8,7 +8,6 @@
  *
  * Usage:
  *   node scripts/fetch-prompt.js --domain 2.1 --stage analysis
- *   node scripts/fetch-prompt.js --domain 2.1 --stage execution
  *
  * Requires: NOTION_API_KEY environment variable
  *
@@ -39,13 +38,13 @@ function parseArgs(argv) {
 const { domain, stage } = parseArgs(process.argv.slice(2));
 
 if (!domain || !stage) {
-  console.error("Usage: node scripts/fetch-prompt.js --domain X.Y --stage <analysis|execution>");
+  console.error("Usage: node scripts/fetch-prompt.js --domain X.Y --stage analysis");
   console.error("Example: node scripts/fetch-prompt.js --domain 2.1 --stage analysis");
   process.exit(1);
 }
 
-if (stage !== "analysis" && stage !== "execution") {
-  console.error(`Error: --stage must be 'analysis' or 'execution', got '${stage}'`);
+if (stage !== "analysis") {
+  console.error(`Error: --stage must be 'analysis', got '${stage}'`);
   process.exit(1);
 }
 
@@ -77,7 +76,6 @@ if (!config) {
 
 const stageMap = {
   analysis: config.analysisPromptPageId,
-  execution: config.executionPromptPageId,
 };
 
 const pageId = stageMap[stage];
