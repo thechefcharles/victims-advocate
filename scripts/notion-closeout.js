@@ -402,14 +402,18 @@ async function updateDomainRegistry({ prUrl, implNotes }) {
     return { done: false, reason: "no domainRegistryDatabaseId in pipeline config" };
   }
   try {
-    const result = await notion.databases.query({
-      database_id: pipelineNotion.domainRegistryDatabaseId,
-      filter: { property: "Domain", title: { contains: domain } },
+    const dbId = pipelineNotion.domainRegistryDatabaseId.replace(/-/g, "");
+    const result = await notion.search({
+      query: domain,
+      filter: { value: "page", property: "object" },
     });
-    if (!result.results.length) {
+    const page = result.results.find(
+      (r) => r.parent?.type === "database_id" && r.parent.database_id.replace(/-/g, "") === dbId,
+    );
+    if (!page) {
       return { done: false, reason: `domain '${domain}' row not found in Domain Registry` };
     }
-    const pageId = result.results[0].id;
+    const pageId = page.id;
     const props = {
       Status: { select: { name: "Locked" } },
       "Locked Date": { date: { start: new Date().toISOString().slice(0, 10) } },
@@ -431,14 +435,18 @@ async function updateMissionControl({ prUrl }) {
     return { done: false, reason: "no missionControlDatabaseId in pipeline config" };
   }
   try {
-    const result = await notion.databases.query({
-      database_id: pipelineNotion.missionControlDatabaseId,
-      filter: { property: "Domain #", rich_text: { equals: domain } },
+    const dbId = pipelineNotion.missionControlDatabaseId.replace(/-/g, "");
+    const result = await notion.search({
+      query: domain,
+      filter: { value: "page", property: "object" },
     });
-    if (!result.results.length) {
+    const page = result.results.find(
+      (r) => r.parent?.type === "database_id" && r.parent.database_id.replace(/-/g, "") === dbId,
+    );
+    if (!page) {
       return { done: false, reason: `domain '${domain}' row not found in Mission Control` };
     }
-    const pageId = result.results[0].id;
+    const pageId = page.id;
     const props = {
       Status: { select: { name: "Done" } },
       Stage: { select: { name: "10 — Logged + Done" } },
