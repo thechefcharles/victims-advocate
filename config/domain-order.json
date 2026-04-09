@@ -1,6 +1,6 @@
 {
   "integrationBranch": "NXTSTPS2.0-V1",
-  "currentPhase": 3,
+  "currentPhase": 4,
   "phases": {
     "0": {
       "name": "Foundation",
@@ -137,6 +137,26 @@
             "3.2"
           ],
           "status": "locked"
+        }
+      ]
+    },
+    "4": {
+      "name": "Coordination",
+      "buildOrder": [
+        {
+          "domain": "4.1",
+          "dependsOn": ["1.2"],
+          "status": "pending"
+        },
+        {
+          "domain": "4.2",
+          "dependsOn": ["1.2"],
+          "status": "pending"
+        },
+        {
+          "domain": "4.3",
+          "dependsOn": ["4.2"],
+          "status": "pending"
         }
       ]
     }
