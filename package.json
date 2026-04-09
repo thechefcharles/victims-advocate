@@ -19,6 +19,7 @@
     "directory:cbo-va": "node scripts/build-il-cbo-va-directory.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.86.1",
     "@hookform/resolvers": "^5.2.2",
     "@notionhq/client": "^5.16.0",
     "@supabase/ssr": "^0.8.0",
