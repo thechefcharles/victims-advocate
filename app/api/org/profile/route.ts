@@ -1,20 +1,24 @@
 /**
- * Phase A: Organization structured profile (read / update).
- * GET: org members (any role) or admin with ?organization_id=
- * POST: org_admin, supervisor, or admin
+ * Organization structured profile — read / update.
+ * Domain 3.2: GET uses can("org:view_profile"), POST uses can("org:edit_profile").
+ * Responses pass through serializeOrgInternalView (members) or serializeOrgAdminView (platform admin).
  */
 
 import {
   getAuthContext,
   requireFullAccess,
   requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { getOrganizationProfileForContext, updateOrganizationProfile } from "@/lib/server/organizations/profile";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import {
+  serializeOrgInternalView,
+  serializeOrgAdminView,
+} from "@/lib/server/organizations/organizationSerializers";
 
 export async function GET(req: Request) {
   try {
@@ -32,13 +36,17 @@ export async function GET(req: Request) {
       return apiFail("VALIDATION_ERROR", "organization_id required for admin", undefined, 422);
     }
 
-    const profile = await getOrganizationProfileForContext({
-      ctx,
-      organizationId: isAdmin ? orgIdParam ?? ctx.orgId : ctx.orgId,
-    });
+    const orgId = (isAdmin ? orgIdParam ?? ctx.orgId : ctx.orgId)!;
 
-    const { metadata: _m, ...rest } = profile;
-    return apiOk({ profile: rest });
+    const actor = buildActor(ctx);
+    const decision = await can("org:view_profile", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
+
+    const profile = await getOrganizationProfileForContext({ ctx, organizationId: orgId });
+    const serialized = isAdmin ? serializeOrgAdminView(profile) : serializeOrgInternalView(profile);
+    return apiOk({ profile: serialized });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.profile.get.error", { code: appErr.code, message: appErr.message });
@@ -54,13 +62,20 @@ export async function POST(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);
     const orgIdParam = searchParams.get("organization_id")?.trim() || null;
     if (isAdmin && !orgIdParam && !ctx.orgId) {
       return apiFail("VALIDATION_ERROR", "organization_id required for admin", undefined, 422);
+    }
+
+    const orgId = (isAdmin ? orgIdParam ?? ctx.orgId : ctx.orgId)!;
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:edit_profile", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
     let body: Record<string, unknown> = {};
@@ -73,13 +88,13 @@ export async function POST(req: Request) {
     const result = await updateOrganizationProfile({
       ctx,
       body,
-      organizationId: isAdmin ? orgIdParam ?? ctx.orgId : ctx.orgId,
+      organizationId: orgId,
       req,
     });
 
-    const orgId = result.row.id;
+    const rowId = result.row.id;
     const metaBase = {
-      organization_id: orgId,
+      organization_id: rowId,
       updated_sections: result.updatedKeys,
     };
 
@@ -87,8 +102,8 @@ export async function POST(req: Request) {
       ctx,
       action: "org.profile_updated",
       resourceType: "organization",
-      resourceId: orgId,
-      organizationId: orgId,
+      resourceId: rowId,
+      organizationId: rowId,
       metadata: metaBase,
       req,
     }).catch(() => {});
@@ -98,8 +113,8 @@ export async function POST(req: Request) {
         ctx,
         action: "org.profile_status_changed",
         resourceType: "organization",
-        resourceId: orgId,
-        organizationId: orgId,
+        resourceId: rowId,
+        organizationId: rowId,
         metadata: {
           ...metaBase,
           from: result.prevProfileStatus,
@@ -109,8 +124,8 @@ export async function POST(req: Request) {
       }).catch(() => {});
     }
 
-    const { metadata: _m, ...rest } = result.row;
-    return apiOk({ profile: rest });
+    const serialized = isAdmin ? serializeOrgAdminView(result.row) : serializeOrgInternalView(result.row);
+    return apiOk({ profile: serialized });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.profile.post.error", { code: appErr.code, message: appErr.message });

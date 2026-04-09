@@ -1,15 +1,10 @@
 /**
- * Phase E: Withdraw pending designation review request (submitter or org admin).
+ * Withdraw pending designation review request (submitter or org admin).
  */
 
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-  isOrgManagement,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess, isOrgManagement } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -24,8 +19,17 @@ export async function POST(req: Request, { params }: RouteCtx) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    requireOrg(ctx);
-    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+
+    const orgId = ctx.orgId;
+    if (!orgId) {
+      return apiFail("FORBIDDEN", "Organization context required.", undefined, 403);
+    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:manage_members", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const asOrgAdmin = isOrgManagement(ctx.orgRole);
 
@@ -36,13 +40,13 @@ export async function POST(req: Request, { params }: RouteCtx) {
     }
 
     const existing = await getDesignationReviewRequestById(requestId);
-    if (!existing || existing.organization_id !== ctx.orgId) {
+    if (!existing || existing.organization_id !== orgId) {
       return apiFail("NOT_FOUND", "Request not found", undefined, 404);
     }
 
     const row = await withdrawDesignationReviewRequest({
       id: requestId,
-      organizationId: ctx.orgId!,
+      organizationId: orgId,
       actorUserId: ctx.userId,
       asOrgAdmin,
     });
@@ -52,7 +56,7 @@ export async function POST(req: Request, { params }: RouteCtx) {
       action: "designation.review_withdrawn",
       resourceType: "designation_review_request",
       resourceId: requestId,
-      organizationId: ctx.orgId!,
+      organizationId: orgId,
       metadata: { request_id: requestId },
       req,
     }).catch(() => {});

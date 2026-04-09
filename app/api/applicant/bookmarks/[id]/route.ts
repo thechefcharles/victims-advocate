@@ -12,14 +12,15 @@ import { removeBookmark } from "@/lib/server/applicant/applicantBookmarkService"
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
 
+    const { id } = await params;
     const supabase = getSupabaseAdmin();
-    await removeBookmark(ctx, params.id, supabase);
+    await removeBookmark(ctx, id, supabase);
     return new Response(null, { status: 204 });
   } catch (err) {
     const appErr = toAppError(err);

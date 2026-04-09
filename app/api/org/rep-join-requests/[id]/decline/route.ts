@@ -1,5 +1,7 @@
 /**
  * Org admin / supervisor declines an org rep's join request.
+ * Domain 3.2: auth via can("org:approve_join"). DB logic preserved — uses org_rep_join_requests
+ * table (distinct from advocate_org_join_requests handled by membershipService).
  */
 
 import {
@@ -7,12 +9,12 @@ import {
   requireAuth,
   requireFullAccess,
   requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { createNotification } from "@/lib/server/notifications/create";
 import { logEvent } from "@/lib/server/audit/logEvent";
 
@@ -37,7 +39,6 @@ export async function POST(
     const isPlatformAdmin = ctx.isAdmin === true;
     if (!isPlatformAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { id: requestId } = await params;
@@ -61,6 +62,15 @@ export async function POST(
     if (row.status !== "pending") {
       return apiFail("VALIDATION_ERROR", "This request is no longer pending", undefined, 409);
     }
+
+    const orgId = isPlatformAdmin ? row.organization_id : ctx.orgId!;
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:approve_join", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
+
     if (!isPlatformAdmin && row.organization_id !== ctx.orgId) {
       return apiFail("FORBIDDEN", "This request belongs to another organization", undefined, 403);
     }

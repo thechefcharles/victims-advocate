@@ -1,30 +1,28 @@
 /**
- * Phase 2: Revoke org invite (org_admin or admin).
+ * Revoke org invite (org_admin or platform admin).
+ * Domain 3.2: auth via can("org:revoke_invite"). Logic delegated to revokeOrgInvite.
  */
 
-import { NextResponse } from "next/server";
 import {
   getAuthContext,
   requireFullAccess,
   requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_MANAGEMENT_ROLES,
 } from "@/lib/server/auth";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
+import { revokeOrgInvite } from "@/lib/server/organizations/inviteService";
 
 export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
 
-    // Admin can revoke any invite; org_admin must be in the org
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
     }
 
     const body = await req.json().catch(() => null);
@@ -37,40 +35,30 @@ export async function POST(req: Request) {
       return apiFail("VALIDATION_ERROR", "invite_id is required", undefined, 422);
     }
 
-    const supabase = getSupabaseAdmin();
-    const { data: existing } = await supabase
-      .from("org_invites")
-      .select("id, organization_id, email, org_role")
-      .eq("id", inviteId)
-      .is("used_at", null)
-      .is("revoked_at", null)
-      .maybeSingle();
+    // For admin, allow targeting any org via body.organization_id; otherwise use ctx.orgId
+    const orgId = (isAdmin && typeof body.organization_id === "string" && body.organization_id.trim())
+      ? body.organization_id.trim()
+      : ctx.orgId!;
 
-    if (!existing) {
-      return apiFail("NOT_FOUND", "Invite not found or already used/revoked", undefined, 404);
+    if (!orgId) {
+      return apiFail("VALIDATION_ERROR", "organization_id required when not in an org", undefined, 422);
     }
 
-    if (!isAdmin && existing.organization_id !== ctx.orgId) {
-      return apiFail("FORBIDDEN", "Cannot revoke invite from another organization", undefined, 403);
+    const actor = buildActor(ctx);
+    const decision = await can("org:revoke_invite", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
-    const { error } = await supabase
-      .from("org_invites")
-      .update({
-        revoked_at: new Date().toISOString(),
-        revoked_by: ctx.userId,
-      })
-      .eq("id", inviteId);
-
-    if (error) throw new Error(error.message);
+    await revokeOrgInvite(inviteId, { ...ctx, orgId });
 
     await logEvent({
       ctx,
       action: "org.invite.revoke",
       resourceType: "org_invite",
       resourceId: inviteId,
-      organizationId: existing.organization_id,
-      metadata: { email: existing.email, org_role: existing.org_role },
+      organizationId: orgId,
+      metadata: {},
       req,
     });
 

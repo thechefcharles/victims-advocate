@@ -1,15 +1,11 @@
 /**
- * Phase D: Org admin/supervisor preview of designation (no raw grading score).
+ * Org admin/supervisor preview of designation (no raw grading score).
  * Admins may pass ?organization_id= for the same payload shape.
  */
 
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import {
@@ -27,14 +23,16 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const orgIdParam = searchParams.get("organization_id")?.trim();
+    const orgId = ctx.isAdmin && orgIdParam ? orgIdParam : ctx.orgId;
 
-    let orgId: string;
-    if (ctx.isAdmin && orgIdParam) {
-      orgId = orgIdParam;
-    } else {
-      requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
-      orgId = ctx.orgId!;
+    if (!orgId) {
+      return apiFail("VALIDATION_ERROR", "organization_id required.", undefined, 422);
+    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:manage_members", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
     const row = await getCurrentOrgDesignation(orgId);

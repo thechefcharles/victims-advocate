@@ -3,6 +3,8 @@
  */
 
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import {
@@ -17,9 +19,9 @@ export async function GET(req: Request, { params }: RouteCtx) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    if (!ctx.isAdmin) {
-      return apiFail("FORBIDDEN", "Admin only", undefined, 403);
-    }
+    const actor = buildActor(ctx);
+    const d = await can("admin:view_any", actor, { type: "admin", id: "platform", ownerId: "" });
+    if (!d.allowed) return apiFail("FORBIDDEN", d.message ?? "Admin access required.", undefined, 403);
 
     const { id } = await params;
     const orgId = id?.trim();
@@ -41,9 +43,9 @@ export async function POST(req: Request, { params }: RouteCtx) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    if (!ctx.isAdmin) {
-      return apiFail("FORBIDDEN", "Admin only", undefined, 403);
-    }
+    const actor = buildActor(ctx);
+    const d = await can("admin:edit_any", actor, { type: "admin", id: "platform", ownerId: "" });
+    if (!d.allowed) return apiFail("FORBIDDEN", d.message ?? "Admin access required.", undefined, 403);
 
     const { id } = await params;
     const orgId = id?.trim();
