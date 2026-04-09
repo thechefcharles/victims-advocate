@@ -76,28 +76,30 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 ## Automated Pipeline — Trigger Phrases
 
-When told **"start domain X.Y"** or **"start phase N"**:
+When told **"start domain X.Y"**:
 
 1. Run: `node scripts/preflight.js --domain X.Y`
    If it fails, stop and report the error. Do not proceed.
 2. Run: `node scripts/fetch-prompt.js --domain X.Y --stage analysis`
-3. Read the prompt output. Run the full analysis.
-4. Run: `node scripts/write-artifact.js --domain X.Y --type analysis` *(FUTURE)*
-5. Run: `node scripts/post-notion-output.js [analysisOutputPageId]` with the analysis output
-6. Run: `node scripts/generate-execution-prompt.js --domain X.Y` *(FUTURE)*
-7. Confirm: "Analysis and review complete. Running execution."
-8. Run: `node scripts/fetch-prompt.js --domain X.Y --stage execution`
-9. Read the prompt output. Run full execution.
-10. Run: `node scripts/validate.js --domain X.Y` *(FUTURE)*
-11. If validation fails: write escalation packet and stop.
-12. Run: `node scripts/post-notion-output.js [implementationNotesPageId]` with implementation output
-13. Run: `node scripts/commit-and-pr.js --domain X.Y` *(FUTURE)*
-14. Run: `node scripts/notion-closeout.js --domain X.Y --pr-url [url]` *(FUTURE)*
-15. Check `config/domain-order.json` for the next unblocked domain. Start it.
+3. Read the prompt output. Run the full analysis against the repo.
+4. Run: `node scripts/post-notion-output.js [analysisOutputPageId]` with the analysis output (page ID from `config/domain-pages.json`)
+5. Run: `node scripts/generate-execution-prompt.js --domain X.Y`
+   This calls the Anthropic API to review the analysis and posts the resulting execution prompt to Notion page 4.
+6. Run: `node scripts/fetch-prompt.js --domain X.Y --stage execution`
+7. Read the prompt output. Run the full execution in auto-accept mode.
+8. Run: `node scripts/validate.js --domain X.Y`
+   If any gate fails: stop, post the failure summary to the implementation notes page, and escalate. Do not proceed.
+9. Run: `node scripts/post-notion-output.js [implementationNotesPageId]` with the implementation output
+10. Run: `node scripts/commit-and-pr.js --domain X.Y`
+11. Run: `node scripts/notion-closeout.js --domain X.Y --pr-url [url]`
+    The PR URL is auto-read from `artifacts/domain-X.Y-pr.txt` if `--pr-url` is omitted.
+12. Check `config/domain-order.json` for the next unblocked domain. If one exists and the human has not asked you to stop, start it.
+
+When told **"start phase N"**: same as "start domain X.Y" for the first unblocked domain in phase N, then automatically chain to subsequent domains in build order until the phase is complete.
 
 When told **"escalate domain X.Y"**:
 
-1. Write `artifacts/domain-X.Y-escalation.md`.
+1. Write `artifacts/domain-X.Y-escalation.md` describing the blocker.
 2. Post to the Notion escalation page.
 3. Stop. Wait for human resolution.
 
@@ -108,19 +110,27 @@ When told **"continue domain X.Y with escalation resolved"**:
 
 ### Pipeline Identity
 
-You are the sole AI in a single-agent pipeline. Notion is your shared state; artifacts are your local state. All handoffs go through Notion pages and artifacts. Never proceed past a scope boundary — escalate instead.
+You are the sole AI in a single-agent pipeline. Notion is your shared state; artifacts are your local state. All handoffs go through Notion pages and artifacts in `artifacts/`. Never proceed past a scope boundary — escalate instead.
 
-### Future scripts (not yet built)
+### Pipeline scripts (all present as of this commit)
 
-The following scripts are referenced above but do NOT exist yet. They are planned for future infrastructure sessions and the trigger-phrase flow above will be incomplete until they ship:
+| Script | Purpose |
+|---|---|
+| `scripts/preflight.js` | Branch setup + Rule 25 enforcement (auto-merges any locked-domain branches that aren't yet on `NXTSTPS2.0-V1`) |
+| `scripts/fetch-prompt.js` | Reads analysis or execution prompts from Notion directly (no copy-paste) |
+| `scripts/post-notion-output.js` | Stdin → Notion page (used for analysis output and implementation notes) |
+| `scripts/generate-execution-prompt.js` | Reads analysis from Notion page 3, calls Anthropic API with the architectural reviewer system prompt, posts the resulting execution prompt to page 4. Replaces the manual claude.ai review step. Supports `--dry-run`. |
+| `scripts/validate.js` | Runs all validation gates: clears `.next`, TSC, tests, build, and per-domain grepChecks from `config/domain-pages.json`. JSDoc/comment lines auto-excluded from grep matches to avoid false positives. |
+| `scripts/commit-and-pr.js` | Stages, commits, pushes, opens GitHub PR via `gh`, writes PR URL to `artifacts/domain-X.Y-pr.txt` |
+| `scripts/notion-closeout.js` | Runs the 13-item close-out: implementation-notes read, lock checklist write, domain-order.json status update, validation/PR confirmation, phase-complete check. Best-effort items are explicitly skipped with a clear reason rather than silently no-oping. |
 
-- `scripts/write-artifact.js` — persists analysis/implementation output to `artifacts/domain-X.Y-*.md`
-- `scripts/generate-execution-prompt.js` — calls the Anthropic API with the analysis to produce the execution prompt (replaces the claude.ai architect step)
-- `scripts/validate.js` — runs all validation gates (TSC, tests, build, grep checks from `domain-pages.json`)
-- `scripts/commit-and-pr.js` — stages changes, commits, pushes, and opens a GitHub PR via `gh`
-- `scripts/notion-closeout.js` — runs all 13 Notion close-out steps (registry update, mission control, lock checklist, deferred items, etc.)
+### Required environment variables
 
-What works today (post-this-session): preflight + fetch-prompt + the existing post-notion-output. That's enough to do "one command for the data fetching" but not yet "one command end-to-end."
+| Variable | Used by |
+|---|---|
+| `NOTION_API_KEY` | `fetch-prompt.js`, `post-notion-output.js`, `generate-execution-prompt.js`, `notion-closeout.js` |
+| `ANTHROPIC_API_KEY` | `generate-execution-prompt.js` |
+| `PATH` includes `/opt/homebrew/bin` | `commit-and-pr.js` (for `gh` CLI) |
 
 ---
 
