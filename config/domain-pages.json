@@ -240,10 +240,10 @@
         "description": "Compliance code preserved"
       },
       {
-        "pattern": "can(\\\"translation:explain_text\\\"",
+        "pattern": "explainText",
         "path": "app/api/translate/route.ts",
         "expectedCount": ">=1",
-        "description": "Rule 17 fixed on translate route"
+        "description": "Rule 17 fixed — route delegates to explainText service (which gates via can())"
       }
     ]
   },
