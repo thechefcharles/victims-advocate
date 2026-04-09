@@ -1,42 +1,36 @@
 /**
- * Phase 11: Admin – list and create program definitions.
+ * Domain 3.3 — Admin: list and create program definitions.
+ * Auth via can("admin:manage_programs"). Logic delegated to programService.
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { logEvent } from "@/lib/server/audit/logEvent";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
+import { listProgramDefinitions, createProgramDefinition } from "@/lib/server/programs";
+import { serializeProgramDefinition } from "@/lib/server/serializers/program.serializer";
 
 const SCOPE_TYPES = ["state", "federal", "local", "general"] as const;
+const ADMIN_RESOURCE = { type: "admin" as const, id: "platform", ownerId: "" };
 
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    if (!ctx.isAdmin) {
-      return apiFail("FORBIDDEN", "Admin only", undefined, 403);
-    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("admin:manage_programs", actor, ADMIN_RESOURCE);
+    if (!decision.allowed) return apiFail("FORBIDDEN", decision.message ?? "Admin only.", undefined, 403);
 
     const url = new URL(req.url);
-    const status = url.searchParams.get("status");
-    const stateCode = url.searchParams.get("stateCode") ?? url.searchParams.get("state_code");
-    const isActive = url.searchParams.get("isActive");
+    const status = url.searchParams.get("status") as "draft" | "active" | "archived" | null;
+    const stateCode = url.searchParams.get("stateCode") ?? url.searchParams.get("state_code") ?? undefined;
+    const isActiveParam = url.searchParams.get("isActive");
+    const is_active = isActiveParam === "true" ? true : isActiveParam === "false" ? false : undefined;
 
-    const supabase = getSupabaseAdmin();
-    let q = supabase.from("program_definitions").select("*").order("program_key");
-
-    if (status === "draft" || status === "active" || status === "archived") q = q.eq("status", status);
-    if (stateCode != null && stateCode !== "") q = q.eq("state_code", stateCode);
-    if (isActive === "true") q = q.eq("is_active", true);
-    if (isActive === "false") q = q.eq("is_active", false);
-
-    const { data, error } = await q.limit(200);
-
-    if (error) throw new Error(error.message);
-
-    return apiOk({ programs: data ?? [] });
+    const programs = await listProgramDefinitions({ status: status ?? undefined, state_code: stateCode, is_active });
+    return apiOk({ programs: programs.map(serializeProgramDefinition) });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("admin.programs.list.error", { code: appErr.code, message: appErr.message });
@@ -48,9 +42,10 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    if (!ctx.isAdmin) {
-      return apiFail("FORBIDDEN", "Admin only", undefined, 403);
-    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("admin:manage_programs", actor, ADMIN_RESOURCE);
+    if (!decision.allowed) return apiFail("FORBIDDEN", decision.message ?? "Admin only.", undefined, 403);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -60,61 +55,34 @@ export async function POST(req: Request) {
     const programKey = typeof body.program_key === "string" ? body.program_key.trim() : "";
     const name = typeof body.name === "string" ? body.name.trim() : "";
     if (!programKey || !name) {
-      return apiFail("VALIDATION_ERROR", "program_key and name are required", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "program_key and name are required.", undefined, 422);
     }
 
     const scopeType = body.scope_type ?? "state";
     if (!SCOPE_TYPES.includes(scopeType)) {
-      return apiFail("VALIDATION_ERROR", "scope_type must be state|federal|local|general", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "scope_type must be state|federal|local|general.", undefined, 422);
     }
 
-    const description = typeof body.description === "string" ? body.description.trim() || null : null;
-    const stateCode = typeof body.state_code === "string" ? body.state_code.trim() || null : null;
-    const version = typeof body.version === "string" ? body.version.trim() || "1" : "1";
-    const ruleSet = body.rule_set && typeof body.rule_set === "object" ? body.rule_set : {};
-    const requiredDocuments = Array.isArray(body.required_documents) ? body.required_documents : [];
-    const deadlineMetadata = body.deadline_metadata && typeof body.deadline_metadata === "object" ? body.deadline_metadata : {};
-    const dependencyRules = body.dependency_rules && typeof body.dependency_rules === "object" ? body.dependency_rules : {};
-    const stackingRules = body.stacking_rules && typeof body.stacking_rules === "object" ? body.stacking_rules : {};
-    const metadata = body.metadata && typeof body.metadata === "object" ? body.metadata : {};
-
-    const supabase = getSupabaseAdmin();
-    const { data: inserted, error } = await supabase
-      .from("program_definitions")
-      .insert({
+    const program = await createProgramDefinition(
+      {
         program_key: programKey,
         name,
-        description,
-        state_code: stateCode,
+        description: typeof body.description === "string" ? body.description.trim() || null : null,
+        state_code: typeof body.state_code === "string" ? body.state_code.trim() || null : null,
         scope_type: scopeType,
-        status: "draft",
-        is_active: false,
-        version,
-        rule_set: ruleSet,
-        required_documents: requiredDocuments,
-        deadline_metadata: deadlineMetadata,
-        dependency_rules: dependencyRules,
-        stacking_rules: stackingRules,
-        metadata,
-        created_by: ctx.userId,
-        updated_by: ctx.userId,
-      })
-      .select("*")
-      .single();
+        version: typeof body.version === "string" ? body.version.trim() || "1" : "1",
+        rule_set: body.rule_set && typeof body.rule_set === "object" ? body.rule_set : {},
+        required_documents: Array.isArray(body.required_documents) ? body.required_documents : [],
+        deadline_metadata: body.deadline_metadata && typeof body.deadline_metadata === "object" ? body.deadline_metadata : {},
+        dependency_rules: body.dependency_rules && typeof body.dependency_rules === "object" ? body.dependency_rules : {},
+        stacking_rules: body.stacking_rules && typeof body.stacking_rules === "object" ? body.stacking_rules : {},
+        metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : {},
+      },
+      ctx
+    );
 
-    if (error) throw new Error(error.message);
-
-    await logEvent({
-      ctx,
-      action: "routing.program_definition_create",
-      resourceType: "program_definition",
-      resourceId: (inserted as { id: string })?.id,
-      metadata: { program_key: programKey },
-      req,
-    }).catch(() => {});
-
-    logger.info("admin.programs.create", { programKey, userId: ctx.userId });
-    return apiOk({ program: inserted });
+    logger.info("admin.programs.create", { program_key: programKey, userId: ctx.userId });
+    return apiOk({ program: serializeProgramDefinition(program) });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("admin.programs.create.error", { code: appErr.code, message: appErr.message });

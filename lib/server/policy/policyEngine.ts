@@ -828,6 +828,18 @@ async function evalOrg(
       return consentDenial ?? allow();
     }
 
+    case "org:link_catalog_entry": {
+      // Domain 3.3 — same tier as org:edit_profile: org_owner or supervisor
+      if (
+        actor.accountType !== "provider" ||
+        !actor.activeRole ||
+        !ORG_MANAGE_MEMBERS_ROLES.has(actor.activeRole)
+      ) {
+        return deny("INSUFFICIENT_ROLE", "Organization owner or supervisor required.");
+      }
+      return consentDenial ?? allow();
+    }
+
     default:
       return deny(
         "RESOURCE_NOT_FOUND",

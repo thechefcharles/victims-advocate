@@ -193,6 +193,11 @@ export async function evalApplicantDomain(
       return deny("Applicants may only reorder their own bookmarks.");
     }
 
+    case "profile:set_affiliation": {
+      // Domain 3.3 — any authenticated user may set their own program affiliation
+      return allow();
+    }
+
     default:
       return deny(`Unknown applicant domain action: ${action}`);
   }
