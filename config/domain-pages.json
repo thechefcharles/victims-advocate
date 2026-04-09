@@ -365,5 +365,23 @@
     "socGate": false,
     "migrationTimestampFloor": "20260507000000",
     "grepChecks": []
+  },
+  "5.1": {
+    "slug": "5.1-trusted-helper",
+    "name": "Trusted Helper / Delegate Access",
+    "phase": 5,
+    "blockedBy": "3.1",
+    "status": "pending",
+    "specPageId": "33bf6ea84e41814eaaabfd8ee08f4116",
+    "analysisPromptPageId": "33bf6ea84e4181bebb1bc457a06ce1e7",
+    "analysisOutputPageId": "33bf6ea84e418172bf13df71df88b3f1",
+    "executionPromptPageId": "33bf6ea84e418123a888f2639f903825",
+    "implementationNotesPageId": "33bf6ea84e41818c8995ccdcba2092a0",
+    "lockChecklistPageId": "33bf6ea84e41810fa852dcab097c13c2",
+    "refDocsPageId": "33bf6ea84e4181d0b640ead59f4b8395",
+    "dataClass": "A",
+    "socGate": false,
+    "migrationTimestampFloor": "20260513000000",
+    "grepChecks": []
   }
 }
