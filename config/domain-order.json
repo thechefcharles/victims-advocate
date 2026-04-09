@@ -32,8 +32,13 @@
       ]
     },
     "3": {
-      "name": "TBD",
-      "buildOrder": []
+      "name": "Core Structure",
+      "buildOrder": [
+        { "domain": "3.1", "dependsOn": [], "status": "pending" },
+        { "domain": "3.2", "dependsOn": ["3.1"], "status": "pending" },
+        { "domain": "3.3", "dependsOn": ["3.2"], "status": "pending" },
+        { "domain": "3.4", "dependsOn": ["3.2"], "status": "pending" }
+      ]
     }
   }
 }
