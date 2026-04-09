@@ -11,6 +11,8 @@ import {
 } from "@/lib/server/organizations/profileSensitiveTracking";
 import { rowToOrganizationProfile, parseOrgProfilePatch } from "./validation";
 import type { OrganizationProfile, OrganizationProfileRow } from "./types";
+// Domain 3.2: wire search index sync after profile updates (fire-and-catch, non-blocking)
+import { syncOrgToIndex } from "@/lib/server/search";
 
 export function organizationRowToProfileRow(row: Record<string, unknown>): OrganizationProfileRow {
   const profile = rowToOrganizationProfile(row);
@@ -194,6 +196,11 @@ export async function updateOrganizationProfile(params: {
       });
     }
   }
+
+  // Domain 3.2: sync search index — fire-and-catch, must not block or rethrow
+  syncOrgToIndex({ organizationId: orgId }, getSupabaseAdmin()).catch((err) => {
+    console.error("[org:profile] syncOrgToIndex failed after profile update", { orgId, err });
+  });
 
   return {
     row: organizationRowToProfileRow(row),

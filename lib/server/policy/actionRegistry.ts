@@ -231,6 +231,32 @@ export const POLICY_ACTIONS = [
   /** Edit the org's public/internal profile. org_owner, supervisor. */
   "org:edit_profile",
 
+  // Domain 3.2 additions — 12 new org actions
+  /** View org profile (public/internal view). Any active org member. */
+  "org:view_profile",
+  /** Register a new org (platform-controlled; admin only). */
+  "org:register",
+  /** Create or list org invites. org_owner, program_manager only. */
+  "org:invite",
+  /** Accept an org invite token. Any authenticated user (no org role required). */
+  "org:accept_invite",
+  /** Revoke a pending org invite. org_owner, program_manager only. */
+  "org:revoke_invite",
+  /** Request to join an existing org (advocate role). */
+  "org:request_to_join",
+  /** Approve or decline a join request. org_owner, program_manager, supervisor. */
+  "org:approve_join",
+  /** Update a member's org_role. org_owner, program_manager only. */
+  "org:update_member_role",
+  /** Revoke an org membership. org_owner, program_manager only. */
+  "org:revoke_member",
+  /** Submit org profile for public activation review. Leadership tier. */
+  "org:submit_for_review",
+  /** Submit or manage org claim request (platform-controlled; admin only). */
+  "org:claim",
+  /** View the org's program catalog. Any active org member. */
+  "org:view_program_catalog",
+
   // -------------------------------------------------------------------------
   // Admin actions — platform admin only
   // -------------------------------------------------------------------------

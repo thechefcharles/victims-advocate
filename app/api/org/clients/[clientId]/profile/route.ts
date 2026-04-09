@@ -2,13 +2,9 @@
  * GET victim account personal_info for org staff when the org has a case with that victim.
  */
 
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_CASE_STAFF_ROLES,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
@@ -23,19 +19,24 @@ export async function GET(
     const authCtx = await getAuthContext(req);
     requireFullAccess(authCtx, req);
 
-    const isAdmin = authCtx.isAdmin;
-    if (!isAdmin) {
-      requireOrg(authCtx);
-      requireOrgRole(authCtx, SIMPLE_ORG_CASE_STAFF_ROLES);
-    }
-
     const { clientId } = await ctx.params;
     const victimId = String(clientId || "").trim();
     if (!victimId) {
       return apiFail("VALIDATION_ERROR", "Missing clientId", undefined, 400);
     }
 
-    if (!isAdmin) {
+    if (!authCtx.isAdmin) {
+      const orgId = authCtx.orgId;
+      if (!orgId) {
+        return apiFail("FORBIDDEN", "Organization context required.", undefined, 403);
+      }
+
+      const actor = buildActor(authCtx);
+      const decision = await can("org:view_cases", actor, { type: "org", id: orgId, ownerId: orgId });
+      if (!decision.allowed) {
+        return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+      }
+
       const allowed = await orgHasVictimCase(authCtx, victimId);
       if (!allowed) {
         return apiFail("FORBIDDEN", "No case with this victim for your organization", undefined, 403);

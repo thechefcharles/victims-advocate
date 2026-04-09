@@ -3,6 +3,8 @@
  */
 
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
@@ -20,9 +22,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    if (!ctx.isAdmin) {
-      return apiFail("FORBIDDEN", "Admin only", undefined, 403);
-    }
+    const actor = buildActor(ctx);
+    const adminDecision = await can("admin:edit_any", actor, { type: "admin", id: "platform", ownerId: "" });
+    if (!adminDecision.allowed) return apiFail("FORBIDDEN", adminDecision.message ?? "Admin access required.", undefined, 403);
 
     const { id: raw } = await params;
     const orgId = raw?.trim();

@@ -1,27 +1,22 @@
 /**
- * Org invites — create (simple-owner tier), list (leadership).
- * Phase 4: POST body `org_role` limited to `ORG_SELF_SERVE_INVITE_ROLES` (staff only; owner-tier via claim/admin).
+ * Org invites — list (leadership) and create (management).
+ * Domain 3.2: auth via can(). Admin bypass for listing with organization_id param.
+ * Self-serve invite roles restricted to ORG_SELF_SERVE_INVITE_ROLES.
  */
 
-import { NextResponse } from "next/server";
 import {
   getAuthContext,
   requireFullAccess,
   requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-  SIMPLE_ORG_MANAGEMENT_ROLES,
   ORG_SELF_SERVE_INVITE_ROLES,
   normalizeOrgRoleInput,
 } from "@/lib/server/auth";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
-import { sha256Hex } from "@/lib/server/audit/hash";
 import { logger } from "@/lib/server/logging";
-import { randomBytes } from "crypto";
-
-const DEFAULT_EXPIRY_DAYS = 7;
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
+import { listOrgInvites, createOrgInvite } from "@/lib/server/organizations/inviteService";
 
 function isValidEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
@@ -35,7 +30,6 @@ export async function GET(req: Request) {
     const isAdmin = ctx.isAdmin;
     if (!isAdmin) {
       requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
     }
 
     const { searchParams } = new URL(req.url);
@@ -46,19 +40,14 @@ export async function GET(req: Request) {
       return apiFail("VALIDATION_ERROR", "organization_id required when not in an org", undefined, 422);
     }
 
-    const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from("org_invites")
-      .select("id, created_at, email, org_role, expires_at")
-      .eq("organization_id", orgId)
-      .is("used_at", null)
-      .is("revoked_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false });
+    const actor = buildActor(ctx);
+    const decision = await can("org:invite", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
-    if (error) throw new Error(error.message);
-
-    return apiOk({ invites: data ?? [] });
+    const invites = await listOrgInvites(orgId, ctx);
+    return apiOk({ invites });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.invites.list.error", { code: appErr.code, message: appErr.message });
@@ -71,7 +60,12 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, SIMPLE_ORG_MANAGEMENT_ROLES);
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:invite", actor, { type: "org", id: ctx.orgId!, ownerId: ctx.orgId! });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -85,7 +79,7 @@ export async function POST(req: Request) {
     const expiryDays =
       typeof body.expiry_days === "number" && body.expiry_days > 0
         ? Math.min(body.expiry_days, 30)
-        : DEFAULT_EXPIRY_DAYS;
+        : 7;
 
     if (!email) {
       return apiFail("VALIDATION_ERROR", "email is required", undefined, 422);
@@ -102,25 +96,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = randomBytes(32).toString("hex");
-    const tokenHash = await sha256Hex(token);
-    const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
-
-    const supabase = getSupabaseAdmin();
-    const { data: invite, error } = await supabase
-      .from("org_invites")
-      .insert({
-        organization_id: ctx.orgId!,
-        email,
-        org_role: orgRole,
-        token_hash: tokenHash,
-        expires_at: expiresAt.toISOString(),
-        created_by: ctx.userId,
-      })
-      .select("id, created_at, email, org_role, expires_at")
-      .single();
-
-    if (error) throw new Error(error.message);
+    const { invite, rawToken } = await createOrgInvite(
+      { email, orgRole, expiryDays },
+      ctx,
+    );
 
     await logEvent({
       ctx,
@@ -136,13 +115,9 @@ export async function POST(req: Request) {
       typeof process.env.NEXT_PUBLIC_APP_URL === "string"
         ? process.env.NEXT_PUBLIC_APP_URL
         : req.url.replace(/\/api\/org\/invites$/, "");
-    const acceptUrl = `${baseUrl.replace(/\/$/, "")}/invite/accept?token=${token}`;
+    const acceptUrl = `${baseUrl.replace(/\/$/, "")}/invite/accept?token=${rawToken}`;
 
-    return apiOk(
-      { invite: { ...invite, accept_url: acceptUrl } },
-      undefined,
-      201
-    );
+    return apiOk({ invite: { ...invite, accept_url: acceptUrl } }, undefined, 201);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.invites.create.error", { code: appErr.code, message: appErr.message });

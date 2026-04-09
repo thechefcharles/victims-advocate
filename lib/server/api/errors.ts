@@ -17,6 +17,7 @@ export type ErrorCode =
   | "DOCUMENT_RESTRICTED"
   | "DOCUMENT_DELETED"
   | "DOCUMENT_UPLOAD_INVALID"
+  | "CONFLICT"
   | "INTERNAL";
 
 const STATUS_MAP: Record<ErrorCode, number> = {
@@ -34,6 +35,7 @@ const STATUS_MAP: Record<ErrorCode, number> = {
   DOCUMENT_RESTRICTED: 403,
   DOCUMENT_DELETED: 404,
   DOCUMENT_UPLOAD_INVALID: 422,
+  CONFLICT: 409,
   INTERNAL: 500,
 };
 

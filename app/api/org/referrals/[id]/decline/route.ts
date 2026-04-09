@@ -1,10 +1,6 @@
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { declineCaseOrgReferral } from "@/lib/server/referrals/service";
@@ -18,9 +14,17 @@ export async function POST(req: Request, context: RouteParams) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
 
-    if (!ctx.isAdmin) {
-      requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+    const orgId = ctx.orgId;
+    const resolvedOrgId = orgId ?? "";
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:manage_members", actor, {
+      type: "org",
+      id: resolvedOrgId,
+      ownerId: resolvedOrgId,
+    });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
     const { id: referralId } = await context.params;

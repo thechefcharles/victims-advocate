@@ -12,14 +12,15 @@ import { revokeHelper } from "@/lib/server/applicant/trustedHelperService";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
 
+    const { id } = await params;
     const supabase = getSupabaseAdmin();
-    await revokeHelper(ctx, params.id, supabase);
+    await revokeHelper(ctx, id, supabase);
     return new Response(null, { status: 204 });
   } catch (err) {
     const appErr = toAppError(err);
