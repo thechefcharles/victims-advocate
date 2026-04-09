@@ -119,6 +119,22 @@ export async function syncOrgToIndex(
     metadata: row.metadata,
   });
 
+  // Step 3b: Extract listing contact fields from metadata JSONB.
+  // These are surfaced in discovery map rows (Domain 3.4) without joining organizations table.
+  const meta = row.metadata as Record<string, unknown> | null | undefined;
+  const listingAddress =
+    typeof meta?.listing_address === "string" && meta.listing_address.trim()
+      ? meta.listing_address.trim()
+      : null;
+  const listingPhone =
+    typeof meta?.listing_phone === "string" && meta.listing_phone.trim()
+      ? meta.listing_phone.trim()
+      : null;
+  const listingWebsite =
+    typeof meta?.listing_website === "string" && meta.listing_website.trim()
+      ? meta.listing_website.trim()
+      : null;
+
   // Step 4: Derive state codes.
   // Prefer the typed states_of_operation column; fall back to an empty array.
   // (coverage_area.states is the legacy source — the states_of_operation column
@@ -155,6 +171,9 @@ export async function syncOrgToIndex(
       lng: lng,
       location: locationValue,
       approximate,
+      address: listingAddress,
+      phone: listingPhone,
+      website: listingWebsite,
       is_active: true,
       last_synced_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

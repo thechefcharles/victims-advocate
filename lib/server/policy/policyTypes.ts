@@ -70,7 +70,8 @@ export type PolicyResourceType =
   | "applicant_preference"
   | "safety_preference"
   | "trusted_helper_access"
-  | "applicant_bookmark";
+  | "applicant_bookmark"
+  | "provider_search";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant

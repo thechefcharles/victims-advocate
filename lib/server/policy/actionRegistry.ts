@@ -312,6 +312,12 @@ export const POLICY_ACTIONS = [
   "org:link_catalog_entry",
   /** Set the applicant's program affiliation in their profile. Any authenticated user. */
   "profile:set_affiliation",
+
+  // -------------------------------------------------------------------------
+  // Domain 3.4 — Provider Discovery actions
+  // -------------------------------------------------------------------------
+  /** Browse the provider discovery map and search index. Any authenticated user. */
+  "provider_search:browse",
 ] as const;
 
 /** Union of all valid policy action strings. */

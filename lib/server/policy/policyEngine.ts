@@ -1452,6 +1452,7 @@ export async function can(
     case "safety_preference":
     case "trusted_helper_access":
     case "applicant_bookmark":
+    case "provider_search":
       decision = await evalApplicantDomain(action, actor, resource, context);
       break;
     default:

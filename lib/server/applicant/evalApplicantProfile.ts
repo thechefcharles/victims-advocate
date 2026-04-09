@@ -198,6 +198,11 @@ export async function evalApplicantDomain(
       return allow();
     }
 
+    case "provider_search:browse": {
+      // Domain 3.4 — any authenticated user may browse the provider discovery map
+      return allow();
+    }
+
     default:
       return deny(`Unknown applicant domain action: ${action}`);
   }
