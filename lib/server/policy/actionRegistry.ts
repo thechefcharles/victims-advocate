@@ -352,6 +352,28 @@ export const POLICY_ACTIONS = [
   "appointment:list",
   /** View availability rules for scheduling context. Provider or applicant. */
   "appointment:availability.view",
+
+  // -------------------------------------------------------------------------
+  // Domain 4.3 — Event actions
+  // -------------------------------------------------------------------------
+  /** Create a new event in draft. Provider leadership only. */
+  "event:create",
+  /** View a single event. Public for published+visible scopes, provider for own org. */
+  "event:view",
+  /** Update event metadata. Provider staff in the owning org. */
+  "event:update",
+  /** Publish an event (draft → published). Provider leadership only. */
+  "event:publish",
+  /** Cancel an event (any non-closed → cancelled). Provider leadership only. */
+  "event:cancel",
+  /** Close an event (terminal). Provider leadership only. */
+  "event:close",
+  /** List events. Public for visible scope, provider for org scope. */
+  "event:list",
+  /** Register for a published event. Any authenticated user (scope-permitting). */
+  "event:register",
+  /** Cancel own registration for an event. */
+  "event:unregister",
 ] as const;
 
 /** Union of all valid policy action strings. */

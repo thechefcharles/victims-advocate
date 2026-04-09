@@ -72,7 +72,8 @@ export type PolicyResourceType =
   | "trusted_helper_access"
   | "applicant_bookmark"
   | "referral"
-  | "appointment";
+  | "appointment"
+  | "event";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant
