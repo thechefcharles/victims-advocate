@@ -141,6 +141,15 @@ if (!prUrl) {
 
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 
+// Pipeline-wide Notion config (optional — best-effort items 3-7 and 13 depend on this)
+const pipelineNotionPath = path.join(repoRoot, "config", "pipeline-notion.json");
+let pipelineNotion = null;
+try {
+  pipelineNotion = JSON.parse(fs.readFileSync(pipelineNotionPath, "utf8"));
+} catch {
+  // best-effort only — items 3-7 and 13 will be skipped if not present
+}
+
 // ---------------------------------------------------------------------------
 // Notion block extraction (same as fetch-prompt.js)
 // ---------------------------------------------------------------------------
@@ -245,6 +254,7 @@ async function readImplementationNotes() {
       baselineEntering: baselineMatch ? parseInt(baselineMatch[1], 10) : null,
       baselineExiting: baselineMatch ? parseInt(baselineMatch[2], 10) : null,
       contentLength: content.length,
+      rawContent: content,
     };
   } catch (err) {
     return { found: false, error: err.message };
@@ -363,6 +373,195 @@ function isPhaseComplete() {
 }
 
 // ---------------------------------------------------------------------------
+// Items 3-7, 13: Best-effort Notion database/page updates
+// ---------------------------------------------------------------------------
+
+/** Parses deferred item bullet lines out of implementation notes content. */
+function parseDeferredItems(content) {
+  if (!content) return [];
+  const lines = content.split("\n");
+  const items = [];
+  let inSection = false;
+  for (const line of lines) {
+    if (/deferred/i.test(line) && /^(?:#{1,3}|\d+\.)\s/.test(line)) {
+      inSection = true;
+      continue;
+    }
+    if (inSection) {
+      if (/^(?:#{1,3}|\d+\.)\s/.test(line)) { inSection = false; continue; }
+      const m = line.match(/^[-*•]\s+(.+)/);
+      if (m) items.push(m[1].trim());
+    }
+  }
+  return items;
+}
+
+/** Item 3: set Domain Registry row to Locked. */
+async function updateDomainRegistry({ prUrl, implNotes }) {
+  if (!pipelineNotion?.domainRegistryDatabaseId) {
+    return { done: false, reason: "no domainRegistryDatabaseId in pipeline config" };
+  }
+  try {
+    const result = await notion.databases.query({
+      database_id: pipelineNotion.domainRegistryDatabaseId,
+      filter: { property: "Domain", title: { contains: domain } },
+    });
+    if (!result.results.length) {
+      return { done: false, reason: `domain '${domain}' row not found in Domain Registry` };
+    }
+    const pageId = result.results[0].id;
+    const props = {
+      Status: { select: { name: "Locked" } },
+      "Locked Date": { date: { start: new Date().toISOString().slice(0, 10) } },
+    };
+    if (prUrl) props["PR URL"] = { url: prUrl };
+    if (implNotes?.testCount) {
+      props["Notes"] = { rich_text: [{ type: "text", text: { content: `${config.name} — ${implNotes.testCount} tests passing` } }] };
+    }
+    await notion.pages.update({ page_id: pageId, properties: props });
+    return { done: true, pageId };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+/** Item 4: set Mission Control row to Done / Stage 10. */
+async function updateMissionControl({ prUrl }) {
+  if (!pipelineNotion?.missionControlDatabaseId) {
+    return { done: false, reason: "no missionControlDatabaseId in pipeline config" };
+  }
+  try {
+    const result = await notion.databases.query({
+      database_id: pipelineNotion.missionControlDatabaseId,
+      filter: { property: "Domain #", rich_text: { equals: domain } },
+    });
+    if (!result.results.length) {
+      return { done: false, reason: `domain '${domain}' row not found in Mission Control` };
+    }
+    const pageId = result.results[0].id;
+    const props = {
+      Status: { select: { name: "Done" } },
+      Stage: { select: { name: "10 — Logged + Done" } },
+      Validation: { select: { name: "Passing" } },
+      Locked: { date: { start: new Date().toISOString().slice(0, 10) } },
+    };
+    if (prUrl) props["PR URL"] = { url: prUrl };
+    await notion.pages.update({ page_id: pageId, properties: props });
+    return { done: true, pageId };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+/** Item 5: check off domain's to-do block on the Domain Checklist page. */
+async function updateDomainChecklist() {
+  if (!pipelineNotion?.domainChecklistPageId) {
+    return { done: false, reason: "no domainChecklistPageId in pipeline config" };
+  }
+  try {
+    const blocks = await fetchAllBlocks(pipelineNotion.domainChecklistPageId);
+    const todo = blocks.find(
+      (b) => b.type === "to_do" && richTextToPlain(b.to_do.rich_text).includes(domain),
+    );
+    if (!todo) {
+      return { done: false, reason: `no to-do block containing '${domain}' found on Domain Checklist` };
+    }
+    if (todo.to_do.checked) return { done: true, detail: "already checked" };
+    await notion.blocks.update({ block_id: todo.id, to_do: { checked: true } });
+    return { done: true, blockId: todo.id };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+/** Item 6: append lock summary to Refactor Roadmap page. */
+async function updateRefactorRoadmap({ prUrl, implNotes }) {
+  if (!pipelineNotion?.refactorRoadmapPageId) {
+    return { done: false, reason: "no refactorRoadmapPageId in pipeline config" };
+  }
+  try {
+    const date = new Date().toISOString().slice(0, 10);
+    const summary = [
+      `Domain ${domain} — ${config.name} — LOCKED ${date}`,
+      `Branch: domain/${config.slug}`,
+      `PR: ${prUrl || "(not provided)"}`,
+      `Tests: ${implNotes?.testCount ?? "?"} passing`,
+    ].join("\n");
+    await appendToPage(pipelineNotion.refactorRoadmapPageId, `Domain ${domain} lock summary`, summary);
+    return { done: true };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+/** Item 7: create Deferred Items database rows from implementation notes. */
+async function logDeferredItems(rawContent) {
+  if (!pipelineNotion?.deferredItemsDatabaseId) {
+    return { done: false, reason: "no deferredItemsDatabaseId in pipeline config" };
+  }
+  try {
+    const items = parseDeferredItems(rawContent);
+    if (!items.length) {
+      return { done: true, count: 0, detail: "no deferred items parsed from implementation notes" };
+    }
+    let created = 0;
+    for (const item of items) {
+      const dashIdx = item.search(/\s(?:—|-{1,2})\s/);
+      const title = dashIdx > 0 ? item.slice(0, dashIdx).trim() : item;
+      const description = dashIdx > 0 ? item.slice(dashIdx).replace(/^[\s—\-]+/, "") : "";
+      const props = {
+        Item: { title: [{ type: "text", text: { content: title.slice(0, 2000) } }] },
+        "From Domain": { rich_text: [{ type: "text", text: { content: domain } }] },
+        Status: { select: { name: "Open" } },
+        Priority: { select: { name: "Post-phase" } },
+      };
+      if (description) {
+        props["Description"] = { rich_text: [{ type: "text", text: { content: description.slice(0, 2000) } }] };
+      }
+      await notion.pages.create({
+        parent: { database_id: pipelineNotion.deferredItemsDatabaseId },
+        properties: props,
+      });
+      created++;
+    }
+    return { done: true, count: created };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+/** Item 13: append lock-update block to the phase's Initiation Prompt page. */
+async function updateInitiationPrompt({ implNotes }) {
+  if (!pipelineNotion?.phaseFolders) {
+    return { done: false, reason: "no phaseFolders in pipeline config" };
+  }
+  const folderId = pipelineNotion.phaseFolders[String(config.phase)];
+  if (!folderId) {
+    return { done: false, reason: `no phase folder ID configured for phase ${config.phase}` };
+  }
+  try {
+    const resp = await notion.blocks.children.list({ block_id: folderId, page_size: 50 });
+    const promptBlock = resp.results.find(
+      (b) =>
+        b.type === "child_page" &&
+        /initiation prompt/i.test(b.child_page?.title || ""),
+    );
+    if (!promptBlock) {
+      return { done: false, reason: "no 'Phase Initiation Prompt' child page found in phase folder" };
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    const update = [
+      `Domain ${domain} (${config.name}) locked — ${date}`,
+      `New test baseline: ${implNotes?.testCount ?? "unknown"}`,
+    ].join("\n");
+    await appendToPage(promptBlock.id, `Lock update — ${domain} — ${date}`, update);
+    return { done: true, pageId: promptBlock.id };
+  } catch (err) {
+    return { done: false, reason: err.message };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 
@@ -412,17 +611,36 @@ function isPhaseComplete() {
     recordItem(2, "Lock Checklist written", "skipped", "no lockChecklistPageId in config");
   }
 
-  // Items 3-7: Domain Registry / Mission Control / Domain Checklist /
-  // Refactor Roadmap / Deferred Items
-  // These require Notion database IDs that aren't part of the standard
-  // domain-pages.json schema. They're recorded as "skipped" with a clear
-  // reason. A future enhancement can add the database IDs to a global
-  // pipeline config and unblock these.
-  recordItem(3, "Domain Registry updated", "skipped", "database ID not in pipeline config");
-  recordItem(4, "Mission Control updated", "skipped", "database ID not in pipeline config");
-  recordItem(5, "Domain Checklist updated", "skipped", "database ID not in pipeline config");
-  recordItem(6, "Refactor Roadmap updated", "skipped", "database ID not in pipeline config");
-  recordItem(7, "Deferred Items logged", "skipped", "database ID not in pipeline config");
+  // Item 3: Domain Registry
+  {
+    const r = await updateDomainRegistry({ prUrl, implNotes });
+    recordItem(3, "Domain Registry updated", r.done ? "done" : "skipped", r.detail || r.pageId || r.reason);
+  }
+
+  // Item 4: Mission Control
+  {
+    const r = await updateMissionControl({ prUrl });
+    recordItem(4, "Mission Control updated", r.done ? "done" : "skipped", r.detail || r.pageId || r.reason);
+  }
+
+  // Item 5: Domain Checklist
+  {
+    const r = await updateDomainChecklist();
+    recordItem(5, "Domain Checklist updated", r.done ? "done" : "skipped", r.detail || r.blockId || r.reason);
+  }
+
+  // Item 6: Refactor Roadmap
+  {
+    const r = await updateRefactorRoadmap({ prUrl, implNotes });
+    recordItem(6, "Refactor Roadmap updated", r.done ? "done" : "skipped", r.detail || r.reason);
+  }
+
+  // Item 7: Deferred Items
+  {
+    const r = await logDeferredItems(implNotes.rawContent || "");
+    const detail = r.done ? `${r.count ?? 0} items created` + (r.detail ? ` — ${r.detail}` : "") : r.reason;
+    recordItem(7, "Deferred Items logged", r.done ? "done" : "skipped", detail);
+  }
 
   // Item 8: Locked Upstream Context — embedded in checklist body
   recordItem(8, "Locked Upstream Context written", "done", "embedded in lock checklist body");
@@ -477,12 +695,10 @@ function isPhaseComplete() {
   );
 
   // Item 13: Initiation prompt updated
-  recordItem(
-    13,
-    "Initiation prompt updated",
-    "skipped",
-    "phase initiation prompt page ID not in pipeline config",
-  );
+  {
+    const r = await updateInitiationPrompt({ implNotes });
+    recordItem(13, "Initiation prompt updated", r.done ? "done" : "skipped", r.detail || r.pageId || r.reason);
+  }
 
   // ---------------------------------------------------------------------------
   // Write closeout artifact

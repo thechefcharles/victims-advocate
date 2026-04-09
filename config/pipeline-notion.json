@@ -1,0 +1,17 @@
+{
+  "domainRegistryDatabaseId": "18ba9fb6-e4af-46cf-bfee-f0ce92e890cd",
+  "missionControlDatabaseId": "e23ef709-f416-4bdd-8198-388f3f1e802c",
+  "deferredItemsDatabaseId": "cee95b45-abc7-4100-b023-4276901d5d2f",
+  "domainChecklistPageId": "33af6ea84e4181f48dafc6a06addd52c",
+  "refactorRoadmapPageId": "33af6ea84e418199885fef51bd03d2e5",
+  "phaseFolders": {
+    "0": "339f6ea84e418172be32ceaf7709be37",
+    "1": "339f6ea84e418192a5a1c9016dc36ed1",
+    "2": "339f6ea84e41819b96b5cc3406e976a7",
+    "3": "339f6ea84e4181a5a98ee80023ef9372",
+    "4": "339f6ea84e41817b9854c3f61bde320b",
+    "5": "339f6ea84e4181ce9398f101404a3b1a",
+    "6": "339f6ea84e41819f96ddee24932c822a",
+    "7": "339f6ea84e41815b8d83f8784e8ede56"
+  }
+}
