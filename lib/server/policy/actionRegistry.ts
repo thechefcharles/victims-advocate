@@ -312,6 +312,26 @@ export const POLICY_ACTIONS = [
   "org:link_catalog_entry",
   /** Set the applicant's program affiliation in their profile. Any authenticated user. */
   "profile:set_affiliation",
+
+  // -------------------------------------------------------------------------
+  // Domain 4.1 — Referral actions
+  // -------------------------------------------------------------------------
+  /** Create a referral (draft). Source-org leadership only. */
+  "referral:create",
+  /** View a referral. Source org, target org (scoped), or applicant (own). */
+  "referral:view",
+  /** Accept a referral (pending_acceptance → accepted). Target-org leadership only. */
+  "referral:accept",
+  /** Reject a referral (pending_acceptance → rejected). Target-org leadership only. */
+  "referral:reject",
+  /** Cancel a referral (any non-closed status → cancelled). Source-org leadership. */
+  "referral:cancel",
+  /** Close a referral (accepted/rejected/cancelled → closed). Source-org leadership. */
+  "referral:close",
+  /** View a referral share package. Provider only (source or target org). */
+  "referral:share_package.view",
+  /** Prepare a referral share package. Source-org leadership only. */
+  "referral:share_package.prepare",
 ] as const;
 
 /** Union of all valid policy action strings. */
