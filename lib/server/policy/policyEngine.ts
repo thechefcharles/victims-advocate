@@ -23,6 +23,7 @@ import { logEvent } from "@/lib/server/audit/logEvent";
 import type { PolicyActor, PolicyResource, PolicyContext, PolicyDecision } from "./policyTypes";
 import type { PolicyAction } from "./actionRegistry";
 import { assertSameTenant } from "./tenantScope";
+import { evalApplicantDomain } from "@/lib/server/applicant/evalApplicantProfile";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1338,6 +1339,13 @@ export async function can(
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);
+      break;
+    case "applicant_profile":
+    case "applicant_preference":
+    case "safety_preference":
+    case "trusted_helper_access":
+    case "applicant_bookmark":
+      decision = await evalApplicantDomain(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");

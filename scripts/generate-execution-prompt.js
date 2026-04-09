@@ -252,13 +252,18 @@ async function postToNotionPage(pageId, content) {
   log(`  ✓ fetched ${analysisContent.length} characters`);
 
   // 2. Call Anthropic API
-  log("Calling Anthropic API (claude-sonnet-4-20250514, max_tokens=8000)...");
+  const ANTHROPIC_MODEL = "claude-sonnet-4-6";
+  const ANTHROPIC_MAX_TOKENS = 32000;
+  log(`Calling Anthropic API (${ANTHROPIC_MODEL}, max_tokens=${ANTHROPIC_MAX_TOKENS})...`);
   const client = new Anthropic();
-  let response;
+  let executionPrompt = "";
+  let stopReason = "unknown";
+  let inputTokens = 0;
+  let outputTokens = 0;
   try {
-    response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 8000,
+    const stream = await client.messages.stream({
+      model: ANTHROPIC_MODEL,
+      max_tokens: ANTHROPIC_MAX_TOKENS,
       system: systemPrompt,
       messages: [
         {
@@ -267,21 +272,24 @@ async function postToNotionPage(pageId, content) {
         },
       ],
     });
+    const response = await stream.finalMessage();
+    executionPrompt = response.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("\n");
+    stopReason = response.stop_reason ?? "unknown";
+    inputTokens = response.usage?.input_tokens ?? 0;
+    outputTokens = response.usage?.output_tokens ?? 0;
   } catch (err) {
     fail(`Anthropic API call failed: ${err.message}`);
   }
-
-  const executionPrompt = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("\n");
 
   if (!executionPrompt || executionPrompt.trim().length < 100) {
     fail(`Anthropic returned empty or trivial response (${executionPrompt.length} chars)`);
   }
   log(`  ✓ received ${executionPrompt.length} characters`);
   log(
-    `  ✓ usage: input=${response.usage?.input_tokens ?? "?"}, output=${response.usage?.output_tokens ?? "?"}, stop_reason=${response.stop_reason}`,
+    `  ✓ usage: input=${inputTokens}, output=${outputTokens}, stop_reason=${stopReason}`,
   );
 
   // 3. Write artifact

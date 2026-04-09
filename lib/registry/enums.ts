@@ -210,17 +210,28 @@ export type DocumentStatus = "active" | "locked" | "archived";
 export type ConsentGrantStatus = "active" | "revoked" | "expired";
 
 // ---------------------------------------------------------------------------
-// Domain 2.2 — TrustedHelper
+// Domain 3.1 — TrustedHelper / Bookmark (Applicant Domain)
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 2.2 TrustedHelper
- * [INFERRED] Confirm values against Notion spec before execution pass.
+ * Owned by: Domain 3.1 Applicant Domain
+ * [DB-CONFIRMED] Matches trusted_helper_access.status CHECK constraint in
+ * migration 20260508000002_trusted_helper_access.sql.
  */
 export type TrustedHelperStatus =
   | "pending"
   | "active"
   | "revoked";
+
+/**
+ * Owned by: Domain 3.1 Applicant Domain
+ * [DB-CONFIRMED] Matches applicant_bookmarks.target_type CHECK constraint in
+ * migration 20260508000003_applicant_bookmarks.sql.
+ */
+export type BookmarkTargetType =
+  | "provider"
+  | "program"
+  | "resource";
 
 // ---------------------------------------------------------------------------
 // Domain 5.1 — ScoreMethodology

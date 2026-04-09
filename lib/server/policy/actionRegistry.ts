@@ -240,6 +240,42 @@ export const POLICY_ACTIONS = [
   "admin:edit_any",
   /** Impersonate / view-as a user for support purposes. */
   "admin:impersonate",
+
+  // -------------------------------------------------------------------------
+  // Domain 3.1 — Applicant Domain actions
+  // -------------------------------------------------------------------------
+  /** View own applicant profile (self or trusted helper with profile:view). */
+  "applicant_profile:view",
+  /** Update own applicant profile (self only). */
+  "applicant_profile:update",
+  /** View another applicant's profile (provider with case access or admin). */
+  "applicant_profile:view_others",
+  /** View own applicant preferences (self only). */
+  "applicant_preference:view",
+  /** Update own applicant preferences (self only). */
+  "applicant_preference:update",
+  /** View own safety preferences (self only). */
+  "safety_preference:view",
+  /** Update own safety preferences (self only). */
+  "safety_preference:update",
+  /** Trigger quick exit — clears local state and redirects to safe URL. */
+  "safety_preference:quick_exit",
+  /** Grant trusted helper access to another user. Applicant only. */
+  "trusted_helper:grant",
+  /** Revoke a trusted helper grant. Applicant owner or platform admin. */
+  "trusted_helper:revoke",
+  /** List trusted helpers for own account. Applicant only. */
+  "trusted_helper:list",
+  /** Act on behalf of an applicant as an active trusted helper. */
+  "trusted_helper:act_as",
+  /** Create a bookmark for a provider, program, or resource. Applicant only. */
+  "applicant_bookmark:create",
+  /** List own bookmarks. Applicant only. */
+  "applicant_bookmark:list",
+  /** Delete own bookmark. Applicant only. */
+  "applicant_bookmark:delete",
+  /** Reorder own bookmarks. Applicant only. */
+  "applicant_bookmark:reorder",
 ] as const;
 
 /** Union of all valid policy action strings. */

@@ -1,3 +1,4 @@
+// @deprecated — use resolveApplicantByUserId from lib/server/applicant/applicantProfileRepository.ts
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
 import { parsePersonalInfo, type VictimPersonalInfo } from "@/lib/personalInfo";

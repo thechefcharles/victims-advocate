@@ -65,7 +65,12 @@ export type PolicyResourceType =
   | "translation_mapping_set"
   | "locale_preference"
   | "explanation_request"
-  | "admin";
+  | "admin"
+  | "applicant_profile"
+  | "applicant_preference"
+  | "safety_preference"
+  | "trusted_helper_access"
+  | "applicant_bookmark";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant
