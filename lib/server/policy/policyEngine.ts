@@ -28,6 +28,7 @@ import { evalReferral } from "@/lib/server/referrals/referralPolicy";
 import { evalAppointment } from "@/lib/server/appointments/appointmentPolicy";
 import { evalEvent } from "@/lib/server/events/eventPolicy";
 import { evalTrustedHelper } from "@/lib/server/trustedHelper/trustedHelperPolicy";
+import { evalRecommendation } from "@/lib/server/recommendations/recommendationPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1470,6 +1471,9 @@ export async function can(
       break;
     case "event":
       decision = await evalEvent(action, actor, resource, context);
+      break;
+    case "recommendation":
+      decision = await evalRecommendation(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");

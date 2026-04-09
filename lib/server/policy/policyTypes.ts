@@ -75,7 +75,8 @@ export type PolicyResourceType =
   | "appointment"
   | "event"
   | "provider_search"
-  | "trusted_helper";
+  | "trusted_helper"
+  | "recommendation";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant
