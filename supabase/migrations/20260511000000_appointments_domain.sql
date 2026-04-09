@@ -18,7 +18,7 @@ create table if not exists public.appointments (
   id                    uuid primary key default gen_random_uuid(),
   case_id               uuid not null references public.cases(id) on delete cascade,
   organization_id       uuid not null references public.organizations(id) on delete cascade,
-  program_id            uuid references public.programs(id) on delete set null,
+  program_id            uuid references public.program_definitions(id) on delete set null,
   service_type          text not null,
   scheduled_start       timestamptz not null,
   scheduled_end         timestamptz not null,
@@ -65,7 +65,7 @@ create policy "service_role_appointments"
 create table if not exists public.availability_rules (
   id              uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id) on delete cascade,
-  program_id      uuid references public.programs(id) on delete cascade,
+  program_id      uuid references public.program_definitions(id) on delete cascade,
   staff_user_id   uuid references auth.users(id) on delete cascade,
   -- 0 = Sunday, 1 = Monday, … 6 = Saturday. NULL means entire date range (for blackouts).
   day_of_week     smallint check (day_of_week between 0 and 6),

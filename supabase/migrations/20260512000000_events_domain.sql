@@ -17,7 +17,7 @@
 create table if not exists public.events (
   id                  uuid primary key default gen_random_uuid(),
   organization_id     uuid not null references public.organizations(id) on delete cascade,
-  program_id          uuid references public.programs(id) on delete set null,
+  program_id          uuid references public.program_definitions(id) on delete set null,
   title               text not null,
   description         text,
   event_type          text not null,
