@@ -192,7 +192,7 @@
         {
           "domain": "5.1",
           "dependsOn": [],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "5.2",
