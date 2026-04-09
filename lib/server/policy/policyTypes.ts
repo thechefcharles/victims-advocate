@@ -62,6 +62,9 @@ export type PolicyResourceType =
   | "state_workflow_config"
   | "cvc_form_template"
   | "output_generation_job"
+  | "translation_mapping_set"
+  | "locale_preference"
+  | "explanation_request"
   | "admin";
 
 /**

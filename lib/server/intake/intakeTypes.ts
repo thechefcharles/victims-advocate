@@ -25,6 +25,8 @@ export type IntakeSessionRecord = {
   intake_schema_version: string;
   /** Domain 2.2 — UUID FK to state_workflow_configs.id. Nullable until populated by intakeService.startIntake. */
   state_workflow_config_id: string | null;
+  /** Domain 2.4 — UUID FK to translation_mapping_sets_v2.id. Nullable until populated by intakeService.startIntake. */
+  translation_mapping_set_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -40,6 +42,8 @@ export type IntakeSubmissionRecord = {
   intake_schema_version: string;
   /** Domain 2.2 — copied from the linked session at submission time. */
   state_workflow_config_id: string | null;
+  /** Domain 2.4 — copied from the linked session at submission time. */
+  translation_mapping_set_id: string | null;
   state_code: "IL" | "IN";
   submitted_at: string;
   submitted_by_user_id: string | null;

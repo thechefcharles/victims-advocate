@@ -128,6 +128,34 @@ export type CvcFormTemplateStatus = "draft" | "active" | "deprecated";
 export type OutputGenerationJobStatus = "pending" | "processing" | "completed" | "failed";
 
 // ---------------------------------------------------------------------------
+// Domain 2.4 — Translation / i18n
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by: Domain 2.4 Translation / i18n.
+ * v1 supports English and Spanish only. Additional locales deferred.
+ */
+export type LocaleCode = "en" | "es";
+
+/**
+ * Owned by: Domain 2.4 Translation / i18n
+ * [DB-CONFIRMED] Matches translation_mapping_sets_v2.status CHECK constraint in
+ * migration 20260507000000_translation_i18n.sql.
+ */
+export type TranslationMappingSetStatus = "draft" | "active" | "deprecated";
+
+/**
+ * Owned by: Domain 2.4 Translation / i18n
+ * [DB-CONFIRMED] Matches explanation_requests.status CHECK constraint in
+ * migration 20260507000000_translation_i18n.sql.
+ *
+ * pending   — request row created, prompt not yet sent.
+ * completed — model returned and guardrails passed.
+ * failed    — model error, blacklist hit, or post-processing rejected output.
+ */
+export type ExplanationRequestStatus = "pending" | "completed" | "failed";
+
+// ---------------------------------------------------------------------------
 // Domain 1.4 — Referral
 // ---------------------------------------------------------------------------
 

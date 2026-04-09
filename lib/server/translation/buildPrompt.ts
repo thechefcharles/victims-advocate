@@ -1,10 +1,20 @@
 /**
- * Phase 9: Centralized prompt builder for "Explain this" translator.
- * Phase 10: Optional knowledge-base grounding.
+ * Domain 2.4: "Explain this" prompt builder.
+ *
+ * Originally created in Phase 9 / Phase 10 (KB grounding) as
+ * lib/server/translator/buildPrompt.ts. Domain 2.4 moves it under
+ * lib/server/translation/ as part of the translator → translation absorption.
+ *
+ * The BEHAVIOR_RULES are the load-bearing safety code. They MUST NOT be
+ * weakened or removed. Any future change must keep:
+ *   - "no legal advice" prohibition
+ *   - "no eligibility certainty / 'you will qualify'" prohibition
+ *   - "no falsification / no omission suggestion" prohibition
+ *   - calm trauma-informed tone requirement
  */
 
-import type { ExplainRequest } from "./types";
-import { MAX_EXPLANATION_LENGTH } from "./types";
+import type { ExplainRequest } from "./translationTypes";
+import { MAX_EXPLANATION_LENGTH } from "./translationTypes";
 import type { KnowledgeEntryRow } from "@/lib/server/knowledge";
 
 const BEHAVIOR_RULES = [
@@ -44,7 +54,7 @@ export function buildExplainSystemPrompt(hasKnowledgeContext = false): string {
   if (hasKnowledgeContext) {
     lines.push(
       "",
-      "When AUTHORITATIVE CONTEXT from the knowledge base is provided in the user message, base your explanation on it. Do not add specific rules, deadlines, or program details that are not in that context. If the text to explain is not covered by the context, give a short general explanation only."
+      "When AUTHORITATIVE CONTEXT from the knowledge base is provided in the user message, base your explanation on it. Do not add specific rules, deadlines, or program details that are not in that context. If the text to explain is not covered by the context, give a short general explanation only.",
     );
   }
   return lines.join("\n");
@@ -77,3 +87,6 @@ export function buildExplainUserPrompt(req: ExplainRequest): string {
     "Provide a short, plain-language explanation. End with a single disclaimer line if appropriate: 'This is general information, not legal advice.'",
   ].join("\n");
 }
+
+// Re-export BEHAVIOR_RULES for testability and gate verification.
+export { BEHAVIOR_RULES };

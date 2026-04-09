@@ -1164,6 +1164,82 @@ async function evalOutputGenerationJob(
   return consentDenial ?? allow();
 }
 
+async function evalTranslation(
+  action: PolicyAction,
+  actor: PolicyActor,
+  resource: PolicyResource,
+  context?: PolicyContext,
+): Promise<PolicyDecision> {
+  // Translation surfaces are platform-wide. No tenant scope.
+  // Agency accounts ARE allowed to use Explain This and update their own
+  // locale preference (they use the app too). Admin-only mutations stay denied
+  // for agencies via the global isAdmin bypass logic.
+  const consentDenial = checkConsent(context);
+
+  switch (action) {
+    case "translation:explain_text":
+    case "translation_mapping:resolve": {
+      // Allowed for any authenticated actor (auth check already done in can()).
+      return consentDenial ?? allow();
+    }
+
+    case "locale_preference:update": {
+      // Owner-only: actor.userId must match resource.ownerId (the user_id of the
+      // locale_preferences row). Allowed for any authenticated account type
+      // (applicant, provider, agency, admin via bypass).
+      if (resource.ownerId && resource.ownerId !== actor.userId) {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "You can only update your own locale preference.",
+        );
+      }
+      return consentDenial ?? allow();
+    }
+
+    case "translation:explanation_view_log":
+    case "translation_mapping_set:view": {
+      // Admin-only — handled via the global isAdmin bypass in can(). Reaching
+      // here means the actor is not an admin → deny.
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required for translation log/admin views.",
+      );
+    }
+
+    case "translation_mapping_set:update": {
+      if (resource.status && resource.status !== "draft") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Translation mapping sets can only be edited while in draft status.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to update translation mapping sets.",
+      );
+    }
+
+    case "translation_mapping_set:publish": {
+      if (resource.status && resource.status !== "draft") {
+        return deny(
+          "INSUFFICIENT_ROLE",
+          "Only draft translation mapping sets can be published.",
+        );
+      }
+      return deny(
+        "INSUFFICIENT_ROLE",
+        "Platform administrator access required to publish translation mapping sets.",
+      );
+    }
+
+    default:
+      return deny(
+        "RESOURCE_NOT_FOUND",
+        `Action '${action}' is not valid for translation resource types.`,
+      );
+  }
+}
+
 async function evalAdmin(
   action: PolicyAction,
   actor: PolicyActor,
@@ -1254,6 +1330,11 @@ export async function can(
       break;
     case "output_generation_job":
       decision = await evalOutputGenerationJob(action, actor, resource, context);
+      break;
+    case "translation_mapping_set":
+    case "locale_preference":
+    case "explanation_request":
+      decision = await evalTranslation(action, actor, resource, context);
       break;
     case "admin":
       decision = await evalAdmin(action, actor, resource, context);

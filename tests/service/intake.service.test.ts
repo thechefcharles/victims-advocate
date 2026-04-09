@@ -51,6 +51,11 @@ vi.mock("@/lib/server/stateWorkflows/resolvers", () => ({
   resolveActiveStateWorkflowConfig: vi.fn().mockResolvedValue(null),
 }));
 
+// Domain 2.4 cross-domain mock — startIntake also calls this. Default null.
+vi.mock("@/lib/server/translation", () => ({
+  resolveActiveTranslationMappingSet: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/server/cases/caseRepository", () => ({
   getCaseRecordById: vi.fn().mockResolvedValue({
     id: "case-1",
@@ -126,6 +131,7 @@ function makeSession(overrides: Partial<IntakeSessionRecord> = {}): IntakeSessio
     },
     intake_schema_version: "v1",
     state_workflow_config_id: null,
+    translation_mapping_set_id: null,
     created_at: "2026-04-01T00:00:00Z",
     updated_at: "2026-04-02T00:00:00Z",
     ...overrides,
@@ -145,6 +151,7 @@ function makeSubmission(overrides: Partial<IntakeSubmissionRecord> = {}): Intake
     },
     intake_schema_version: "v1",
     state_workflow_config_id: null,
+    translation_mapping_set_id: null,
     state_code: "IL",
     submitted_at: "2026-04-08T12:00:00Z",
     submitted_by_user_id: "applicant-1",

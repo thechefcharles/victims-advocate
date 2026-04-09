@@ -32,6 +32,7 @@ function makeSubmission(
     submitted_payload: payload,
     intake_schema_version: "v1",
     state_workflow_config_id: null,
+    translation_mapping_set_id: null,
     state_code: "IL",
     submitted_at: "2026-04-08T00:00:00Z",
     submitted_by_user_id: "applicant-1",
