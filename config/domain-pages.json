@@ -401,5 +401,41 @@
     "socGate": false,
     "migrationTimestampFloor": "20260514000000",
     "grepChecks": []
+  },
+  "6.1": {
+    "slug": "6.1-trust-transparency",
+    "name": "Trust / Transparency / Scoring",
+    "phase": 6,
+    "blockedBy": "0.5",
+    "status": "pending",
+    "specPageId": "33bf6ea84e4181a4a2d5d98fcd747cce",
+    "analysisPromptPageId": "33bf6ea84e4181bdbaecde3044ca11ce",
+    "analysisOutputPageId": "33bf6ea84e4181efafd6ccfd520768c0",
+    "executionPromptPageId": "33bf6ea84e41815aa679f240adf6613f",
+    "implementationNotesPageId": "33bf6ea84e418196ae70f04d6718b585",
+    "lockChecklistPageId": "33bf6ea84e4181f99af8c16abbb9b1e1",
+    "refDocsPageId": "33bf6ea84e41819fba95f0116350aec8",
+    "dataClass": "A",
+    "socGate": false,
+    "migrationTimestampFloor": "20260515000000",
+    "grepChecks": []
+  },
+  "6.2": {
+    "slug": "6.2-agency-reporting",
+    "name": "Agency / Reporting",
+    "phase": 6,
+    "blockedBy": "6.1",
+    "status": "pending",
+    "specPageId": "33bf6ea84e4181898a27e035cccfed1d",
+    "analysisPromptPageId": "33bf6ea84e418177bf6bda02b5bdc3d2",
+    "analysisOutputPageId": "33bf6ea84e4181afa691e4c9e0503701",
+    "executionPromptPageId": "33bf6ea84e4181519f6cdf318c78dbc1",
+    "implementationNotesPageId": "33bf6ea84e418179a2a8c7482ec895e7",
+    "lockChecklistPageId": "33bf6ea84e4181619fa7ec6280c84f13",
+    "refDocsPageId": "33bf6ea84e418116a003d5778c7df8b0",
+    "dataClass": "A",
+    "socGate": false,
+    "migrationTimestampFloor": "20260516000000",
+    "grepChecks": []
   }
 }

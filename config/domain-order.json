@@ -202,6 +202,23 @@
           "status": "pending"
         }
       ]
+    },
+    "6": {
+      "name": "Trust & Reporting",
+      "buildOrder": [
+        {
+          "domain": "6.1",
+          "dependsOn": [],
+          "status": "pending"
+        },
+        {
+          "domain": "6.2",
+          "dependsOn": [
+            "6.1"
+          ],
+          "status": "pending"
+        }
+      ]
     }
   }
 }
