@@ -383,5 +383,23 @@
     "socGate": false,
     "migrationTimestampFloor": "20260513000000",
     "grepChecks": []
+  },
+  "5.2": {
+    "slug": "5.2-resources",
+    "name": "Resources / Recommendations",
+    "phase": 5,
+    "blockedBy": "5.1",
+    "status": "pending",
+    "specPageId": "33bf6ea84e4181449657cfb1f1cb144d",
+    "analysisPromptPageId": "33bf6ea84e4181daaf05e26ba738bd82",
+    "analysisOutputPageId": "33bf6ea84e418105aaa4e97ca341c1a6",
+    "executionPromptPageId": "33bf6ea84e41810a803de60c5bde2bac",
+    "implementationNotesPageId": "33bf6ea84e4181db9ce9f83391f855ff",
+    "lockChecklistPageId": "33bf6ea84e41819aab48dc85d9648914",
+    "refDocsPageId": "33bf6ea84e41810ab1f8de805b4453c1",
+    "dataClass": "B",
+    "socGate": false,
+    "migrationTimestampFloor": "20260514000000",
+    "grepChecks": []
   }
 }
