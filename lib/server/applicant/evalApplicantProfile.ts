@@ -113,48 +113,12 @@ export async function evalApplicantDomain(
     }
 
     // -----------------------------------------------------------------------
-    // trusted_helper_access
+    // trusted_helper_access — moved to evalTrustedHelper (Domain 5.1)
     // -----------------------------------------------------------------------
-    case "trusted_helper:grant": {
-      if (actor.accountType !== "applicant") {
-        return deny("Only applicants may grant trusted helper access.");
-      }
-      return allow();
-    }
-
-    case "trusted_helper:revoke": {
-      if (!targetUserId) return deny("Target applicant user ID required.");
-      if (actor.userId === targetUserId) return allow();
-      if (actor.accountType === "platform_admin") return allow();
-      return deny("Only the applicant or a platform admin may revoke helper access.");
-    }
-
-    case "trusted_helper:list": {
-      if (actor.accountType !== "applicant") {
-        return deny("Only applicants may list their trusted helpers.");
-      }
-      return allow();
-    }
-
-    case "trusted_helper:act_as": {
-      // The caller must pre-fetch the grant and inject via context.requestMetadata.helperGrant
-      // resource.ownerId = applicantUserId, actor.userId = helperUserId
-      const grant = context?.requestMetadata?.helperGrant as {
-        status: string;
-        granted_scope: string[];
-      } | null | undefined;
-
-      if (!grant || grant.status !== "active") {
-        return deny("No active helper grant found.");
-      }
-
-      const requestedAction = resource.status ?? "";
-      if (requestedAction && !grant.granted_scope.includes(requestedAction)) {
-        return deny(`Action '${requestedAction}' is not in the helper's granted scope.`);
-      }
-
-      return allow();
-    }
+    // All trusted_helper:* cases are now dispatched by policyEngine.ts to
+    // evalTrustedHelper. This branch is unreachable — the case list in the
+    // policy engine routes "trusted_helper_access" and "trusted_helper"
+    // resource types to evalTrustedHelper instead of evalApplicantDomain.
 
     // -----------------------------------------------------------------------
     // applicant_bookmark

@@ -288,8 +288,18 @@ export const POLICY_ACTIONS = [
   "safety_preference:quick_exit",
   /** Grant trusted helper access to another user. Applicant only. */
   "trusted_helper:grant",
+  /** View a single trusted helper grant. Applicant owner, helper party, or admin. */
+  "trusted_helper:view",
   /** Revoke a trusted helper grant. Applicant owner or platform admin. */
   "trusted_helper:revoke",
+  /** Accept a pending trusted helper grant. Helper party only. */
+  "trusted_helper:accept",
+  /** Expire an active trusted helper grant. Admin / system sweep only. */
+  "trusted_helper:expire",
+  /** Update scope on an active trusted helper grant. Applicant owner only. */
+  "trusted_helper:scope.update",
+  /** View the audit trail for a trusted helper grant. Applicant owner or admin. */
+  "trusted_helper:audit.view",
   /** List trusted helpers for own account. Applicant only. */
   "trusted_helper:list",
   /** Act on behalf of an applicant as an active trusted helper. */
