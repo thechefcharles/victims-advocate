@@ -374,6 +374,12 @@ export const POLICY_ACTIONS = [
   "event:register",
   /** Cancel own registration for an event. */
   "event:unregister",
+
+  // -------------------------------------------------------------------------
+  // Domain 3.4 — Provider Discovery actions
+  // -------------------------------------------------------------------------
+  /** Browse the provider discovery map and search index. Any authenticated user. */
+  "provider_search:browse",
 ] as const;
 
 /** Union of all valid policy action strings. */

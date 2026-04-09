@@ -73,7 +73,8 @@ export type PolicyResourceType =
   | "applicant_bookmark"
   | "referral"
   | "appointment"
-  | "event";
+  | "event"
+  | "provider_search";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant

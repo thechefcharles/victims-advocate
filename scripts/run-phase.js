@@ -25,23 +25,20 @@
  * runDomain steps (per domain):
  *   a. node scripts/preflight.js --domain {domain}
  *   b. node scripts/fetch-prompt.js --domain {domain} --stage analysis
- *   c. [Claude Code] reads artifacts/domain-{domain}-analysis-prompt.txt and runs full analysis
- *      Result posted to Notion via post-notion-output.js (Claude-driven)
- *   d. node scripts/generate-execution-prompt.js --domain {domain}
- *   e. node scripts/fetch-prompt.js --domain {domain} --stage execution
- *   f. [Claude Code] reads artifacts/domain-{domain}-execution-prompt.txt and runs full execution
- *      Implementation notes posted to Notion via post-notion-output.js (Claude-driven)
- *   g. node scripts/validate.js --domain {domain}  — stops phase if any gate fails
- *   h. node scripts/post-notion-output.js [implementationNotesPageId]  (Claude-driven)
- *   i. node scripts/commit-and-pr.js --domain {domain}
- *   j. node scripts/notion-closeout.js --domain {domain}
- *   k. Update config/domain-order.json status → "locked"
+ *   c. [Claude Code] reads artifacts/domain-{domain}-analysis-prompt.txt, runs full
+ *      analysis + implementation in one pass, posts implementation notes to Notion
+ *      via post-notion-output.js (Claude-driven)
+ *   d. node scripts/validate.js --domain {domain}  — stops phase if any gate fails
+ *   e. node scripts/post-notion-output.js [implementationNotesPageId]  (Claude-driven)
+ *   f. node scripts/commit-and-pr.js --domain {domain}
+ *   g. node scripts/notion-closeout.js --domain {domain}
+ *   h. Update config/domain-order.json status → "locked"
  *
  * Escalation: if artifacts/domain-{domain}-escalation.md exists after
  * execution, the phase stops and the file content is printed. Human resolves,
  * then re-runs with --resume.
  *
- * Requires: NOTION_API_KEY, ANTHROPIC_API_KEY, gh CLI on PATH
+ * Requires: NOTION_API_KEY, gh CLI on PATH
  */
 
 "use strict";
@@ -322,23 +319,10 @@ async function runDomain(domain) {
   sh(`node scripts/fetch-prompt.js --domain ${domain} --stage analysis`);
   log(`${domain}: analysis prompt fetched → artifacts/domain-${domain}-analysis-prompt.txt`);
 
-  // ---- c. [Claude Code] — run full analysis ----------------------------------
-  // Claude Code (the running agent) reads the fetched prompt from the artifact
-  // and performs the analysis. This step is a signal/checkpoint for the agent.
-  log(`${domain}: ACTION REQUIRED — Claude Code: read artifacts/domain-${domain}-analysis-prompt.txt, run full analysis, post output to Notion page ${config.analysisOutputPageId} via post-notion-output.js`);
-
-  // ---- d. Generate execution prompt ------------------------------------------
-  log(`${domain}: generating execution prompt (Anthropic API review)...`);
-  sh(`node scripts/generate-execution-prompt.js --domain ${domain}`);
-  log(`${domain}: execution prompt generated`);
-
-  // ---- e. Fetch execution prompt ---------------------------------------------
-  log(`${domain}: fetching execution prompt...`);
-  sh(`node scripts/fetch-prompt.js --domain ${domain} --stage execution`);
-  log(`${domain}: execution prompt fetched → artifacts/domain-${domain}-execution-prompt.txt`);
-
-  // ---- f. [Claude Code] — run full execution ---------------------------------
-  log(`${domain}: ACTION REQUIRED — Claude Code: read artifacts/domain-${domain}-execution-prompt.txt, run full execution in auto-accept mode`);
+  // ---- c. [Claude Code] — run full analysis + implementation ----------------
+  // Claude Code reads the fetched analysis prompt and performs analysis AND
+  // implementation in one pass. No intermediate Anthropic API review step.
+  log(`${domain}: ACTION REQUIRED — Claude Code: read artifacts/domain-${domain}-analysis-prompt.txt, run full analysis + implementation in one pass, post implementation notes to Notion via post-notion-output.js`);
 
   // ---- Escalation check (after execution, before validation) -----------------
   const escalationPath = path.join(artifactsDir, `domain-${domain}-escalation.md`);
@@ -354,7 +338,7 @@ async function runDomain(domain) {
     process.exit(1);
   }
 
-  // ---- g. Validate -----------------------------------------------------------
+  // ---- d. Validate -----------------------------------------------------------
   log(`${domain}: running validation gates...`);
   let testCount = null;
   try {
@@ -374,10 +358,10 @@ async function runDomain(domain) {
     process.exit(1);
   }
 
-  // ---- h. [Claude Code] — post implementation notes --------------------------
+  // ---- e. [Claude Code] — post implementation notes --------------------------
   log(`${domain}: ACTION REQUIRED — Claude Code: post implementation notes to Notion page ${config.implementationNotesPageId} via post-notion-output.js`);
 
-  // ---- i. Commit and PR ------------------------------------------------------
+  // ---- f. Commit and PR ------------------------------------------------------
   log(`${domain}: committing and opening PR...`);
   sh(`node scripts/commit-and-pr.js --domain ${domain}`);
   const prTxtPath = path.join(artifactsDir, `domain-${domain}-pr.txt`);
@@ -386,11 +370,11 @@ async function runDomain(domain) {
     : "(no PR URL found)";
   log(`${domain}: PR created — ${prUrl}`);
 
-  // ---- j. Notion closeout ----------------------------------------------------
+  // ---- g. Notion closeout ----------------------------------------------------
   log(`${domain}: running Notion closeout...`);
   sh(`node scripts/notion-closeout.js --domain ${domain}`);
 
-  // ---- k. Mark locked in domain-order.json -----------------------------------
+  // ---- h. Mark locked in domain-order.json -----------------------------------
   markDomainLocked(domain);
   log(`${domain}: LOCKED ✅`);
 

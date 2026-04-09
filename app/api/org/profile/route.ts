@@ -19,6 +19,8 @@ import {
   serializeOrgInternalView,
   serializeOrgAdminView,
 } from "@/lib/server/organizations/organizationSerializers";
+import { syncOrgToIndex } from "@/lib/server/search/indexSync";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET(req: Request) {
   try {
@@ -123,6 +125,11 @@ export async function POST(req: Request) {
         req,
       }).catch(() => {});
     }
+
+    // Domain 3.4 — Wire search index sync (fire-and-forget, must not block response).
+    void syncOrgToIndex({ organizationId: rowId }, getSupabaseAdmin()).catch((err) =>
+      logger.warn("syncOrgToIndex.error", { organizationId: rowId, error: (err as Error).message })
+    );
 
     const serialized = isAdmin ? serializeOrgAdminView(result.row) : serializeOrgInternalView(result.row);
     return apiOk({ profile: serialized });
