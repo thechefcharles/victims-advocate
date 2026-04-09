@@ -73,6 +73,7 @@ export type PolicyResourceType =
   | "applicant_bookmark"
   | "referral"
   | "appointment"
+  | "event"
   | "provider_search";
 
 /**
