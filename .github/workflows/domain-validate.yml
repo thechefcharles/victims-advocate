@@ -27,7 +27,8 @@ jobs:
       - name: Tests
         run: |
           npm test -- --passWithNoTests 2>&1 | tee test-output.txt
-          TEST_COUNT=$(grep -oP 'Tests\s+\K\d+' test-output.txt || echo "0")
+          TEST_COUNT=$(grep "Tests" test-output.txt | grep "passed" | sed 's/.*Tests  *//' | sed 's/ .*//' | head -1)
+          TEST_COUNT=${TEST_COUNT:-0}
           echo "Test count: $TEST_COUNT"
           if [ "$TEST_COUNT" -lt "1100" ]; then
             echo "FAIL: Test count $TEST_COUNT is below minimum threshold (1100)"
