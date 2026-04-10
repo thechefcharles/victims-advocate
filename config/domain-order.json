@@ -219,6 +219,33 @@
           "status": "pending"
         }
       ]
+    },
+    "7": {
+      "name": "Governance & Platform",
+      "buildOrder": [
+        {
+          "domain": "7.1",
+          "dependsOn": [],
+          "status": "pending"
+        },
+        {
+          "domain": "7.2",
+          "dependsOn": [],
+          "status": "pending"
+        },
+        {
+          "domain": "7.3",
+          "dependsOn": [],
+          "status": "pending"
+        },
+        {
+          "domain": "7.4",
+          "dependsOn": [
+            "7.1"
+          ],
+          "status": "pending"
+        }
+      ]
     }
   }
 }
