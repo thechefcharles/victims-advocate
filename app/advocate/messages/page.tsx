@@ -90,6 +90,7 @@ function AdvocateMessagesContent() {
             });
             if (!res.ok) return null;
             return res.json() as Promise<{
+              data?: MessageRow[];
               messages?: MessageRow[];
               unread_count?: number;
             }>;
@@ -100,7 +101,7 @@ function AdvocateMessagesContent() {
           const c = slice[j];
           const json = results[j];
           if (!json) continue;
-          const messages = (json.messages ?? []) as MessageRow[];
+          const messages = (json.data ?? json.messages ?? []) as MessageRow[];
           const unreadCount = Number(json.unread_count ?? 0);
           if (messages.length === 0) continue;
 

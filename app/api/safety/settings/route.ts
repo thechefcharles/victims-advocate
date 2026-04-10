@@ -3,11 +3,23 @@ import { apiOk, apiFailFromError, toAppError, apiFail } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { getSafetySettings, upsertSafetySettings } from "@/lib/server/safety/settings";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 
 export async function GET(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
+
+    const actor = buildActor(ctx);
+    const decision = await can("safety_preference:view", actor, {
+      type: "safety_preference",
+      id: ctx.userId,
+      ownerId: ctx.userId,
+    });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const settings = await getSafetySettings({ ctx });
     return apiOk({ settings });
@@ -22,6 +34,16 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
+
+    const actor = buildActor(ctx);
+    const decision = await can("safety_preference:update", actor, {
+      type: "safety_preference",
+      id: ctx.userId,
+      ownerId: ctx.userId,
+    });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const body = await req.json().catch(() => ({}));
     const patch = {
@@ -69,4 +91,3 @@ export async function POST(req: Request) {
     return apiFailFromError(appErr);
   }
 }
-

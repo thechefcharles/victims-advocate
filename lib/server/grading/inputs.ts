@@ -1,14 +1,19 @@
 /**
- * Phase C: Aggregate platform signals into org-level scoring inputs (honest proxies).
- * Workflow metrics come only from {@link getOrganizationSignals}; grading does not query
- * cases, routing_runs, completeness_runs, or case_messages directly.
+ * Phase C / Domain 0.5: Aggregate platform signals into org-level scoring inputs (honest proxies).
+ *
+ * Trust Law compliant: reads from signal aggregates when available,
+ * falls back to getOrganizationSignals() during migration period.
+ *
+ * Grading does not query cases, routing_runs, completeness_runs,
+ * case_messages, or organizations directly — ever.
  */
 
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import { AppError } from "@/lib/server/api";
 import { getOrganizationSignals } from "@/lib/server/orgSignals/aggregate";
 import type { OrganizationSignals } from "@/lib/server/orgSignals/types";
 import type { OrgScoringInputs } from "./types";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getSignalAggregates } from "@/lib/server/trustSignal";
+import type { SignalAggregate } from "@/lib/server/trustSignal";
 
 function daysSince(iso: string | null): number | null {
   if (!iso) return null;
@@ -17,22 +22,17 @@ function daysSince(iso: string | null): number | null {
   return Math.floor((Date.now() - t) / 86400000);
 }
 
-function profileCompleteness(org: Record<string, unknown>): number {
+function profileCompleteness(profile: OrganizationSignals["profile"]): number {
   let n = 0;
   const max = 7;
-  if (Array.isArray(org.service_types) && org.service_types.length > 0) n++;
-  if (Array.isArray(org.languages) && org.languages.length > 0) n++;
-  if (
-    org.coverage_area &&
-    typeof org.coverage_area === "object" &&
-    Object.keys(org.coverage_area as object).length > 0
-  )
-    n++;
-  if (Array.isArray(org.intake_methods) && org.intake_methods.length > 0) n++;
-  if (org.capacity_status && String(org.capacity_status) !== "unknown") n++;
-  if (org.accepting_clients === true) n++;
-  if (org.avg_response_time_hours != null && org.avg_response_time_hours !== "") n++;
-  if (Array.isArray(org.accessibility_features) && org.accessibility_features.length > 0) n++;
+  if (profile.serviceTypesCount > 0) n++;
+  if (profile.languagesCount > 0) n++;
+  if (profile.hasCoverage) n++;
+  if (profile.intakeMethodsCount > 0) n++;
+  if (profile.capacityStatus !== "unknown") n++;
+  if (profile.acceptingClients) n++;
+  if (profile.avgResponseTimeHours != null) n++;
+  if (profile.accessibilityFeaturesCount > 0) n++;
   return Math.min(1, n / max);
 }
 
@@ -61,30 +61,92 @@ function messaging30dCounts(signals: OrganizationSignals): { advocate: number; v
   return { advocate, victim };
 }
 
+/**
+ * Returns the average emitted value for a signal type across all events.
+ * Returns 0 when no aggregate exists for the type.
+ */
+function aggAvg(aggregates: SignalAggregate[], signalType: string): number {
+  const agg = aggregates.find((a) => a.signal_type === signalType);
+  if (!agg || agg.total_count === 0) return 0;
+  return agg.total_value / agg.total_count;
+}
+
 export async function buildOrgScoringInputs(params: {
   organizationId: string;
 }): Promise<OrgScoringInputs> {
   const { organizationId } = params;
+
+  // Trust Law compliant: reads from signal aggregates when available,
+  // falls back to getOrganizationSignals() during migration period.
   const supabase = getSupabaseAdmin();
+  const aggregates = await getSignalAggregates(organizationId, supabase);
 
-  const [signals, orgRes] = await Promise.all([
-    getOrganizationSignals(organizationId),
-    supabase
-      .from("organizations")
-      .select(
-        "id,name,service_types,languages,coverage_area,intake_methods,accessibility_features,accepting_clients,capacity_status,avg_response_time_hours,profile_last_updated_at"
-      )
-      .eq("id", organizationId)
-      .maybeSingle(),
-  ]);
+  // getOrganizationSignals() is always called — provides org profile fields
+  // that are not encoded in numeric signal aggregates (name, accepting_clients, etc.)
+  const signals = await getOrganizationSignals(organizationId);
 
-  const { data: org, error: orgErr } = orgRes;
+  // Primary path: override workflow-derived fields with pre-aggregated values.
+  // Org profile fields (name, capacity, languages, etc.) always come from signals.profile.
+  if (aggregates.length > 0) {
+    const { profile } = signals;
 
-  if (orgErr || !org) {
-    throw new AppError("NOT_FOUND", "Organization not found", undefined, 404);
+    const caseTotal = Math.max(0, Math.round(aggAvg(aggregates, "case_volume")));
+    const avgAgeDays = aggAvg(aggregates, "case_age_distribution") || null;
+    const routingRate = aggAvg(aggregates, "routing_coverage");
+    const completenessRate = aggAvg(aggregates, "completeness_coverage");
+    const msgVolume = Math.round(aggAvg(aggregates, "messaging_volume"));
+    const msgRecent30d = Math.round(aggAvg(aggregates, "messaging_recency_30d"));
+    const ocrRate = aggAvg(aggregates, "ocr_coverage");
+    const apptRate = aggAvg(aggregates, "appointment_coverage");
+    const profileCompl = aggAvg(aggregates, "profile_completeness");
+
+    const casesWithRouting = Math.round(routingRate * caseTotal);
+    const casesWithCompleteness = Math.round(completenessRate * caseTotal);
+    const ocrRunsProxy = Math.max(0, Math.round(ocrRate * caseTotal));
+
+    // messaging_recency_30d signal value = recentMessageThreads count
+    const advocateMessages = msgRecent30d > 0 ? Math.max(msgRecent30d, 1) : 0;
+    const victimMessages =
+      msgRecent30d > 0 ? Math.max(1, Math.round(msgRecent30d * 0.35)) : 0;
+
+    let appointmentsCompleted = 0;
+    let appointmentsTotalTracked = 0;
+    if (apptRate > 0 && caseTotal > 0) {
+      appointmentsTotalTracked = Math.max(1, Math.round(apptRate * caseTotal));
+      appointmentsCompleted = Math.round(appointmentsTotalTracked * 0.65);
+    }
+
+    return {
+      organization_id: organizationId,
+      org_name: profile.name,
+      profile_completeness_0_1: profileCompl > 0 ? profileCompl : profileCompleteness(profile),
+      accepting_clients: profile.acceptingClients,
+      capacity_status: profile.capacityStatus,
+      avg_response_time_hours: profile.avgResponseTimeHours,
+      languages_count: profile.languagesCount,
+      accessibility_count: profile.accessibilityFeaturesCount,
+      intake_methods_count: profile.intakeMethodsCount,
+      service_types_count: profile.serviceTypesCount,
+      profile_last_updated_at: profile.lastProfileUpdate,
+      profile_last_updated_days_ago: daysSince(profile.lastProfileUpdate),
+      case_count_total: caseTotal,
+      case_count_90d: estimatedCaseCountLast90d(caseTotal, avgAgeDays),
+      cases_with_routing: casesWithRouting,
+      cases_with_completeness: casesWithCompleteness,
+      routing_ratio_0_1: routingRate,
+      completeness_ratio_0_1: completenessRate,
+      case_messages_total: msgVolume,
+      advocate_messages_30d: advocateMessages,
+      victim_messages_30d: victimMessages,
+      ocr_runs_total: ocrRunsProxy,
+      appointments_completed: appointmentsCompleted,
+      appointments_total_tracked: appointmentsTotalTracked,
+    };
   }
 
-  const o = org as Record<string, unknown>;
+  // Fallback path: aggregates not yet populated — use live signals (existing behavior).
+
+  const { profile } = signals;
   const totalCases = signals.cases.total;
   const routingRate = signals.workflow.routingUsageRate ?? 0;
   const completenessRate = signals.workflow.completenessUsageRate ?? 0;
@@ -104,26 +166,19 @@ export async function buildOrgScoringInputs(params: {
     appointmentsCompleted = Math.round(appointmentsTotalTracked * 0.65);
   }
 
-  const pl = o.profile_last_updated_at != null ? String(o.profile_last_updated_at) : null;
-
   return {
     organization_id: organizationId,
-    org_name: String(o.name ?? ""),
-    profile_completeness_0_1: profileCompleteness(o),
-    accepting_clients: Boolean(o.accepting_clients),
-    capacity_status: String(o.capacity_status ?? "unknown"),
-    avg_response_time_hours:
-      o.avg_response_time_hours != null && o.avg_response_time_hours !== ""
-        ? Number(o.avg_response_time_hours)
-        : null,
-    languages_count: Array.isArray(o.languages) ? o.languages.length : 0,
-    accessibility_count: Array.isArray(o.accessibility_features)
-      ? o.accessibility_features.length
-      : 0,
-    intake_methods_count: Array.isArray(o.intake_methods) ? o.intake_methods.length : 0,
-    service_types_count: Array.isArray(o.service_types) ? o.service_types.length : 0,
-    profile_last_updated_at: pl,
-    profile_last_updated_days_ago: daysSince(pl),
+    org_name: profile.name,
+    profile_completeness_0_1: profileCompleteness(profile),
+    accepting_clients: profile.acceptingClients,
+    capacity_status: profile.capacityStatus,
+    avg_response_time_hours: profile.avgResponseTimeHours,
+    languages_count: profile.languagesCount,
+    accessibility_count: profile.accessibilityFeaturesCount,
+    intake_methods_count: profile.intakeMethodsCount,
+    service_types_count: profile.serviceTypesCount,
+    profile_last_updated_at: profile.lastProfileUpdate,
+    profile_last_updated_days_ago: daysSince(profile.lastProfileUpdate),
     case_count_total: totalCases,
     case_count_90d: estimatedCaseCountLast90d(totalCases, signals.cases.avgAgeDays),
     cases_with_routing: casesWithRouting,

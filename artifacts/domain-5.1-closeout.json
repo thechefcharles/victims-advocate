@@ -1,0 +1,90 @@
+{
+  "success": true,
+  "domain": "5.1",
+  "name": "Trusted Helper / Delegate Access",
+  "phase": 5,
+  "closedAt": "2026-04-09T20:28:53.109Z",
+  "prUrl": "https://github.com/thechefcharles/victims-advocate/pull/47",
+  "testCount": 909,
+  "nextDomain": "4.2",
+  "phaseComplete": false,
+  "items": [
+    {
+      "num": 1,
+      "name": "Implementation Notes read",
+      "status": "done",
+      "detail": "909 tests, 6905 chars from page 5"
+    },
+    {
+      "num": 2,
+      "name": "Lock Checklist written",
+      "status": "done",
+      "detail": "posted to page 33bf6ea84e41810fa852dcab097c13c2"
+    },
+    {
+      "num": 3,
+      "name": "Domain Registry updated",
+      "status": "skipped",
+      "detail": "domain '5.1' row not found in Domain Registry"
+    },
+    {
+      "num": 4,
+      "name": "Mission Control updated",
+      "status": "skipped",
+      "detail": "domain '5.1' row not found in Mission Control"
+    },
+    {
+      "num": 5,
+      "name": "Domain Checklist updated",
+      "status": "done",
+      "detail": "b9d0b1ad-7f94-4fbb-9893-505f634f420e"
+    },
+    {
+      "num": 6,
+      "name": "Refactor Roadmap updated",
+      "status": "done"
+    },
+    {
+      "num": 7,
+      "name": "Deferred Items logged",
+      "status": "done",
+      "detail": "2 items created"
+    },
+    {
+      "num": 8,
+      "name": "Locked Upstream Context written",
+      "status": "done",
+      "detail": "embedded in lock checklist body"
+    },
+    {
+      "num": 9,
+      "name": "Next domain noted",
+      "status": "done",
+      "detail": "4.2"
+    },
+    {
+      "num": 10,
+      "name": "Validation gates confirmed",
+      "status": "skipped",
+      "detail": "no domain-X.Y-validation.json artifact (run validate.js first)"
+    },
+    {
+      "num": 11,
+      "name": "Branch / PR confirmed",
+      "status": "done",
+      "detail": "https://github.com/thechefcharles/victims-advocate/pull/47"
+    },
+    {
+      "num": 12,
+      "name": "Phase complete check",
+      "status": "done",
+      "detail": "Phase 5 not yet complete"
+    },
+    {
+      "num": 13,
+      "name": "Initiation prompt updated",
+      "status": "skipped",
+      "detail": "no 'Phase Initiation Prompt' child page found in phase folder"
+    }
+  ]
+}

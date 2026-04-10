@@ -1,0 +1,91 @@
+{
+  "success": true,
+  "domain": "3.1",
+  "name": "Applicant Domain",
+  "phase": 3,
+  "closedAt": "2026-04-09T06:24:17.369Z",
+  "prUrl": "https://github.com/thechefcharles/victims-advocate/pull/38",
+  "testCount": null,
+  "nextDomain": "3.1",
+  "phaseComplete": false,
+  "items": [
+    {
+      "num": 1,
+      "name": "Implementation Notes read",
+      "status": "done",
+      "detail": "? tests, 4878 chars from page 5"
+    },
+    {
+      "num": 2,
+      "name": "Lock Checklist written",
+      "status": "done",
+      "detail": "posted to page 33bf6ea84e418114873dd774144f4c47"
+    },
+    {
+      "num": 3,
+      "name": "Domain Registry updated",
+      "status": "skipped",
+      "detail": "database ID not in pipeline config"
+    },
+    {
+      "num": 4,
+      "name": "Mission Control updated",
+      "status": "skipped",
+      "detail": "database ID not in pipeline config"
+    },
+    {
+      "num": 5,
+      "name": "Domain Checklist updated",
+      "status": "skipped",
+      "detail": "database ID not in pipeline config"
+    },
+    {
+      "num": 6,
+      "name": "Refactor Roadmap updated",
+      "status": "skipped",
+      "detail": "database ID not in pipeline config"
+    },
+    {
+      "num": 7,
+      "name": "Deferred Items logged",
+      "status": "skipped",
+      "detail": "database ID not in pipeline config"
+    },
+    {
+      "num": 8,
+      "name": "Locked Upstream Context written",
+      "status": "done",
+      "detail": "embedded in lock checklist body"
+    },
+    {
+      "num": 9,
+      "name": "Next domain noted",
+      "status": "done",
+      "detail": "3.1"
+    },
+    {
+      "num": 10,
+      "name": "Validation gates confirmed",
+      "status": "skipped",
+      "detail": "no domain-X.Y-validation.json artifact (run validate.js first)"
+    },
+    {
+      "num": 11,
+      "name": "Branch / PR confirmed",
+      "status": "done",
+      "detail": "https://github.com/thechefcharles/victims-advocate/pull/38"
+    },
+    {
+      "num": 12,
+      "name": "Phase complete check",
+      "status": "done",
+      "detail": "Phase 3 not yet complete"
+    },
+    {
+      "num": 13,
+      "name": "Initiation prompt updated",
+      "status": "skipped",
+      "detail": "phase initiation prompt page ID not in pipeline config"
+    }
+  ]
+}

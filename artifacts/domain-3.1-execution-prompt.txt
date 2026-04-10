@@ -1,0 +1,1155 @@
+--- PIPELINE CONTEXT ---
+
+Domain: 3.1 — Applicant Domain
+Stage: EXECUTION (analysis reviewed and approved)
+Prompt generated: 2026-04-09 (auto-pipeline review pass)
+Reviewer: Architectural Review Agent
+Branch target: domain/3.1-applicant
+Upstream lock: all prior domains must be on NXTSTPS2.0-V1 before this branch is created (Rule 25)
+
+---
+
+--- CRITICAL CORRECTIONS ---
+
+1. LANGUAGE: The existing codebase uses `role = 'victim'` and files named `victimPersonalAccess.ts`, `requireRole(ctx, "victim")`, URL paths `/victim/*`. All NEW code written in Domain 3.1 MUST use `applicant` naming. DO NOT rename or delete existing files with `victim` in the name unless explicitly listed in FILE INSTRUCTIONS below. Legacy file names and URL paths stay for back-compat.
+
+2. NO NEW `safety_preferences` TABLE: The architect prompt uses the name `safety_preferences` for the target model. The underlying table is `user_safety_settings` (Phase 17). Domain 3.1 does NOT create a `safety_preferences` table. The code model is named `SafetyPreference` but the DB table stays `user_safety_settings`. See Decision 1.
+
+3. `applicant_profiles` IS GREENFIELD ALONGSIDE `profiles`: The new `applicant_profiles` table is a one-to-one extension of `profiles`. It does NOT replace `profiles`. Dual-write to `profiles.personal_info` jsonb continues during transition. See Decision 2.
+
+4. DEFERRED DATA MIGRATION: No ETL / backfill job runs in this domain. The migration creates the new table and a dual-write path only. Data migration from `profiles.personal_info` into `applicant_profiles` rows is deferred.
+
+5. URL PATHS UNCHANGED: `/victim/*` URL routes are not moved or redirected. Only internal service/type naming moves to `applicant`.
+
+---
+
+--- ANALYSIS FINDINGS SUMMARY ---
+
+Baseline: TSC=0 errors, 655 tests passing across 38 test files.
+Target floor after 3.1: TSC=0, ≥687 tests.
+
+Key findings:
+- `applicant_profiles`, `applicant_preferences`, `trusted_helper_access`, `applicant_bookmarks` tables: ALL greenfield — do not exist.
+- `user_safety_settings` table: EXISTS and is fully wired. Absorb, do not rebuild.
+- `locale_preferences` table: EXISTS (Domain 2.4). Do NOT duplicate. `applicant_preferences` holds different fields.
+- `profiles.personal_info` jsonb: EXISTS. New `applicant_profiles` table sits alongside it. Dual-write during transition.
+- `TrustedHelperStatus` enum: EXISTS in `lib/registry/enums.ts` (pending|active|revoked). Confirmed usable.
+- Zero `can()` coverage on any applicant route today — Rule 17 violations across all five applicant-adjacent routes.
+- No applicant serializers exist. Raw DB / jsonb responses leak through all existing applicant routes.
+- No `lib/server/applicant/` directory exists. No `app/api/applicant/` routes exist.
+- `resolveApplicantByUserId` does not exist. Must be created as a canonical cross-domain resolver.
+- Trust signals for applicant events: deferred per architect prompt (`grepChecks: []`).
+
+---
+
+--- BRANCH SETUP ---
+
+Run these commands in order. Do not proceed past the verification step if the check fails.
+
+```bash
+# Rule 25 / Rule 18 check — prior domain must be on NXTSTPS2.0-V1
+git fetch origin
+git log origin/NXTSTPS2.0-V1 --oneline | head -20
+# Verify domain/3.0 (or whatever the immediately prior domain branch was) is merged into NXTSTPS2.0-V1
+# If NOT merged, STOP and flag. Do not create domain/3.1-applicant until prior domain is on NXTSTPS2.0-V1.
+
+# Create the domain branch from NXTSTPS2.0-V1
+git checkout NXTSTPS2.0-V1
+git pull origin NXTSTPS2.0-V1
+git checkout -b domain/3.1-applicant
+
+# Confirm baseline
+npx tsc --noEmit
+npm test -- --passWithNoTests
+# Expected: TSC=0, 655 tests pass
+```
+
+If either baseline check fails, STOP. Do not write a single line of implementation until the baseline is clean.
+
+---
+
+--- LOCKED UPSTREAM CONTEXT ---
+
+The following domains are locked. Claude Code must read these to understand contracts but MUST NOT modify any file owned by them.
+
+Domain 0.x — Foundation
+- `lib/registry/enums.ts` — provides `TrustedHelperStatus` ('pending'|'active'|'revoked'), `PolicyAction`, `PolicyResourceType` enums. Domain 3.1 ADDS new values; it does not overwrite.
+- `lib/server/policy/policyEngine.ts` — provides `can(actor, action, resource)`. Domain 3.1 adds new evaluator functions called by `can()`.
+- `types/database.types.ts` — generated types. Domain 3.1 updates after migration runs.
+
+Domain 1.x — Organization
+- `lib/server/organization/` — org resolvers. Do not touch.
+
+Domain 2.1 — Intake Auth
+- `lib/server/intake/intakeService.ts` — reads `profiles.personal_info` directly today. Domain 3.1 adds a small additive call to `resolveApplicantByUserId` alongside this. The existing intake behavior is NOT broken.
+- `app/api/intake/` routes — locked.
+
+Domain 2.2 — Case
+- `lib/server/case/` — locked. Case-based access checks used by `victimPersonalAccess.ts` are READ by Domain 3.1 policy evaluator but not modified.
+
+Domain 2.3 — Intake Session
+- `lib/server/intakeSession/` — locked.
+
+Domain 2.4 — Translation/Locale
+- `public.locale_preferences` table — locked. `applicant_preferences` does NOT add a `locale` column. All locale concerns stay in Domain 2.4's table.
+- `lib/server/locale/` — locked.
+
+Domain 2.5 — Notifications (if present)
+- Reads `safetyModeEnabled` from `AuthContext`. Domain 3.1 must preserve the `safetyModeEnabled` field on `AuthContext` with identical semantics. Do not rename or remove.
+
+Safety module (Phase 17, pre-domain)
+- `lib/server/safety/settings.ts`, `lib/server/safety/guards.ts`, `lib/server/safety/types.ts` — these files become DEPRECATED ALIASES pointing to the new applicant service. They are NOT deleted in Domain 3.1. See FILE INSTRUCTIONS.
+- `app/api/safety/settings/route.ts`, `app/api/safety/quick-exit/route.ts` — existing routes STAY. They get a `can()` policy gate added (thin edit). No other logic changes.
+- `app/settings/safety/page.tsx` — locked. No changes.
+- `lib/client/safety/` — locked. No changes.
+
+---
+
+--- DECISIONS ---
+
+Decision 1 — Safety preferences naming (resolves Follow-up Q1)
+ADOPT OPTION B. The `user_safety_settings` table stays with its current name. No `ALTER TABLE RENAME` migration. The code model in Domain 3.1 is named `SafetyPreference` and lives in `lib/server/applicant/safetyPreferenceService.ts`. The existing `lib/server/safety/settings.ts` becomes a thin re-export alias pointing to the new service. The underlying table name referenced in all queries remains `user_safety_settings`. Rationale: zero migration cost, zero risk to a working production table, precedent set by Domain 2.3.
+
+Decision 2 — applicant_profiles table design (resolves Follow-up Q2 and Q6)
+CREATE a new `applicant_profiles` table as a one-to-one extension of `profiles` (FK: `applicant_profiles.user_id UNIQUE → auth.users(id)`). Cardinality: one-to-one. Provider/agency/admin `profiles` rows have no corresponding `applicant_profiles` row. Dual-write: when Domain 3.1's `updateApplicantProfile` writes to `applicant_profiles`, it also writes the overlapping fields back to `profiles.personal_info` jsonb. The jsonb column is NOT dropped in this domain. The `applicant_profiles` table holds all fields from the `personal_info` zod schema as proper columns PLUS `profile_completion_pct integer` computed on write.
+
+Decision 3 — trusted_helper_access schema (resolves Follow-up Q3)
+CREATE `trusted_helper_access` with these columns:
+- `id uuid PK DEFAULT gen_random_uuid()`
+- `applicant_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `helper_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `granted_scope text[] NOT NULL DEFAULT '{}'` — array of action strings, not jsonb. Allowed values: `'intake:view'`, `'intake:edit'`, `'documents:upload'`, `'messages:read'`, `'profile:view'`. Stored as a Postgres text array. Validation enforced in service layer.
+- `status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','revoked'))`
+- `granted_at timestamptz DEFAULT now()`
+- `accepted_at timestamptz`
+- `revoked_at timestamptz`
+- `granted_by_user_id uuid NOT NULL REFERENCES auth.users(id)`
+- `notes text`
+- `created_at timestamptz DEFAULT now()`
+- `updated_at timestamptz DEFAULT now()`
+- UNIQUE `(applicant_user_id, helper_user_id)` — one grant record per pair; status tracks lifecycle.
+
+Rationale for text array over jsonb: simpler to query (`'intake:edit' = ANY(granted_scope)`), no JSON parsing in policy evaluator, easier to index.
+
+Decision 4 — applicant_bookmarks target type (resolves Follow-up Q4)
+CREATE `applicant_bookmarks` with:
+- `id uuid PK DEFAULT gen_random_uuid()`
+- `applicant_user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE`
+- `target_type text NOT NULL CHECK (target_type IN ('provider','program','resource'))`
+- `target_id uuid NOT NULL` — polymorphic UUID; no FK constraint (targets are in different tables)
+- `position integer NOT NULL DEFAULT 0`
+- `notes text`
+- `created_at timestamptz DEFAULT now()`
+- UNIQUE `(applicant_user_id, target_type, target_id)`
+
+Rationale: Three target types confirmed. No per-type FK constraints to avoid cross-domain coupling. Uniqueness prevents duplicate bookmarks.
+
+Decision 5 — applicant_preferences field set (resolves Follow-up Q5)
+CREATE `applicant_preferences` with:
+- `id uuid PK DEFAULT gen_random_uuid()`
+- `user_id uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE`
+- `accessibility_mode text NOT NULL DEFAULT 'none' CHECK (accessibility_mode IN ('high_contrast','large_text','screen_reader','none'))`
+- `notification_channel_preference text NOT NULL DEFAULT 'in_app' CHECK (notification_channel_preference IN ('email','sms','in_app'))`
+- `discovery_search_radius_miles integer NOT NULL DEFAULT 25`
+- `discovery_default_state_code text`
+- `intake_save_frequency_seconds integer NOT NULL DEFAULT 30`
+- `created_at timestamptz DEFAULT now()`
+- `updated_at timestamptz DEFAULT now()`
+
+Does NOT include: locale (Domain 2.4), safety mode (user_safety_settings), language for translation (locale_preferences). Rationale: clean separation of concerns per analysis recommendation.
+
+Decision 6 — resolveApplicantByUserId signature (resolves Follow-up Q7)
+```typescript
+resolveApplicantByUserId(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<ApplicantProfileRecord | null>
+```
+Pure read. No policy gate. Caller is responsible for authorization. Returns `null` (not throws) when no applicant_profiles row exists. Other domains (intake, case, support_request) consume this without needing to know about the policy layer.
+
+Decision 7 — assertApplicantSelfOrGrantedHelper / helper acting-as semantics (resolves Follow-up Q8)
+Helpers operate with a synthetic context: `{ userId: applicant_user_id, actingAs: helper_user_id, grantedScope: string[] }`. Routes that accept helper actions receive a standard `actor` object with `userId` set to the applicant they are acting for. The `actingAs` field identifies who is physically authenticated. Audit logs record BOTH. The policy evaluator for `trusted_helper:act_as` checks that (a) the authenticated session belongs to `helper_user_id`, (b) a grant record exists with `status='active'`, and (c) the requested action is in `granted_scope`.
+
+Decision 8 — /victim/* URL paths (resolves Follow-up Q9)
+URLs stay unchanged. `/victim/*` routes are not moved or redirected. Internal service/type naming uses `applicant`. This is a code-layer rename only.
+
+Decision 9 — Trust signals (resolves Follow-up Q10)
+DEFERRED. No new trust signal types are added in Domain 3.1. The architect prompt has `grepChecks: []`. Domain 3.1 lands the data model and policy gates. Signal types (`applicant_profile_completeness`, `trusted_helper_granted`, `safety_mode_activated`) are scheduled for a follow-up domain.
+
+Decision 10 — Cross-domain service edits (resolves Follow-up Q11)
+- `lib/server/intake/intakeService.ts`: ADD a single additive call to `resolveApplicantByUserId` to enrich intake context. Existing direct `profiles.personal_info` reads remain as a fallback. No existing behavior changes.
+- `lib/server/safety/settings.ts`: becomes a re-export shim to `lib/server/applicant/safetyPreferenceService.ts`. The shim preserves every existing export name so downstream consumers (AuthContext, notifications) require zero changes.
+- `lib/server/profile/getPersonalInfo.ts`: DO NOT DELETE. Add a deprecation comment `// @deprecated — use resolveApplicantByUserId from lib/server/applicant/applicantProfileRepository.ts`. The function body stays intact. Removal deferred.
+- `lib/server/profile/victimPersonalAccess.ts`: DO NOT DELETE. Add deprecation comment. The `canReadVictimPersonalInfo` inline checks become inputs wired through the policy evaluator in this domain, but the original file continues to export the same functions for back-compat.
+
+Decision 11 — Test target (resolves Follow-up Q12)
+Target: 655 baseline → 687+ after Domain 3.1. Minimum 32 new tests as specified in the analysis test plan. All 32 tests listed in Section 10 of the analysis must be implemented.
+
+---
+
+--- CONSTRAINTS ---
+
+DO NOT:
+- DO NOT modify any existing migration file. New migrations only, all timestamped AFTER 20260501400000.
+- DO NOT rename or delete `lib/server/safety/settings.ts`, `lib/server/safety/guards.ts`, `lib/server/safety/types.ts`. Convert to re-export shims only.
+- DO NOT delete `lib/server/profile/getPersonalInfo.ts` or `lib/server/profile/victimPersonalAccess.ts`. Deprecate only.
+- DO NOT move or add redirects for any `/victim/*` URL route.
+- DO NOT create a `safety_preferences` table. The underlying table stays `user_safety_settings`.
+- DO NOT add a `locale` or `primary_language` column to `applicant_preferences`. Those live in `locale_preferences` (Domain 2.4).
+- DO NOT write business logic inside any `app/api/` route handler. All logic goes in service/repository layer.
+- DO NOT expose raw DB rows from any route. All responses go through a serializer function.
+- DO NOT use inline role checks as the final authorization authority. All auth goes through `can()` in `policyEngine.ts`.
+- DO NOT use the word `victim` in any new file, variable name, function name, type name, or comment. Use `applicant`.
+- DO NOT create a `safety_preferences` duplicate table alongside `user_safety_settings`.
+- DO NOT backfill / ETL data from `profiles.personal_info` into `applicant_profiles`. Dual-write only.
+- DO NOT remove `safetyModeEnabled` from `AuthContext` or change its semantics.
+- DO NOT query the `organizations` table inside `searchRepository` or `searchService` (Rule 12 — Search Law).
+- DO NOT have `grading/trustSignal` query `cases`, `routing_runs`, `completeness_runs`, or `case_messages` (Rule 11 — Trust Law).
+- DO NOT proceed past scope boundary. If you encounter a required change outside the listed files, document it in the OUTPUT REQUIRED section and stop without implementing it.
+
+---
+
+--- FILE INSTRUCTIONS ---
+
+All files are listed in dependency order. Create in order shown.
+
+═══════════════════════════════════════════════════
+MIGRATIONS (create first — all other files depend on schema)
+═══════════════════════════════════════════════════
+
+CREATE: `supabase/migrations/20260502000000_applicant_profiles.sql`
+
+```sql
+-- Domain 3.1 — Applicant Domain
+-- Creates applicant_profiles as a one-to-one extension of profiles
+-- personal_info jsonb on profiles is NOT dropped here (dual-write transition)
+
+CREATE TABLE IF NOT EXISTS public.applicant_profiles (
+  id                          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                     uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Identity (mirrors personal_info jsonb fields as relational columns)
+  preferred_name              text,
+  legal_first_name            text,
+  legal_last_name             text,
+  pronouns                    text,
+  gender_identity             text,
+  date_of_birth               date,
+  ethnicity                   text,
+  race                        text,
+
+  -- Contact
+  street_address              text,
+  apt                         text,
+  city                        text,
+  state                       text,
+  zip                         text,
+  cell_phone                  text,
+  alternate_phone             text,
+
+  -- Background
+  occupation                  text,
+  education_level             text,
+
+  -- Communication preferences (kept here as profile-level, distinct from locale_preferences)
+  interpreter_needed          boolean DEFAULT false,
+  preferred_contact_method    text,
+
+  -- Computed
+  profile_completion_pct      integer NOT NULL DEFAULT 0 CHECK (profile_completion_pct BETWEEN 0 AND 100),
+
+  created_at                  timestamptz NOT NULL DEFAULT now(),
+  updated_at                  timestamptz NOT NULL DEFAULT now()
+);
+
+-- RLS
+ALTER TABLE public.applicant_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Applicant: full access to own row
+CREATE POLICY "applicant_profiles_self_select"
+  ON public.applicant_profiles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "applicant_profiles_self_insert"
+  ON public.applicant_profiles FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "applicant_profiles_self_update"
+  ON public.applicant_profiles FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- Platform admin: read-only
+CREATE POLICY "applicant_profiles_admin_select"
+  ON public.applicant_profiles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+-- Service role: unrestricted (for server-side operations)
+CREATE POLICY "applicant_profiles_service_role"
+  ON public.applicant_profiles FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+
+-- updated_at trigger
+CREATE TRIGGER set_applicant_profiles_updated_at
+  BEFORE UPDATE ON public.applicant_profiles
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+-- Indexes
+CREATE INDEX idx_applicant_profiles_user_id ON public.applicant_profiles (user_id);
+CREATE INDEX idx_applicant_profiles_state ON public.applicant_profiles (state);
+```
+
+---
+
+CREATE: `supabase/migrations/20260502000001_applicant_preferences.sql`
+
+```sql
+-- Domain 3.1 — Applicant Domain
+-- applicant_preferences: accessibility, notification channel, discovery defaults
+-- Does NOT duplicate locale (locale_preferences, Domain 2.4) or safety mode (user_safety_settings)
+
+CREATE TABLE IF NOT EXISTS public.applicant_preferences (
+  id                              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                         uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  accessibility_mode              text NOT NULL DEFAULT 'none'
+    CHECK (accessibility_mode IN ('high_contrast','large_text','screen_reader','none')),
+
+  notification_channel_preference text NOT NULL DEFAULT 'in_app'
+    CHECK (notification_channel_preference IN ('email','sms','in_app')),
+
+  discovery_search_radius_miles   integer NOT NULL DEFAULT 25
+    CHECK (discovery_search_radius_miles > 0),
+
+  discovery_default_state_code    text,
+
+  intake_save_frequency_seconds   integer NOT NULL DEFAULT 30
+    CHECK (intake_save_frequency_seconds BETWEEN 5 AND 300),
+
+  created_at                      timestamptz NOT NULL DEFAULT now(),
+  updated_at                      timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.applicant_preferences ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "applicant_preferences_self_select"
+  ON public.applicant_preferences FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "applicant_preferences_self_insert"
+  ON public.applicant_preferences FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "applicant_preferences_self_update"
+  ON public.applicant_preferences FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "applicant_preferences_admin_select"
+  ON public.applicant_preferences FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "applicant_preferences_service_role"
+  ON public.applicant_preferences FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+
+CREATE TRIGGER set_applicant_preferences_updated_at
+  BEFORE UPDATE ON public.applicant_preferences
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+CREATE INDEX idx_applicant_preferences_user_id ON public.applicant_preferences (user_id);
+```
+
+---
+
+CREATE: `supabase/migrations/20260502000002_trusted_helper_access.sql`
+
+```sql
+-- Domain 3.1 — Applicant Domain
+-- trusted_helper_access: delegate/helper grant management
+-- granted_scope stored as text[] for efficient ANY() queries
+
+CREATE TABLE IF NOT EXISTS public.trusted_helper_access (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  applicant_user_id   uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  helper_user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Array of permitted action strings
+  -- Valid values: 'intake:view','intake:edit','documents:upload','messages:read','profile:view'
+  granted_scope       text[] NOT NULL DEFAULT '{}',
+
+  status              text NOT NULL DEFAULT 'pending'
+    CHECK (status IN ('pending','active','revoked')),
+
+  granted_at          timestamptz NOT NULL DEFAULT now(),
+  accepted_at         timestamptz,
+  revoked_at          timestamptz,
+
+  granted_by_user_id  uuid NOT NULL REFERENCES auth.users(id),
+  notes               text,
+
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now(),
+
+  -- One grant record per applicant-helper pair; status tracks lifecycle
+  UNIQUE (applicant_user_id, helper_user_id)
+);
+
+ALTER TABLE public.trusted_helper_access ENABLE ROW LEVEL SECURITY;
+
+-- Applicant: can see their own grants (as grantor)
+CREATE POLICY "trusted_helper_access_applicant_select"
+  ON public.trusted_helper_access FOR SELECT
+  USING (auth.uid() = applicant_user_id);
+
+-- Applicant: can insert grants they initiate
+CREATE POLICY "trusted_helper_access_applicant_insert"
+  ON public.trusted_helper_access FOR INSERT
+  WITH CHECK (auth.uid() = applicant_user_id);
+
+-- Applicant: can update (revoke) their own grants
+CREATE POLICY "trusted_helper_access_applicant_update"
+  ON public.trusted_helper_access FOR UPDATE
+  USING (auth.uid() = applicant_user_id)
+  WITH CHECK (auth.uid() = applicant_user_id);
+
+-- Helper: can see grants they have received
+CREATE POLICY "trusted_helper_access_helper_select"
+  ON public.trusted_helper_access FOR SELECT
+  USING (auth.uid() = helper_user_id);
+
+-- Helper: can update to accept (status pending → active)
+CREATE POLICY "trusted_helper_access_helper_update"
+  ON public.trusted_helper_access FOR UPDATE
+  USING (auth.uid() = helper_user_id AND status = 'pending')
+  WITH CHECK (auth.uid() = helper_user_id);
+
+-- Platform admin: read-only
+CREATE POLICY "trusted_helper_access_admin_select"
+  ON public.trusted_helper_access FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "trusted_helper_access_service_role"
+  ON public.trusted_helper_access FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+
+CREATE TRIGGER set_trusted_helper_access_updated_at
+  BEFORE UPDATE ON public.trusted_helper_access
+  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+
+CREATE INDEX idx_trusted_helper_applicant ON public.trusted_helper_access (applicant_user_id, status);
+CREATE INDEX idx_trusted_helper_helper ON public.trusted_helper_access (helper_user_id, status);
+```
+
+---
+
+CREATE: `supabase/migrations/20260502000003_applicant_bookmarks.sql`
+
+```sql
+-- Domain 3.1 — Applicant Domain
+-- applicant_bookmarks: polymorphic saved resources
+-- target_id is UUID stored without FK (polymorphic targets in different tables)
+
+CREATE TABLE IF NOT EXISTS public.applicant_bookmarks (
+  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  applicant_user_id   uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  target_type         text NOT NULL
+    CHECK (target_type IN ('provider','program','resource')),
+  target_id           uuid NOT NULL,
+
+  position            integer NOT NULL DEFAULT 0,
+  notes               text,
+
+  created_at          timestamptz NOT NULL DEFAULT now(),
+
+  UNIQUE (applicant_user_id, target_type, target_id)
+);
+
+ALTER TABLE public.applicant_bookmarks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "applicant_bookmarks_self_select"
+  ON public.applicant_bookmarks FOR SELECT
+  USING (auth.uid() = applicant_user_id);
+
+CREATE POLICY "applicant_bookmarks_self_insert"
+  ON public.applicant_bookmarks FOR INSERT
+  WITH CHECK (auth.uid() = applicant_user_id);
+
+CREATE POLICY "applicant_bookmarks_self_update"
+  ON public.applicant_bookmarks FOR UPDATE
+  USING (auth.uid() = applicant_user_id)
+  WITH CHECK (auth.uid() = applicant_user_id);
+
+CREATE POLICY "applicant_bookmarks_self_delete"
+  ON public.applicant_bookmarks FOR DELETE
+  USING (auth.uid() = applicant_user_id);
+
+CREATE POLICY "applicant_bookmarks_admin_select"
+  ON public.applicant_bookmarks FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
+CREATE POLICY "applicant_bookmarks_service_role"
+  ON public.applicant_bookmarks FOR ALL
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
+
+CREATE INDEX idx_applicant_bookmarks_owner ON public.applicant_bookmarks (applicant_user_id, position);
+CREATE INDEX idx_applicant_bookmarks_target ON public.applicant_bookmarks (target_type, target_id);
+```
+
+═══════════════════════════════════════════════════
+TYPES (create before services that consume them)
+═══════════════════════════════════════════════════
+
+CREATE: `lib/server/applicant/types.ts`
+
+Spec:
+- Export `ApplicantProfileRecord` — row shape for `applicant_profiles` table, all columns typed precisely (date fields as `string | null`, uuid as `string`, boolean as `boolean`, integer as `number`).
+- Export `ApplicantPreferenceRecord` — row shape for `applicant_preferences` table.
+- Export `TrustedHelperAccessRecord` — row shape for `trusted_helper_access` table. `granted_scope` typed as `string[]`. `status` typed as `'pending' | 'active' | 'revoked'`.
+- Export `ApplicantBookmarkRecord` — row shape for `applicant_bookmarks` table. `target_type` typed as `'provider' | 'program' | 'resource'`.
+- Export `ApplicantSelfView` — the serialized shape returned to the applicant themselves. Includes: `profile: SerializedApplicantProfile`, `preferences: SerializedApplicantPreference`, `safetyPreference: SerializedSafetyPreference`, `bookmarks: SerializedApplicantBookmark[]`.
+- Export `ApplicantProviderView` — includes `profile` only (no safety prefs, no bookmarks). Provider sees identity + case-relevant fields.
+- Export `ApplicantAdminView` — includes all of `ApplicantSelfView` plus `createdAt`, `updatedAt`, `profileCompletionPct`.
+- Export `TrustedHelperScopeAction` as `'intake:view' | 'intake:edit' | 'documents:upload' | 'messages:read' | 'profile:view'`.
+- Export `BookmarkTargetType` as `'provider' | 'program' | 'resource'`.
+- Export `AccessibilityMode` as `'high_contrast' | 'large_text' | 'screen_reader' | 'none'`.
+- Export `NotificationChannelPreference` as `'email' | 'sms' | 'in_app'`.
+- Do NOT import from `lib/server/safety/types.ts` directly for new types. The `SerializedSafetyPreference` type is defined here, mirroring the shape of `user_safety_settings` columns without the internal DB fields (`id`, `metadata`).
+- Use `applicant` in all type names. Zero `victim` references.
+
+---
+
+CREATE: `lib/server/applicant/applicantProfileRepository.ts`
+
+Spec:
+- Import `SupabaseClient` from `@supabase/supabase-js`.
+- Import `ApplicantProfileRecord` from `./types`.
+- Export `resolveApplicantByUserId(userId: string, supabase: SupabaseClient): Promise<ApplicantProfileRecord | null>` — SELECT from `applicant_profiles WHERE user_id = userId`. Returns `null` if no row. Throws a typed `RepositoryError` (not a raw Supabase error) if the query fails.
+- Export `upsertApplicantProfile(userId: string, fields: Partial<ApplicantProfileRecord>, supabase: SupabaseClient): Promise<ApplicantProfileRecord>` — upserts on `user_id`. On conflict, merges provided fields. After upsert to `applicant_profiles`, performs a dual-write: calls `syncPersonalInfoJsonb(userId, fields, supabase)` (defined in same file) to keep `profiles.personal_info` in sync. Returns the upserted row.
+- Export `syncPersonalInfoJsonb(userId: string, fields: Partial<ApplicantProfileRecord>, supabase: SupabaseClient): Promise<void>` — maps `ApplicantProfileRecord` fields onto the `personal_info` jsonb structure consumed by `lib/personalInfo.ts`. Uses a Supabase RPC or PATCH merge to update only the overlapping keys. Does NOT overwrite unrelated jsonb fields (e.g. `interpreter_needed`, `primary_language` that may still exist only in the jsonb). Non-overlapping fields in `applicant_profiles` (e.g. `profile_completion_pct`) are not written to jsonb.
+- Export `computeProfileCompletionPct(profile: Partial<ApplicantProfileRecord>): number` — pure function. Returns 0–100 based on how many of the key identity fields are populated: `preferred_name`, `legal_first_name`, `legal_last_name`, `cell_phone`, `city`, `state`, `zip`, `date_of_birth`. Score is `(filled / 8) * 100` rounded to nearest integer.
+- No business logic. No `can()` calls. No policy checks. Pure data access.
+
+---
+
+CREATE: `lib/server/applicant/applicantPreferenceRepository.ts`
+
+Spec:
+- Export `getApplicantPreferences(userId: string, supabase: SupabaseClient): Promise<ApplicantPreferenceRecord | null>`.
+- Export `upsertApplicantPreferences(userId: string, fields: Partial<ApplicantPreferenceRecord>, supabase: SupabaseClient): Promise<ApplicantPreferenceRecord>` — upserts on `user_id`. Validates field values against the allowed enums before writing (throw `ValidationError` if invalid).
+- Validate `accessibility_mode` against `AccessibilityMode` union, `notification_channel_preference` against `NotificationChannelPreference` union.
+- No policy checks.
+
+---
+
+CREATE: `lib/server/applicant/safetyPreferenceService.ts`
+
+Spec:
+- This is the canonical implementation of safety preference logic going forward. The existing `lib/server/safety/settings.ts` will become a shim re-exporting from this file.
+- Import `SupabaseClient` from `@supabase/supabase-js`.
+- Import `UserSafetySettingsRow` and `SafetySettings` from `lib/server/safety/types.ts` (unchanged — do not redefine those types).
+- Export `getSafetyPreference(userId: string, supabase: SupabaseClient): Promise<SafetySettings>` — reads from `user_safety_settings`. Returns the `defaultSafetySettings` value (from `lib/server/safety/settings.ts`) when no row exists. Preserves existing default behavior exactly.
+- Export `upsertSafetyPreference(userId: string, patch: Partial<SafetySettings>, supabase: SupabaseClient): Promise<SafetySettings>` — partial patch merge. Reads current, merges patch, writes back. Returns the merged result.
+- Export `getSafeNotificationMode` re-exported from `lib/server/safety/settings.ts` (it already exists; just re-export so callers can import from either module during transition).
+- All function signatures are identical to those in `lib/server/safety/settings.ts` so the shim conversion is a one-line change.
+- No policy checks.
+
+---
+
+CREATE: `lib/server/applicant/trustedHelperRepository.ts`
+
+Spec:
+- Export `grantTrustedHelperAccess(applicantUserId: string, helperUserId: string, scope: string[], grantedByUserId: string, notes: string | null, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord>` — inserts into `trusted_helper_access` with `status='pending'`. Validates that all scope values are in `TrustedHelperScopeAction`. Throws `ValidationError` for invalid scope values. Throws `ConflictError` if an `active` grant already exists for this pair.
+- Export `acceptTrustedHelperGrant(grantId: string, helperUserId: string, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord>` — updates `status='active'`, sets `accepted_at=now()`. Throws `NotFoundError` if grant not found. Throws `AuthorizationError` if `helperUserId` does not match the record's `helper_user_id`.
+- Export `revokeTrustedHelperAccess(grantId: string, revokerUserId: string, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord>` — sets `status='revoked'`, sets `revoked_at=now()`. Preserves the record. Throws if the revoker is neither the applicant nor an admin.
+- Export `listHelperGrantsForApplicant(applicantUserId: string, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord[]>`.
+- Export `listGrantsForHelper(helperUserId: string, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord[]>`.
+- Export `resolveActiveGrant(applicantUserId: string, helperUserId: string, supabase: SupabaseClient): Promise<TrustedHelperAccessRecord | null>` — used by policy evaluator.
+- No policy checks.
+
+---
+
+CREATE: `lib/server/applicant/applicantBookmarkRepository.ts`
+
+Spec:
+- Export `listApplicantBookmarks(applicantUserId: string, supabase: SupabaseClient): Promise<ApplicantBookmarkRecord[]>` — ordered by `position ASC`.
+- Export `createApplicantBookmark(applicantUserId: string, targetType: BookmarkTargetType, targetId: string, notes: string | null, supabase: SupabaseClient): Promise<ApplicantBookmarkRecord>` — computes `position` as `MAX(position) + 1` for that owner. On conflict (duplicate `(applicant_user_id, target_type, target_id)`), returns the existing record without error.
+- Export `deleteApplicantBookmark(bookmarkId: string, applicantUserId: string, supabase: SupabaseClient): Promise<void>` — hard delete. Verifies ownership before delete (throws `AuthorizationError` if `applicant_user_id` does not match).
+- Export `reorderApplicantBookmarks(applicantUserId: string, orderedIds: string[], supabase: SupabaseClient): Promise<void>` — receives an array of bookmark IDs in the desired order. Writes `position = index` for each. Validates that all IDs belong to `applicantUserId`. Executes as a batch UPDATE. Throws `ValidationError` if any ID is not owned by the applicant.
+- No policy checks.
+
+---
+
+CREATE: `lib/server/applicant/applicantProfileService.ts`
+
+Spec:
+- This is the policy-gated service layer. All public functions call `can()` before delegating to repositories.
+- Import `can` from `lib/server/policy/policyEngine.ts`.
+- Import `resolveApplicantByUserId`, `upsertApplicantProfile`, `computeProfileCompletionPct` from `./applicantProfileRepository`.
+- Import `serializeApplicantSelfView`, `serializeApplicantProviderView`, `serializeApplicantAdminView` from `./applicantSerializers`.
+- Import `AuthContext` from the existing auth context type.
+- Export `getApplicantProfile(actor: AuthContext, targetUserId: string, supabase: SupabaseClient): Promise<ApplicantSelfView | ApplicantProviderView | ApplicantAdminView>` — determines the view type based on who is asking:
+  - Actor is the applicant themselves → checks `can(actor, "applicant_profile:view")` → returns `serializeApplicantSelfView`.
+  - Actor is an admin → checks `can(actor, "applicant_profile:view_others")` → returns `serializeApplicantAdminView`.
+  - Actor is a provider → checks `can(actor, "applicant_profile:view_others", { targetUserId })` → returns `serializeApplicantProviderView`.
+  - All others → throws `PolicyDeniedError`.
+- Export `updateApplicantProfile(actor: AuthContext, targetUserId: string, fields: Partial<ApplicantProfileRecord>, supabase: SupabaseClient): Promise<ApplicantSelfView>` — checks `can(actor, "applicant_profile:update")`. Computes `profile_completion_pct` via `computeProfileCompletionPct`. Calls `upsertApplicantProfile`. Returns `serializeApplicantSelfView`.
+- Export `getApplicantPreferencesForSelf(actor: AuthContext, supabase: SupabaseClient): Promise<ApplicantPreferenceRecord>` — checks `can(actor, "applicant_preference:view")`. Delegates to preference repository.
+- Export `updateApplicantPreferences(actor: AuthContext, fields: Partial<ApplicantPreferenceRecord>, supabase: SupabaseClient): Promise<ApplicantPreferenceRecord>` — checks `can(actor, "applicant_preference:update")`. Delegates to preference repository.
+- Export `getSafetyPreferenceForSelf(actor: AuthContext, supabase: SupabaseClient): Promise<SafetySettings>` — checks `can(actor, "safety_preference:view")`. Delegates to `safetyPreferenceService`.
+- Export `updateSafetyPreference(actor: AuthContext, patch: Partial<SafetySettings>, supabase: SupabaseClient): Promise<SafetySettings>` — checks `can(actor, "safety_preference:update")`. Delegates to `safetyPreferenceService`.
+- Export `performQuickExit(actor: AuthContext, supabase: SupabaseClient): Promise<{ redirectTo: string }>` — checks `can(actor, "safety_preference:quick_exit")`. Calls existing quick-exit audit log path. Returns `{ redirectTo: "/" }`.
+- Business logic lives here. Routes must call this service only.
+
+---
+
+CREATE: `lib/server/applicant/trustedHelperService.ts`
+
+Spec:
+- Policy-gated service wrapping `trustedHelperRepository`.
+- Export `grantHelper(actor: AuthContext, helperUserId: string, scope: string[], notes: string | null, supabase: SupabaseClient)` — checks `can(actor, "trusted_helper:grant")`. Verifies actor is an applicant. Delegates to repository.
+- Export `revokeHelper(actor: AuthContext, grantId: string, supabase: SupabaseClient)` — checks `can(actor, "trusted_helper:revoke")`. Delegates to repository.
+- Export `listMyHelpers(actor: AuthContext, supabase: SupabaseClient)` — checks `can(actor, "trusted_helper:list")`. Returns grants where `applicant_user_id = actor.userId`.
+- Export `listMyGrantors(actor: AuthContext, supabase: SupabaseClient)` — returns active grants where `helper_user_id = actor.userId`. No special policy check needed beyond authentication.
+- Export `actAsApplicant(actor: AuthContext, applicantUserId: string, requestedAction: string, supabase: SupabaseClient): Promise<{ syntheticContext: SyntheticHelperContext }>` — checks `can(actor, "trusted_helper:act_as", { applicantUserId, requestedAction })`. Resolves the active grant. Verifies `requestedAction in granted_scope`. Returns a `SyntheticHelperContext: { userId: applicantUserId, actingAs: actor.userId, grantedScope: string[] }`.
+
+---
+
+CREATE: `lib/server/applicant/applicantBookmarkService.ts`
+
+Spec:
+- Policy-gated service wrapping `applicantBookmarkRepository`.
+- Export `listBookmarks(actor: AuthContext, supabase: SupabaseClient)` — checks `can(actor, "applicant_bookmark:list")`. Returns owned bookmarks.
+- Export `addBookmark(actor: AuthContext, targetType: BookmarkTargetType, targetId: string, notes: string | null, supabase: SupabaseClient)` — checks `can(actor, "applicant_bookmark:create")`. Delegates to repository.
+- Export `removeBookmark(actor: AuthContext, bookmarkId: string, supabase: SupabaseClient)` — checks `can(actor, "applicant_bookmark:delete")`. Delegates to repository.
+- Export `reorderBookmarks(actor: AuthContext, orderedIds: string[], supabase: SupabaseClient)` — checks `can(actor, "applicant_bookmark:reorder")`. Delegates to repository.
+
+---
+
+CREATE: `lib/server/applicant/applicantSerializers.ts`
+
+Spec:
+- Import `ApplicantProfileRecord`, `ApplicantPreferenceRecord`, `ApplicantBookmarkRecord`, `ApplicantSelfView`, `ApplicantProviderView`, `ApplicantAdminView`, `SerializedSafetyPreference` from `./types`.
+- Import `SafetySettings` from `lib/server/safety/types.ts`.
+- Export `serializeApplicantSelfView(profile: ApplicantProfileRecord | null, preferences: ApplicantPreferenceRecord | null, safetyPreference: SafetySettings, bookmarks: ApplicantBookmarkRecord[]): ApplicantSelfView` — maps DB rows to API response shape. Never passes through raw DB fields. Omits `id` fields from nested objects (expose `user_id` only). Includes `profileCompletionPct` from `profile.profile_completion_pct`.
+- Export `serializeApplicantProviderView(profile: ApplicantProfileRecord | null): ApplicantProviderView` — provider sees only: `preferredName`, `legalFirstName`, `legalLastName`, `pronouns`, `city`, `state`, `preferredContactMethod`, `interpreterNeeded`. No DOB, no full address, no safety prefs, no bookmarks.
+- Export `serializeApplicantAdminView(profile: ApplicantProfileRecord | null, preferences: ApplicantPreferenceRecord | null, safetyPreference: SafetySettings, bookmarks: ApplicantBookmarkRecord[]): ApplicantAdminView` — superset of self view. Adds: `createdAt`, `updatedAt`, `profileCompletionPct`, all fields including DOB and full address.
+- NONE of these serializers ever return the raw `personal_info` jsonb field from `profiles`. They return only the typed columns from `applicant_profiles`.
+- All serialized property names use camelCase.
+
+---
+
+CREATE: `lib/server/applicant/evalApplicantProfile.ts`
+
+Spec:
+- This is the policy evaluator for the `applicant_profile`, `applicant_preference`, `safety_preference`, `trusted_helper_access`, and `applicant_bookmark` resource types.
+- Import `PolicyEvaluator`, `PolicyContext`, `PolicyResult` types from `lib/server/policy/policyEngine.ts` (or wherever these types currently live — look up the exact import).
+- Import `resolveActiveGrant` from `./trustedHelperRepository`.
+- The evaluator must handle all 16 policy actions listed in the analysis section 4:
+  1. `applicant_profile:view` — ALLOW if `actor.userId === resource.targetUserId` OR actor is a trusted active helper with `'profile:view'` in scope.
+  2. `applicant_profile:update` — ALLOW if `actor.userId === resource.targetUserId` only (applicant-self only).
+  3. `applicant_profile:view_others` — ALLOW if actor is `platform_admin` OR (actor has `account_type='provider'` AND has a shared active case with the applicant). The case-access check reuses the logic from `victimPersonalAccess.ts:canReadVictimPersonalInfo` (call it; don't duplicate).
+  4. `applicant_preference:view` — ALLOW if `actor.userId === resource.targetUserId`.
+  5. `applicant_preference:update` — ALLOW if `actor.userId === resource.targetUserId` only.
+  6. `safety_preference:view` — ALLOW if `actor.userId === resource.targetUserId`.
+  7. `safety_preference:update` — ALLOW if `actor.userId === resource.targetUserId` only.
+  8. `safety_preference:quick_exit` — ALLOW if `actor.userId === resource.targetUserId` only.
+  9. `trusted_helper:grant` — ALLOW if actor has `account_type='applicant'`.
+  10. `trusted_helper:revoke` — ALLOW if `actor.userId === resource.applicantUserId` OR actor is `platform_admin`.
+  11. `trusted_helper:list` — ALLOW if actor has `account_type='applicant'`.
+  12. `trusted_helper:act_as` — ALLOW if an active grant exists for `(resource.applicantUserId, actor.userId)` AND `resource.requestedAction` is in the grant's `granted_scope`. The grant lookup is async — the evaluator must be async.
+  13. `applicant_bookmark:create` — ALLOW if actor has `account_type='applicant'` AND `actor.userId === resource.applicantUserId`.
+  14. `applicant_bookmark:list` — ALLOW if actor has `account_type='applicant'` AND `actor.userId === resource.applicantUserId`.
+  15. `applicant_bookmark:delete` — ALLOW if `actor.userId === resource.applicantUserId`.
+  16. `applicant_bookmark:reorder` — ALLOW if `actor.userId === resource.applicantUserId`.
+- All evaluators return `{ allowed: boolean, reason: string }`. Never throw; always return a result.
+- Export a single `evalApplicantDomain` function that dispatches on action string.
+
+---
+
+EDIT: `lib/server/policy/policyEngine.ts`
+
+Spec:
+- Locate the section where domain evaluators are registered/dispatched.
+- ADD: import `evalApplicantDomain` from `../applicant/evalApplicantProfile`.
+- ADD: wire `evalApplicantDomain` into the dispatch table for the following resource type prefixes: `applicant_profile`, `applicant_preference`, `safety_preference`, `trusted_helper_access`, `applicant_bookmark`.
+- ADD: the 16 new `PolicyAction` string literals to the `PolicyAction` type/enum (or wherever it is currently maintained). If `PolicyAction` is in `lib/registry/enums.ts`, edit that file instead and import the new values into `policyEngine.ts`.
+- DO NOT change any existing evaluator registrations.
+- DO NOT change the `can()` function signature.
+
+---
+
+EDIT: `lib/registry/enums.ts`
+
+Spec:
+- ADD the following new resource types to `PolicyResourceType` (wherever it currently lives in this file): `'applicant_profile'`, `'applicant_preference'`, `'safety_preference'`, `'trusted_helper_access'`, `'applicant_bookmark'`.
+- ADD the 16 new policy action strings to `PolicyAction` if it is maintained here (check the file first).
+- ADD `BookmarkTargetType` enum if enums from this file are the pattern used by other domains for similar string-union enums. If the pattern is TypeScript union types in types files, skip adding here.
+- CONFIRM `TrustedHelperStatus` values (`pending|active|revoked`) match the DB CHECK constraint in the migration. The analysis states this enum is `[INFERRED]` — verify the actual values in the file before writing the migration CHECK. If they differ, use the DB migration values as the canonical source and update the enum comment accordingly.
+- DO NOT change any existing enum values.
+
+═══════════════════════════════════════════════════
+ROUTE EDITS (policy gate retrofits only — no logic changes)
+═══════════════════════════════════════════════════
+
+EDIT: `app/api/safety/settings/route.ts`
+
+Spec:
+- Remove `requireFullAccess` as the sole auth gate.
+- ADD: import `can` from `lib/server/policy/policyEngine.ts` and import the applicant service.
+- GET handler: after auth resolution, call `can(actor, "safety_preference:view", { targetUserId: actor.userId })`. If denied, return 403 with `{ error: "Forbidden" }`.
+- POST handler: after auth resolution, call `can(actor, "safety_preference:update", { targetUserId: actor.userId })`. If denied, return 403.
+- Delegate all DB work to `getSafetyPreferenceForSelf` and `updateSafetyPreference` from `lib/server/applicant/applicantProfileService.ts`.
+- Do NOT change the response shape. Existing consumers (safety page, AuthContext) must continue to work.
+- `requireFullAccess` may remain as a pre-check for basic authentication (verifying a session exists) but `can()` is now the final authority on whether the action is allowed.
+
+---
+
+EDIT: `app/api/safety/quick-exit/route.ts`
+
+Spec:
+- ADD: after auth resolution, call `can(actor, "safety_preference:quick_exit", { targetUserId: actor.userId })`. If denied, return 403.
+- Do NOT change the audit logging logic.
+- Do NOT change the `redirectTo` return value.
+
+---
+
+EDIT: `app/api/me/personal-info/route.ts`
+
+Spec:
+- Remove `requireRole(ctx, "victim")`.
+- ADD: import `can` from `lib/server/policy/policyEngine.ts`.
+- PATCH handler: call `can(actor, "applicant_profile:update", { targetUserId: actor.userId })`. If denied, return 403.
+- Delegate the update to `updateApplicantProfile` from `lib/server/applicant/applicantProfileService.ts`.
+- The response must go through `serializeApplicantSelfView` — no raw DB row in the response.
+- Back-compat: the route URL `/api/me/personal-info` stays unchanged. The response shape must remain compatible with existing consumers of this endpoint.
+
+---
+
+NEW ROUTES:
+
+CREATE: `app/api/applicant/profile/route.ts`
+
+Spec:
+- GET: resolves actor, calls `getApplicantProfile(actor, actor.userId, supabase)`. Returns serialized result.
+- Thin route. Zero business logic. All work in the service layer.
+- Import everything needed from `lib/server/applicant/applicantProfileService.ts`.
+- Response: 200 with the serialized profile object, or 403/401.
+
+---
+
+CREATE: `app/api/applicant/preferences/route.ts`
+
+Spec:
+- GET: calls `getApplicantPreferencesForSelf(actor, supabase)`. Returns serialized preferences.
+- PATCH: validates request body, calls `updateApplicantPreferences(actor, fields, supabase)`. Returns updated preferences.
+- Thin route only.
+
+---
+
+CREATE: `app/api/applicant/bookmarks/route.ts`
+
+Spec:
+- GET: calls `listBookmarks(actor, supabase)`. Returns array.
+- POST: validates body (`targetType`, `targetId`, `notes?`), calls `addBookmark(actor, targetType, targetId, notes, supabase)`.
+- Thin route only.
+
+---
+
+CREATE: `app/api/applicant/bookmarks/[id]/route.ts`
+
+Spec:
+- DELETE: calls `removeBookmark(actor, params.id, supabase)`. Returns 204.
+- Thin route only.
+
+---
+
+CREATE: `app/api/applicant/bookmarks/reorder/route.ts`
+
+Spec:
+- POST: validates body `{ orderedIds: string[] }`, calls `reorderBookmarks(actor, orderedIds, supabase)`. Returns 200.
+- Thin route only.
+
+---
+
+CREATE: `app/api/applicant/helpers/route.ts`
+
+Spec:
+- GET: calls `listMyHelpers(actor, supabase)`. Returns active/pending grants for this applicant.
+- POST: validates body `{ helperUserId, scope, notes? }`, calls `grantHelper(actor, helperUserId, scope, notes, supabase)`. Returns 201 with the new grant.
+- Thin route only.
+
+---
+
+CREATE: `app/api/applicant/helpers/[id]/route.ts`
+
+Spec:
+- DELETE: calls `revokeHelper(actor, params.id, supabase)`. Returns 204.
+- Thin route only.
+
+═══════════════════════════════════════════════════
+SHIM CONVERSIONS (existing safety module → re-exports)
+═══════════════════════════════════════════════════
+
+EDIT: `lib/server/safety/settings.ts`
+
+Spec:
+- ADD at top of file: `// @deprecated — use lib/server/applicant/safetyPreferenceService.ts. This file is a re-export shim maintained for back-compat.`
+- All existing exports (`getSafetySettings`, `upsertSafetySettings`, `defaultSafetySettings`, `getSafeNotificationMode`) must continue to be exported from this file.
+- Move the implementation bodies to `lib/server/applicant/safetyPreferenceService.ts` (as specified above).
+- This file re-exports the same function names from the new service module.
+- Verify that `AuthContext` population code (wherever `safetyModeEnabled` is computed) still works without modification — the shim must be transparent.
+
+═══════════════════════════════════════════════════
+DEPRECATION COMMENTS (no code changes — comments only)
+═══════════════════════════════════════════════════
+
+EDIT: `lib/server/profile/getPersonalInfo.ts`
+
+Spec:
+- ADD at top: `// @deprecated — use resolveApplicantByUserId from lib/server/applicant/applicantProfileRepository.ts`
+- Do NOT change any logic. File stays functional.
+
+---
+
+EDIT: `lib/server/profile/victimPersonalAccess.ts`
+
+Spec:
+- ADD at top: `// @deprecated — inline access checks are being replaced by evalApplicantProfile in the policy engine. Functions are preserved for back-compat. Do not add new callers.`
+- Do NOT change any logic.
+
+═══════════════════════════════════════════════════
+TESTS
+═══════════════════════════════════════════════════
+
+CREATE: `__tests__/domain-3.1-applicant.test.ts`
+
+Spec:
+All 32 tests from the analysis test plan must be implemented. Use the exact test numbering from the analysis. Tests are organized into four describe blocks:
+
+describe('Domain 3.1 — Policy (10 tests)') — tests 1–10 from analysis section 10.
+describe('Domain 3.1 — State/Behavior (5 tests)') — tests 11–15 from analysis section 10.
+describe('Domain 3.1 — Service (10 tests)') — tests 16–25 from analysis section 10.
+describe('Domain 3.1 — Serializers (4 tests)') — tests 26–29 from analysis section 10.
+
+Cross-domain integration tests 30–32 go in: `__tests__/domain-3.1-cross-domain.test.ts`
+
+describe('Domain 3.1 — Cross-domain Integration (3 tests)')
+
+Test implementation notes:
+- Test 1: Unauthenticated actor → `can(null, "applicant_profile:view", ...)` → `{ allowed: false }`.
+- Test 2: Applicant actor with `userId = targetUserId` → ALLOW.
+- Test 3: Applicant actor with `userId !== targetUserId` and no helper grant → DENY.
+- Test 4: Provider actor + mock `canReadVictimPersonalInfo` returning true → ALLOW.
+- Test 5: Provider actor + mock `canReadVictimPersonalInfo` returning false → DENY.
+- Test 6: Admin actor → ALLOW for `view_others`.
+- Test 7: Applicant updates own preferences → `can(actor, "applicant_preference:update")` → ALLOW.
+- Test 8: Provider tries to update applicant preferences → DENY.
+- Test 9: Applicant grants helper → `can(actor, "trusted_helper:grant")` → ALLOW.
+- Test 10: Helper with revoked grant tries `trusted_helper:act_as` → DENY.
+- Test 11: `performQuickExit` → returns `{ redirectTo: "/" }`, audit log entry created.
+- Test 12: `upsertSafetyPreference` with `safetyModeEnabled: true` → `suppress_notification_previews` becomes true.
+- Test 13: Grant lifecycle → create pending, accept → active, revoke → revoked. Verify `accepted_at` and `revoked_at` timestamps populated.
+- Test 14: `reorderBookmarks` with 3 IDs → positions become 0, 1, 2. Reorder with same IDs in different order → positions updated correctly.
+- Test 15: `getApplicantPreferencesForSelf` reads from `applicant_preferences` table; locale read from `locale_preferences` (separate query, different table).
+- Test 16: `getApplicantProfile(selfActor, selfActor.userId, ...)` → returns `ApplicantSelfView`.
+- Test 17: `getApplicantProfile(providerActor, applicantUserId, ...)` with mock case access → returns `ApplicantProviderView`.
+- Test 18: `updateApplicantProfile` → `applicant_profiles` row updated + `profiles.personal_info` jsonb patched + audit row logged.
+- Test 19: `getSafetyPreference` when no row in `user_safety_settings` → returns `defaultSafetySettings`.
+- Test 20: `upsertSafetyPreference` with partial patch → merges correctly, does not overwrite unset fields.
+- Test 21: `grantTrustedHelperAccess` → creates row with `status='pending'`, `accepted_at=null`.
+- Test 22: `revokeTrustedHelperAccess` → flips `status='revoked'`, `revoked_at` populated. Original row preserved (no delete).
+- Test 23: `listApplicantBookmarks` → returns bookmarks ordered by `position ASC`.
+- Test 24: `createApplicantBookmark` twice with same `(applicant_user_id, target_type, target_id)` → second call returns existing record without error, no duplicate row.
+- Test 25: `resolveApplicantByUserId` with known userId → returns `ApplicantProfileRecord`. With unknown userId → returns `null`.
+- Test 26: `serializeApplicantSelfView` output includes `preferences`, `safetyPreference`, `bookmarks`. Does not include raw `personal_info` jsonb. Does not include internal `id` of nested tables.
+- Test 27: `serializeApplicantProviderView` output includes `preferredName`, `city`, `state`. Does NOT include `safetyPreference`, `bookmarks`, `dateOfBirth`, full address.
+- Test 28: `serializeApplicantAdminView` output includes `createdAt`, `updatedAt`, `profileCompletionPct`, full address including DOB.
+- Test 29: Feed a mock `ApplicantProfileRecord` with a `personal_info` raw key injected → none of the three serializers output that key. Raw jsonb fields never pass through.
+- Test 30: Mock `intakeService` call that triggers `resolveApplicantByUserId` → verify it reads from `applicant_profiles`, not from `profiles.personal_info`.
+- Test 31: `getSafetyPreference` where `safetyModeEnabled: true` → `AuthContext.safetyModeEnabled` is `true` (integration with AuthContext population).
+- Test 32: Call the legacy `PATCH /api/me/personal-info` route → verify 200 and that the response shape is unchanged (back-compat test using the route's existing test fixture pattern).
+
+Use mock Supabase clients (`createMockSupabaseClient`) consistent with the existing test helpers in the codebase. Do not make real DB calls in unit tests.
+
+---
+
+--- VALIDATION GATES ---
+
+Run all gates in order. Each must pass before the next. Report results for each gate individually.
+
+Gate 1 — Migration timestamp compliance
+```bash
+ls supabase/migrations/ | grep "^202605020000"
+# Expected: 4 files:
+# 20260502000000_applicant_profiles.sql
+# 20260502000001_applicant_preferences.sql
+# 20260502000002_trusted_helper_access.sql
+# 20260502000003_applicant_bookmarks.sql
+```
+Gate passes if all 4 files exist and no migration with timestamp ≤ 20260501400000 was created by this domain.
+
+Gate 2 — No victim references in new files
+```bash
+grep -rn "victim" \
+  lib/server/applicant/ \
+  app/api/applicant/ \
+  __tests__/domain-3.1-applicant.test.ts \
+  __tests__/domain-3.1-cross-domain.test.ts
+# Expected: 0 matches
+# Exception: if victimPersonalAccess.ts is imported by name, the import path string containing "victim" is acceptable — the code within the new file must use "applicant"
+```
+Gate passes if result is 0 matches (or only the import path string for back-compat imports).
+
+Gate 3 — No safety_preferences table created
+```bash
+grep -rn "safety_preferences" supabase/migrations/
+# Expected: 0 matches (the table name must not appear in any migration)
+```
+Gate passes if 0 matches.
+
+Gate 4 — No business logic in route files
+```bash
+grep -n "supabase\." \
+  app/api/applicant/profile/route.ts \
+  app/api/applicant/preferences/route.ts \
+  app/api/applicant/bookmarks/route.ts \
+  "app/api/applicant/bookmarks/[id]/route.ts" \
+  app/api/applicant/bookmarks/reorder/route.ts \
+  app/api/applicant/helpers/route.ts \
+  "app/api/applicant/helpers/[id]/route.ts"
+# Expected: 0 matches
+# Routes must not call supabase directly — must go through service layer
+```
+Gate passes if 0 matches.
+
+Gate 5 — can() coverage on all edited routes
+```bash
+grep -n "can(" \
+  app/api/safety/settings/route.ts \
+  app/api/safety/quick-exit/route.ts \
+  app/api/me/personal-info/route.ts \
+  app/api/applicant/profile/route.ts \
+  app/api/applicant/preferences/route.ts \
+  app/api/applicant/bookmarks/route.ts \
+  "app/api/applicant/bookmarks/[id]/route.ts" \
+  app/api/applicant/bookmarks/reorder/route.ts \
+  app/api/applicant/helpers/route.ts \
+  "app/api/applicant/helpers/[id]/route.ts"
+# Expected: at least 1 match per file (each route must call can())
+```
+Gate passes if all 10 files show ≥1 match.
+
+Gate 6 — requireRole("victim") removed from edited routes
+```bash
+grep -rn "requireRole.*victim" \
+  app/api/me/personal-info/route.ts \
+  app/api/safety/settings/route.ts \
+  app/api/safety/quick-exit/route.ts
+# Expected: 0 matches
+```
+Gate passes if 0 matches.
+
+Gate 7 — No raw DB responses in route handlers
+```bash
+grep -n "\.data\b" \
+  app/api/applicant/profile/route.ts \
+  app/api/applicant/preferences/route.ts \
+  app/api/applicant/bookmarks/route.ts \
+  "app/api/applicant/bookmarks/[id]/route.ts" \
+  app/api/applicant/bookmarks/reorder/route.ts \
+  app/api/applicant/helpers/route.ts \
+  "app/api/applicant/helpers/[id]/route.ts"
+# Expected: 0 matches (routes must not access .data from supabase responses directly)
+```
+Gate passes if 0 matches.
+
+Gate 8 — user_safety_settings table name preserved in service
+```bash
+grep -n "user_safety_settings" lib/server/applicant/safetyPreferenceService.ts
+# Expected: ≥1 match (the new service must reference the actual table name)
+grep -n "safety_preferences" lib/server/applicant/safetyPreferenceService.ts
+# Expected: 0 matches (no phantom table name)
+```
+Gate passes if both conditions met.
+
+Gate 9 — Shim preservation
+```bash
+grep -n "export" lib/server/safety/settings.ts
+# Expected: all previously exported names still exported
+# Manually verify: getSafetySettings (or equivalent), upsertSafetySettings, defaultSafetySettings, getSafeNotificationMode
+```
+Gate passes if all original exports are present.
+
+Gate 10 — locale_preferences not duplicated
+```bash
+grep -rn "locale" \
+  supabase/migrations/20260502000001_applicant_preferences.sql \
+  lib/server/applicant/applicantPreferenceRepository.ts \
+  lib/server/applicant/types.ts
+# Expected: 0 matches (locale lives in Domain 2.4 only)
+```
+Gate passes if 0 matches.
+
+Gate 11 — Dual-write present in repository
+```bash
+grep -n "syncPersonalInfoJsonb\|personal_info" lib/server/applicant/applicantProfileRepository.ts
+# Expected: ≥1 match for each (dual-write function must exist and reference personal_info)
+```
+Gate passes if both patterns found.
+
+Gate 12 — TrustedHelperStatus enum alignment
+```bash
+grep -n "TrustedHelperStatus\|pending\|active\|revoked" lib/registry/enums.ts | head -20
+# Manually verify: enum values match CHECK constraint in 20260502000002_trusted_helper_access.sql
+# Both must be: 'pending' | 'active' | 'revoked'
+```
+Gate passes if values match.
+
+Gate 13 — TypeScript compilation
+```bash
+npx tsc --noEmit
+# Expected: EXIT=0, 0 errors
+```
+Gate passes if exit code is 0.
+
+Gate 14 — Test suite
+```bash
+npm test -- --passWithNoTests
+# Expected: all tests pass, count ≥ 687
+```
+Gate passes if all pass and count ≥ 687 (655 baseline + 32 new).
+
+Gate 15 — Build
+```bash
+npm run build
+# Expected: successful build, 0 errors
+```
+Gate passes if build succeeds.
+
+---
+
+--- OUTPUT REQUIRED ---
+
+Claude Code must produce a structured report with ALL of the following sections:
+
+```
+## Domain 3.1 — Applicant Domain — Implementation Report
+
+### Branch
+domain/3.1-applicant
+
+### Rule 25 Verification
+[State: PASSED / FAILED]
+Prior domain on NXTSTPS2.0-V1: [yes/no]
+Git log excerpt showing verification
+
+### Baseline Confirmed
+TSC errors before: 0
+Tests before: 655
+
+### Migrations Created
+List each migration file with:
+- Filename
+- Tables created
+- RLS policies count
+- Indexes count
+
+### Files Created
+List each new file with:
+- Path
+- Exports (function/type names)
+- Line count (approximate)
+
+### Files Edited
+List each edited file with:
+- Path
+- What changed (1–2 sentences)
+- Did existing behavior change? (yes/no — must be no for back-compat files)
+
+### Policy Actions Registered
+List all 16 new policy actions added to policyEngine + evalApplicantProfile
+
+### Validation Gate Results
+Gate 1: [PASS/FAIL] — [output or error]
+Gate 2: [PASS/FAIL] — [output or error]
+...
+Gate 15: [PASS/FAIL] — [output or error]
+
+### Test Results
+New test count: [N]
+Total test count: [N] (target ≥ 687)
+All tests passing: [yes/no]
+Any skipped tests: [list if any]
+
+### Deferred Items Log
+(from analysis section 11 — confirm each deferred item is documented here, not implemented)
+1. [item] — status: deferred to [where]
+...
+
+### Scope Boundary Violations (if any)
+(Any required change discovered outside listed files — describe and STOP)
+
+### AuthContext safetyModeEnabled preserved
+[yes/no] — explain how the shim preserves this
+
+### Back-compat verification
+PATCH /api/me/personal-info: [working/broken] — [evidence]
+GET/POST /api/safety/settings: [working/broken] — [evidence]
+/victim/* URL routes: [unchanged/changed]
+
+### Final Compilation
+TSC errors after: [0]
+Tests after: [count]
+Build: [success/failure]
+```
+
+---
+
+--- AUTO-POST TO NOTION ---
+
+Page ID: (use the Domain 3.1 Notion page ID from the project's Notion workspace — look up in `.env` or project config as `NOTION_DOMAIN_3_1_PAGE_ID` or equivalent)
+
+VERIFY BEFORE POST: Do not auto-post if any of the following are true:
+- Gate 13 (TSC) did not pass with exit code 0
+- Gate 14 (tests) count is below 687
+- Gate 15 (build) failed
+- Any Scope Boundary Violation is logged
+
+If all gates pass, post the complete Implementation Report (OUTPUT REQUIRED section above) to Notion using the existing `notion-post.js` script pattern established in prior domains.
+
+Post title: `Domain 3.1 — Applicant Domain — Implementation Complete`
+Post timestamp: auto (now())
+Post tags: `domain-complete`, `3.1`, `applicant-domain`, `NXTSTPS2.0-V1-candidate`
+
+After posting, output this confirmation line:
+`AUTO-POST: Notion page [PAGE_ID] updated — Domain 3.1 implementation report posted.`
+
+If gates fail, output:
+`AUTO-POST: BLOCKED — [list failing gates]. Fix and re-run validation before posting.`

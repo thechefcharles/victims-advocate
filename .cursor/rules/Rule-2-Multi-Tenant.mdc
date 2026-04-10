@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+All work must preserve strict multi-tenant boundaries. Every data access must be scoped to the actor's tenantId. Use assertSameTenant() from lib/server/policy/tenantScope.ts. Never expose cross-tenant data. Never rely on UI hiding for security.

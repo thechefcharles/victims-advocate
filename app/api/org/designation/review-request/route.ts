@@ -1,14 +1,10 @@
 /**
- * Phase E: Submit designation review request (org_admin / supervisor).
+ * Submit designation review request (org_admin / supervisor).
  */
 
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -22,8 +18,17 @@ export async function POST(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
-    requireOrg(ctx);
-    requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
+
+    const orgId = ctx.orgId;
+    if (!orgId) {
+      return apiFail("FORBIDDEN", "Organization context required.", undefined, 403);
+    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:manage_members", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
     const requestKind = String(body?.request_kind ?? "").trim() as ReviewRequestKind;
@@ -40,7 +45,6 @@ export async function POST(req: Request) {
       return apiFail("VALIDATION_ERROR", "body must be 20–8000 characters", undefined, 422);
     }
 
-    const orgId = ctx.orgId!;
     const des = await getCurrentOrgDesignation(orgId);
 
     const row = await createDesignationReviewRequest({

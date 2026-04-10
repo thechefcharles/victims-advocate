@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+All status fields use canonical enums from lib/registry/enums.ts. All status transitions go through transition() from lib/server/workflow/engine.ts. No direct .update({status: ...}) in routes. No free-text statuses.

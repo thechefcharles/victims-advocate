@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+Backend is the source of truth. Services own business logic. Repositories own data access. Serializers shape all responses. Routes stay thin. Policies handle authorization via can(). State machines handle transitions via transition().
+
+Never: business logic in routes, raw DB responses returned, bypass service layer, inline isAdmin checks outside buildActor().

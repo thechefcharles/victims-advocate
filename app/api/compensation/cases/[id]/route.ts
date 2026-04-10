@@ -4,7 +4,7 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
-import { getCaseById, appendCaseTimelineEvent } from "@/lib/server/data";
+import { getCaseById } from "@/lib/server/data";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -76,7 +76,6 @@ export async function PATCH(req: Request, context: RouteParams) {
     const b = body as Record<string, unknown>;
     const application = b?.application;
     const name = b?.name;
-    const status = b?.status;
     const eligibilityAnswers = b?.eligibility_answers;
     const eligibilityResult = b?.eligibility_result;
     const eligibilityReadiness = b?.eligibility_readiness;
@@ -85,7 +84,6 @@ export async function PATCH(req: Request, context: RouteParams) {
     const hasUpdates =
       application !== undefined ||
       name !== undefined ||
-      status !== undefined ||
       eligibilityAnswers !== undefined ||
       eligibilityResult !== undefined ||
       eligibilityReadiness !== undefined ||
@@ -135,14 +133,6 @@ export async function PATCH(req: Request, context: RouteParams) {
     if (eligibilityAnswers !== undefined || eligibilityResult !== undefined) {
       updates.eligibility_completed_at = new Date().toISOString();
     }
-    const statusAllowed = ["draft", "ready_for_review", "submitted", "closed"];
-    if (
-      status !== undefined &&
-      typeof status === "string" &&
-      statusAllowed.includes(status)
-    ) {
-      updates.status = status;
-    }
 
     if (state_code !== undefined) {
       const sc = typeof state_code === "string" ? state_code.trim().toUpperCase() : "";
@@ -153,7 +143,6 @@ export async function PATCH(req: Request, context: RouteParams) {
       }
     }
 
-    const previousCase = result.case as { status?: string; organization_id?: string };
     const { data: updated, error: updateError } = await supabaseAdmin
       .from("cases")
       .update(updates)
@@ -163,24 +152,6 @@ export async function PATCH(req: Request, context: RouteParams) {
 
     if (updateError) {
       throw new AppError("INTERNAL", "Failed to update case", updateError, 500);
-    }
-
-    const newStatus = updated?.status as string | undefined;
-    if (
-      status !== undefined &&
-      previousCase?.organization_id &&
-      newStatus &&
-      previousCase.status !== newStatus
-    ) {
-      appendCaseTimelineEvent({
-        caseId: id,
-        organizationId: previousCase.organization_id,
-        actor: { userId: ctx.userId, role: result.access.role },
-        eventType: "case.status_changed",
-        title: "Status changed",
-        description: `${previousCase.status ?? "—"} → ${newStatus}`,
-        metadata: { from: previousCase.status ?? null, to: newStatus },
-      }).catch(() => {});
     }
 
     logger.info("compensation.cases.patch", { caseId: id, userId: ctx.userId });

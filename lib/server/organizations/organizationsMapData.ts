@@ -1,9 +1,9 @@
 /**
- * Shared payload for victim/advocate “find organizations” map APIs.
+ * Shared payload for applicant/advocate "find organizations" map APIs.
  *
- * Uses a broader visibility rule than case matching: includes seeded / draft-profile
- * partners so manually added directory orgs still appear on the map while they finish
- * onboarding. Case matching and recommendations still use `canOrganizationAppearInSearch`.
+ * Domain 3.4 — Search Law compliance: loadOrganizationsMapRows() reads from
+ * provider_search_index instead of the organizations table directly.
+ * Orgs must pass canOrganizationAppearInSearch() (is_active=true in index) to appear.
  *
  * Merges geocoded rows from `data/il-cbo-va-2026.json` (built by
  * `scripts/build-il-cbo-va-directory.mjs`) for directory pins without Supabase ids.
@@ -12,13 +12,7 @@
 import fs from "fs";
 import path from "path";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
-import {
-  countiesFromCoverage,
-  regionLabelForOrg,
-  statesFromCoverage,
-} from "@/lib/server/ecosystem/regions";
-import { computeOrgMapPoint } from "@/lib/server/organizations/mapCoordinates";
-import { buildResponseAccessibilitySnapshot } from "@/lib/server/organizations/responseAccessibilitySnapshot";
+import { regionLabelForOrg } from "@/lib/server/ecosystem/regions";
 import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 export type OrganizationMapRow = {
@@ -132,66 +126,37 @@ export function isOrganizationMapListable(row: {
 }
 
 export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> {
+  // Search Law: read from provider_search_index only — no direct organizations query.
+  // Orgs appear here only after passing canOrganizationAppearInSearch() (is_active=true in index).
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("organizations")
+    .from("provider_search_index")
     .select(
-      "id,name,coverage_area,metadata,accepting_clients,capacity_status,profile_status,profile_stage,status,lifecycle_status,public_profile_status,languages,intake_methods,hours,avg_response_time_hours,accessibility_features"
+      "org_id,name,state_codes,accepting_clients,capacity_status,approximate,lat,lng,address,phone,website"
     )
-    .eq("status", "active")
-    .in("lifecycle_status", ["managed", "seeded"])
-    .in("public_profile_status", ["active", "pending_review", "draft"])
-    .in("profile_status", ["active", "draft"])
-    .in("profile_stage", ["created", "searchable", "enriched"]);
+    .eq("is_active", true)
+    .limit(500);
 
   if (error) throw new Error(error.message);
 
-  const eligible = (data ?? []).filter((row) => isOrganizationMapListable(row));
-
-  const dbRows = eligible.map((row) => {
-    const cov = row.coverage_area as Record<string, unknown>;
-    const states = statesFromCoverage(cov);
-    const counties = countiesFromCoverage(cov);
-    const pt = computeOrgMapPoint({
-      id: row.id,
-      coverage_area: cov,
-      metadata: row.metadata,
-    });
-    const meta = row.metadata as Record<string, unknown> | null | undefined;
-    const listingAddress =
-      typeof meta?.listing_address === "string" && meta.listing_address.trim()
-        ? meta.listing_address.trim()
-        : null;
-    const listingPhone = cleanDirectoryPhone(
-      typeof meta?.listing_phone === "string" ? meta.listing_phone : null
-    );
-    const listingWebsite =
-      typeof meta?.listing_website === "string" && meta.listing_website.trim()
-        ? meta.listing_website.trim()
-        : null;
-
-    return {
-      id: row.id,
-      name: row.name,
-      lat: pt.lat,
-      lng: pt.lng,
-      approximate: pt.approximate,
-      accepting_clients: Boolean(row.accepting_clients),
-      capacity_status: row.capacity_status ?? "unknown",
-      region_label: regionLabelForOrg(states, counties),
-      states,
-      address: listingAddress,
-      phone: listingPhone,
-      website: listingWebsite,
-      response_accessibility: buildResponseAccessibilitySnapshot({
-        languages: row.languages,
-        intake_methods: row.intake_methods,
-        hours: row.hours,
-        avg_response_time_hours: row.avg_response_time_hours,
-        accessibility_features: row.accessibility_features,
-      }),
-    };
-  });
+  const dbRows: OrganizationMapRow[] = (data ?? []).map((row) => ({
+    id: row.org_id as string,
+    name: row.name as string,
+    lat: typeof row.lat === "number" ? row.lat : 0,
+    lng: typeof row.lng === "number" ? row.lng : 0,
+    approximate: Boolean(row.approximate),
+    accepting_clients: Boolean(row.accepting_clients),
+    capacity_status: (row.capacity_status as string | null) ?? "unknown",
+    region_label: regionLabelForOrg(
+      Array.isArray(row.state_codes) ? (row.state_codes as string[]) : [],
+      [] // county data not available in search index
+    ),
+    states: Array.isArray(row.state_codes) ? (row.state_codes as string[]) : [],
+    address: (row.address as string | null) ?? null,
+    phone: (row.phone as string | null) ?? null,
+    website: (row.website as string | null) ?? null,
+    response_accessibility: null, // [DEFERRED-3.4-002]: not in search index; requires org join
+  }));
 
   const cboRows = loadCboVaMapRows();
   return [...dbRows, ...cboRows];

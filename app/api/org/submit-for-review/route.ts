@@ -1,24 +1,26 @@
 /**
- * Phase 3: Org owner submits organization for platform review of public activation.
- * Sets public_profile_status → pending_review (admin must approve to set active).
+ * Org owner submits organization for platform review of public activation.
+ * Domain 3.2: auth via can("org:submit_for_review"). Existing service calls preserved.
  */
 
 import {
   getAuthContext,
   requireFullAccess,
   requireOrg,
-  requireOrgRole,
   requireActiveAccount,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import {
   getOrganizationProfileForContext,
   organizationRowToProfileRow,
 } from "@/lib/server/organizations/profile";
 import { canOrganizationSubmitForActivation } from "@/lib/server/organizations/state";
+import { serializeOrgInternalView } from "@/lib/server/organizations/organizationSerializers";
 
 export async function POST(req: Request) {
   try {
@@ -26,7 +28,12 @@ export async function POST(req: Request) {
     requireFullAccess(ctx, req);
     requireActiveAccount(ctx, req);
     requireOrg(ctx);
-    requireOrgRole(ctx, "owner");
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:submit_for_review", actor, { type: "org", id: ctx.orgId!, ownerId: ctx.orgId! });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     const profileRow = await getOrganizationProfileForContext({ ctx, organizationId: ctx.orgId });
     if (profileRow.status !== "active") {
@@ -89,13 +96,10 @@ export async function POST(req: Request) {
 
     logger.info("org.activation.submitted", { orgId: ctx.orgId, userId: ctx.userId });
 
-    const row = updated as Record<string, unknown>;
-    const out = organizationRowToProfileRow(row);
-    const { metadata: _m, ...profileRest } = out;
-
+    const out = organizationRowToProfileRow(updated as Record<string, unknown>);
     return apiOk({
       message: "Your organization has been submitted for review. A platform administrator will follow up.",
-      profile: profileRest,
+      profile: serializeOrgInternalView(out),
     });
   } catch (err) {
     const appErr = toAppError(err);

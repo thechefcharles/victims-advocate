@@ -1,0 +1,7 @@
+---
+alwaysApply: true
+---
+
+When asked to analyze: read files, find gaps, do NOT write code.
+When asked to implement: follow the approved spec only, stay in scope, document anything outside scope and stop.
+Always: read docs/AGENTS.md and docs/CODING_CONTEXT.md at the start of every session.

@@ -1,18 +1,20 @@
 /**
- * Org rep (role organization) requests to join an existing org when the catalog entry
- * already has a NxtStps account. Org admins approve/decline.
+ * Org rep (role: organization) requests to join an existing org.
+ * Domain 3.2: auth via can("org:request_to_join"). Thin route — DB logic preserved for
+ * org_rep_join_requests table (distinct from advocate_org_join_requests).
  */
 
 import {
   getAuthContext,
   requireAuth,
   requireFullAccess,
-  requireRole,
   type AuthContext,
 } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { createNotification } from "@/lib/server/notifications/create";
 import { getAdvocateDisplayForNotification } from "@/lib/server/notifications/advocateDisplay";
 import { logEvent } from "@/lib/server/audit/logEvent";
@@ -94,7 +96,6 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
     requireFullAccess(ctx, req);
-    requireRole(ctx, "organization");
 
     let body: unknown;
     try {
@@ -102,6 +103,7 @@ export async function POST(req: Request) {
     } catch {
       return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
     }
+
     const organizationId =
       typeof (body as { organization_id?: unknown })?.organization_id === "string"
         ? String((body as { organization_id: string }).organization_id).trim()
@@ -109,6 +111,16 @@ export async function POST(req: Request) {
 
     if (!organizationId) {
       return apiFail("VALIDATION_ERROR", "organization_id is required", undefined, 422);
+    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:request_to_join", actor, {
+      type: "org",
+      id: organizationId,
+      ownerId: organizationId,
+    });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
     const supabase = getSupabaseAdmin();

@@ -1,3 +1,6 @@
+// @deprecated — inline access checks are being replaced by evalApplicantProfile in the policy
+// engine. Functions are preserved for back-compat. Do not add new callers.
+
 /**
  * Who may read a victim's account-level personal_info (profiles.personal_info).
  */

@@ -9,6 +9,15 @@ import {
   toIsoOrNull,
 } from "./helpers";
 import type { OrganizationSignals } from "./types";
+import { emitSignal } from "@/lib/server/trustSignal";
+
+/** System sentinel for background signal emissions (no human actor). */
+const SYSTEM_ACTOR_ID = "00000000-0000-0000-0000-000000000000";
+/** Daily dedup key: stable for a given org + signal type within a calendar day. */
+function dailyIdempotencyKey(orgId: string, signalType: string): string {
+  const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return `${orgId}:${signalType}:${date}`;
+}
 
 type CaseRow = { id: string; created_at: string; updated_at: string; status: string };
 type MessageRow = { case_id: string; created_at: string; sender_role: string | null };
@@ -37,7 +46,7 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
   const { data: org, error: orgErr } = await supabase
     .from("organizations")
     .select(
-      "id,profile_status,profile_stage,last_profile_update,profile_last_updated_at,service_types,languages,coverage_area,capacity_status,intake_methods"
+      "id,name,profile_status,profile_stage,last_profile_update,profile_last_updated_at,service_types,languages,coverage_area,capacity_status,intake_methods,accessibility_features,accepting_clients,avg_response_time_hours"
     )
     .eq("id", organizationId)
     .maybeSingle();
@@ -214,6 +223,94 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
   }
   if (appointmentsNotAvailable) flags.push("appointments_not_available");
 
+  const serviceTypesCount = Array.isArray(org.service_types) ? org.service_types.length : 0;
+  const languagesCount = Array.isArray(org.languages) ? org.languages.length : 0;
+  const intakeMethodsCount = Array.isArray(org.intake_methods) ? org.intake_methods.length : 0;
+  const accessibilityFeaturesCount = Array.isArray(org.accessibility_features)
+    ? org.accessibility_features.length
+    : 0;
+  const capacityStatus = String(org.capacity_status ?? "unknown");
+
+  // Domain 0.5 — emit trust signals as fire-and-forget side effects.
+  // All calls are void (no await, no error propagation).
+  // Existing queries above remain intact as the primary data source.
+  {
+    const profileComplScore =
+      [
+        serviceTypesCount > 0,
+        languagesCount > 0,
+        hasCoverage,
+        intakeMethodsCount > 0,
+        capacityStatus !== "unknown",
+        org.accepting_clients === true,
+        org.avg_response_time_hours != null,
+        accessibilityFeaturesCount > 0,
+      ].filter(Boolean).length / 8;
+
+    void emitSignal(
+      { orgId: organizationId, signalType: "case_volume", value: totalCases,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "case_volume") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "case_age_distribution",
+        value: average(caseAges) ?? 0,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "case_age_distribution") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "messaging_volume",
+        value: casesWithMessages.size,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "messaging_volume") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "messaging_recency_30d",
+        value: recentMessageThreads.size,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "messaging_recency_30d") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "routing_coverage",
+        value: clampRate(routingCaseSet.size, totalCases) ?? 0,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "routing_coverage") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "completeness_coverage",
+        value: clampRate(completenessCaseSet.size, totalCases) ?? 0,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "completeness_coverage") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "ocr_coverage",
+        value: clampRate(ocrCaseSet.size, totalCases) ?? 0,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "ocr_coverage") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "appointment_coverage",
+        value: appointmentsUsageRate ?? 0,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "appointment_coverage") },
+      supabase,
+    );
+    void emitSignal(
+      { orgId: organizationId, signalType: "profile_completeness",
+        value: profileComplScore,
+        actorUserId: SYSTEM_ACTOR_ID, actorAccountType: "platform_admin",
+        idempotencyKey: dailyIdempotencyKey(organizationId, "profile_completeness") },
+      supabase,
+    );
+  }
+
   return {
     organizationId,
     computedAt,
@@ -222,12 +319,24 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
       profileStage: org.profile_stage != null ? String(org.profile_stage) : null,
       lastProfileUpdate,
       completeness: profileCompletenessBucket({
-        serviceTypesCount: Array.isArray(org.service_types) ? org.service_types.length : 0,
-        languagesCount: Array.isArray(org.languages) ? org.languages.length : 0,
+        serviceTypesCount,
+        languagesCount,
         hasCoverage,
-        hasCapacity: String(org.capacity_status ?? "unknown").toLowerCase() !== "unknown",
-        hasIntakeMethods: Array.isArray(org.intake_methods) && org.intake_methods.length > 0,
+        hasCapacity: capacityStatus.toLowerCase() !== "unknown",
+        hasIntakeMethods: intakeMethodsCount > 0,
       }),
+      name: String(org.name ?? ""),
+      acceptingClients: org.accepting_clients === true,
+      capacityStatus,
+      avgResponseTimeHours:
+        org.avg_response_time_hours != null && org.avg_response_time_hours !== ""
+          ? Number(org.avg_response_time_hours)
+          : null,
+      accessibilityFeaturesCount,
+      languagesCount,
+      intakeMethodsCount,
+      serviceTypesCount,
+      hasCoverage,
     },
     cases: {
       total: totalCases,

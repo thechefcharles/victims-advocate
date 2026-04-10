@@ -1,10 +1,6 @@
-import {
-  getAuthContext,
-  requireFullAccess,
-  requireOrg,
-  requireOrgRole,
-  SIMPLE_ORG_LEADERSHIP_ROLES,
-} from "@/lib/server/auth";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listOrgReferralsInboxEnriched } from "@/lib/server/referrals/service";
@@ -32,18 +28,18 @@ export async function GET(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
 
-    const isAdmin = ctx.isAdmin;
-    if (!isAdmin) {
-      requireOrg(ctx);
-      requireOrgRole(ctx, SIMPLE_ORG_LEADERSHIP_ROLES);
-    }
-
     const { searchParams } = new URL(req.url);
     const orgIdParam = searchParams.get("organization_id")?.trim();
-    const orgId = isAdmin && orgIdParam ? orgIdParam : ctx.orgId!;
+    const orgId = ctx.isAdmin && orgIdParam ? orgIdParam : ctx.orgId;
 
     if (!orgId) {
-      return apiFail("VALIDATION_ERROR", "organization_id required for admin", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "organization_id required.", undefined, 422);
+    }
+
+    const actor = buildActor(ctx);
+    const decision = await can("org:manage_members", actor, { type: "org", id: orgId, ownerId: orgId });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
     const statusParam = searchParams.get("status");

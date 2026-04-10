@@ -24,6 +24,14 @@ export type AuditAction =
   | "document.deleted"
   | "document.restricted"
   | "document.unrestricted"
+  | "document.download"
+  | "document.shared"
+  | "document.locked"
+  | "document.replaced"
+  | "document.version_created"
+  | "consent.grant_created"
+  | "consent.grant_revoked"
+  | "consent.sharing_checked"
   | "org.create"
   | "org.claim_request.submitted"
   | "org.activation.submitted"
@@ -61,6 +69,7 @@ export type AuditAction =
   | "auth.email_verification_required"
   | "auth.email_verification_resent"
   | "auth.email_verified"
+  | "auth.view_as_activated"
   | "auth.login_failed"
   | "auth.locked"
   | "auth.login_rate_limited"
@@ -145,7 +154,12 @@ export type AuditAction =
   | "referral.created"
   | "referral.accepted"
   | "referral.declined"
-  | "org.permission_denied";
+  | "org.permission_denied"
+  | "workflow.state_transition"
+  | "trust.signal_emitted"
+  // Domain 3.3 — Program Domain
+  | "program.catalog_entry_linked"
+  | "profile.affiliation_updated";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

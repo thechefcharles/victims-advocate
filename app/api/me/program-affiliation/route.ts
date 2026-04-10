@@ -1,32 +1,24 @@
 /**
- * Update Illinois victim assistance directory affiliation (profiles.affiliated_catalog_entry_id).
- * Victim / advocate / organization accounts may record which listed program they belong to.
+ * Domain 3.3 — User: set program affiliation (profiles.affiliated_catalog_entry_id).
+ * Auth via can("profile:set_affiliation"). Logic delegated to programService.
  */
 
-import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/auth";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
-import { getCatalogProgramById } from "@/lib/catalog/loadCatalog";
 import { logger } from "@/lib/server/logging";
-
-function profileAffiliationFail(err: { message: string; code?: string }) {
-  const msg = err.message ?? "";
-  if (msg.includes("affiliated_catalog_entry_id")) {
-    return apiFail(
-      "INTERNAL",
-      "Database is missing the affiliation column. In Supabase, run migration 20260323000000_profiles_program_catalog.sql (adds profiles.affiliated_catalog_entry_id).",
-      { code: err.code, hint: msg },
-      500
-    );
-  }
-  return apiFail("INTERNAL", `Could not update profile: ${msg}`, { code: err.code }, 500);
-}
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
+import { setUserProgramAffiliation, CatalogEntryNotFoundError } from "@/lib/server/programs";
 
 export async function PATCH(req: Request) {
   try {
     const ctx = await getAuthContext(req);
-    requireAuth(ctx);
-    requireActiveAccount(ctx, req);
+    requireFullAccess(ctx, req);
+
+    const actor = buildActor(ctx);
+    const profileResource = { type: "applicant_profile" as const, id: ctx.userId, ownerId: ctx.userId };
+    const decision = await can("profile:set_affiliation", actor, profileResource);
+    if (!decision.allowed) return apiFail("FORBIDDEN", decision.message ?? "Authentication required.", undefined, 403);
 
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
@@ -42,51 +34,19 @@ export async function PATCH(req: Request) {
     } else if (typeof raw === "string" && /^\d+$/.test(raw.trim())) {
       catalogEntryId = parseInt(raw.trim(), 10);
     } else {
-      return apiFail("VALIDATION_ERROR", "catalog_entry_id must be a number or null", undefined, 422);
+      return apiFail("VALIDATION_ERROR", "catalog_entry_id must be a number or null.", undefined, 422);
     }
 
-    if (catalogEntryId != null && !getCatalogProgramById(catalogEntryId)) {
-      return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id", undefined, 422);
-    }
+    await setUserProgramAffiliation(ctx.userId, catalogEntryId, ctx);
 
-    const supabase = getSupabaseAdmin();
-    const payload = {
-      affiliated_catalog_entry_id: catalogEntryId,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data: updatedRows, error: updateErr } = await supabase
-      .from("profiles")
-      .update(payload)
-      .eq("id", ctx.userId)
-      .select("id");
-
-    if (updateErr) {
-      logger.error("me.program_affiliation.update", { message: updateErr.message, code: updateErr.code });
-      return profileAffiliationFail(updateErr);
-    }
-
-    const touched = updatedRows && updatedRows.length > 0;
-    if (!touched) {
-      const role = ctx.realRole ?? ctx.role;
-      const { error: upsertErr } = await supabase.from("profiles").upsert(
-        {
-          id: ctx.userId,
-          role,
-          ...payload,
-        },
-        { onConflict: "id" }
-      );
-
-      if (upsertErr) {
-        logger.error("me.program_affiliation.upsert", { message: upsertErr.message, code: upsertErr.code });
-        return profileAffiliationFail(upsertErr);
-      }
-    }
-
-    return apiOk({ affiliatedCatalogEntryId: catalogEntryId });
+    logger.info("me.program_affiliation.updated", { userId: ctx.userId, catalogEntryId });
+    return apiOk({ affiliated_catalog_entry_id: catalogEntryId });
   } catch (err) {
+    if (err instanceof CatalogEntryNotFoundError) {
+      return apiFail("VALIDATION_ERROR", "Unknown catalog_entry_id.", undefined, 422);
+    }
     const appErr = toAppError(err);
+    logger.error("me.program_affiliation.error", { code: appErr.code, message: appErr.message });
     return apiFailFromError(appErr);
   }
 }

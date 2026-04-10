@@ -1,11 +1,14 @@
 /**
- * PATCH: victim updates profiles.personal_info (partial merge).
+ * PATCH: applicant updates profiles.personal_info (partial merge).
+ * Domain 3.1: requireRole("victim") replaced with can("applicant_profile:update").
  */
 
-import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
+import { getAuthContext, requireAuth } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
+import { can } from "@/lib/server/policy/policyEngine";
+import { buildActor } from "@/lib/server/policy/policyTypes";
 import {
   mergePersonalInfo,
   personalInfoPatchSchema,
@@ -15,7 +18,16 @@ export async function PATCH(req: Request) {
   try {
     const ctx = await getAuthContext(req);
     requireAuth(ctx);
-    requireRole(ctx, "victim");
+
+    const actor = buildActor(ctx);
+    const decision = await can("applicant_profile:update", actor, {
+      type: "applicant_profile",
+      id: ctx.userId,
+      ownerId: ctx.userId,
+    });
+    if (!decision.allowed) {
+      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
+    }
 
     let body: unknown;
     try {

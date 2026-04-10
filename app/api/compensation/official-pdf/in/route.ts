@@ -1,114 +1,34 @@
-// app/api/compensation/official-pdf/in/route.ts
-// Indiana State Form 23776 – fill by drawing text at coordinates (no AcroForm fields).
+/**
+ * Domain 2.3 — CVC Form Processing: legacy IN CVC PDF route (now a thin shell).
+ *
+ * Replaced by Domain 2.3. Business logic lives in lib/server/cvcForms/cvcOutputService.
+ * URL and HTTP method preserved so existing callers continue to work.
+ */
 
 import { NextResponse } from "next/server";
-import { PDFDocument, StandardFonts } from "pdf-lib";
-import { readFile } from "fs/promises";
-import path from "path";
-import type { CompensationApplication } from "@/lib/compensationSchema";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { getCaseById } from "@/lib/server/data";
-import { IN_CVC_COORDS } from "@/lib/pdfMaps/in_cvc_coords";
+import { apiFailFromError, toAppError, AppError } from "@/lib/server/api";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { generateCvcForm } from "@/lib/server/cvcForms";
 
 export const runtime = "nodejs";
 
-type RequestBody =
-  | { application: CompensationApplication }
-  | { caseId: string };
-
-function normalizeApplication(raw: unknown): CompensationApplication | null {
-  if (!raw) return null;
-  if (typeof raw === "object") return raw as CompensationApplication;
-  if (typeof raw === "string") {
-    try {
-      const once = JSON.parse(raw.trim());
-      if (typeof once === "object" && once) return once as CompensationApplication;
-      if (typeof once === "string") {
-        const twice = JSON.parse(once);
-        if (typeof twice === "object" && twice) return twice as CompensationApplication;
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return null;
-}
-
 export async function POST(req: Request) {
   try {
-    let appData: CompensationApplication | null = null;
-    const body = (await req.json().catch(() => null)) as RequestBody | null;
+    const ctx = await getAuthContext(req);
+    requireFullAccess(ctx, req);
 
-    if (body && "application" in body && body.application) {
-      appData = normalizeApplication(body.application);
-    } else if (body && "caseId" in body && typeof body.caseId === "string") {
-      const ctx = await getAuthContext(req);
-      requireFullAccess(ctx, req);
-      const result = await getCaseById({ caseId: body.caseId, ctx });
-      if (!result) {
-        return NextResponse.json({ error: "Case not found or no application data" }, { status: 404 });
-      }
-      const raw = result.case.application;
-      appData = typeof raw === "string" ? normalizeApplication(raw) : normalizeApplication(raw);
+    const body = (await req.json().catch(() => ({}))) as { caseId?: string };
+    const caseId = body.caseId;
+    if (typeof caseId !== "string" || caseId.length === 0) {
+      throw new AppError("VALIDATION_ERROR", "caseId is required.", undefined, 422);
     }
 
-    if (!appData) {
-      return NextResponse.json({ error: "No application data provided" }, { status: 400 });
-    }
+    const supabase = getSupabaseAdmin();
+    const job = await generateCvcForm(ctx, caseId, supabase);
 
-    const templatePath = path.join(process.cwd(), "public", "pdf", "indiana_cvc_application.pdf");
-    let templateBytes: Buffer;
-    try {
-      templateBytes = await readFile(templatePath);
-    } catch {
-      return NextResponse.json(
-        { error: "Indiana CVC form not configured. Add public/pdf/indiana_cvc_application.pdf" },
-        { status: 503 }
-      );
-    }
-
-    const srcDoc = await PDFDocument.load(templateBytes, { ignoreEncryption: true });
-    const pdfDoc = await PDFDocument.create();
-    const pageCount = srcDoc.getPageCount();
-    const pages = await pdfDoc.copyPages(srcDoc, Array.from({ length: pageCount }, (_, i) => i));
-    pages.forEach((p) => pdfDoc.addPage(p));
-
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const fontSizeDefault = 9;
-
-    for (const item of IN_CVC_COORDS) {
-      const text = item.getValue(appData);
-      if (!text || !text.trim()) continue;
-      const page = pdfDoc.getPage(item.pageIndex);
-      const size = item.fontSize ?? fontSizeDefault;
-      const maxWidth = 200;
-      const lines = text.length > 60 ? [text.slice(0, 60), text.slice(60)].filter(Boolean) : [text];
-      let y = item.y;
-      for (const line of lines) {
-        const safe = line.slice(0, 80);
-        page.drawText(safe, {
-          x: item.x,
-          y,
-          size,
-          font,
-        });
-        y -= size + 2;
-      }
-    }
-
-    const pdfBytes = await pdfDoc.save();
-    const pdfBuffer = Buffer.from(pdfBytes);
-
-    return new NextResponse(pdfBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="Indiana_CVC_Application_Filled.pdf"',
-      },
-    });
+    return NextResponse.json({ data: job, error: null });
   } catch (err) {
-    console.error("[IN PDF] Error generating official CVC PDF:", err);
-    return NextResponse.json({ error: "Failed to generate Indiana CVC PDF" }, { status: 500 });
+    return apiFailFromError(toAppError(err));
   }
 }
