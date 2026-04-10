@@ -226,17 +226,17 @@
         {
           "domain": "7.1",
           "dependsOn": [],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "7.2",
           "dependsOn": [],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "7.3",
           "dependsOn": [],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "7.4",
