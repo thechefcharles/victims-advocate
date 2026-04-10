@@ -157,6 +157,8 @@ export async function insertPolicyDocument(
     .from("policy_documents")
     .insert({
       policy_type: fields.policyType,
+      doc_type: fields.policyType, // keep legacy column in sync
+      is_active: fields.status === "active", // keep legacy column in sync
       version: fields.version,
       title: fields.title,
       content: fields.content,
@@ -203,7 +205,11 @@ export async function setPolicyDocumentStatus(
   status: PolicyDocumentStatus,
   supabase: SupabaseClient,
 ): Promise<PolicyDocument> {
-  const updates: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  const updates: Record<string, unknown> = {
+    status,
+    is_active: status === "active", // keep legacy column in sync
+    updated_at: new Date().toISOString(),
+  };
   if (status === "active") updates.published_at = new Date().toISOString();
   if (status === "deprecated") updates.deprecated_at = new Date().toISOString();
   const { data, error } = await supabase

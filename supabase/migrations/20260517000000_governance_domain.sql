@@ -57,36 +57,46 @@ CREATE POLICY audit_events_service_role_all
   USING (true) WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
--- 2. policy_documents — versioned, single-active per type
+-- 2. policy_documents — extend existing table from 20250127000004
+--    Legacy table has: id, doc_type, version, title, content, is_active,
+--    applies_to_role, workflow_key, created_by, metadata, created_at, updated_at
+--    We add governance columns alongside the existing ones.
 -- ---------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS policy_documents (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  policy_type text NOT NULL,
-  version text NOT NULL,
-  title text NOT NULL,
-  content text NOT NULL,
-  status text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'deprecated')),
-  created_by_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-  published_at timestamptz,
-  deprecated_at timestamptz,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (policy_type, version)
-);
+-- Add a status column that maps to the governance lifecycle.
+-- Backfill: is_active=true → 'active', else 'draft'.
+ALTER TABLE policy_documents
+  ADD COLUMN IF NOT EXISTS status text DEFAULT 'draft'
+    CHECK (status IS NULL OR status IN ('draft', 'active', 'deprecated'));
 
--- Single-active per policy_type
-CREATE UNIQUE INDEX policy_documents_one_active_per_type
+UPDATE policy_documents SET status = 'active' WHERE is_active = true AND status IS NULL;
+UPDATE policy_documents SET status = 'draft' WHERE is_active = false AND status IS NULL;
+
+-- Add policy_type as an alias for doc_type (governance convention).
+ALTER TABLE policy_documents
+  ADD COLUMN IF NOT EXISTS policy_type text;
+
+UPDATE policy_documents SET policy_type = doc_type WHERE policy_type IS NULL;
+
+-- Add governance-specific columns.
+ALTER TABLE policy_documents
+  ADD COLUMN IF NOT EXISTS created_by_user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL;
+ALTER TABLE policy_documents
+  ADD COLUMN IF NOT EXISTS published_at timestamptz;
+ALTER TABLE policy_documents
+  ADD COLUMN IF NOT EXISTS deprecated_at timestamptz;
+
+-- Backfill published_at for already-active documents.
+UPDATE policy_documents SET published_at = updated_at
+  WHERE status = 'active' AND published_at IS NULL;
+
+-- Single-active per policy_type (governance layer — coexists with legacy index).
+CREATE UNIQUE INDEX IF NOT EXISTS policy_documents_one_active_per_policy_type
   ON policy_documents (policy_type)
   WHERE status = 'active';
 
-CREATE INDEX policy_documents_type_idx ON policy_documents (policy_type, status);
-
-ALTER TABLE policy_documents ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY policy_documents_service_role_all
-  ON policy_documents FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
+CREATE INDEX IF NOT EXISTS policy_documents_policy_type_status_idx
+  ON policy_documents (policy_type, status);
 
 -- ---------------------------------------------------------------------------
 -- 3. policy_acceptances — immutable INSERT-ONLY
