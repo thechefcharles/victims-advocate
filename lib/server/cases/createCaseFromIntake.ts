@@ -75,7 +75,10 @@ export async function createCaseFromIntakeSubmission(
   const { data: newCase, error: caseError } = await supabase
     .from("cases").insert({ owner_user_id: ctx.userId, organization_id: orgId, status, state_code, name: name ?? undefined, application })
     .select("*").single();
-  if (caseError || !newCase) throw new AppError("INTERNAL", "Failed to save case", undefined, 500);
+  if (caseError || !newCase) {
+    console.error("[createCaseFromIntake] Supabase insert error:", caseError?.message, caseError?.details, caseError?.hint, caseError?.code);
+    throw new AppError("INTERNAL", `Failed to save case: ${caseError?.message ?? "unknown"}`, undefined, 500);
+  }
 
   const { error: accessError } = await supabase.from("case_access").insert({
     case_id: newCase.id, user_id: ctx.userId, organization_id: orgId, role: "owner", can_view: true, can_edit: true,
