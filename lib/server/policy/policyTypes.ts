@@ -80,7 +80,9 @@ export type PolicyResourceType =
   | "trust"
   | "reporting_submission"
   | "agency_notice"
-  | "agency_analytics";
+  | "agency_analytics"
+  | "notification"
+  | "notification_preference";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant
