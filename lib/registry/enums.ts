@@ -175,14 +175,15 @@ export type ReferralStatus =
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 1.5 Appointment
- * [INFERRED] Confirm values against Notion spec before execution pass.
+ * Owned by: Domain 4.2 Appointments
+ * [DB-CONFIRMED] Matches appointmentTypes.ts APPOINTMENT_STATUSES and
+ * migration 20260511000000_appointments_domain.sql CHECK constraint.
  */
 export type AppointmentStatus =
   | "scheduled"
-  | "confirmed"
-  | "completed"
+  | "rescheduled"
   | "cancelled"
+  | "completed"
   | "no_show";
 
 // ---------------------------------------------------------------------------
@@ -214,14 +215,16 @@ export type ConsentGrantStatus = "active" | "revoked" | "expired";
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 3.1 Applicant Domain
- * [DB-CONFIRMED] Matches trusted_helper_access.status CHECK constraint in
- * migration 20260508000002_trusted_helper_access.sql.
+ * Owned by: Domain 5.1 Trusted Helper
+ * [DB-CONFIRMED] Matches trusted_helper_access.status CHECK constraint
+ * after Domain 5.1 normalize migration (20260513000000):
+ * pending | active | revoked | expired
  */
 export type TrustedHelperStatus =
   | "pending"
   | "active"
-  | "revoked";
+  | "revoked"
+  | "expired";
 
 /**
  * Owned by: Domain 3.1 Applicant Domain
