@@ -34,6 +34,7 @@ import { evalAgency } from "@/lib/server/agency/agencyPolicy";
 import { evalGovernance } from "@/lib/server/governance/governancePolicy";
 import { evalNotification } from "@/lib/server/notifications/notificationPolicy";
 import { evalAIGuidance } from "@/lib/server/aiGuidance/aiGuidancePolicy";
+import { evalAdminTools } from "@/lib/server/admin/adminPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1502,6 +1503,9 @@ export async function can(
     case "ai_guidance":
     case "advocate_copilot":
       decision = await evalAIGuidance(action, actor, resource, context);
+      break;
+    case "admin_tools":
+      decision = await evalAdminTools(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");
