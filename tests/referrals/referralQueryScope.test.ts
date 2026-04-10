@@ -26,7 +26,7 @@ const orgAReferral: ReferralRow = {
 };
 
 vi.mock("@/lib/server/referrals/referralRepository", () => ({
-  createReferral: vi.fn(),
+  insertReferral: vi.fn(),
   getReferralById: vi.fn(),
   listReferralsForSourceOrg: vi.fn(),
   listReferralsForTargetOrg: vi.fn(),

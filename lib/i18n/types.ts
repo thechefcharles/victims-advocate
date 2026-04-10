@@ -2,14 +2,14 @@
 export type I18nDict = {
   nav: {
     dashboard: string;
-    dashboardVictim: string;
+    dashboardApplicant: string;
     dashboardAdvocate: string;
     login: string;
     logout: string;
     myAccount: string;
     accountPlaceholderTitle: string;
     accountPlaceholderBody: string;
-    /** Shown under the email card when the victim personal info form is present. */
+    /** Shown under the email card when the applicant personal info form is present. */
     accountVictimEmailCardBody: string;
     /** Shown under the email card when the advocate personal info form is present. */
     accountAdvocateEmailCardBody: string;
@@ -98,7 +98,7 @@ export type I18nDict = {
     signInLink: string;
   };
 
-  victimDashboard: {
+  applicantDashboard: {
     eyebrow: string;
     title: string;
     /** Use tf(..., { name }) — shown when account has a preferred or legal name */
@@ -419,7 +419,7 @@ export type I18nDict = {
   };
 
   /** /victim/messages — secure threads by case */
-  victimMessages: {
+  applicantMessages: {
     backDashboard: string;
     eyebrow: string;
     title: string;
@@ -707,7 +707,7 @@ export type I18nDict = {
     signIn: string;
 
     newHere: string;
-    createVictimAccount: string;
+    createApplicantAccount: string;
     workAsAdvocate: string;
     createAdvocateAccount: string;
     needHelp: string;
@@ -1583,7 +1583,7 @@ forms: {
   applicant: {
     title: string;
     description: string;
-    isVictimAlsoApplicantLabel: string;
+    isApplicantAlsoApplicantLabel: string;
     sameAsVictimNote: string;
 
     options: {
@@ -2245,7 +2245,7 @@ forms: {
       phone: string;
       email: string;
       address: string;
-      isVictimAlsoApplicant: string;
+      isApplicantAlsoApplicant: string;
       relationshipToVictim: string;
       date: string;
       time: string;

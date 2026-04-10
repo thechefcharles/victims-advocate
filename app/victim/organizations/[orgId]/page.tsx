@@ -44,19 +44,19 @@ export default function VictimOrganizationPublicProfilePage() {
 
   const frameworkCopy = useMemo(
     () => ({
-      learnMoreDialogTitle: t("victimDashboard.findOrganizationsPage.learnMoreDialogTitle"),
-      learnMoreDialogSubtitle: t("victimDashboard.findOrganizationsPage.learnMoreDialogSubtitle"),
-      frameworkFieldPending: t("victimDashboard.findOrganizationsPage.frameworkFieldPending"),
-      fieldPendingExternal: t("victimDashboard.findOrganizationsPage.fieldPendingExternal"),
-      fieldPendingFallback: t("victimDashboard.findOrganizationsPage.fieldPendingFallback"),
-      tier1Title: t("victimDashboard.findOrganizationsPage.tier1Title"),
-      tier1Desc: t("victimDashboard.findOrganizationsPage.tier1Desc"),
-      tier2Title: t("victimDashboard.findOrganizationsPage.tier2Title"),
-      tier2Desc: t("victimDashboard.findOrganizationsPage.tier2Desc"),
-      tier3Title: t("victimDashboard.findOrganizationsPage.tier3Title"),
-      tier3Desc: t("victimDashboard.findOrganizationsPage.tier3Desc"),
-      sourceSelfHint: t("victimDashboard.findOrganizationsPage.sourceSelfHint"),
-      sourcePlatformHint: t("victimDashboard.findOrganizationsPage.sourcePlatformHint"),
+      learnMoreDialogTitle: t("applicantDashboard.findOrganizationsPage.learnMoreDialogTitle"),
+      learnMoreDialogSubtitle: t("applicantDashboard.findOrganizationsPage.learnMoreDialogSubtitle"),
+      frameworkFieldPending: t("applicantDashboard.findOrganizationsPage.frameworkFieldPending"),
+      fieldPendingExternal: t("applicantDashboard.findOrganizationsPage.fieldPendingExternal"),
+      fieldPendingFallback: t("applicantDashboard.findOrganizationsPage.fieldPendingFallback"),
+      tier1Title: t("applicantDashboard.findOrganizationsPage.tier1Title"),
+      tier1Desc: t("applicantDashboard.findOrganizationsPage.tier1Desc"),
+      tier2Title: t("applicantDashboard.findOrganizationsPage.tier2Title"),
+      tier2Desc: t("applicantDashboard.findOrganizationsPage.tier2Desc"),
+      tier3Title: t("applicantDashboard.findOrganizationsPage.tier3Title"),
+      tier3Desc: t("applicantDashboard.findOrganizationsPage.tier3Desc"),
+      sourceSelfHint: t("applicantDashboard.findOrganizationsPage.sourceSelfHint"),
+      sourcePlatformHint: t("applicantDashboard.findOrganizationsPage.sourcePlatformHint"),
     }),
     [t]
   );
@@ -68,7 +68,7 @@ export default function VictimOrganizationPublicProfilePage() {
       setErr(null);
       setOrg(null);
       if (!orgId) {
-        setErr(t("victimDashboard.findOrganizationsPage.orgProfileInvalid"));
+        setErr(t("applicantDashboard.findOrganizationsPage.orgProfileInvalid"));
         setLoading(false);
         return;
       }
@@ -76,7 +76,7 @@ export default function VictimOrganizationPublicProfilePage() {
       const token = sessionData.session?.access_token;
       if (!token) {
         if (!cancelled) {
-          setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+          setErr(t("applicantDashboard.findOrganizationsPage.loadError"));
           setLoading(false);
         }
         return;
@@ -88,7 +88,7 @@ export default function VictimOrganizationPublicProfilePage() {
         const json = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (!cancelled) {
-            setErr(getApiErrorMessage(json, t("victimDashboard.findOrganizationsPage.loadError")));
+            setErr(getApiErrorMessage(json, t("applicantDashboard.findOrganizationsPage.loadError")));
           }
           return;
         }
@@ -108,10 +108,10 @@ export default function VictimOrganizationPublicProfilePage() {
               website: o.website ?? null,
               response_accessibility: o.response_accessibility as ResponseAccessibilityPublic,
             });
-          } else setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+          } else setErr(t("applicantDashboard.findOrganizationsPage.loadError"));
         }
       } catch {
-        if (!cancelled) setErr(t("victimDashboard.findOrganizationsPage.loadError"));
+        if (!cancelled) setErr(t("applicantDashboard.findOrganizationsPage.loadError"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -127,19 +127,19 @@ export default function VictimOrganizationPublicProfilePage() {
         <PageHeader
           title={
             org?.name ??
-            (loading ? t("victimDashboard.findOrganizationsPage.orgProfileLoading") : "Organization")
+            (loading ? t("applicantDashboard.findOrganizationsPage.orgProfileLoading") : "Organization")
           }
-          subtitle={t("victimDashboard.findOrganizationsPage.orgProfileSubtitle")}
+          subtitle={t("applicantDashboard.findOrganizationsPage.orgProfileSubtitle")}
           backLink={{
-            href: ROUTES.victimFindOrganizations,
-            label: t("victimDashboard.findOrganizationsPage.orgProfileBack"),
+            href: ROUTES.applicantFindOrganizations,
+            label: t("applicantDashboard.findOrganizationsPage.orgProfileBack"),
           }}
           className={APP_CARD}
         />
 
         {loading ? (
           <div className={`${APP_CARD} text-sm text-[var(--color-muted)] animate-pulse`}>
-            {t("victimDashboard.findOrganizationsPage.orgProfileLoading")}
+            {t("applicantDashboard.findOrganizationsPage.orgProfileLoading")}
           </div>
         ) : null}
 
@@ -156,29 +156,29 @@ export default function VictimOrganizationPublicProfilePage() {
               <span className="text-[var(--color-slate)]"> · </span>
               {org.accepting_clients ? (
                 <span className="text-emerald-400/90">
-                  {t("victimDashboard.findOrganizationsPage.accepting")}
+                  {t("applicantDashboard.findOrganizationsPage.accepting")}
                 </span>
               ) : (
                 <span className="text-[var(--color-muted)]">
-                  {t("victimDashboard.findOrganizationsPage.notAccepting")}
+                  {t("applicantDashboard.findOrganizationsPage.notAccepting")}
                 </span>
               )}
               <span className="text-[var(--color-slate)]"> · </span>
               <span className="text-[var(--color-muted)]">
-                {t("victimDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
+                {t("applicantDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
               </span>
             </div>
 
             {(org.address || org.phone || org.website) ? (
               <div className="space-y-2">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
-                  {t("victimDashboard.findOrganizationsPage.orgProfileContact")}
+                  {t("applicantDashboard.findOrganizationsPage.orgProfileContact")}
                 </h2>
                 <dl className="grid gap-2 text-sm text-[var(--color-slate)]">
                   {org.address ? (
                     <div>
                       <dt className="text-xs text-[var(--color-muted)]">
-                        {t("victimDashboard.findOrganizationsPage.directoryAddress")}
+                        {t("applicantDashboard.findOrganizationsPage.directoryAddress")}
                       </dt>
                       <dd>{org.address}</dd>
                     </div>
@@ -186,7 +186,7 @@ export default function VictimOrganizationPublicProfilePage() {
                   {org.phone ? (
                     <div>
                       <dt className="text-xs text-[var(--color-muted)]">
-                        {t("victimDashboard.findOrganizationsPage.directoryPhone")}
+                        {t("applicantDashboard.findOrganizationsPage.directoryPhone")}
                       </dt>
                       <dd>
                         <a href={`tel:${org.phone.replace(/\D/g, "")}`} className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline">
@@ -198,7 +198,7 @@ export default function VictimOrganizationPublicProfilePage() {
                   {org.website ? (
                     <div>
                       <dt className="text-xs text-[var(--color-muted)]">
-                        {t("victimDashboard.findOrganizationsPage.directoryWebsite")}
+                        {t("applicantDashboard.findOrganizationsPage.directoryWebsite")}
                       </dt>
                       <dd>
                         <a
@@ -219,7 +219,7 @@ export default function VictimOrganizationPublicProfilePage() {
             {org.special_populations?.length ? (
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
-                  {t("victimDashboard.findOrganizationsPage.orgProfilePopulations")}
+                  {t("applicantDashboard.findOrganizationsPage.orgProfilePopulations")}
                 </h2>
                 <ul className="flex flex-wrap gap-2">
                   {org.special_populations.map((s) => (
@@ -237,7 +237,7 @@ export default function VictimOrganizationPublicProfilePage() {
             {org.service_types.length > 0 ? (
               <div>
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
-                  {t("victimDashboard.findOrganizationsPage.orgProfileServices")}
+                  {t("applicantDashboard.findOrganizationsPage.orgProfileServices")}
                 </h2>
                 <ul className="flex flex-wrap gap-2">
                   {org.service_types.map((s) => (
@@ -259,14 +259,14 @@ export default function VictimOrganizationPublicProfilePage() {
             />
 
             <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-              {t("victimDashboard.findOrganizationsPage.orgProfileFooter")}
+              {t("applicantDashboard.findOrganizationsPage.orgProfileFooter")}
             </p>
 
             <Link
-              href={ROUTES.victimFindOrganizations}
+              href={ROUTES.applicantFindOrganizations}
               className="inline-flex text-sm text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
             >
-              {t("victimDashboard.findOrganizationsPage.orgProfileBack")}
+              {t("applicantDashboard.findOrganizationsPage.orgProfileBack")}
             </Link>
           </div>
         ) : null}

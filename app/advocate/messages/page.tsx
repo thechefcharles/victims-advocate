@@ -213,7 +213,7 @@ function AdvocateMessagesContent() {
           <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 px-5 py-8 text-center space-y-4">
             <p className="text-sm text-[var(--color-slate)]">No unread or recent secure messages to show.</p>
             <p className="text-xs text-[var(--color-muted)] max-w-md mx-auto">
-              When a victim sends a message or a thread is active, the case will appear here. You
+              When an applicant sends a message or a thread is active, the case will appear here. You
               can continue case updates from My Dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">

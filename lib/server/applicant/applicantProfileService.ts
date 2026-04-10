@@ -63,7 +63,7 @@ export async function getApplicantProfile(
 
   if (actor.accountType === "provider") {
     const { canReadVictimPersonalInfo } = await import(
-      "@/lib/server/profile/victimPersonalAccess"
+      "@/lib/server/profile/applicantPersonalAccess"
     );
     const hasCaseAccess = canReadVictimPersonalInfo(ctx, targetUserId);
     const decision = await can(

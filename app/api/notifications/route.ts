@@ -2,7 +2,7 @@ import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { listNotificationsForUser } from "@/lib/server/notifications/query";
-import { syncVictimConnectionNotifications } from "@/lib/server/notifications/victimPendingSync";
+import { syncApplicantConnectionNotifications } from "@/lib/server/notifications/applicantPendingSync";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     requireFullAccess(ctx, req);
 
     if (ctx.role === "victim") {
-      await syncVictimConnectionNotifications(ctx);
+      await syncApplicantConnectionNotifications(ctx);
     }
 
     const url = new URL(req.url);

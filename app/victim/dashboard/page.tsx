@@ -1,10 +1,10 @@
 "use client";
 
-import VictimDashboard from "@/components/dashboard/VictimDashboard";
+import ApplicantDashboard from "@/components/dashboard/ApplicantDashboard";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useConsentRedirect } from "@/components/auth/useConsentRedirect";
 
-export default function VictimDashboardPage() {
+export default function ApplicantDashboardPage() {
   const { user, accessToken, loading: authLoading, legalConsentNextPath } = useAuth();
   const consentReady = useConsentRedirect(
     accessToken,
@@ -22,6 +22,6 @@ export default function VictimDashboardPage() {
   }
 
   return (
-    <VictimDashboard userId={user?.id ?? ""} token={accessToken} />
+    <ApplicantDashboard userId={user?.id ?? ""} token={accessToken} />
   );
 }

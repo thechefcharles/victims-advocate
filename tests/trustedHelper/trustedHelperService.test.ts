@@ -34,10 +34,10 @@ vi.mock("@/lib/server/trustedHelper/trustedHelperRepository", () => ({
   listTrustedHelperAccessByApplicantId: vi.fn(),
   listTrustedHelperAccessByHelperUserId: vi.fn(),
   findActiveGrantForPair: vi.fn(),
-  createTrustedHelperAccess: vi.fn(),
+  insertTrustedHelperAccess: vi.fn(),
   updateTrustedHelperAccessStatus: vi.fn(),
   updateTrustedHelperAccessScope: vi.fn(),
-  createTrustedHelperEvent: vi.fn(),
+  insertTrustedHelperEvent: vi.fn(),
   listTrustedHelperEventsByGrantId: vi.fn(),
 }));
 
@@ -69,7 +69,7 @@ const helperActor = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(repo.getTrustedHelperAccessById).mockResolvedValue(baseGrant);
-  vi.mocked(repo.createTrustedHelperAccess).mockResolvedValue({
+  vi.mocked(repo.insertTrustedHelperAccess).mockResolvedValue({
     ...baseGrant,
     status: "pending",
   });
@@ -79,7 +79,7 @@ beforeEach(() => {
   vi.mocked(repo.updateTrustedHelperAccessScope).mockImplementation(({ granted_scope_detail }) =>
     Promise.resolve({ ...baseGrant, granted_scope_detail } as TrustedHelperAccessRow),
   );
-  vi.mocked(repo.createTrustedHelperEvent).mockResolvedValue({} as never);
+  vi.mocked(repo.insertTrustedHelperEvent).mockResolvedValue({} as never);
   vi.mocked(repo.findActiveGrantForPair).mockResolvedValue(baseGrant);
   vi.mocked(repo.listTrustedHelperAccessByHelperUserId).mockResolvedValue([]);
 });
@@ -98,7 +98,7 @@ describe("trusted helper service", () => {
         },
       },
     });
-    expect(repo.createTrustedHelperAccess).toHaveBeenCalledWith(
+    expect(repo.insertTrustedHelperAccess).toHaveBeenCalledWith(
       expect.objectContaining({
         applicant_user_id: "applicant-1",
         helper_user_id: "helper-1",
@@ -109,7 +109,7 @@ describe("trusted helper service", () => {
       }),
     );
     expect(result.status).toBe("pending");
-    expect(repo.createTrustedHelperEvent).toHaveBeenCalledWith(
+    expect(repo.insertTrustedHelperEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event_type: "granted" }),
     );
   });
@@ -139,7 +139,7 @@ describe("trusted helper service", () => {
       setRevokedAt: true,
     });
     expect(result.status).toBe("revoked");
-    expect(repo.createTrustedHelperEvent).toHaveBeenCalledWith(
+    expect(repo.insertTrustedHelperEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event_type: "revoked",
         metadata: { reason: "no longer needed" },
@@ -163,7 +163,7 @@ describe("trusted helper service", () => {
       granted_scope_detail: newScope,
     });
     expect(result.granted_scope_detail.viewOnly).toBe(true);
-    expect(repo.createTrustedHelperEvent).toHaveBeenCalledWith(
+    expect(repo.insertTrustedHelperEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event_type: "scope_updated" }),
     );
   });

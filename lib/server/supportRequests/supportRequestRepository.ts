@@ -117,7 +117,7 @@ export async function findActiveSupportRequestForApplicant(
 /**
  * Inserts a new support request row. Returns the created record.
  */
-export async function createSupportRequestRecord(
+export async function insertSupportRequestRecord(
   supabase: SupabaseClient,
   input: {
     applicant_id: string;

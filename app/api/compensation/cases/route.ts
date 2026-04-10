@@ -1,60 +1,14 @@
-// app/api/compensation/cases/route.ts
+/**
+ * GET  /api/compensation/cases — List cases for current user/org.
+ * POST /api/compensation/cases — Create case from intake submission.
+ */
+
 import { NextResponse } from "next/server";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
 import { apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { listCasesForUser, listCasesForOrgRoleContext, appendCaseTimelineEvent } from "@/lib/server/data";
-import { logEvent } from "@/lib/server/audit/logEvent";
-import type { CompensationApplication } from "@/lib/compensationSchema";
-
-type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
-
-type CreateCaseBody =
-  | { application: unknown; status?: CaseStatus; state_code?: string }
-  | { caseId?: string; application: unknown; status?: CaseStatus; state_code?: string } // tolerated
-  | unknown; // legacy: raw application object
-
-/**
- * Prevents the "jsonb contains a stringified JSON" problem.
- * Accepts:
- * - object => returns object
- * - JSON string => parses once or twice if needed
- */
-function normalizeApplication(raw: unknown): CompensationApplication | null {
-  if (!raw) return null;
-
-  // already an object
-  if (typeof raw === "object") return raw as CompensationApplication;
-
-  // stringified JSON (possibly double-stringified)
-  if (typeof raw === "string") {
-    try {
-      const once = JSON.parse(raw);
-      if (typeof once === "object" && once) return once as CompensationApplication;
-
-      if (typeof once === "string") {
-        const twice = JSON.parse(once);
-        if (typeof twice === "object" && twice) return twice as CompensationApplication;
-      }
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
-}
-
-function normalizeStatus(maybe: unknown): CaseStatus {
-  const allowed: CaseStatus[] = ["draft", "ready_for_review", "submitted", "closed"];
-  return allowed.includes(maybe as CaseStatus) ? (maybe as CaseStatus) : "draft";
-}
-
-function normalizeStateCode(maybe: unknown): string {
-  const s = typeof maybe === "string" ? maybe.trim().toUpperCase() : "";
-  const allowed = ["IL", "IN"];
-  return allowed.includes(s) ? s : "IL";
-}
+import { listCasesForUser, listCasesForOrgRoleContext } from "@/lib/server/data";
+import { createCaseFromIntakeSubmission } from "@/lib/server/cases/createCaseFromIntake";
 
 export async function GET(req: Request) {
   try {
@@ -78,168 +32,11 @@ export async function POST(req: Request) {
     const ctx = await getAuthContext(req);
     requireFullAccess(ctx, req);
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const body = await req.json().catch(() => null);
+    if (!body) return apiFail("VALIDATION_ERROR", "We couldn't read that request.", undefined, 400);
 
-    const body = (await req.json().catch(() => null)) as CreateCaseBody | null;
-    if (!body) return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 400);
-
-    // Accept either:
-    // 1) { application: <app>, status?: ..., state_code?: ... }
-    // 2) <app> directly (legacy)
-    const rawApp =
-      typeof body === "object" && body && "application" in body ? (body as any).application : body;
-
-    const application = normalizeApplication(rawApp);
-    if (!application) {
-      return apiFail("VALIDATION_ERROR", "We couldn't read your application data. Refresh the page and try again.", undefined, 400);
-    }
-
-    const status =
-      typeof body === "object" && body && "status" in body
-        ? normalizeStatus((body as any).status)
-        : "draft";
-
-    const state_code =
-      typeof body === "object" && body && "state_code" in body
-        ? normalizeStateCode((body as any).state_code)
-        : "IL";
-
-    const name =
-      typeof body === "object" && body && "name" in body && typeof (body as any).name === "string"
-        ? (body as any).name.trim() || null
-        : null;
-
-    // Victim-owned cases start with no organization until they connect one (Find organizations),
-    // even if this user has an org_memberships row (e.g. former advocate signup or shared account).
-    let orgId: string | null =
-      ctx.role === "victim" ? null : (ctx.orgId ?? null);
-    if (!orgId && ctx.role !== "victim") {
-      const { data: legacyOrg } = await supabaseAdmin
-        .from("organizations")
-        .select("id")
-        .eq("name", "Legacy (pre-tenant)")
-        .limit(1)
-        .maybeSingle();
-      orgId = legacyOrg?.id ?? null;
-    }
-    if (!orgId && ctx.role !== "victim") {
-      return apiFail(
-        "FORBIDDEN",
-        "Organization membership or legacy org required to create a case",
-        undefined,
-        403
-      );
-    }
-
-    // 1) Create the case
-    const { data: newCase, error: caseError } = await supabaseAdmin
-      .from("cases")
-      .insert({
-        owner_user_id: ctx.userId,
-        organization_id: orgId,
-        status,
-        state_code,
-        name: name ?? undefined,
-        application, // IMPORTANT: store as jsonb object (not string)
-      })
-      .select("*")
-      .single();
-
-    if (caseError || !newCase) {
-      console.error("Error inserting case", caseError);
-      return NextResponse.json(
-        { error: "Failed to save case" },
-        { status: 500 }
-      );
-    }
-
-    // 2) Create owner access row
-    const { error: accessError } = await supabaseAdmin.from("case_access").insert({
-      case_id: newCase.id,
-      user_id: ctx.userId,
-      organization_id: orgId,
-      role: "owner",
-      can_view: true,
-      can_edit: true,
-    });
-
-    if (accessError) {
-      console.error("Error inserting case_access owner row", accessError);
-      // do not fail creation
-    }
-
-    appendCaseTimelineEvent({
-      caseId: newCase.id,
-      organizationId: orgId,
-      actor: { userId: ctx.userId, role: "owner" },
-      eventType: "case.created",
-      title: "Case created",
-      description: status !== "draft" ? `Status: ${status}` : null,
-      metadata: { status },
-    }).catch(() => {});
-
-    appendCaseTimelineEvent({
-      caseId: newCase.id,
-      organizationId: orgId,
-      actor: { userId: ctx.userId, role: "owner" },
-      eventType: "case.intake_completed",
-      title: "Intake completed",
-      description: null,
-      metadata: {},
-    }).catch(() => {});
-
-    logEvent({
-      ctx,
-      action: "intake.completed",
-      resourceType: "case",
-      resourceId: newCase.id,
-      metadata: { case_id: newCase.id, org_id: orgId ?? null },
-      req,
-    }).catch(() => {});
-
-    // 3) Attach any unassigned documents from this user to the new case (set org on docs)
-    const { data: attachedDocs, error: attachError } = await supabaseAdmin
-      .from("documents")
-      .update({ case_id: newCase.id, organization_id: orgId })
-      .eq("uploaded_by_user_id", ctx.userId)
-      .is("case_id", null)
-      .select("id");
-
-    if (attachError) {
-      logger.warn("compensation.cases.create.attach_docs_failed", { caseId: newCase.id });
-      return NextResponse.json(
-        {
-          case: newCase,
-          access: { role: "owner", can_view: true, can_edit: true },
-          warning:
-            "Case saved, but failed to attach some documents. You may need to re-upload them.",
-          permissionWarning: accessError ? "Case saved, but permission row failed to create." : null,
-        },
-        { status: 201 }
-      );
-    }
-
-    const attachedCount = Array.isArray(attachedDocs) ? attachedDocs.length : 0;
-    if (attachedCount > 0) {
-      appendCaseTimelineEvent({
-        caseId: newCase.id,
-        organizationId: orgId,
-        actor: { userId: ctx.userId, role: "owner" },
-        eventType: "case.document_uploaded",
-        title: "Documents attached to case",
-        description: `${attachedCount} document(s) attached`,
-        metadata: { count: attachedCount },
-      }).catch(() => {});
-    }
-
-    return NextResponse.json(
-      {
-        case: newCase,
-        access: { role: "owner", can_view: true, can_edit: true },
-        permissionWarning: accessError ? "Case saved, but permission row failed to create." : null,
-      },
-      { status: 201 }
-    );
+    const result = await createCaseFromIntakeSubmission(ctx, body as Record<string, unknown>, req);
+    return NextResponse.json(result, { status: 201 });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("compensation.cases.create.error", { code: appErr.code, message: appErr.message });

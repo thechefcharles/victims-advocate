@@ -21,6 +21,8 @@ describe("governance serializer", () => {
       resourceId: "sm-1",
       eventCategory: "trust_scoring",
       metadata: { version: "1.0.0" },
+      ipAddress: "192.168.1.1",
+      userAgent: "Mozilla/5.0",
       createdAt: "2026-04-10T00:00:00Z",
     };
     const view = serializeAuditEvent(event);

@@ -70,7 +70,7 @@ export async function listReferralsForApplicantSafeView(applicantId: string): Pr
   return (data ?? []).map((r) => asReferralRow(r as Record<string, unknown>));
 }
 
-export async function createReferral(params: {
+export async function insertReferral(params: {
   source_organization_id: string;
   target_organization_id: string;
   applicant_id: string;
@@ -114,7 +114,7 @@ export async function updateReferralStatus(params: {
   return asReferralRow(data as Record<string, unknown>);
 }
 
-export async function createReferralSharePackage(params: {
+export async function insertReferralSharePackage(params: {
   referral_id: string;
   prepared_by: string;
   consent_grant_id?: string | null;

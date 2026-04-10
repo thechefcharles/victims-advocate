@@ -149,7 +149,7 @@ export default function TopNav() {
    * Advocate-profile leaders use the advocate block (Organization home) instead — avoids duplicate pills.
    */
   const showOrgNavForOrgRole = role === "organization" && orgLeadershipMembership;
-  const isVictim = role === "victim";
+  const isApplicant = role === "victim";
   const isAdvocate = role === "advocate";
   const applicantChrome = isApplicantFacingPath(pathname);
 
@@ -202,12 +202,12 @@ export default function TopNav() {
               <Link href={ROUTES.help} className={NAV_PRIMARY}>
                 {t("nav.help")}
               </Link>
-            ) : isVictim ? (
+            ) : isApplicant ? (
               <>
-                <Link href={ROUTES.victimDashboard} className={NAV_PRIMARY}>
+                <Link href={ROUTES.applicantDashboard} className={NAV_PRIMARY}>
                   {t("nav.mySupport")}
                 </Link>
-                <Link href={ROUTES.victimMessages} className={NAV_PRIMARY}>
+                <Link href={ROUTES.applicantMessages} className={NAV_PRIMARY}>
                   {t("nav.messages")}
                 </Link>
                 <Link href={ROUTES.help} className={NAV_PRIMARY}>

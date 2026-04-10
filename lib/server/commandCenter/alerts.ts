@@ -163,10 +163,10 @@ export function aggregateAlertsForCase(input: AlertInputs): CaseAlert[] {
         "unread_victim_message",
         "high",
         "Unread victim message",
-        `${unread_victim_message_count} unread message(s) from the victim.`,
+        `${unread_victim_message_count} unread message(s) from the applicant.`,
         ["unread_victim_message"],
         ["messaging"],
-        "Review the victim message and respond."
+        "Review the applicant message and respond."
       )
     );
   }

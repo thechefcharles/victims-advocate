@@ -11,7 +11,7 @@ import { buildActor } from "@/lib/server/policy/policyTypes";
 import type { AuthContext } from "@/lib/server/auth/context";
 import {
   listApplicantBookmarks,
-  createApplicantBookmark,
+  insertApplicantBookmark,
   deleteApplicantBookmark,
   reorderApplicantBookmarks,
 } from "./applicantBookmarkRepository";
@@ -51,7 +51,7 @@ export async function addBookmark(
   });
   if (!decision.allowed) denyForbidden(decision.message);
 
-  return createApplicantBookmark(ctx.userId, targetType, targetId, notes, supabase);
+  return insertApplicantBookmark(ctx.userId, targetType, targetId, notes, supabase);
 }
 
 export async function removeBookmark(

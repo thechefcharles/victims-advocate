@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - "domain/**"
+      - "NXTSTPS2.0-V1"
+  pull_request:
+    branches:
+      - "NXTSTPS2.0-V1"
+      - "main"
 
 jobs:
   validate:
@@ -15,16 +20,28 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
+
       - name: TypeScript
         run: npx tsc --noEmit
+
       - name: Tests
-        run: npm test
+        run: |
+          npm test -- --passWithNoTests 2>&1 | tee test-output.txt
+          TEST_COUNT=$(grep "Tests" test-output.txt | grep "passed" | sed 's/.*Tests  *//' | sed 's/ .*//' | head -1)
+          TEST_COUNT=${TEST_COUNT:-0}
+          echo "Test count: $TEST_COUNT"
+          if [ "$TEST_COUNT" -lt "1100" ]; then
+            echo "FAIL: Test count $TEST_COUNT is below minimum threshold (1100)"
+            exit 1
+          fi
+
       - name: Build
         run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
       - name: Trust signal isolation check
         run: |
           COUNT=0
@@ -37,14 +54,34 @@ jobs:
             echo "FAIL: Trust signal coupling violation"
             exit 1
           fi
-          echo "PASS"
+          echo "PASS: No trust signal coupling violations"
+
+      - name: Search Law check
+        run: |
+          COUNT=0
+          # Check recommendation ENGINE (not context service — context reads user's own case legitimately)
+          if [ -f "lib/server/recommendations/recommendationEngine.ts" ]; then
+            COUNT=$((COUNT + $(grep "from('cases')\|from(\"cases\")\|from('programs')\|from(\"programs\")" lib/server/recommendations/recommendationEngine.ts 2>/dev/null | wc -l)))
+          fi
+          # Check agency analytics (should read from analytics_snapshots, not ops tables)
+          if [ -f "lib/server/agency/agencyAnalyticsService.ts" ]; then
+            COUNT=$((COUNT + $(grep "from('cases')\|from(\"cases\")\|from('programs')\|from(\"programs\")" lib/server/agency/agencyAnalyticsService.ts 2>/dev/null | wc -l)))
+          fi
+          if [ "$COUNT" -gt "0" ]; then
+            echo "FAIL: Search Law violation — engine/analytics querying ops tables directly"
+            exit 1
+          fi
+          echo "PASS: Search Law compliant"
+
       - name: Migration timestamp check
         run: |
-          for f in $(git diff --name-only origin/main HEAD -- 'supabase/migrations/*.sql'); do
-            TS=$(basename $f | cut -c1-14)
+          FAIL=0
+          for f in $(git diff --name-only origin/main HEAD -- 'supabase/migrations/*.sql' 2>/dev/null); do
+            TS=$(basename "$f" | cut -c1-14)
             if [ "$TS" -lt "20260501000000" ]; then
               echo "FAIL: Migration $f timestamp before safe range"
-              exit 1
+              FAIL=1
             fi
           done
-          echo "PASS"
+          if [ "$FAIL" -eq "1" ]; then exit 1; fi
+          echo "PASS: Migration timestamps valid"

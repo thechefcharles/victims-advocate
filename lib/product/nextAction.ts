@@ -4,7 +4,7 @@
  */
 
 import type { ProductPriority } from "./priority";
-import { victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
+import { applicantCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 
 export type NextActionKind =
   | "resume_application"
@@ -166,7 +166,7 @@ export function getNextActionForCase(input: CaseNextActionInput): NextAction {
 
   if (messagesUnread > 0) {
     const messagesHref =
-      mode === "victim" ? victimCaseMessagesUrl(caseId) : baseHref;
+      mode === "victim" ? applicantCaseMessagesUrl(caseId) : baseHref;
     return {
       label: "View Messages",
       action: "view_messages",
@@ -253,7 +253,7 @@ export function getNextActionForCase(input: CaseNextActionInput): NextAction {
   return {
     label: "View Messages",
     action: "none",
-    href: mode === "victim" ? victimCaseMessagesUrl(caseId) : baseHref,
+    href: mode === "victim" ? applicantCaseMessagesUrl(caseId) : baseHref,
     priority: "low",
     reason: "You’re up to date. Review messages or your application any time.",
     uiVariant: "up_to_date",

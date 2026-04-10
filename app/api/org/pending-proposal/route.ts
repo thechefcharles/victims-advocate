@@ -8,7 +8,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
-import { ORG_TYPES } from "@/lib/server/org/createOrganizationForUser";
+import { ORG_TYPES } from "@/lib/server/organizations/createOrganizationForUser";
 import { normalizeOrganizationWebsite } from "@/lib/utils/organizationWebsite";
 
 export async function POST(req: Request) {

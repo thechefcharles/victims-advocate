@@ -7,7 +7,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type PendingRequest = {
   id: string;
-  victim_user_id: string;
+  applicant_user_id: string;
   victim_email: string | null;
   status: string;
   created_at: string;
@@ -135,7 +135,7 @@ export default function AdvocateConnectionRequestsPage() {
           <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 text-center">
             <p className="text-[var(--color-slate)]">No pending connection requests.</p>
             <p className="text-sm text-[var(--color-muted)] mt-2">
-              When a victim sends you a request, it will appear here.
+              When an applicant sends you a request, it will appear here.
             </p>
           </div>
         )}

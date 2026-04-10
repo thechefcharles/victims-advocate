@@ -7,7 +7,7 @@ export async function notifyNewMessage(params: {
   caseId: string;
   organizationId: string;
   senderId: string;
-  senderRole: "victim" | "advocate";
+  senderRole: "applicant" | "advocate" | "victim";
   ctx: AuthContext;
 }): Promise<void> {
   const { caseId, organizationId, senderId, senderRole, ctx } = params;
@@ -39,7 +39,7 @@ export async function notifyNewMessage(params: {
         recipients,
         caseId,
         organizationId,
-        type: "message.victim_to_advocate",
+        type: "message.applicant_to_advocate",
         title: mode === "strict" ? "You have a new update" : "New secure message on a case",
         body: null,
         actionUrl: `/compensation/intake?case=${caseId}`,
@@ -54,7 +54,7 @@ export async function notifyNewMessage(params: {
         recipients: [ownerId],
         caseId,
         organizationId,
-        type: "message.advocate_to_victim",
+        type: "message.advocate_to_applicant",
         title: mode === "strict" ? "You have a new update" : "New secure message from your advocate",
         body: null,
         actionUrl: `/compensation/intake?case=${caseId}`,

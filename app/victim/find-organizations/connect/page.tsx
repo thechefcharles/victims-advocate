@@ -23,15 +23,15 @@ function needLabel(
 ): string {
   switch (key) {
     case "general_support":
-      return t("victimDashboard.findOrganizationsPage.needGeneralSupport");
+      return t("applicantDashboard.findOrganizationsPage.needGeneralSupport");
     case "police_report":
-      return t("victimDashboard.findOrganizationsPage.needPoliceReport");
+      return t("applicantDashboard.findOrganizationsPage.needPoliceReport");
     case "medical_bills":
-      return t("victimDashboard.findOrganizationsPage.needMedicalBills");
+      return t("applicantDashboard.findOrganizationsPage.needMedicalBills");
     case "employment":
-      return t("victimDashboard.findOrganizationsPage.needEmployment");
+      return t("applicantDashboard.findOrganizationsPage.needEmployment");
     case "funeral":
-      return t("victimDashboard.findOrganizationsPage.needFuneral");
+      return t("applicantDashboard.findOrganizationsPage.needFuneral");
     default:
       return key;
   }
@@ -46,8 +46,8 @@ function ConnectOrganizationHelpInner() {
   const backHref = useMemo(
     () =>
       caseId
-        ? `${ROUTES.victimFindOrganizations}?case=${encodeURIComponent(caseId)}`
-        : ROUTES.victimFindOrganizations,
+        ? `${ROUTES.applicantFindOrganizations}?case=${encodeURIComponent(caseId)}`
+        : ROUTES.applicantFindOrganizations,
     [caseId]
   );
 
@@ -69,7 +69,7 @@ function ConnectOrganizationHelpInner() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       if (!token) {
-        if (!cancelled) setOrgLoadErr(t("victimDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"));
+        if (!cancelled) setOrgLoadErr(t("applicantDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"));
         return;
       }
       try {
@@ -81,7 +81,7 @@ function ConnectOrganizationHelpInner() {
         if (!res.ok) {
           if (!cancelled) {
             setOrgLoadErr(
-              getApiErrorMessage(json, t("victimDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"))
+              getApiErrorMessage(json, t("applicantDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"))
             );
           }
           return;
@@ -89,7 +89,7 @@ function ConnectOrganizationHelpInner() {
         const name = (json?.data?.organization?.name as string | undefined)?.trim();
         if (!cancelled) setOrgName(name?.length ? name : "Organization");
       } catch {
-        if (!cancelled) setOrgLoadErr(t("victimDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"));
+        if (!cancelled) setOrgLoadErr(t("applicantDashboard.findOrganizationsPage.connectHelpNeedsLoadOrgError"));
       }
     })();
     return () => {
@@ -123,7 +123,7 @@ function ConnectOrganizationHelpInner() {
       if (!validOrg) return;
       const help_needs = ORGANIZATION_CONNECT_HELP_NEED_KEYS.filter((k) => selected.has(k));
       if (help_needs.length === 0) {
-        setFormErr(t("victimDashboard.findOrganizationsPage.connectHelpNeedsPickOne"));
+        setFormErr(t("applicantDashboard.findOrganizationsPage.connectHelpNeedsPickOne"));
         return;
       }
       setSubmitting(true);
@@ -131,7 +131,7 @@ function ConnectOrganizationHelpInner() {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (!token) {
-          setFormErr(t("victimDashboard.findOrganizationsPage.connectFailed"));
+          setFormErr(t("applicantDashboard.findOrganizationsPage.connectFailed"));
           return;
         }
         const res = await fetch("/api/victim/organization-connect-request", {
@@ -145,15 +145,15 @@ function ConnectOrganizationHelpInner() {
         const json = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (res.status === 409) {
-            setFormErr(t("victimDashboard.findOrganizationsPage.connectDuplicate"));
+            setFormErr(t("applicantDashboard.findOrganizationsPage.connectDuplicate"));
             return;
           }
-          setFormErr(getApiErrorMessage(json, t("victimDashboard.findOrganizationsPage.connectFailed")));
+          setFormErr(getApiErrorMessage(json, t("applicantDashboard.findOrganizationsPage.connectFailed")));
           return;
         }
         setDone(true);
       } catch {
-        setFormErr(t("victimDashboard.findOrganizationsPage.connectFailed"));
+        setFormErr(t("applicantDashboard.findOrganizationsPage.connectFailed"));
       } finally {
         setSubmitting(false);
       }
@@ -166,16 +166,16 @@ function ConnectOrganizationHelpInner() {
       <main className={APP_PAGE_MAIN}>
         <div className="relative max-w-lg mx-auto space-y-4">
           <PageHeader
-            title={t("victimDashboard.findOrganizationsPage.connectHelpNeedsTitle")}
-            subtitle={t("victimDashboard.findOrganizationsPage.connectHelpNeedsInvalidLink")}
-            backLink={{ href: backHref, label: t("victimDashboard.findOrganizationsPage.connectHelpNeedsBack") }}
+            title={t("applicantDashboard.findOrganizationsPage.connectHelpNeedsTitle")}
+            subtitle={t("applicantDashboard.findOrganizationsPage.connectHelpNeedsInvalidLink")}
+            backLink={{ href: backHref, label: t("applicantDashboard.findOrganizationsPage.connectHelpNeedsBack") }}
             className={APP_CARD}
           />
           <Link
             href={backHref}
             className="inline-flex text-sm text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
           >
-            {t("victimDashboard.findOrganizationsPage.connectHelpNeedsContinueBrowse")}
+            {t("applicantDashboard.findOrganizationsPage.connectHelpNeedsContinueBrowse")}
           </Link>
         </div>
       </main>
@@ -189,9 +189,9 @@ function ConnectOrganizationHelpInner() {
         aria-hidden={done}
       >
         <PageHeader
-          title={t("victimDashboard.findOrganizationsPage.connectHelpNeedsTitle")}
-          subtitle={t("victimDashboard.findOrganizationsPage.connectHelpNeedsSubtitle")}
-          backLink={{ href: backHref, label: t("victimDashboard.findOrganizationsPage.connectHelpNeedsBack") }}
+          title={t("applicantDashboard.findOrganizationsPage.connectHelpNeedsTitle")}
+          subtitle={t("applicantDashboard.findOrganizationsPage.connectHelpNeedsSubtitle")}
+          backLink={{ href: backHref, label: t("applicantDashboard.findOrganizationsPage.connectHelpNeedsBack") }}
           className={APP_CARD}
         />
 
@@ -204,19 +204,19 @@ function ConnectOrganizationHelpInner() {
         {orgName ? (
           <p className="text-sm text-[var(--color-muted)] px-1">
             <span className="text-[var(--color-muted)]">
-              {t("victimDashboard.findOrganizationsPage.connectHelpNeedsOrgLabel")}:{" "}
+              {t("applicantDashboard.findOrganizationsPage.connectHelpNeedsOrgLabel")}:{" "}
             </span>
             <span className="font-medium text-[var(--color-charcoal)]">{orgName}</span>
           </p>
         ) : !orgLoadErr && validOrg && !orgName ? (
           <p className="text-xs text-[var(--color-slate)] px-1 animate-pulse">
-            {t("victimDashboard.findOrganizationsPage.orgProfileLoading")}
+            {t("applicantDashboard.findOrganizationsPage.orgProfileLoading")}
           </p>
         ) : null}
 
         <form onSubmit={(e) => void onSubmit(e)} className={`${APP_CARD} space-y-4`}>
           <p className="text-xs font-medium uppercase tracking-wide text-[var(--color-muted)]">
-            {t("victimDashboard.findOrganizationsPage.connectHelpNeedsSelectHint")}
+            {t("applicantDashboard.findOrganizationsPage.connectHelpNeedsSelectHint")}
           </p>
           <ul className="space-y-3">
             {ORGANIZATION_CONNECT_HELP_NEED_KEYS.map((key) => (
@@ -244,8 +244,8 @@ function ConnectOrganizationHelpInner() {
             className="w-full rounded-lg bg-teal-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 disabled:opacity-50"
           >
             {submitting
-              ? t("victimDashboard.findOrganizationsPage.connectHelpNeedsSubmitting")
-              : t("victimDashboard.findOrganizationsPage.connectHelpNeedsSubmit")}
+              ? t("applicantDashboard.findOrganizationsPage.connectHelpNeedsSubmitting")
+              : t("applicantDashboard.findOrganizationsPage.connectHelpNeedsSubmit")}
           </button>
         </form>
       </div>
@@ -262,27 +262,27 @@ function ConnectOrganizationHelpInner() {
               id="connect-success-modal-title"
               className="text-lg font-semibold text-[var(--color-navy)] tracking-tight"
             >
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalTitle")}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalTitle")}
             </h2>
             <p className="text-sm text-[var(--color-slate)] leading-relaxed">
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalBody")}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalBody")}
             </p>
             <p className="text-sm text-[var(--color-slate)] leading-relaxed">
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalCrisisLead")}{" "}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalCrisisLead")}{" "}
               <a href="tel:911" className="font-medium text-teal-400 underline hover:text-teal-300">
                 911
               </a>{" "}
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalCrisisOr")}{" "}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalCrisisOr")}{" "}
               <a href="tel:988" className="font-medium text-rose-300 underline hover:text-rose-200">
                 988
               </a>{" "}
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalCrisisTail")}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalCrisisTail")}
             </p>
             <Link
-              href={ROUTES.victimDashboard}
+              href={ROUTES.applicantDashboard}
               className="mt-2 flex min-h-[2.75rem] w-full items-center justify-center rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-400/50"
             >
-              {t("victimDashboard.findOrganizationsPage.connectSuccessModalReturnDashboard")}
+              {t("applicantDashboard.findOrganizationsPage.connectSuccessModalReturnDashboard")}
             </Link>
           </div>
         </div>

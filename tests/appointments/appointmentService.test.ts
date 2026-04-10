@@ -34,12 +34,12 @@ vi.mock("@/lib/server/appointments/appointmentRepository", () => ({
   listAppointmentsForApplicant: vi.fn(),
   listAppointmentsForProviderScope: vi.fn(),
   listAppointmentsForCase: vi.fn(),
-  createAppointment: vi.fn(),
+  insertAppointment: vi.fn(),
   updateAppointmentStatus: vi.fn(),
   updateAppointmentFields: vi.fn(),
-  createRescheduledAppointment: vi.fn(),
+  insertRescheduledAppointment: vi.fn(),
   updateReminderState: vi.fn(),
-  createAppointmentEvent: vi.fn(),
+  insertAppointmentEvent: vi.fn(),
   getAvailabilityRulesForContext: vi.fn(),
   findConflictingAppointments: vi.fn(),
 }));
@@ -70,12 +70,12 @@ const ctx = {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(repo.getAppointmentById).mockResolvedValue(mockAppointment);
-  vi.mocked(repo.createAppointment).mockResolvedValue(mockAppointment);
-  vi.mocked(repo.createAppointmentEvent).mockResolvedValue({} as never);
+  vi.mocked(repo.insertAppointment).mockResolvedValue(mockAppointment);
+  vi.mocked(repo.insertAppointmentEvent).mockResolvedValue({} as never);
   vi.mocked(repo.updateAppointmentStatus).mockImplementation(({ status }) =>
     Promise.resolve({ ...mockAppointment, status } as AppointmentRow),
   );
-  vi.mocked(repo.createRescheduledAppointment).mockResolvedValue({
+  vi.mocked(repo.insertRescheduledAppointment).mockResolvedValue({
     ...mockAppointment,
     id: "appt-2",
     rescheduled_from_id: "appt-1",
@@ -100,8 +100,8 @@ describe("appointment service", () => {
     });
     // Conflict check must have been called BEFORE DB write
     expect(avail.checkAppointmentConflicts).toHaveBeenCalled();
-    expect(repo.createAppointment).toHaveBeenCalled();
-    expect(repo.createAppointmentEvent).toHaveBeenCalledWith(
+    expect(repo.insertAppointment).toHaveBeenCalled();
+    expect(repo.insertAppointmentEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event_type: "created" }),
     );
   });
@@ -121,7 +121,7 @@ describe("appointment service", () => {
     ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
     // Neither conflict check nor DB write should have been reached
     expect(avail.checkAppointmentConflicts).not.toHaveBeenCalled();
-    expect(repo.createAppointment).not.toHaveBeenCalled();
+    expect(repo.insertAppointment).not.toHaveBeenCalled();
   });
 
   it("rescheduleAppointment sets rescheduled_from_id and writes history event", async () => {
@@ -134,11 +134,11 @@ describe("appointment service", () => {
         reason: "Applicant requested change",
       },
     });
-    expect(repo.createRescheduledAppointment).toHaveBeenCalledWith(
+    expect(repo.insertRescheduledAppointment).toHaveBeenCalledWith(
       expect.objectContaining({ originalId: "appt-1" }),
     );
     expect(result.rescheduled_from_id).toBe("appt-1");
-    expect(repo.createAppointmentEvent).toHaveBeenCalledWith(
+    expect(repo.insertAppointmentEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event_type: "rescheduled", appointment_id: "appt-1" }),
     );
   });
@@ -146,7 +146,7 @@ describe("appointment service", () => {
   it("cancelAppointment accepts optional reason and writes history event", async () => {
     await cancelAppointment({ ctx, id: "appt-1", reason: "Staff unavailable" });
     expect(repo.updateAppointmentStatus).toHaveBeenCalledWith({ id: "appt-1", status: "cancelled" });
-    expect(repo.createAppointmentEvent).toHaveBeenCalledWith(
+    expect(repo.insertAppointmentEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event_type: "cancelled",
         metadata: { reason: "Staff unavailable" },
@@ -157,7 +157,7 @@ describe("appointment service", () => {
   it("completeAppointment sets terminal completed state", async () => {
     const result = await completeAppointment({ ctx, id: "appt-1" });
     expect(result.status).toBe("completed");
-    expect(repo.createAppointmentEvent).toHaveBeenCalledWith(
+    expect(repo.insertAppointmentEvent).toHaveBeenCalledWith(
       expect.objectContaining({ event_type: "completed" }),
     );
   });

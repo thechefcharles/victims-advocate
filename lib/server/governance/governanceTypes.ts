@@ -78,6 +78,8 @@ export interface AuditEvent {
   resourceId: string;
   eventCategory: AuditEventCategory;
   metadata: Record<string, unknown>;
+  ipAddress: string | null;
+  userAgent: string | null;
   createdAt: string;
 }
 
@@ -141,4 +143,8 @@ export interface LogAuditEventInput {
   resourceId: string;
   eventCategory: AuditEventCategory;
   metadata?: Record<string, unknown>;
+  /** Source IP address — populated at route boundary when available. */
+  ipAddress?: string;
+  /** User agent string — populated at route boundary when available. */
+  userAgent?: string;
 }

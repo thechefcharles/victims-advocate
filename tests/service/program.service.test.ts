@@ -97,7 +97,7 @@ import {
 } from "@/lib/server/programs";
 import { evaluateProgram, intakeFromApplication } from "@/lib/server/routing/evaluate";
 import { serializeProgramDefinition } from "@/lib/server/serializers/program.serializer";
-import { orgRowFromCatalogEntry } from "@/lib/server/org/catalogOrgFields";
+import { orgRowFromCatalogEntry } from "@/lib/server/organizations/catalogOrgFields";
 import type { ProgramDefinitionRow } from "@/lib/server/routing/types";
 
 // ---------------------------------------------------------------------------

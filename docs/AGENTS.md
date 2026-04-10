@@ -164,6 +164,17 @@ You are the sole AI in a single-agent pipeline. Notion is your shared state; art
 
 ---
 
+## Naming Conventions
+
+Service functions: `create*`, `get*`, `list*`, `update*`, `resolve*`
+Repository functions: `insert*`, `get*ById`, `list*ForX`, `update*Record`
+Policy evaluators: `eval*` (dispatched from policyEngine.ts)
+Find functions: `find*` (conditional lookup, may return null)
+Do not use `fetch*`, `load*`, `query*` for service/repository functions.
+Do not mix `create*` (service) with `insert*` (repository) in the same layer.
+
+---
+
 ## Required output format for every run
 
 Every run must end with:

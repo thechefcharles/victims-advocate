@@ -160,15 +160,18 @@ export type ExplanationRequestStatus = "pending" | "completed" | "failed";
 // ---------------------------------------------------------------------------
 
 /**
- * Owned by: Domain 1.4 Referral
- * [DB-CONFIRMED] Matches `case_org_referrals.status` CHECK constraint in
- * migration 20260429120000_case_org_referrals.sql.
- * Do not change without a new migration.
+ * Owned by: Domain 4.1 Referrals
+ * Canonical values from the Domain 4.1 state machine (referralStateMachine.ts).
+ * The legacy `case_org_referrals.status` DB CHECK has the old 3-value set
+ * (pending, accepted, declined); Domain 4.1 `referrals` table uses the full set.
  */
 export type ReferralStatus =
-  | "pending"
+  | "draft"
+  | "pending_acceptance"
   | "accepted"
-  | "declined";
+  | "rejected"
+  | "cancelled"
+  | "closed";
 
 // ---------------------------------------------------------------------------
 // Domain 1.5 — Appointment
@@ -235,6 +238,34 @@ export type BookmarkTargetType =
   | "provider"
   | "program"
   | "resource";
+
+// ---------------------------------------------------------------------------
+// Domain 3.2 — Organization
+// ---------------------------------------------------------------------------
+
+/**
+ * Owned by: Domain 3.2 Organization
+ * [DB-CONFIRMED] organizations.status CHECK constraint (20250127000002).
+ */
+export type OrganizationStatus = "active" | "suspended" | "archived";
+
+/**
+ * Owned by: Domain 3.2 Organization
+ * [DB-CONFIRMED] organizations.lifecycle_status (20260425120000).
+ */
+export type OrgLifecycleStatus = "seeded" | "managed" | "archived";
+
+/**
+ * Owned by: Domain 3.2 Organization
+ * [DB-CONFIRMED] organizations.public_profile_status (20260425120000).
+ */
+export type OrgPublicProfileStatus = "draft" | "pending_review" | "active" | "paused";
+
+/**
+ * Owned by: Domain 3.2 Organization
+ * [DB-CONFIRMED] organizations.capacity_status (20260317160000).
+ */
+export type CapacityStatus = "open" | "limited" | "waitlist" | "closed" | "unknown";
 
 // ---------------------------------------------------------------------------
 // Domain 5.1 — ScoreMethodology

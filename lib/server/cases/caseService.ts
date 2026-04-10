@@ -28,7 +28,7 @@ import {
   getCaseRecordById,
   listCasesByOwner,
   listCasesByOrganization,
-  createCaseRecord,
+  insertCaseRecord,
   updateCaseRecord,
 } from "./caseRepository";
 import {
@@ -100,7 +100,7 @@ export async function createCaseFromSupportRequest(
   const decision = await can("case:create_from_support_request", actor, resource);
   if (!decision.allowed) denyForbidden(decision.message);
 
-  const record = await createCaseRecord(supabase, {
+  const record = await insertCaseRecord(supabase, {
     owner_user_id: ctx.userId,
     organization_id: input.organization_id,
     program_id: input.program_id ?? null,

@@ -97,90 +97,117 @@ export function MarketingHomePage() {
       <main>
         {/* Hero */}
         <section className="relative overflow-hidden border-b border-[var(--color-border-light)] scroll-mt-24">
-          <div
-            className="pointer-events-none absolute -right-24 top-1/4 h-[400px] w-[400px] rounded-full bg-[var(--color-teal-light)] opacity-40 max-md:hidden"
-            aria-hidden
-          />
-          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[3fr_2fr] lg:py-16">
+          <div className="pointer-events-none absolute -right-24 top-1/4 h-[400px] w-[400px] rounded-full bg-[var(--color-teal-light)] opacity-30 max-md:hidden" aria-hidden />
+
+          <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[3fr_2fr] lg:py-20">
+            {/* Left — headline + CTAs */}
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--color-teal)]">
-                {t("home.mkt.hero.eyebrow")}
-              </p>
-              <h1 className="mt-3 max-w-[580px] text-4xl font-bold leading-[1.15] tracking-[-0.02em] text-[var(--color-navy)] sm:text-5xl">
-                {t("home.mkt.hero.headline")}
+              <p className="text-sm font-medium text-[var(--color-teal)]">NxtStps is here to help.</p>
+              <h1 className="mt-4 max-w-[540px] text-5xl font-bold leading-[1.1] tracking-[-0.025em] text-[var(--color-navy)] sm:text-6xl">
+                Taking the next step shouldn&apos;t be the hardest one.
               </h1>
-              <p className="marketing-serif mt-6 max-w-[520px] text-lg leading-[1.618] text-[var(--color-charcoal)] sm:text-xl">
-                {t("home.mkt.hero.subhead")}
+              <p className="mt-6 max-w-[480px] text-lg leading-relaxed text-[var(--color-slate)]">
+                NxtStps is an operating system for victim services — helping applicants access compensation,
+                advocates manage cases, and organizations deliver support more effectively.
               </p>
 
-              <div className="mt-10 grid grid-cols-1 gap-4 border-y border-[var(--color-border-light)] py-8 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-[var(--color-border-light)]">
-                <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-warning)]">{t("home.mkt.hero.stat1Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat1Label")}</div>
-                </div>
-                <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-warning)]">{t("home.mkt.hero.stat2Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat2Label")}</div>
-                </div>
-                <div className="px-2 text-center sm:px-4">
-                  <div className="text-4xl font-bold text-[var(--color-teal-deep)]">{t("home.mkt.hero.stat3Num")}</div>
-                  <div className="mt-1 text-sm text-[var(--color-slate)]">{t("home.mkt.hero.stat3Label")}</div>
-                </div>
-              </div>
-              <p className="mt-3 text-center text-[11px] text-[var(--color-muted)] sm:text-left">{t("home.mkt.hero.source")}</p>
-
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                {loading ? (
-                  <span className="text-sm text-[var(--color-muted)]">{t("common.loading")}</span>
-                ) : user ? (
-                  <Link
-                    href={getDashboardPath(me)}
-                    className="inline-flex h-[52px] min-h-[48px] items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-teal-deep)] px-8 text-base font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
-                  >
-                    {t("home.hero.ctaMyDashboard")}
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      href={START_APPLICATION_HREF}
-                      className="inline-flex h-[52px] min-h-[48px] items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-teal-deep)] px-8 text-base font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
-                    >
-                      {t("home.mkt.hero.ctaPrimary")}
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Link
+                  href={user ? "/compensation/eligibility" : "/signup?intent=applicant"}
+                  className="inline-flex h-[52px] items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-teal-deep)] px-8 text-base font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
+                >
+                  Apply now
+                </Link>
+                {!user && (
+                  <div className="flex items-center gap-3 text-sm text-[var(--color-slate)]">
+                    <Link href="/login" className="font-medium text-[var(--color-teal)] hover:underline">
+                      Sign in
                     </Link>
-                    <a
-                      href="#interactive-demo"
-                      className="inline-flex h-[52px] min-h-[48px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-8 text-base font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors"
-                    >
-                      {t("home.mkt.hero.ctaDemo")}
-                    </a>
-                  </>
+                    <span className="text-[var(--color-muted)]">or</span>
+                    <Link href="/signup" className="font-medium text-[var(--color-teal)] hover:underline">
+                      Create account
+                    </Link>
+                  </div>
                 )}
               </div>
-              <p className="mt-4 text-sm text-[var(--color-muted)]">{t("home.mkt.hero.ctaFootnote")}</p>
+              <p className="mt-3 text-[13px] text-[var(--color-muted)]">Free for applicants. No account required to explore.</p>
             </div>
 
-            {/* Preview card */}
-            <div className="relative flex flex-col items-center">
-              <div
-                className="w-full max-w-md rounded-[var(--radius-xl)] border border-[var(--color-border-light)] bg-[var(--color-warm-cream)] p-6 shadow-[var(--shadow-card)]"
-                aria-hidden
-              >
-                <div className="space-y-3 opacity-60">
-                  <div className="h-2 w-3/4 rounded-full bg-[var(--color-sage)]" />
-                  <div className="h-8 rounded-md bg-[var(--color-light-sand)]" />
-                  <div className="h-8 rounded-md bg-[var(--color-light-sand)]" />
-                </div>
-                <div className="relative -mt-16 rounded-[var(--radius-lg)] border border-[var(--color-border-light)] bg-white p-4 shadow-md">
-                  <p className="text-sm font-semibold text-[var(--color-navy)]">Let&apos;s check your eligibility</p>
-                  <p className="mt-3 text-xs text-[var(--color-slate)]">Was this crime reported to the police?</p>
-                  <div className="mt-2 flex gap-2">
-                    <span className="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs">Yes</span>
-                    <span className="rounded-md border border-[var(--color-border)] px-2 py-1 text-xs">Not yet</span>
+            {/* Right — What is NxtStps card */}
+            <div className="flex flex-col justify-center">
+              <div className="w-full rounded-2xl border border-[var(--color-border-light)] bg-white p-6 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-teal)]">One platform, three audiences</p>
+                <div className="mt-5 space-y-4">
+                  <div className="flex gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-teal-light)]">
+                      <Heart className="h-4 w-4 text-[var(--color-teal-deep)]" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-navy)]">Applicants</p>
+                      <p className="mt-0.5 text-[13px] text-[var(--color-slate)]">Find services, file for compensation, track your case — guided and multilingual.</p>
+                    </div>
                   </div>
-                  <p className="mt-3 text-[11px] text-[var(--color-muted)]">{t("home.mkt.hero.previewStepLabel")}</p>
+                  <div className="flex gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-teal-light)]">
+                      <Users className="h-4 w-4 text-[var(--color-teal-deep)]" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-navy)]">Providers &amp; Advocates</p>
+                      <p className="mt-0.5 text-[13px] text-[var(--color-slate)]">Manage cases, referrals, scheduling, and reporting in one workspace.</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--color-teal-light)]">
+                      <Building2 className="h-4 w-4 text-[var(--color-teal-deep)]" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--color-navy)]">Agencies</p>
+                      <p className="mt-0.5 text-[13px] text-[var(--color-slate)]">Oversight analytics, compliance monitoring, and provider performance — no casework access.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <p className="mt-4 max-w-sm text-center text-[13px] text-[var(--color-muted)]">{t("home.mkt.hero.previewCaption")}</p>
+              <a
+                href="#convert"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-6 py-3 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors"
+              >
+                Request a demo →
+              </a>
+            </div>
+          </div>
+
+          {/* Full-width stat band */}
+          <div className="border-t border-[var(--color-border-light)] bg-[var(--color-surface)]/50">
+            <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-2">
+              {/* 1 in 16 */}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-[var(--color-teal)]">Chicago, 2018–2023</p>
+                <div className="mt-2 text-6xl font-bold text-[var(--color-warning)] sm:text-7xl">1 in 16</div>
+                <p className="mt-2 text-lg text-[var(--color-charcoal)]">victims of violent crime applied for compensation</p>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--color-slate)]">
+                  Over <strong className="text-[var(--color-charcoal)]">179,000</strong> direct victims.
+                  Only <strong className="text-[var(--color-charcoal)]">11,000</strong> applied.
+                  The money exists — the process is the barrier.
+                </p>
+                <p className="mt-3 text-[11px] text-[var(--color-muted)]">
+                  Source: Chavis &amp; Nass, <em>The Trace</em>, 2021. FOIA analysis of IL Attorney General data.
+                </p>
+              </div>
+              {/* 3 stats */}
+              <div className="grid grid-cols-3 gap-0 divide-x divide-[var(--color-border-light)] self-center">
+                <div className="px-3 text-center">
+                  <div className="text-3xl font-bold text-[var(--color-warning)] sm:text-4xl">63%</div>
+                  <div className="mt-1 text-xs text-[var(--color-slate)]">of claims denied</div>
+                </div>
+                <div className="px-3 text-center">
+                  <div className="text-3xl font-bold text-[var(--color-warning)] sm:text-4xl">281</div>
+                  <div className="mt-1 text-xs text-[var(--color-slate)]">days median wait</div>
+                </div>
+                <div className="px-3 text-center">
+                  <div className="text-3xl font-bold text-[var(--color-teal-deep)] sm:text-4xl">3,677</div>
+                  <div className="mt-1 text-xs text-[var(--color-slate)]">IL claims per year</div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -223,38 +250,46 @@ export function MarketingHomePage() {
             <p className="marketing-serif mt-6 max-w-[680px] text-lg leading-[1.618] text-white/85">{t("home.mkt.problem.body")}</p>
 
             <div className="mt-10 grid gap-4 md:grid-cols-3">
-              {[
-                {
-                  eyebrow: t("home.mkt.problem.card1Eyebrow"),
-                  stat: t("home.mkt.problem.card1Stat"),
-                  desc: t("home.mkt.problem.card1Desc"),
-                },
-                {
-                  eyebrow: t("home.mkt.problem.card2Eyebrow"),
-                  stat: t("home.mkt.problem.card2Stat"),
-                  desc: t("home.mkt.problem.card2Desc"),
-                },
-                {
-                  eyebrow: t("home.mkt.problem.card3Eyebrow"),
-                  stat: t("home.mkt.problem.card3Stat"),
-                  desc: t("home.mkt.problem.card3Desc"),
-                },
-              ].map((c, i) => (
-                <div
-                  key={i}
-                  className="rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.06] p-6"
-                >
-                  <p className="text-xs font-medium uppercase tracking-wide text-white/60">{c.eyebrow}</p>
-                  <p
-                    className={`mt-2 text-5xl font-bold ${
-                      i === 0 || i === 1 ? "text-[var(--color-gold-light)]" : "text-[var(--color-teal-soft)]"
-                    }`}
-                  >
-                    {c.stat}
-                  </p>
-                  <p className="mt-3 text-[15px] leading-snug text-white/75">{c.desc}</p>
+              {/* Card 1: 63% denied */}
+              <div className="rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.06] p-6">
+                <p className="text-xs font-medium uppercase tracking-wide text-white/60">{t("home.mkt.problem.card1Eyebrow")}</p>
+                <p className="mt-2 text-5xl font-bold text-[var(--color-gold-light)]">{t("home.mkt.problem.card1Stat")}</p>
+                <p className="mt-3 text-[15px] leading-snug text-white/75">{t("home.mkt.problem.card1Desc")}</p>
+              </div>
+
+              {/* Card 2: 281 days */}
+              <div className="rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.06] p-6">
+                <p className="text-xs font-medium uppercase tracking-wide text-white/60">{t("home.mkt.problem.card2Eyebrow")}</p>
+                <p className="mt-2 text-5xl font-bold text-[var(--color-gold-light)]">{t("home.mkt.problem.card2Stat")}</p>
+                <p className="mt-3 text-[15px] leading-snug text-white/75">{t("home.mkt.problem.card2Desc")}</p>
+              </div>
+
+              {/* Card 3: Bar chart — awards by crime type (replaces $125K audit) */}
+              <div className="rounded-[var(--radius-lg)] border border-white/12 bg-white/[0.06] p-6">
+                <p className="text-xs font-medium uppercase tracking-wide text-white/60">The Trace · FOIA analysis</p>
+                <h3 className="mt-2 text-lg font-bold text-white">Awards Depend on the Crime</h3>
+                <div className="mt-4 space-y-3">
+                  {[
+                    { label: "Murder", denial: 14, awardNoPay: 23, award: 63 },
+                    { label: "Assault & battery", denial: 29, awardNoPay: 38, award: 33 },
+                    { label: "Sex offenses", denial: 21, awardNoPay: 60, award: 19 },
+                  ].map((row) => (
+                    <div key={row.label}>
+                      <span className="text-[11px] font-medium text-white/70">{row.label}</span>
+                      <div className="mt-1 flex h-6 w-full overflow-hidden rounded">
+                        <div className="flex items-center justify-center text-[10px] font-bold text-white bg-[#3B7DD8]" style={{ width: `${row.award}%` }}>{row.award}%</div>
+                        <div className="flex items-center justify-center text-[10px] font-bold text-[#1a1a2e] bg-[#D4A853]" style={{ width: `${row.awardNoPay}%` }}>{row.awardNoPay}%</div>
+                        <div className="flex items-center justify-center text-[10px] font-bold text-[#1a1a2e] bg-[#E8D5B0]" style={{ width: `${row.denial}%` }}>{row.denial}%</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-white/50">
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#3B7DD8]" /> Award</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#D4A853]" /> Award–no pay</span>
+                  <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-sm bg-[#E8D5B0]" /> Denial</span>
+                </div>
+              </div>
             </div>
             <p className="mt-10 text-center text-xs text-white/45">{t("home.mkt.problem.sources")}</p>
           </div>
@@ -346,57 +381,6 @@ export function MarketingHomePage() {
                 {t("home.mkt.denial.docHint")}
               </Link>
             </p>
-          </div>
-        </section>
-
-        {/* About / pilot */}
-        <section id="about" className="scroll-mt-28 border-b border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/50 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--color-teal)]">
-              {t("home.mkt.about.label")}
-            </p>
-            <h2 className="mt-3 text-3xl font-bold text-[var(--color-navy)] sm:text-4xl">{t("home.mkt.about.title")}</h2>
-            <div className="mt-10 grid gap-10 lg:grid-cols-2">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-slate)]">
-                  {t("home.mkt.about.pilotLabel")}
-                </p>
-                <div className="mt-4 rounded-[var(--radius-lg)] border border-[var(--color-teal-deep)]/15 bg-[var(--color-teal-light)] p-6">
-                  <h3 className="text-xl font-bold text-[var(--color-teal-deep)]">{t("home.mkt.about.pilotName")}</h3>
-                  <p className="mt-2 text-sm text-[var(--color-slate)]">{t("home.mkt.about.pilotAddr")}</p>
-                  <p className="mt-4 text-[15px] leading-relaxed text-[var(--color-charcoal)]">{t("home.mkt.about.pilotDesc")}</p>
-                  <span className="mt-4 inline-block rounded-full bg-[var(--color-sage-light)] px-3 py-1 text-xs font-medium text-[var(--color-sage-deep)]">
-                    {t("home.mkt.about.pilotStatus")}
-                  </span>
-                  <p className="mt-4 text-sm text-[var(--color-slate)]">{t("home.mkt.about.pilotTargets")}</p>
-                </div>
-                <p className="mt-6 text-sm text-[var(--color-slate)]">{t("home.mkt.about.pilotCtaIntro")}</p>
-                <a href="#convert" className="mt-2 inline-block text-sm font-medium text-[var(--color-teal)] hover:underline">
-                  {t("home.mkt.about.pilotCta")}
-                </a>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-[var(--color-navy)]">{t("home.mkt.about.teamHeading")}</h3>
-                <p className="marketing-serif mt-4 text-lg leading-[1.618] text-[var(--color-charcoal)]">
-                  {t("home.mkt.about.teamBody")}
-                </p>
-                <ul className="mt-8 space-y-4">
-                  {[
-                    [t("home.mkt.about.founder1Name"), t("home.mkt.about.founder1Role"), t("home.mkt.about.founder1Bio")],
-                    [t("home.mkt.about.founder2Name"), t("home.mkt.about.founder2Role"), t("home.mkt.about.founder2Bio")],
-                    [t("home.mkt.about.founder3Name"), t("home.mkt.about.founder3Role"), t("home.mkt.about.founder3Bio")],
-                    [t("home.mkt.about.founder4Name"), t("home.mkt.about.founder4Role"), t("home.mkt.about.founder4Bio")],
-                  ].map(([name, r, bio], i) => (
-                    <li key={i} className="border-b border-[var(--color-border-light)] pb-4 last:border-0">
-                      <div className="font-semibold text-[var(--color-navy)]">{name}</div>
-                      <div className="text-sm text-[var(--color-teal)]">{r}</div>
-                      <div className="mt-1 text-sm text-[var(--color-slate)]">{bio}</div>
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-8 text-sm text-[var(--color-muted)]">{t("home.mkt.about.companyLine")}</p>
-              </div>
-            </div>
           </div>
         </section>
 

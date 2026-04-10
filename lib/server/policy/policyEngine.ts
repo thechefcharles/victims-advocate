@@ -35,6 +35,7 @@ import { evalGovernance } from "@/lib/server/governance/governancePolicy";
 import { evalNotification } from "@/lib/server/notifications/notificationPolicy";
 import { evalAIGuidance } from "@/lib/server/aiGuidance/aiGuidancePolicy";
 import { evalAdminTools } from "@/lib/server/admin/adminPolicy";
+import { evalOrganization } from "@/lib/server/organizations/organizationPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -686,177 +687,14 @@ async function evalMessage(
   }
 }
 
+/** Delegates to extracted organizationPolicy.ts (Domain 3.2 normalization). */
 async function evalOrg(
   action: PolicyAction,
   actor: PolicyActor,
   resource: PolicyResource,
   context?: PolicyContext,
 ): Promise<PolicyDecision> {
-  const tenantDenial = assertSameTenant(actor, resource);
-  if (tenantDenial) return tenantDenial;
-
-  const consentDenial = checkConsent(context);
-
-  switch (action) {
-    case "org:view_members": {
-      // Decision 3: org_owner, supervisor, auditor
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !ORG_VIEW_MEMBERS_ROLES.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization owner, supervisor, or auditor required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:manage_members": {
-      // Decision 3: org_owner, supervisor only
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !ORG_MANAGE_MEMBERS_ROLES.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization owner or supervisor required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:view_cases": {
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !ORG_CASE_ACCESS_ROLES.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization case-access role required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:edit_profile": {
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !CASE_LEADERSHIP.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization owner or supervisor required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    // -----------------------------------------------------------------------
-    // Domain 3.2 additions
-    // -----------------------------------------------------------------------
-
-    case "org:view_profile": {
-      // Any active org member or admin
-      if (actor.isAdmin) return consentDenial ?? allow();
-      if (actor.accountType !== "provider" || !actor.activeRole) {
-        return deny("INSUFFICIENT_ROLE", "Organization membership required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:register":
-    case "org:claim": {
-      // Platform-controlled: admin only
-      if (!actor.isAdmin) {
-        return deny("INSUFFICIENT_ROLE", "Platform administrator required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:invite":
-    case "org:revoke_invite":
-    case "org:update_member_role":
-    case "org:revoke_member": {
-      // Management tier only: org_owner, program_manager (mapped to SimpleOrgRole 'owner')
-      const ORG_MANAGEMENT_DB_ROLES = new Set(["org_owner", "program_manager"]);
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !ORG_MANAGEMENT_DB_ROLES.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization owner or program manager required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:accept_invite": {
-      // Any authenticated user (no org role required — they are joining an org)
-      if (!actor.userId) {
-        return deny("INSUFFICIENT_ROLE", "Authentication required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:request_to_join": {
-      // Advocate role users (victim_advocate, intake_specialist) or unaffiliated providers.
-      // Providers with a non-advocate role (org_owner, supervisor, etc.) are denied.
-      const ADVOCATE_DB_ROLES = new Set(["victim_advocate", "intake_specialist"]);
-      if (actor.accountType !== "provider") {
-        return deny("INSUFFICIENT_ROLE", "Provider account required.");
-      }
-      // Allow unaffiliated providers (no role yet) or those with advocate roles.
-      // Deny providers who already hold a non-advocate role.
-      if (actor.activeRole !== null && !ADVOCATE_DB_ROLES.has(actor.activeRole)) {
-        return deny("INSUFFICIENT_ROLE", "Advocate role required to request joining an organization.");
-      }
-      // Note: uniqueness of org membership is enforced at DB level
-      return consentDenial ?? allow();
-    }
-
-    case "org:approve_join": {
-      // Leadership: org_owner, program_manager, supervisor
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !CASE_LEADERSHIP.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization leadership required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:submit_for_review": {
-      // Leadership tier
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !CASE_LEADERSHIP.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization leadership required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:view_program_catalog": {
-      // Any active org member or admin
-      if (actor.isAdmin) return consentDenial ?? allow();
-      if (actor.accountType !== "provider" || !actor.activeRole) {
-        return deny("INSUFFICIENT_ROLE", "Organization membership required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    case "org:link_catalog_entry": {
-      // Domain 3.3 — same tier as org:edit_profile: org_owner or supervisor
-      if (
-        actor.accountType !== "provider" ||
-        !actor.activeRole ||
-        !ORG_MANAGE_MEMBERS_ROLES.has(actor.activeRole)
-      ) {
-        return deny("INSUFFICIENT_ROLE", "Organization owner or supervisor required.");
-      }
-      return consentDenial ?? allow();
-    }
-
-    default:
-      return deny(
-        "RESOURCE_NOT_FOUND",
-        `Action '${action}' is not valid for resource type 'org'.`,
-      );
-  }
+  return evalOrganization(action, actor, resource, context);
 }
 
 async function evalSupportRequest(

@@ -13,7 +13,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
-import { getVictimDisplayForNotification } from "@/lib/server/notifications/victimDisplay";
+import { getVictimDisplayForNotification } from "@/lib/server/notifications/applicantDisplay";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 import { isOrganizationMapListable } from "@/lib/server/organizations/organizationsMapData";

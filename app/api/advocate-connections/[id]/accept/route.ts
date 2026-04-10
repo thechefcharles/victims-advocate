@@ -1,5 +1,5 @@
 /**
- * Advocate accepts a connection request from a victim.
+ * Advocate accepts a connection request from an applicant.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -8,7 +8,7 @@ import { apiOk, apiFail, apiFailFromError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { toAppError, AppError } from "@/lib/server/api";
 import { upsertAdvocateCaseAccess } from "@/lib/server/advocate/grantAdvocateCaseAccess";
-import { removeVictimPendingConnectionNotificationsForRequest } from "@/lib/server/notifications/removeVictimPendingForRequest";
+import { removeApplicantPendingConnectionNotificationsForRequest } from "@/lib/server/notifications/removeApplicantPendingForRequest";
 
 export async function POST(
   req: Request,
@@ -29,7 +29,7 @@ export async function POST(
 
     const { data: row, error: fetchErr } = await supabase
       .from("advocate_connection_requests")
-      .select("id, victim_user_id, advocate_user_id, status, case_id")
+      .select("id, applicant_user_id, advocate_user_id, status, case_id")
       .eq("id", requestId)
       .eq("advocate_user_id", ctx.userId)
       .maybeSingle();
@@ -59,15 +59,15 @@ export async function POST(
       });
     }
 
-    await removeVictimPendingConnectionNotificationsForRequest(
-      row.victim_user_id as string,
+    await removeApplicantPendingConnectionNotificationsForRequest(
+      row.applicant_user_id as string,
       requestId
     );
 
     logger.info("advocate_connection.accept", {
       requestId,
       advocateId: ctx.userId,
-      victimId: row.victim_user_id,
+      victimId: row.applicant_user_id,
       caseId: caseId ?? undefined,
     });
 

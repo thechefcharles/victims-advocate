@@ -30,7 +30,7 @@ export default function OrganizationSetupPage() {
     if (loading || !user) return;
     if (isAdmin) return;
     if (profileRole === "victim") {
-      router.replace("/victim/dashboard");
+      router.replace("/applicant/dashboard");
       return;
     }
     if (profileRole === "advocate") {

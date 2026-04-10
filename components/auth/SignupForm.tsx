@@ -231,7 +231,7 @@ export default function SignupForm() {
             href="/signup?intent=advocate"
             className="underline underline-offset-2 hover:text-[var(--color-charcoal)]"
           >
-            I’m a victim advocate
+            I’m an applicant advocate
           </Link>
         </div>
 

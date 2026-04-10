@@ -74,31 +74,31 @@ export const PAGE_REGISTRY: PageRegistryEntry[] = [
     notes: "Often redirects to role-specific dashboard.",
   },
   {
-    id: "victim_dashboard",
-    path: "/victim/dashboard",
-    title: "Victim dashboard",
+    id: "applicant_dashboard",
+    path: "/applicant/dashboard",
+    title: "Applicant dashboard",
     audience: "role:victim",
   },
   {
-    id: "victim_messages",
-    path: "/victim/messages",
-    title: "Secure messages (victim)",
+    id: "applicant_messages",
+    path: "/applicant/messages",
+    title: "Secure messages (applicant)",
     audience: "role:victim",
     notes: "Case-scoped threads; not embedded in intake.",
   },
   {
-    id: "victim_find_organizations",
-    path: "/victim/find-organizations",
-    title: "Find organizations (victim)",
+    id: "applicant_find_organizations",
+    path: "/applicant/find-organizations",
+    title: "Find organizations (applicant)",
     audience: "role:victim",
-    notes: "Placeholder for map / geo / org scores; linked from victim dashboard.",
+    notes: "Placeholder for map / geo / org scores; linked from applicant dashboard.",
   },
   {
-    id: "victim_connect_organization_help",
-    path: "/victim/find-organizations/connect",
+    id: "applicant_connect_organization_help",
+    path: "/applicant/find-organizations/connect",
     title: "Connect — what do you need help with?",
     audience: "role:victim",
-    notes: "Multi-select needs before POST /api/victim/organization-connect-request; query: organization, optional case.",
+    notes: "Multi-select needs before POST /api/applicant/organization-connect-request; query: organization, optional case.",
   },
   {
     id: "advocate_dashboard",
@@ -174,14 +174,14 @@ export const ROUTES = {
   account: "/account",
   dashboard: "/dashboard",
   dashboardClients: "/dashboard/clients",
-  victimDashboard: "/victim/dashboard",
-  victimMessages: "/victim/messages",
-  victimFindOrganizations: "/victim/find-organizations",
-  /** Before POST connect: victim selects what they need help with. */
-  victimConnectOrganizationHelp: "/victim/find-organizations/connect",
-  /** Victim-facing read-only organization profile (UUID). */
-  victimOrganization: (organizationId: string) =>
-    `/victim/organizations/${encodeURIComponent(organizationId)}`,
+  applicantDashboard: "/applicant/dashboard",
+  applicantMessages: "/applicant/messages",
+  applicantFindOrganizations: "/applicant/find-organizations",
+  /** Before POST connect: applicant selects what they need help with. */
+  applicantConnectOrganizationHelp: "/applicant/find-organizations/connect",
+  /** Applicant-facing read-only organization profile (UUID). */
+  applicantOrganization: (organizationId: string) =>
+    `/applicant/organizations/${encodeURIComponent(organizationId)}`,
   advocateDashboard: "/advocate",
   advocateHome: "/advocate",
   advocateMessages: "/advocate/messages",
@@ -199,19 +199,19 @@ export const ROUTES = {
   settingsSafety: "/settings/safety",
 } as const;
 
-/** Per-case victim flows (dynamic segments). */
-export const victimCasePaths = {
-  advocate: (caseId: string) => `/victim/case/${encodeURIComponent(caseId)}/advocate`,
-  organization: (caseId: string) => `/victim/case/${encodeURIComponent(caseId)}/organization`,
+/** Per-case applicant flows (dynamic segments). */
+export const applicantCasePaths = {
+  advocate: (caseId: string) => `/applicant/case/${encodeURIComponent(caseId)}/advocate`,
+  organization: (caseId: string) => `/applicant/case/${encodeURIComponent(caseId)}/organization`,
 } as const;
 
 /** Deep-link to the dedicated secure messages tool for a case (victim). */
-export function victimCaseMessagesUrl(caseId: string): string {
-  return `${ROUTES.victimMessages}?case=${encodeURIComponent(caseId)}`;
+export function applicantCaseMessagesUrl(caseId: string): string {
+  return `${ROUTES.applicantMessages}?case=${encodeURIComponent(caseId)}`;
 }
 
 /** Victim connect flow: choose help areas, then submit connect for this org. */
-export function victimConnectOrganizationHelpUrl(params: {
+export function applicantConnectOrganizationHelpUrl(params: {
   organizationId: string;
   caseId?: string;
 }): string {
@@ -219,12 +219,12 @@ export function victimConnectOrganizationHelpUrl(params: {
   q.set("organization", params.organizationId.trim());
   const c = params.caseId?.trim();
   if (c) q.set("case", c);
-  return `${ROUTES.victimConnectOrganizationHelp}?${q.toString()}`;
+  return `${ROUTES.applicantConnectOrganizationHelp}?${q.toString()}`;
 }
 
-/** @deprecated Use victimCaseMessagesUrl — messages are no longer embedded in intake. */
+/** @deprecated Use applicantCaseMessagesUrl — messages are no longer embedded in intake. */
 export function compensationIntakeMessagesUrl(caseId: string): string {
-  return victimCaseMessagesUrl(caseId);
+  return applicantCaseMessagesUrl(caseId);
 }
 
 export function advocateCaseMessagesUrl(caseId: string): string {

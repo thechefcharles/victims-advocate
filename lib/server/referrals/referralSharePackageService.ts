@@ -7,7 +7,7 @@ import { AppError } from "@/lib/server/api";
 import type { ReferralSharePackageRow } from "./referralTypes";
 import {
   getReferralById,
-  createReferralSharePackage,
+  insertReferralSharePackage,
   getReferralSharePackageByReferralId,
 } from "./referralRepository";
 
@@ -62,7 +62,7 @@ export async function assembleSharePackage(params: {
     }
   }
 
-  return createReferralSharePackage({
+  return insertReferralSharePackage({
     referral_id: params.referralId,
     prepared_by: params.preparedBy,
     consent_grant_id: params.consentGrantId ?? null,
