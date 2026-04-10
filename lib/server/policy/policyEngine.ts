@@ -30,6 +30,7 @@ import { evalEvent } from "@/lib/server/events/eventPolicy";
 import { evalTrustedHelper } from "@/lib/server/trustedHelper/trustedHelperPolicy";
 import { evalRecommendation } from "@/lib/server/recommendations/recommendationPolicy";
 import { evalTrust } from "@/lib/server/trust/trustPolicy";
+import { evalAgency } from "@/lib/server/agency/agencyPolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1478,6 +1479,11 @@ export async function can(
       break;
     case "trust":
       decision = await evalTrust(action, actor, resource, context);
+      break;
+    case "reporting_submission":
+    case "agency_notice":
+    case "agency_analytics":
+      decision = await evalAgency(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");
