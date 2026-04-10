@@ -450,6 +450,38 @@ export const POLICY_ACTIONS = [
   "agency_analytics:view",
   /** View comparative cross-provider analytics from agency scope. */
   "provider_score:view_agency_comparative",
+
+  // -------------------------------------------------------------------------
+  // Domain 7.1 — Governance / Policy Documents / Audit (14)
+  // -------------------------------------------------------------------------
+  /** Create a draft policy document. Platform admin only. */
+  "policy_document:create",
+  /** Publish a draft policy document. Platform admin only. */
+  "policy_document:publish",
+  /** Deprecate an active policy document. Platform admin only. */
+  "policy_document:deprecate",
+  /** View a policy document (for acceptance flow). Any authenticated user. */
+  "policy_document:view",
+  /** Accept a required policy. Any authenticated user. */
+  "policy_acceptance:create",
+  /** View own policy acceptances. Any authenticated user. */
+  "policy_acceptance:view",
+  /** Create a governed change request. Platform admin only. */
+  "change_request:create",
+  /** Approve a pending change request. Platform admin only. */
+  "change_request:approve",
+  /** Reject a pending change request. Platform admin only. */
+  "change_request:reject",
+  /** Rollback an approved change request (creates new event, no deletion). Platform admin. */
+  "change_request:rollback",
+  /** Log an audit event. Service-layer only (never from UI). */
+  "audit_event:log",
+  /** View audit events. Platform admin only. */
+  "audit_event:view",
+  /** Export audit events for compliance. Platform admin only. */
+  "audit_event:export",
+  /** View compliance events. Platform admin + agency oversight. */
+  "compliance_event:view",
 ] as const;
 
 /** Union of all valid policy action strings. */
