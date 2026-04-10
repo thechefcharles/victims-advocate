@@ -500,6 +500,32 @@ export const POLICY_ACTIONS = [
   "notification:preference.view",
   /** Update own notification preferences. Owner only. */
   "notification:preference.update",
+
+  // -------------------------------------------------------------------------
+  // Domain 7.3 — AI Guidance Chatbot (11)
+  // -------------------------------------------------------------------------
+  /** Create an AI guidance session. Applicant/provider (own context). */
+  "ai_guidance.session.create",
+  /** View an AI guidance session. Owner only. */
+  "ai_guidance.session.view",
+  /** Send a message in an AI guidance session. Owner only. */
+  "ai_guidance.message.send",
+  /** Explain a workflow concept. Any authenticated user. */
+  "ai_guidance.explain",
+  /** AI-assisted intake guidance. Applicant only. */
+  "ai_guidance.intake.assist",
+  /** Generate a workflow checklist. Any authenticated user. */
+  "ai_guidance.checklist.generate",
+  /** Summarize workflow status. Any authenticated user. */
+  "ai_guidance.status.summarize",
+  /** AI resource recommendations. Any authenticated user. */
+  "ai_guidance.resource.recommend",
+  /** Trigger escalation. System/user. */
+  "ai_guidance.escalate",
+  /** Generate an advocate copilot draft. Provider only. */
+  "ai_guidance.draft.generate",
+  /** View AI guidance logs. Platform admin only. */
+  "ai_guidance.log.view_admin",
 ] as const;
 
 /** Union of all valid policy action strings. */
