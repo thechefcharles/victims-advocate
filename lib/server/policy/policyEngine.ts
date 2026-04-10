@@ -33,6 +33,7 @@ import { evalTrust } from "@/lib/server/trust/trustPolicy";
 import { evalAgency } from "@/lib/server/agency/agencyPolicy";
 import { evalGovernance } from "@/lib/server/governance/governancePolicy";
 import { evalNotification } from "@/lib/server/notifications/notificationPolicy";
+import { evalAIGuidance } from "@/lib/server/aiGuidance/aiGuidancePolicy";
 
 // ---------------------------------------------------------------------------
 // Decision helpers
@@ -1497,6 +1498,10 @@ export async function can(
     case "notification":
     case "notification_preference":
       decision = await evalNotification(action, actor, resource, context);
+      break;
+    case "ai_guidance":
+    case "advocate_copilot":
+      decision = await evalAIGuidance(action, actor, resource, context);
       break;
     default:
       decision = deny("RESOURCE_NOT_FOUND", "Unknown resource type.");
