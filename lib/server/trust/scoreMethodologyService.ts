@@ -25,6 +25,7 @@ import {
   setMethodologyStatus,
   updateMethodologyDraft,
 } from "./trustRepository";
+import { logAuditEvent } from "@/lib/server/governance/auditService";
 
 export async function getActiveScoreMethodology(
   supabase: SupabaseClient = getSupabaseAdmin(),
@@ -123,5 +124,14 @@ export async function publishScoreMethodology(params: {
   if (prior) {
     await setMethodologyStatus(prior.id, "deprecated", supabase);
   }
-  return setMethodologyStatus(params.id, "active", supabase);
+  const published = await setMethodologyStatus(params.id, "active", supabase);
+  void logAuditEvent({
+    actorId: "system",
+    action: "score_methodology:publish",
+    resourceType: "score_methodology",
+    resourceId: params.id,
+    eventCategory: "trust_scoring",
+    metadata: { version: published.version, prior_active_id: prior?.id ?? null },
+  });
+  return published;
 }

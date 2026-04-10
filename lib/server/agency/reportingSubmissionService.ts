@@ -20,6 +20,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { emitSignal } from "@/lib/server/trustSignal/signalEmitter";
+import { logAuditEvent } from "@/lib/server/governance/auditService";
 import type { ReportingSubmission } from "./agencyTypes";
 import { validateSubmissionTransition } from "./agencyStateMachine";
 import {
@@ -146,6 +147,13 @@ export async function submitReportingSubmission(params: {
     organizationId: existing.organizationId,
     actorUserId: params.submittedByUserId,
   });
+  void logAuditEvent({
+    actorId: params.submittedByUserId,
+    action: "reporting_submission:submit",
+    resourceType: "reporting_submission",
+    resourceId: params.submissionId,
+    eventCategory: "compliance_event",
+  });
 
   return updated;
 }
@@ -193,6 +201,14 @@ export async function requestReportingRevision(params: {
     actorUserId: params.reviewerUserId,
     metadata: { reason: params.reason },
   });
+  void logAuditEvent({
+    actorId: params.reviewerUserId,
+    action: "reporting_submission:request_revision",
+    resourceType: "reporting_submission",
+    resourceId: params.submissionId,
+    eventCategory: "compliance_event",
+    metadata: { reason: params.reason },
+  });
 
   return updated;
 }
@@ -230,6 +246,13 @@ export async function acceptReportingSubmission(params: {
     submissionId: params.submissionId,
     organizationId: existing.organizationId,
     actorUserId: params.reviewerUserId,
+  });
+  void logAuditEvent({
+    actorId: params.reviewerUserId,
+    action: "reporting_submission:accept",
+    resourceType: "reporting_submission",
+    resourceId: params.submissionId,
+    eventCategory: "compliance_event",
   });
 
   return updated;
@@ -276,6 +299,14 @@ export async function rejectReportingSubmission(params: {
     submissionId: params.submissionId,
     organizationId: existing.organizationId,
     actorUserId: params.reviewerUserId,
+    metadata: { reason: params.reason },
+  });
+  void logAuditEvent({
+    actorId: params.reviewerUserId,
+    action: "reporting_submission:reject",
+    resourceType: "reporting_submission",
+    resourceId: params.submissionId,
+    eventCategory: "compliance_event",
     metadata: { reason: params.reason },
   });
 

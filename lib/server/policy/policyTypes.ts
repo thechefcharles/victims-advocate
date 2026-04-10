@@ -81,6 +81,11 @@ export type PolicyResourceType =
   | "reporting_submission"
   | "agency_notice"
   | "agency_analytics"
+  | "policy_document"
+  | "policy_acceptance"
+  | "change_request"
+  | "audit_event"
+  | "compliance_event"
   | "notification"
   | "notification_preference";
 

@@ -22,6 +22,7 @@ import type {
   ProviderAffiliationStatusType,
 } from "./trustTypes";
 import { getCurrentAffiliation, insertAffiliation } from "./trustRepository";
+import { logAuditEvent } from "@/lib/server/governance/auditService";
 
 const AFFILIATION_TRANSITIONS: Record<
   ProviderAffiliationStatusType,
@@ -74,7 +75,7 @@ export async function updateProviderAffiliation(
 ): Promise<ProviderAffiliationStatus> {
   const current = await getCurrentAffiliation(input.organizationId, supabase);
   assertAffiliationTransition(current?.status ?? null, input.toStatus);
-  return insertAffiliation(
+  const result = await insertAffiliation(
     {
       organizationId: input.organizationId,
       status: input.toStatus,
@@ -84,6 +85,15 @@ export async function updateProviderAffiliation(
     },
     supabase,
   );
+  void logAuditEvent({
+    actorId: input.setByUserId,
+    action: "provider_affiliation:manage",
+    resourceType: "provider_affiliation",
+    resourceId: input.organizationId,
+    eventCategory: "admin_action",
+    metadata: { from_status: current?.status ?? null, to_status: input.toStatus },
+  });
+  return result;
 }
 
 export async function getProviderAffiliationStatus(
