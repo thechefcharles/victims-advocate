@@ -209,7 +209,7 @@
         {
           "domain": "6.1",
           "dependsOn": [],
-          "status": "pending"
+          "status": "locked"
         },
         {
           "domain": "6.2",
