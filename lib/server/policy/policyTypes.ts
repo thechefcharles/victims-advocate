@@ -85,7 +85,9 @@ export type PolicyResourceType =
   | "policy_acceptance"
   | "change_request"
   | "audit_event"
-  | "compliance_event";
+  | "compliance_event"
+  | "notification"
+  | "notification_preference";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant

@@ -482,6 +482,24 @@ export const POLICY_ACTIONS = [
   "audit_event:export",
   /** View compliance events. Platform admin + agency oversight. */
   "compliance_event:view",
+
+  // -------------------------------------------------------------------------
+  // Domain 7.2 — Notifications (7)
+  // -------------------------------------------------------------------------
+  /** List own notifications. Any authenticated user. */
+  "notification:list",
+  /** View a single notification. Owner only. */
+  "notification:view",
+  /** Mark a notification as read. Owner only. */
+  "notification:mark_read",
+  /** Mark a notification as unread. Owner only. */
+  "notification:mark_unread",
+  /** Dismiss a notification. Owner only. */
+  "notification:dismiss",
+  /** View own notification preferences. Owner only. */
+  "notification:preference.view",
+  /** Update own notification preferences. Owner only. */
+  "notification:preference.update",
 ] as const;
 
 /** Union of all valid policy action strings. */
