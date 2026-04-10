@@ -400,6 +400,34 @@ export const POLICY_ACTIONS = [
   "recommendation:view",
   /** Force regeneration of a recommendation set, bypassing cache. */
   "recommendation:refresh",
+
+  // -------------------------------------------------------------------------
+  // Domain 6.1 — Trust / Transparency / Scoring actions (12)
+  // -------------------------------------------------------------------------
+  /** View public reliability summary (any authenticated user). */
+  "provider_reliability:view_public",
+  /** View applicant-safe reliability summary (applicant or provider). */
+  "provider_reliability:view_applicant_safe",
+  /** View own org's internal score snapshot (provider leadership). */
+  "provider_score:view_internal",
+  /** View comparative cross-provider analytics (agency oversight). */
+  "provider_score:view_comparative",
+  /** Recalculate own org's score (provider leadership or admin). */
+  "provider_score:recalculate",
+  /** Open a dispute against a score snapshot (provider leadership). */
+  "provider_score:dispute.create",
+  /** Review a score dispute (platform admin only). */
+  "provider_score:dispute.review",
+  /** View a score methodology (platform admin only). */
+  "score_methodology:view",
+  /** Update a draft score methodology (platform admin only). */
+  "score_methodology:update",
+  /** Publish a draft score methodology — atomic with deprecating prior active. Platform admin. */
+  "score_methodology:publish",
+  /** View provider affiliation status (provider own-org, agency oversight, admin). */
+  "provider_affiliation:view",
+  /** Manage provider affiliation status (platform admin only). */
+  "provider_affiliation:manage",
 ] as const;
 
 /** Union of all valid policy action strings. */
