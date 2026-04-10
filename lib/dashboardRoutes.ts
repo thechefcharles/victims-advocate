@@ -32,14 +32,14 @@ export function mapApiRoleToDashboard(
  */
 export function getDashboardPath(me: DashboardMe): string {
   if (me.isAdmin === true) return "/admin/dashboard";
-  if (me.role === "victim") return "/victim/dashboard";
+  if (me.role === "victim") return "/applicant/dashboard";
   if (me.role === "advocate") return "/advocate";
   if (me.role === "organization") {
     if (!me.orgId) return "/organization/setup";
     if (hasActiveOrgLeadership(me.orgId, me.orgRole)) return "/organization/dashboard";
     return "/account";
   }
-  return "/victim/dashboard";
+  return "/applicant/dashboard";
 }
 
 /** Short label for public-page “go to workspace” buttons (Phase 7). */

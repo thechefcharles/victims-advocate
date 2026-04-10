@@ -1,5 +1,5 @@
 /**
- * Advocate declines a connection request from a victim.
+ * Advocate declines a connection request from an applicant.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
@@ -7,7 +7,7 @@ import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/aut
 import { apiOk, apiFail, apiFailFromError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { toAppError, AppError } from "@/lib/server/api";
-import { removeVictimPendingConnectionNotificationsForRequest } from "@/lib/server/notifications/removeVictimPendingForRequest";
+import { removeApplicantPendingConnectionNotificationsForRequest } from "@/lib/server/notifications/removeApplicantPendingForRequest";
 
 export async function POST(
   req: Request,
@@ -28,7 +28,7 @@ export async function POST(
 
     const { data: row, error: fetchErr } = await supabase
       .from("advocate_connection_requests")
-      .select("id, status, victim_user_id")
+      .select("id, status, applicant_user_id")
       .eq("id", requestId)
       .eq("advocate_user_id", ctx.userId)
       .maybeSingle();
@@ -50,8 +50,8 @@ export async function POST(
       throw new AppError("INTERNAL", "Failed to decline request", undefined, 500);
     }
 
-    await removeVictimPendingConnectionNotificationsForRequest(
-      row.victim_user_id as string,
+    await removeApplicantPendingConnectionNotificationsForRequest(
+      row.applicant_user_id as string,
       requestId
     );
 

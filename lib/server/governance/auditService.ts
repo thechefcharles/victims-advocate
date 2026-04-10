@@ -40,6 +40,8 @@ export async function logAuditEvent(
         resourceId: event.resourceId,
         eventCategory: event.eventCategory,
         metadata: event.metadata ?? {},
+        ipAddress: event.ipAddress ?? null,
+        userAgent: event.userAgent ?? null,
       },
       supabase,
     );

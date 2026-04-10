@@ -37,6 +37,8 @@ describe("governance immutability", () => {
       resourceType: "test",
       resourceId: "r-1",
       eventCategory: "admin_action",
+      ipAddress: null,
+      userAgent: null,
       metadata: {},
       createdAt: "2026-04-10T00:00:00Z",
     };

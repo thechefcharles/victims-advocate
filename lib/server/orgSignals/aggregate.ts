@@ -35,7 +35,7 @@ function isOrgSideRole(role: string | null): boolean {
   return r === "advocate" || r === "org_owner" || r === "supervisor" || r === "victim_advocate";
 }
 
-function isVictimSideRole(role: string | null): boolean {
+function isApplicantSideRole(role: string | null): boolean {
   return (role ?? "").toLowerCase() === "victim";
 }
 
@@ -144,7 +144,7 @@ export async function getOrganizationSignals(organizationId: string): Promise<Or
   const firstReplyHours: number[] = [];
   for (const rows of msgByCase.values()) {
     const sorted = [...rows].sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at));
-    const firstVictim = sorted.find((m) => isVictimSideRole(m.sender_role));
+    const firstVictim = sorted.find((m) => isApplicantSideRole(m.sender_role));
     if (!firstVictim) continue;
     const victimTime = Date.parse(firstVictim.created_at);
     if (Number.isNaN(victimTime)) continue;

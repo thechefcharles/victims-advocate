@@ -36,10 +36,10 @@ import {
   listTrustedHelperAccessByApplicantId,
   listTrustedHelperAccessByHelperUserId,
   findActiveGrantForPair,
-  createTrustedHelperAccess as dbCreate,
+  insertTrustedHelperAccess as dbCreate,
   updateTrustedHelperAccessStatus,
   updateTrustedHelperAccessScope,
-  createTrustedHelperEvent,
+  insertTrustedHelperEvent,
   listTrustedHelperEventsByGrantId,
 } from "./trustedHelperRepository";
 import { validateHelperGrantTransition } from "./trustedHelperStateMachine";
@@ -187,7 +187,7 @@ export async function createTrustedHelperAccess(params: {
 
   const grant = await dbCreate({ ...input, granted_by_user_id: ctx.userId });
 
-  await createTrustedHelperEvent({
+  await insertTrustedHelperEvent({
     grant_id: grant.id,
     event_type: "granted",
     new_status: "pending",
@@ -224,7 +224,7 @@ export async function acceptTrustedHelperAccess(params: {
     setAcceptedAt: true,
   });
 
-  await createTrustedHelperEvent({
+  await insertTrustedHelperEvent({
     grant_id: id,
     event_type: "accepted",
     previous_status: grant.status,
@@ -259,7 +259,7 @@ export async function revokeTrustedHelperAccess(params: {
     setRevokedAt: true,
   });
 
-  await createTrustedHelperEvent({
+  await insertTrustedHelperEvent({
     grant_id: id,
     event_type: "revoked",
     previous_status: grant.status,
@@ -289,7 +289,7 @@ export async function expireTrustedHelperAccess(params: {
     status: "expired",
   });
 
-  await createTrustedHelperEvent({
+  await insertTrustedHelperEvent({
     grant_id: params.id,
     event_type: "expired",
     previous_status: grant.status,
@@ -338,7 +338,7 @@ export async function updateTrustedHelperScope(params: {
     granted_scope_detail: input.granted_scope_detail,
   });
 
-  await createTrustedHelperEvent({
+  await insertTrustedHelperEvent({
     grant_id: id,
     event_type: "scope_updated",
     previous_status: grant.status,

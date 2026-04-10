@@ -150,7 +150,7 @@ export default function SignupConsentWaiverPage() {
           <li>NxtStps cannot guarantee that any application will be approved.</li>
           <li>This agreement asks you to acknowledge those limits clearly.</li>
           <li>
-            If you have questions about your specific situation, a victim advocate or legal aid
+            If you have questions about your specific situation, an applicant advocate or legal aid
             organization can help.
           </li>
           <li>If you are in crisis right now, see the support resources below.</li>

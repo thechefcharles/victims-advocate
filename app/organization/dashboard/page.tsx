@@ -24,8 +24,8 @@ type VictimCaseRef = {
   created_at: string;
 };
 
-type VictimRow = {
-  victim_user_id: string;
+type ApplicantRow = {
+  applicant_user_id: string;
   display_name: string;
   case_count: number;
   cases: VictimCaseRef[];
@@ -54,7 +54,7 @@ export default function OrganizationDashboardPage() {
   const { strictPreviews } = useSafetySettings(accessToken);
 
   const [advocates, setAdvocates] = useState<AdvocateRow[]>([]);
-  const [victims, setVictims] = useState<VictimRow[]>([]);
+  const [victims, setApplicants] = useState<ApplicantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [publicProfileStatus, setPublicProfileStatus] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export default function OrganizationDashboardPage() {
           fetch("/api/org/advocates", {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch("/api/org/victims", {
+          fetch("/api/org/applicants", {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -102,7 +102,7 @@ export default function OrganizationDashboardPage() {
         }
 
         if (!vicRes.ok) {
-          setVictims([]);
+          setApplicants([]);
           errs.push(
             getApiErrorMessage(
               vicJson,
@@ -111,7 +111,7 @@ export default function OrganizationDashboardPage() {
           );
         } else {
           const list = vicJson.data?.victims ?? vicJson.victims ?? [];
-          if (!cancelled) setVictims(Array.isArray(list) ? list : []);
+          if (!cancelled) setApplicants(Array.isArray(list) ? list : []);
         }
 
         if (!cancelled) setErr(errs.length ? errs.join(" ") : null);
@@ -296,7 +296,7 @@ export default function OrganizationDashboardPage() {
               <p className="text-sm text-[var(--color-muted)]">Loading referrals…</p>
             ) : referrals.length === 0 ? (
               <p className="text-sm text-[var(--color-muted)]">
-                Nothing waiting. When a victim or partner sends a referral to your organization, it will show up
+                Nothing waiting. When an applicant or partner sends a referral to your organization, it will show up
                 here until someone accepts or declines.
               </p>
             ) : (
@@ -412,7 +412,7 @@ export default function OrganizationDashboardPage() {
         </section>
 
         <section className="space-y-3">
-          <h2 className="text-lg font-medium text-[var(--color-navy)]">Victims in your organization</h2>
+          <h2 className="text-lg font-medium text-[var(--color-navy)]">Applicants in your organization</h2>
           {loading ? (
             <p className="text-sm text-[var(--color-muted)]">Loading…</p>
           ) : victims.length === 0 ? (
@@ -424,12 +424,12 @@ export default function OrganizationDashboardPage() {
             <ul className="space-y-3">
               {victims.map((v) => (
                 <li
-                  key={v.victim_user_id}
+                  key={v.applicant_user_id}
                   className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-4 py-3 text-sm"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="font-medium text-[var(--color-navy)]">
-                      {maskVictimLabel(v.display_name, v.victim_user_id)}
+                      {maskVictimLabel(v.display_name, v.applicant_user_id)}
                     </span>
                     <span className="text-[11px] text-[var(--color-muted)]">
                       {v.case_count} case{v.case_count === 1 ? "" : "es"}

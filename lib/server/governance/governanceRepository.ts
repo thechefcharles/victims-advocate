@@ -33,6 +33,8 @@ function rowToAuditEvent(row: Record<string, unknown>): AuditEvent {
     resourceId: String(row.resource_id),
     eventCategory: row.event_category as AuditEventCategory,
     metadata: (row.metadata as Record<string, unknown>) ?? {},
+    ipAddress: row.ip_address != null ? String(row.ip_address) : null,
+    userAgent: row.user_agent != null ? String(row.user_agent) : null,
     createdAt: String(row.created_at),
   };
 }
@@ -111,6 +113,8 @@ export async function insertAuditEvent(
       resource_id: fields.resourceId,
       event_category: fields.eventCategory,
       metadata: fields.metadata,
+      ip_address: fields.ipAddress ?? null,
+      user_agent: fields.userAgent ?? null,
     })
     .select("*")
     .single();

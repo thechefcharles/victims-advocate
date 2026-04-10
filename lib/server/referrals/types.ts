@@ -5,6 +5,12 @@
  * timeline entries, and applyCaseOrganizationTransfer on accept.
  */
 
+/**
+ * Legacy referral statuses for `case_org_referrals` table (Phase 1).
+ * Domain 4.1 canonical statuses are in referralTypes.ts (ReferralDomainStatus):
+ *   draft | pending_acceptance | accepted | rejected | cancelled | closed
+ * This type matches the DB CHECK constraint on the legacy table.
+ */
 export const REFERRAL_STATUSES = ["pending", "accepted", "declined"] as const;
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 

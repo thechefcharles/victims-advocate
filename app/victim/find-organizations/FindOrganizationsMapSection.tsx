@@ -8,7 +8,7 @@ import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
 import { OrganizationLearnMoreModal } from "@/components/victim/OrganizationLearnMoreModal";
-import { ROUTES, victimConnectOrganizationHelpUrl } from "@/lib/routes/pageRegistry";
+import { ROUTES, applicantConnectOrganizationHelpUrl } from "@/lib/routes/pageRegistry";
 import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 const OrganizationsMap = dynamic(
@@ -431,7 +431,7 @@ export function FindOrganizationsMapSection({
                   </button>
                   {!o.external ? (
                     <Link
-                      href={ROUTES.victimOrganization(o.id)}
+                      href={ROUTES.applicantOrganization(o.id)}
                       className="inline-flex items-center justify-center rounded-lg border border-[var(--color-muted)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
                     >
                       {copy.organizationProfile}
@@ -446,7 +446,7 @@ export function FindOrganizationsMapSection({
                   )}
                   {!o.external ? (
                     <Link
-                      href={victimConnectOrganizationHelpUrl({
+                      href={applicantConnectOrganizationHelpUrl({
                         organizationId: o.id,
                         caseId: referCaseId,
                       })}

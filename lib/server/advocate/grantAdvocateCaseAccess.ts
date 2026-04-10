@@ -1,6 +1,6 @@
 /**
  * Grant an advocate case_access on a case (service role).
- * Used when a victim adds an already-connected advocate to a case, or when a case-scoped connection is accepted.
+ * Used when an applicant adds an already-connected advocate to a case, or when a case-scoped connection is accepted.
  */
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";

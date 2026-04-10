@@ -220,7 +220,7 @@ describe("SupportRequest service — createSupportRequest", () => {
     // Mock repository functions
     const repoModule = await import("@/lib/server/supportRequests/supportRequestRepository");
     vi.spyOn(repoModule, "findActiveSupportRequestForApplicant").mockResolvedValue(null);
-    vi.spyOn(repoModule, "createSupportRequestRecord").mockResolvedValue(
+    vi.spyOn(repoModule, "insertSupportRequestRecord").mockResolvedValue(
       makeRecord({ status: "draft" }),
     );
 

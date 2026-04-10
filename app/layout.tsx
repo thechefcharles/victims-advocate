@@ -32,7 +32,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "NxtStps",
-  description: "Trauma-informed victim services infrastructure — Illinois Crime Victims Compensation and more.",
+  description: "Trauma-informed applicant services infrastructure — Illinois Crime Victims Compensation and more.",
 };
 
 /** Phase 7 — never block zoom (accessibility); safe-area for notched devices */

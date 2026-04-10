@@ -7,7 +7,7 @@ export const en: I18nDict = {
   ========================== */
   nav: {
     dashboard: "Dashboard",
-    dashboardVictim: "My cases",
+    dashboardApplicant: "My cases",
     dashboardAdvocate: "My clients",
     login: "Log In",
     logout: "Log Out",
@@ -20,7 +20,7 @@ export const en: I18nDict = {
     accountAdvocateEmailCardBody:
       "This is the email you use to sign in. Update your work contact details in the form above.",
     language: "Language",
-    brandTagline: "Victim Support · Made Simple",
+    brandTagline: "Applicant Support · Made Simple",
     compensationHub: "Compensation",
     home: "Home",
     help: "Help",
@@ -91,7 +91,7 @@ export const en: I18nDict = {
     signInLink: "Sign in",
   },
 
-  victimDashboard: {
+  applicantDashboard: {
     eyebrow: "My Dashboard",
     title: "My Dashboard",
     welcomeTitle: "Welcome, {name}",
@@ -214,7 +214,7 @@ export const en: I18nDict = {
       removeOrganization: "Remove Organization Link",
       removeConfirmTitle: "Remove Organization Link?",
       removeConfirmBody:
-        "Your case will use the default platform organization until you choose a victim-service organization again. Messaging may use a different thread.",
+        "Your case will use the default platform organization until you choose an applicant-service organization again. Messaging may use a different thread.",
       legacyLabel: "Default (no victim-service organization selected)",
       organizationRemoved:
         "Organization link removed. This case now uses the default platform organization until you choose another.",
@@ -260,7 +260,7 @@ export const en: I18nDict = {
     findOrganizationsPage: {
       title: "Organizations Near You",
       subtitle:
-        "Explore victim-service organizations in your area. Your exact location stays on this device—we sort distances here, not on our servers.",
+        "Explore service organizations in your area. Your exact location stays on this device—we sort distances here, not on our servers.",
       back: "← Back To My Dashboard",
       mapIntro:
         "Use the map to see organizations near you. Tap the button below only when you are ready to share your location with this browser session.",
@@ -418,7 +418,7 @@ export const en: I18nDict = {
     },
   },
 
-  victimMessages: {
+  applicantMessages: {
     backDashboard: "Back to My Dashboard",
     eyebrow: "Secure messaging",
     title: "Messages",
@@ -528,7 +528,7 @@ export const en: I18nDict = {
     guestConnectHint:
       "To connect with an advocate you’ll need a free account—we’ll guide you when you tap Connect with an advocate.",
     nonVictimRoleHint:
-      "Advocate connections are for victim accounts—Get help now opens Help for other roles.",
+      "Advocate connections are for applicant accounts—Get help now opens Help for other roles.",
     openAdvocateDashboard: "Open Case Dashboard",
   },
 
@@ -592,12 +592,12 @@ export const en: I18nDict = {
       question: "Which option best describes you?",
       options: {
         victim18Own:
-          "I am the victim, I am 18 or older, and I am applying for my own expenses",
-        parentMinor: "I am the parent or legal guardian of a victim who is under 18",
+          "I am the applicant, I am 18 or older, and I am applying for my own expenses",
+        parentMinor: "I am the parent or legal guardian of an applicant who is under 18",
         parentDisabled:
-          "I am the parent or legal guardian of a victim under a legal disability",
+          "I am the parent or legal guardian of an applicant under a legal disability",
         paidExpenses:
-          "I paid or became legally responsible for paying the victim's medical, hospital, funeral, or burial expenses",
+          "I paid or became legally responsible for paying the applicant's medical, hospital, funeral, or burial expenses",
         none: "None of these / I'm not sure",
       },
       helper:
@@ -605,9 +605,9 @@ export const en: I18nDict = {
     },
     q2: {
       title: "Victim age or legal status",
-      question: "Is the victim under 18 years old or under a legal disability?",
+      question: "Is the applicant under 18 years old or under a legal disability?",
       helper:
-        "If the victim is under 18 or under a legal disability, the application must be completed and signed by a parent or legal guardian.",
+        "If the applicant is under 18 or under a legal disability, the application must be completed and signed by a parent or legal guardian.",
       yes: "Yes",
       no: "No",
       notSure: "I'm not sure",
@@ -617,11 +617,11 @@ export const en: I18nDict = {
       question: "Who will sign the application?",
       options: {
         applicant: "I will sign as the applicant",
-        guardian: "I am the parent or legal guardian and will sign on the victim's behalf",
+        guardian: "I am the parent or legal guardian and will sign on the applicant's behalf",
         notSure: "I'm not sure or I can't get the required signature",
       },
       helper:
-        "The application must be signed by the applicant or, if the victim is under 18 or under a legal disability, by a parent or legal guardian.",
+        "The application must be signed by the applicant or, if the applicant is under 18 or under a legal disability, by a parent or legal guardian.",
     },
     q4: {
       title: "Police report",
@@ -687,7 +687,7 @@ export const en: I18nDict = {
     resultNotEligible: {
       headline:
         "You may not be eligible to apply under Illinois Crime Victims Compensation rules.",
-      body: "Only certain individuals are allowed to submit an application, such as the victim (18+), a parent or legal guardian of a minor or disabled victim, or someone who paid qualifying expenses.",
+      body: "Only certain individuals are allowed to submit an application, such as the applicant (18+), a parent or legal guardian of a minor or disabled victim, or someone who paid qualifying expenses.",
       nextSteps: [
         "If you believe someone else should apply, ask them to complete the application",
         "If you need help or referrals, contact the Illinois Attorney General's Office at 1-800-228-3368",
@@ -821,7 +821,7 @@ export const en: I18nDict = {
     goToMyClients: "Go to My clients →",
     learnHowItWorks: "Learn how it works",
     advocatesNote:
-      "Advocates don’t fill out applications here — victims share cases with you for review.",
+      "Advocates don't fill out applications here — applicants share cases with you for review.",
 
     progressTitle: "Your application progress",
     stepOf: "Step {current} of {total}",
@@ -838,9 +838,9 @@ export const en: I18nDict = {
     signIn: "Sign In",
 
     newHere: "New here?",
-    createVictimAccount: "Create victim account",
+    createApplicantAccount: "Create applicant account",
     workAsAdvocate: "Work as an advocate?",
-    createAdvocateAccount: "Create victim advocate account",
+    createAdvocateAccount: "Create advocate account",
     needHelp: "Need help?",
   },
 
@@ -977,7 +977,7 @@ export const en: I18nDict = {
     audience: {
       title: "Who NxtStps supports",
       subtitle:
-        "NxtStps is designed for everyone who touches the victim-services journey—from victims themselves to advocates, hospitals, and state agencies.",
+        "NxtStps is designed for everyone who touches the applicant-services journey—from victims themselves to advocates, hospitals, and state agencies.",
       tabs: {
         victims: "Victims",
         advocates: "Advocates",
@@ -1085,8 +1085,7 @@ export const en: I18nDict = {
       hero: {
         eyebrow: "Illinois Crime Victim Compensation · Pilot stage · Chicago, IL",
         headline: "Taking the next step shouldn't be the hardest one.",
-        subhead:
-          "63% of Illinois crime victim compensation claims are denied—most for preventable reasons: missing documents, missed deadlines, incomplete forms. NxtStps is built to reduce those barriers.",
+        subhead: "",
         stat1Num: "63%",
         stat1Label: "of claims denied",
         stat2Num: "281 days",
@@ -1186,7 +1185,7 @@ export const en: I18nDict = {
         openDirect: "Open video in a new tab",
       },
       audiences: {
-        title: "Built for everyone in the victim services ecosystem",
+        title: "Built for everyone in the applicant services ecosystem",
         tabSurvivors: "Survivors & families",
         tabAdvocates: "Advocates",
         tabCbos: "CBOs & organizations",
@@ -1201,7 +1200,7 @@ export const en: I18nDict = {
         survivorsB3: "Save progress and return anytime",
         survivorsB4: "See why each document matters",
         survivorsB5: "Track status in one place",
-        survivorsB6: "Connect with a victim advocate when you want to",
+        survivorsB6: "Connect with an applicant advocate when you want to",
         advocatesTitle: "Less paperwork — clearer cases",
         advocatesBody:
           "NxtStps helps advocates manage cases with less administrative overhead and cleaner packets for the state — so you spend time with people, not PDFs.",
@@ -1212,7 +1211,7 @@ export const en: I18nDict = {
         advocatesB4: "Caseload view across clients",
         advocatesB5: "Reminders and follow-ups in one workspace",
         advocatesB6: "Exports that support grant reporting",
-        cbosTitle: "One workspace for your victim services program",
+        cbosTitle: "One workspace for your applicant services program",
         cbosBody:
           "Replace scattered spreadsheets and email threads with a compliance-minded system aligned to how VOCA-funded programs actually operate.",
         cbosCta: "Talk to us about pilot partnerships →",
@@ -1362,7 +1361,7 @@ export const en: I18nDict = {
         companyLine: "NxtStps, LLC · Chicago, IL · Founded 2025 · Pilot stage",
       },
       footerMkt: {
-        tagline: "Compliance-first victim services infrastructure.",
+        tagline: "Compliance-first applicant services infrastructure.",
         pilotLine: "Chicago, IL · Founded 2025 · Pilot stage",
         expanding: "Piloting in Illinois. Expanding nationally.",
         colPlatform: "Platform",
@@ -1643,7 +1642,7 @@ intake: {
     },
 
     hasDisability: {
-      question: "Does the victim have a disability?",
+      question: "Does the applicant have a disability?",
     },
 
     disabilityType: {
@@ -1885,7 +1884,7 @@ intake: {
 applicant: {
   title: "Applicant information",
   description: "This is the person applying for compensation.",
-  isVictimAlsoApplicantLabel: "Is the person harmed also the applicant?",
+  isApplicantAlsoApplicantLabel: "Is the person harmed also the applicant?",
   sameAsVictimNote:
     "On the next step you’ll enter details about the person harmed; we’ll copy them into the applicant section when you continue to Incident & details.",
 
@@ -1918,7 +1917,7 @@ applicant: {
   employment: {
   title: "Work & income",
   description:
-    "If the victim missed work or lost income because of the crime, add what you know here.",
+    "If the applicant missed work or lost income because of the crime, add what you know here.",
   descriptionDraft: "Employer details and missed work (if applicable).",
 
   loadFailed: "Failed to load employment section.",
@@ -1928,7 +1927,7 @@ applicant: {
 
   unknownHint: "If unsure, choose Unknown.",
 
-  employedAtTimeLabel: "Was the victim employed at the time?",
+  employedAtTimeLabel: "Was the applicant employed at the time?",
   employerNameLabel: "Employer name (optional)",
   employerNamePlaceholder: "Company / employer name",
   employerPhoneLabel: "Employer phone (optional)",
@@ -1936,7 +1935,7 @@ applicant: {
   employerAddressLabel: "Employer address (optional)",
   employerAddressPlaceholder: "Street, city, state",
 
-  missedWorkLabel: "Did the victim miss work because of the crime?",
+  missedWorkLabel: "Did the applicant miss work because of the crime?",
   missedWorkFromLabel: "Missed work from (optional)",
   missedWorkToLabel: "Missed work to (optional)",
 
@@ -2037,7 +2036,7 @@ court: {
 funeral: {
   title: "Funeral & dependents",
   description:
-    "If the victim passed away or there are dependents affected by the crime, add what you know here.",
+    "If the applicant passed away or there are dependents affected by the crime, add what you know here.",
   descriptionDraft:
     "Funeral/burial details and dependent information (if applicable).",
 
@@ -2048,7 +2047,7 @@ funeral: {
 
   unknownHint: "If unsure, choose Unknown.",
 
-  victimDeceasedLabel: "Was the victim deceased as a result of the crime?",
+  victimDeceasedLabel: "Was the applicant deceased as a result of the crime?",
 
   funeralHomeTitle: "Funeral home",
   funeralHomeNameLabel: "Funeral home name (optional)",
@@ -2057,7 +2056,7 @@ funeral: {
   funeralHomePhonePlaceholder: "(xxx) xxx-xxxx",
 
   dependentsTitle: "Dependents",
-  hasDependentsLabel: "Are there dependents who relied on the victim for support?",
+  hasDependentsLabel: "Are there dependents who relied on the applicant for support?",
   hasDependentsHint: "For example: children, spouse, or other dependents.",
   dependentsCountLabel: "How many dependents? (optional)",
   dependentsCountPlaceholder: "e.g. 2",
@@ -2068,7 +2067,7 @@ funeral: {
 funeralExtended: {
   title: "Funeral, burial, and dependents",
   description:
-    "If the victim died as a result of the crime, this program may help with funeral, burial, or cremation costs. You can enter basic information here.",
+    "If the applicant died as a result of the crime, this program may help with funeral, burial, or cremation costs. You can enter basic information here.",
 
   funeralHome: {
     nameLabel: "Funeral home name",
@@ -2099,7 +2098,7 @@ funeralExtended: {
 
   lifeInsurance: {
     question:
-      "Did the victim have a life insurance policy that paid out after their death?",
+      "Did the applicant have a life insurance policy that paid out after their death?",
     companyLabel: "Life insurance company",
     beneficiaryNameLabel: "Name of beneficiary",
     beneficiaryPhoneLabel: "Beneficiary phone",
@@ -2107,7 +2106,7 @@ funeralExtended: {
   },
 
   dependents: {
-    title: "Dependents who relied on the victim's income",
+    title: "Dependents who relied on the applicant's income",
     nameLabel: "Dependent name",
     relationshipLabel: "Relationship to victim",
     relationshipPlaceholder: "Child, spouse, partner, etc.",
@@ -2133,7 +2132,7 @@ funeralExtended: {
   deathBenefits: {
     title: "Death benefits",
     description:
-      "If the victim died, please provide information about any death benefits received.",
+      "If the applicant died, please provide information about any death benefits received.",
     deathBenefitChicagoFundLabel: "Death Benefit From City of Chicago Fund $",
     lifeHealthAccidentInsuranceLabel:
       "Life, health accident, vehicle towing, or liability insurance $",
@@ -2623,7 +2622,7 @@ approxBillAmount: "Approx. bill amount",
     phone: "Phone",
     email: "Email",
     address: "Address",
-    isVictimAlsoApplicant: "Person harmed is also applicant",
+    isApplicantAlsoApplicant: "Person harmed is also applicant",
     relationshipToVictim: "Relationship to person harmed",
     date: "Date",
     time: "Time",

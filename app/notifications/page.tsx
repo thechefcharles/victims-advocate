@@ -325,7 +325,7 @@ export default function NotificationsPage() {
             (orgJoin !== null
               ? hasActiveOrgLeadership(orgId, orgRole)
               : isAdmin || hasActiveOrgLeadership(orgId, orgRole));
-          const isVictimPendingUnread = n.type === "victim_connection_request_pending" && isUnread;
+          const isApplicantPendingUnread = n.type === "applicant_connection_request_pending" && isUnread;
 
           return (
             <li
@@ -348,7 +348,7 @@ export default function NotificationsPage() {
                       ? strictPreviews
                         ? t("notificationsPage.previewHiddenTitle")
                         : t("notificationsPage.connectionRequestIncomingTitle")
-                      : n.type === "victim_connection_request_pending"
+                      : n.type === "applicant_connection_request_pending"
                         ? strictPreviews
                           ? t("notificationsPage.previewHiddenTitle")
                           : t("notificationsPage.connectionRequestPendingTitle")
@@ -378,7 +378,7 @@ export default function NotificationsPage() {
                       : "Wants to connect with you as their advocate."}
                   </p>
                 </div>
-              ) : isVictimPendingUnread ? (
+              ) : isApplicantPendingUnread ? (
                 !strictPreviews && n.preview_safe && n.body ? (
                   <p className="mt-2 text-xs text-[var(--color-slate)] whitespace-pre-line sm:pl-7">{n.body}</p>
                 ) : null

@@ -9,7 +9,7 @@ import { getDashboardPath } from "@/lib/dashboardRoutes";
 import { getPrivacyPolicyEmail } from "@/lib/legal/platformLegalConfig";
 import { ProgramAffiliationForm } from "@/components/programs/ProgramAffiliationForm";
 import { OrganizationCatalogForm } from "@/components/programs/OrganizationCatalogForm";
-import { VictimPersonalInfoForm } from "@/components/account/VictimPersonalInfoForm";
+import { ApplicantPersonalInfoForm } from "@/components/account/ApplicantPersonalInfoForm";
 import { AdvocatePersonalInfoForm } from "@/components/account/AdvocatePersonalInfoForm";
 import { hasOrgBillingAuthoritySimpleRole } from "@/lib/billing/orgBillingReadiness";
 
@@ -48,7 +48,7 @@ export default function AccountPage() {
     void refetchMe();
   }, [refetchMe]);
 
-  const isVictimProfile = useMemo(() => role === "victim", [role]);
+  const isApplicantProfile = useMemo(() => role === "victim", [role]);
   const isAdvocateProfile = useMemo(() => role === "advocate", [role]);
 
   const onPersonalInfoSaved = useCallback(async () => {
@@ -116,8 +116,8 @@ export default function AccountPage() {
           </div>
         )}
 
-        {isVictimProfile && (
-          <VictimPersonalInfoForm
+        {isApplicantProfile && (
+          <ApplicantPersonalInfoForm
             accessToken={accessToken}
             initial={personalInfo}
             onSaved={() => {
@@ -143,7 +143,7 @@ export default function AccountPage() {
             <p className="text-sm text-[var(--color-charcoal)] break-all">{user?.email ?? "—"}</p>
           </div>
           <p className="text-sm text-[var(--color-muted)] leading-relaxed">
-            {isVictimProfile
+            {isApplicantProfile
               ? t("nav.accountVictimEmailCardBody")
               : isAdvocateProfile
                 ? t("nav.accountAdvocateEmailCardBody")

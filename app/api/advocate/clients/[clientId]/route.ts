@@ -1,5 +1,5 @@
 /**
- * DELETE: Advocate removes themselves from a victim’s client list—drops case_access on that
+ * DELETE: Advocate removes themselves from an applicant’s client list—drops case_access on that
  * victim’s cases and clears advocate_connection_requests for this pair.
  */
 
@@ -8,7 +8,7 @@ import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/aut
 import { apiFail, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { listCasesForUser } from "@/lib/server/data";
 import { logger } from "@/lib/server/logging";
-import { advocateHasClientRelationship } from "@/lib/server/profile/victimPersonalAccess";
+import { advocateHasClientRelationship } from "@/lib/server/profile/applicantPersonalAccess";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function DELETE(
@@ -36,7 +36,7 @@ export async function DELETE(
     const { data: connectionRows } = await supabase
       .from("advocate_connection_requests")
       .select("id")
-      .eq("victim_user_id", victimId)
+      .eq("applicant_user_id", victimId)
       .eq("advocate_user_id", authCtx.userId);
 
     const requestIdSet = new Set(
@@ -70,7 +70,7 @@ export async function DELETE(
     const { error: delConnErr } = await supabase
       .from("advocate_connection_requests")
       .delete()
-      .eq("victim_user_id", victimId)
+      .eq("applicant_user_id", victimId)
       .eq("advocate_user_id", authCtx.userId);
 
     if (delConnErr) {
@@ -92,7 +92,7 @@ export async function DELETE(
       .filter((row) => {
         const m = row.metadata as Record<string, unknown> | null;
         if (!m) return false;
-        const vid = String(m.victim_user_id ?? "").trim();
+        const vid = String(m.applicant_user_id ?? "").trim();
         const rid = String(m.request_id ?? "").trim();
         if (vid === victimId) return true;
         if (rid && requestIdSet.has(rid)) return true;

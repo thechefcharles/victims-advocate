@@ -63,9 +63,9 @@ export default function StartPage() {
           </h2>
           <ul className="list-disc list-inside text-sm text-[var(--color-slate)] space-y-1.5">
             <li>Call 911 or emergency services if you haven&apos;t already.</li>
-            <li>Find out which hospital the victim was taken to.</li>
+            <li>Find out which hospital the applicant was taken to.</li>
             <li>Ask for the name of the doctor, nurse, or social worker on the case.</li>
-            <li>If you are with the victim, stay as calm as possible and follow medical staff instructions.</li>
+            <li>If you are with the applicant, stay as calm as possible and follow medical staff instructions.</li>
           </ul>
         </section>
 

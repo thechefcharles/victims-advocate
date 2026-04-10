@@ -1325,7 +1325,7 @@ export default function CaseDetailPage() {
           </p>
           {applicant.isSameAsVictim ? (
             <p className="text-[var(--color-slate)]">
-              Applicant is the same as the victim.
+              Applicant is the same as the applicant.
             </p>
           ) : (
             <>

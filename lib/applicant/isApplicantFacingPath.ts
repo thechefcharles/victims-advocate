@@ -4,7 +4,8 @@
  */
 export function isApplicantFacingPath(pathname: string | null): boolean {
   if (!pathname) return false;
-  if (pathname.startsWith("/victim")) return true;
+  if (pathname.startsWith("/applicant")) return true;
+  if (pathname.startsWith("/victim")) return true; // legacy redirect path
   if (pathname.startsWith("/compensation/intake")) return true;
   if (pathname.startsWith("/compensation/eligibility")) return true;
   if (pathname.startsWith("/compensation/documents")) return true;

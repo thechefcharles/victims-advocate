@@ -12,6 +12,8 @@ import {
   meetsSearchableMinimum,
 } from "@/lib/organizations/profileStage";
 import { logger } from "@/lib/server/logging";
+import { syncOrgToIndex } from "@/lib/server/search";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { OrganizationProfile } from "./types";
 
 export const ORG_LIFECYCLE_STATUSES = ["seeded", "managed", "archived"] as const;
@@ -173,4 +175,9 @@ export async function syncOrganizationLifecycleFromOwnership(
       organizationId,
     });
   }
+
+  // Sync to provider_search_index — lifecycle changes affect search visibility
+  syncOrgToIndex({ organizationId }, getSupabaseAdmin()).catch((err) => {
+    console.error("[org:lifecycle] syncOrgToIndex failed", { organizationId, err });
+  });
 }

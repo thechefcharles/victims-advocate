@@ -21,11 +21,11 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import {
   getDocumentById,
   listDocumentsByWorkflow,
-  createDocumentRecord,
+  insertDocumentRecord,
   updateDocumentRecord,
   softDeleteDocumentRecord,
   lockDocumentRecord,
-  createDocumentVersionRecord,
+  insertDocumentVersionRecord,
 } from "./documentRepository";
 import {
   serializeForApplicant,
@@ -89,7 +89,7 @@ export async function uploadDocument(
     throw new AppError("FORBIDDEN", decision.message ?? "Document upload denied.", 403);
   }
 
-  const doc = await createDocumentRecord(supabase, {
+  const doc = await insertDocumentRecord(supabase, {
     ...input,
     uploaded_by_user_id: actor.userId,
   });
@@ -195,7 +195,7 @@ export async function replaceDocument(
 
   const versionNumber = (count ?? 0) + 1;
 
-  await createDocumentVersionRecord(
+  await insertDocumentVersionRecord(
     supabase,
     documentId,
     { storage_path: doc.storage_path, file_name: doc.file_name, file_size: doc.file_size, mime_type: doc.mime_type },
@@ -433,7 +433,7 @@ export async function attachToMessage(
     throw new AppError("FORBIDDEN", decision.message ?? "Attachment upload denied.", 403);
   }
 
-  const doc = await createDocumentRecord(supabase, {
+  const doc = await insertDocumentRecord(supabase, {
     doc_type: "attachment",
     file_name: file.file_name,
     mime_type: file.mime_type,

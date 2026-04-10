@@ -8,7 +8,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError, AppError } from "@/lib/se
 import { getCaseById } from "@/lib/server/data";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
-import { syncConnectionRequestsAfterVictimRemovesAdvocateFromCase } from "@/lib/server/advocate/syncConnectionRequestsAfterVictimRemovesAdvocate";
+import { syncConnectionRequestsAfterApplicantRemovesAdvocateFromCase } from "@/lib/server/advocate/syncConnectionRequestsAfterApplicantRemovesAdvocate";
 
 interface RouteParams {
   params: Promise<{ id: string; advocateUserId: string }>;
@@ -62,7 +62,7 @@ export async function DELETE(_req: Request, context: RouteParams) {
       throw new AppError("INTERNAL", "Failed to remove advocate", undefined, 500);
     }
 
-    await syncConnectionRequestsAfterVictimRemovesAdvocateFromCase({
+    await syncConnectionRequestsAfterApplicantRemovesAdvocateFromCase({
       victimUserId: ctx.userId,
       advocateUserId,
       caseId,

@@ -7,7 +7,7 @@ export const es: I18nDict = {
     ========================== */
     nav: {
         dashboard: "Panel",
-        dashboardVictim: "Mis casos",
+        dashboardApplicant: "Mis casos",
         dashboardAdvocate: "Mis clientes",
         login: "Iniciar sesión",
         logout: "Cerrar sesión",
@@ -91,7 +91,7 @@ export const es: I18nDict = {
         signInLink: "Iniciar sesión",
     },
 
-    victimDashboard: {
+    applicantDashboard: {
         eyebrow: "Mi panel",
         title: "Mi panel",
         welcomeTitle: "Bienvenido/a, {name}",
@@ -431,7 +431,7 @@ export const es: I18nDict = {
         },
     },
 
-    victimMessages: {
+    applicantMessages: {
         backDashboard: "Volver a Mi panel",
         eyebrow: "Mensajería segura",
         title: "Mensajes",
@@ -863,7 +863,7 @@ export const es: I18nDict = {
         signIn: "Iniciar sesión",
 
         newHere: "¿Nuevo aquí?",
-        createVictimAccount: "Crear cuenta de víctima",
+        createApplicantAccount: "Crear cuenta de víctima",
         workAsAdvocate: "¿Trabajas como defensor/a?",
         createAdvocateAccount: "Crear cuenta de defensor/a de víctimas",
         needHelp: "¿Necesitas ayuda?",
@@ -1912,7 +1912,7 @@ export const es: I18nDict = {
         applicant: {
             title: "Información del solicitante",
             description: "Esta es la persona que solicita la compensación.",
-            isVictimAlsoApplicantLabel: "¿La persona afectada también es el solicitante?",
+            isApplicantAlsoApplicantLabel: "¿La persona afectada también es el solicitante?",
             sameAsVictimNote:
                 "En el siguiente paso ingresarás los datos de la persona afectada; los copiaremos al solicitante al continuar a Incidente y detalles.",
 
@@ -2666,7 +2666,7 @@ export const es: I18nDict = {
                 phone: "Teléfono",
                 email: "Correo electrónico",
                 address: "Dirección",
-                isVictimAlsoApplicant: "La persona afectada también es solicitante",
+                isApplicantAlsoApplicant: "La persona afectada también es solicitante",
                 relationshipToVictim: "Relación con la persona afectada",
                 date: "Fecha",
                 time: "Hora",

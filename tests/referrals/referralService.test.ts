@@ -26,7 +26,7 @@ const mockReferral: ReferralRow = {
 };
 
 vi.mock("@/lib/server/referrals/referralRepository", () => ({
-  createReferral: vi.fn(),
+  insertReferral: vi.fn(),
   getReferralById: vi.fn(),
   listReferralsForSourceOrg: vi.fn(),
   listReferralsForTargetOrg: vi.fn(),
@@ -58,7 +58,7 @@ const ctx = { userId: "user-1", accountType: "provider" as const, orgId: "org-a"
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(repo.createReferral).mockResolvedValue(mockReferral);
+  vi.mocked(repo.insertReferral).mockResolvedValue(mockReferral);
   vi.mocked(repo.getReferralById).mockResolvedValue(mockReferral);
   vi.mocked(repo.updateReferralStatus).mockImplementation(({ status }) =>
     Promise.resolve({ ...mockReferral, status } as ReferralRow)
@@ -76,7 +76,7 @@ describe("referral service", () => {
         applicantId: "applicant-1",
       },
     });
-    expect(repo.createReferral).toHaveBeenCalledWith(
+    expect(repo.insertReferral).toHaveBeenCalledWith(
       expect.objectContaining({
         source_organization_id: "org-a",
         target_organization_id: "org-b",

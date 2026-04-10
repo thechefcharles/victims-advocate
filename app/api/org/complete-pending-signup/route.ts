@@ -7,7 +7,7 @@ import { getAuthContext, requireAuth, requireActiveAccount } from "@/lib/server/
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { createOrganizationForUser, ORG_TYPES } from "@/lib/server/org/createOrganizationForUser";
+import { createOrganizationForUser, ORG_TYPES } from "@/lib/server/organizations/createOrganizationForUser";
 
 export async function POST(req: Request) {
   try {

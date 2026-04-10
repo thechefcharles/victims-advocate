@@ -25,7 +25,7 @@ export default function CompensationHubPage() {
   const connectHref = !user
     ? "/signup"
     : role === "victim"
-      ? ROUTES.victimDashboard
+      ? ROUTES.applicantDashboard
       : "/help";
 
   return (
@@ -62,7 +62,7 @@ export default function CompensationHubPage() {
             ·
           </span>
           <Link
-            href={role === "victim" ? ROUTES.victimDashboard : ROUTES.compensationConnectAdvocate}
+            href={role === "victim" ? ROUTES.applicantDashboard : ROUTES.compensationConnectAdvocate}
             className="text-[var(--color-slate)] hover:text-[var(--color-navy)] underline underline-offset-4"
           >
             {t("compensationHub.secondaryConnectAdvocate")}
@@ -145,14 +145,14 @@ export default function CompensationHubPage() {
                   onClick={() => handleStartIntake("IL")}
                   className="w-full rounded-lg border border-[var(--color-border)] px-4 py-3 text-sm font-medium text-[var(--color-navy)] hover:bg-[var(--color-light-sand)]/75 hover:border-[var(--color-teal)]/50 transition text-left"
                 >
-                  {t("victimDashboard.stateIL")}
+                  {t("applicantDashboard.stateIL")}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleStartIntake("IN")}
                   className="w-full rounded-lg border border-[var(--color-border)] px-4 py-3 text-sm font-medium text-[var(--color-navy)] hover:bg-[var(--color-light-sand)]/75 hover:border-[var(--color-teal)]/50 transition text-left"
                 >
-                  {t("victimDashboard.stateIN")}
+                  {t("applicantDashboard.stateIN")}
                 </button>
               </div>
               <button

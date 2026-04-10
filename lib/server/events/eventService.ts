@@ -25,11 +25,11 @@ import {
   getEventById,
   listVisibleEvents,
   listProviderScopedEvents,
-  createEvent as dbCreateEvent,
+  insertEvent as dbCreateEvent,
   updateEventFields,
   updateEventStatus,
   incrementRegisteredCount,
-  createEventRegistration,
+  insertEventRegistration,
   cancelEventRegistration,
   findActiveRegistration,
   listEventRegistrationsByEventId,
@@ -210,7 +210,7 @@ export async function registerForEvent(params: {
   });
   if (existing) return existing;
 
-  const registration = await createEventRegistration({
+  const registration = await insertEventRegistration({
     event_id: params.eventId,
     participant_id: params.ctx.userId,
   });
