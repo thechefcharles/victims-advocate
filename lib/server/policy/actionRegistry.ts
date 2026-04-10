@@ -526,6 +526,36 @@ export const POLICY_ACTIONS = [
   "ai_guidance.draft.generate",
   /** View AI guidance logs. Platform admin only. */
   "ai_guidance.log.view_admin",
+
+  // -------------------------------------------------------------------------
+  // Domain 7.4 — Admin Tools (13)
+  // -------------------------------------------------------------------------
+  /** View governance audit events. Platform admin only. */
+  "admin.audit.view",
+  /** Inspect an organization (admin governance view). Platform admin only. */
+  "admin.organization.inspect",
+  /** Create a remediation record for an organization. Platform admin only. */
+  "admin.organization.remediate",
+  /** Review affiliation queue. Platform admin only. */
+  "admin.affiliation.review",
+  /** Update provider affiliation status. Platform admin only. */
+  "admin.affiliation.update",
+  /** View state workflow configs (admin governance). Platform admin only. */
+  "admin.state_workflow.view",
+  /** Publish a state workflow config. Platform admin only. */
+  "admin.state_workflow.publish",
+  /** Deprecate a state workflow config. Platform admin only. */
+  "admin.state_workflow.deprecate",
+  /** Inspect reporting submissions. Platform admin only. */
+  "admin.reporting.inspect",
+  /** Inspect a user account. Platform admin only. */
+  "admin.user.inspect",
+  /** Inspect notifications (admin). Platform admin only. */
+  "admin.notification.inspect",
+  /** Enter support mode (creates tracked session). Platform admin only. */
+  "admin.support_mode.enter",
+  /** Perform an action in support mode. Platform admin only (active session required). */
+  "admin.support_mode.act",
 ] as const;
 
 /** Union of all valid policy action strings. */

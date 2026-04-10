@@ -89,7 +89,8 @@ export type PolicyResourceType =
   | "notification"
   | "notification_preference"
   | "ai_guidance"
-  | "advocate_copilot";
+  | "advocate_copilot"
+  | "admin_tools";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant
