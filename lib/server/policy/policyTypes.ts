@@ -77,7 +77,10 @@ export type PolicyResourceType =
   | "provider_search"
   | "trusted_helper"
   | "recommendation"
-  | "trust";
+  | "trust"
+  | "reporting_submission"
+  | "agency_notice"
+  | "agency_analytics";
 
 /**
  * The resource being acted upon. Callers populate only the fields relevant

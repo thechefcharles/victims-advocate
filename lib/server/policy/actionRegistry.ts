@@ -428,6 +428,28 @@ export const POLICY_ACTIONS = [
   "provider_affiliation:view",
   /** Manage provider affiliation status (platform admin only). */
   "provider_affiliation:manage",
+
+  // -------------------------------------------------------------------------
+  // Domain 6.2 — Agency / Reporting actions (9)
+  // -------------------------------------------------------------------------
+  /** Create a reporting submission draft. Provider leadership (own org). */
+  "reporting_submission:create",
+  /** Submit a reporting package. Provider leadership (own org). */
+  "reporting_submission:submit",
+  /** View a reporting submission. Provider (own org), agency (in-scope), admin. */
+  "reporting_submission:view",
+  /** Request revision on a submission. Agency Officer/Owner only. */
+  "reporting_submission:request_revision",
+  /** Accept a submission. Agency Officer/Owner ONLY — Reviewer CANNOT accept. */
+  "reporting_submission:accept",
+  /** Reject a submission. Agency Officer/Owner ONLY — Reviewer CANNOT reject. */
+  "reporting_submission:reject",
+  /** Issue a formal notice to a provider. Agency Officer/Owner. */
+  "agency_notice:create",
+  /** View agency analytics dashboard. Any agency member. */
+  "agency_analytics:view",
+  /** View comparative cross-provider analytics from agency scope. */
+  "provider_score:view_agency_comparative",
 ] as const;
 
 /** Union of all valid policy action strings. */
