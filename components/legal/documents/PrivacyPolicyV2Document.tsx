@@ -34,7 +34,7 @@ export function PrivacyPolicyV2Document() {
         information obtained through the NxtStps platform, website, and all related services
         (collectively, the &quot;Platform&quot;).
       </p>
-      <p>This Policy is drafted to comply with federal, state, and local confidentiality mandates applicable to victim services, including but not limited to:</p>
+      <p>This Policy is drafted to comply with federal, state, and local confidentiality mandates applicable to applicant services, including but not limited to:</p>
       <ul className="list-disc space-y-1 pl-5">
         <li>The Victims of Crime Act of 1984 (VOCA) and its implementing regulations</li>
         <li>The Violence Against Women Act (VAWA), specifically Section 40002(b)(2)</li>
@@ -168,7 +168,7 @@ export function PrivacyPolicyV2Document() {
         3.2 Sensitive Personal Information
       </h3>
       <p>
-        Given the nature of victim services, Users may provide the following categories of sensitive
+        Given the nature of applicant services, Users may provide the following categories of sensitive
         information in the course of completing a crime victim compensation application:
       </p>
       <ul className="list-disc space-y-1 pl-5">
@@ -255,7 +255,7 @@ export function PrivacyPolicyV2Document() {
         VAWA Section 40002(b)(2) prohibits the disclosure of personally identifying information about
         any individual seeking services from a VAWA-funded program without informed, written, reasonably
         time-limited consent. NxtStps will not disclose individually identifying information about
-        victims of domestic violence, sexual assault, stalking, or trafficking without the victim&apos;s
+        victims of domestic violence, sexual assault, stalking, or trafficking without the applicant&apos;s
         informed written consent, except as compelled by a court order that complies with VAWA&apos;s
         confidentiality provisions.
       </p>
@@ -272,11 +272,11 @@ export function PrivacyPolicyV2Document() {
         5.3 No Disclosure to Abusers or Unauthorized Parties
       </h3>
       <p>
-        NxtStps will not disclose a victim&apos;s use of the Platform, their application status, their
+        NxtStps will not disclose an applicant&apos;s use of the Platform, their application status, their
         location, or any personally identifying information to any person who is not authorized by the
         victim to receive that information. This prohibition applies regardless of any relationship
-        between the requesting party and the victim, including family members, intimate partners, or
-        legal representatives who have not been authorized by the victim.
+        between the requesting party and the applicant, including family members, intimate partners, or
+        legal representatives who have not been authorized by the applicant.
       </p>
       <h3 className="text-base font-medium text-[var(--color-charcoal)]">5.4 Shared Device Safety</h3>
       <p>
@@ -484,9 +484,9 @@ function PrivacyPolicyV2SectionsPart2(props: {
         </li>
         <li>
           (e) <strong>Disclose victim identity without authorization.</strong> NxtStps will never
-          disclose a victim&apos;s identity, location, contact information, or use of the Platform to any
-          person who has not been specifically authorized by the victim to receive that information,
-          regardless of their relationship to the victim.
+          disclose an applicant&apos;s identity, location, contact information, or use of the Platform to any
+          person who has not been specifically authorized by the applicant to receive that information,
+          regardless of their relationship to the applicant.
         </li>
         <li>
           (f) <strong>Share data with law enforcement without legal compulsion.</strong> NxtStps will

@@ -6,7 +6,7 @@ import { getAuthContext, requireFullAccess, requireRole } from "@/lib/server/aut
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
-import { advocateHasClientAccess } from "@/lib/server/profile/victimPersonalAccess";
+import { advocateHasClientAccess } from "@/lib/server/profile/applicantPersonalAccess";
 
 export async function GET(
   req: Request,

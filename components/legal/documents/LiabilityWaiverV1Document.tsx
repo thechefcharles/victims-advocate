@@ -38,7 +38,7 @@ export function LiabilityWaiverV1Document() {
           help you understand what to expect from the platform and what remains your responsibility.
         </p>
         <p>
-          If you need legal advice, a victim advocate can help you find it. If you are in crisis, see
+          If you need legal advice, an applicant advocate can help you find it. If you are in crisis, see
           Section 8.3 of this document.
         </p>
       </section>
@@ -241,7 +241,7 @@ export function LiabilityWaiverV1Document() {
 
       <h3 className="text-base font-medium text-[var(--color-charcoal)]">4.1 Advocates Acting on Behalf of Applicants</h3>
       <p>
-        If you are a Provider user — a victim advocate, case manager, or other authorized representative
+        If you are a Provider user — an applicant advocate, case manager, or other authorized representative
         — completing this Waiver in the course of using the Platform on behalf of an Applicant, the
         following additional provisions apply:
       </p>

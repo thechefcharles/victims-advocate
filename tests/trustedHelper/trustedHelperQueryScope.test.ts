@@ -37,10 +37,10 @@ vi.mock("@/lib/server/trustedHelper/trustedHelperRepository", () => ({
   listTrustedHelperAccessByHelperUserId: vi.fn(),
   getTrustedHelperAccessById: vi.fn(),
   findActiveGrantForPair: vi.fn(),
-  createTrustedHelperAccess: vi.fn(),
+  insertTrustedHelperAccess: vi.fn(),
   updateTrustedHelperAccessStatus: vi.fn(),
   updateTrustedHelperAccessScope: vi.fn(),
-  createTrustedHelperEvent: vi.fn(),
+  insertTrustedHelperEvent: vi.fn(),
   listTrustedHelperEventsByGrantId: vi.fn(),
 }));
 

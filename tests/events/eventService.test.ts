@@ -34,11 +34,11 @@ vi.mock("@/lib/server/events/eventRepository", () => ({
   getEventById: vi.fn(),
   listVisibleEvents: vi.fn(),
   listProviderScopedEvents: vi.fn(),
-  createEvent: vi.fn(),
+  insertEvent: vi.fn(),
   updateEventFields: vi.fn(),
   updateEventStatus: vi.fn(),
   incrementRegisteredCount: vi.fn(),
-  createEventRegistration: vi.fn(),
+  insertEventRegistration: vi.fn(),
   cancelEventRegistration: vi.fn(),
   findActiveRegistration: vi.fn(),
   listEventRegistrationsByEventId: vi.fn(),
@@ -61,7 +61,7 @@ const ctx = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(repo.createEvent).mockResolvedValue(mockEvent);
+  vi.mocked(repo.insertEvent).mockResolvedValue(mockEvent);
   vi.mocked(repo.getEventById).mockResolvedValue(mockEvent);
   vi.mocked(repo.updateEventStatus).mockImplementation(({ status, registrationOpen }) =>
     Promise.resolve({
@@ -87,7 +87,7 @@ describe("event service", () => {
         audience_scope: "public",
       },
     });
-    expect(repo.createEvent).toHaveBeenCalledWith(
+    expect(repo.insertEvent).toHaveBeenCalledWith(
       expect.objectContaining({ audience_scope: "public", created_by: "user-1" }),
     );
     expect(result.status).toBe("draft");
@@ -108,7 +108,7 @@ describe("event service", () => {
         },
       }),
     ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
-    expect(repo.createEvent).not.toHaveBeenCalled();
+    expect(repo.insertEvent).not.toHaveBeenCalled();
   });
 
   it("publishEvent is an explicit state transition (draft → published) and opens registration", async () => {
@@ -166,7 +166,7 @@ describe("event service", () => {
       status: "registered",
       registered_at: "2026-04-09T00:00:00Z",
     };
-    vi.mocked(repo.createEventRegistration).mockResolvedValue(okRegistration);
+    vi.mocked(repo.insertEventRegistration).mockResolvedValue(okRegistration);
     const result = await registerForEvent({ ctx, eventId: "evt-1" });
     expect(result.status).toBe("registered");
     expect(repo.incrementRegisteredCount).toHaveBeenCalledWith({ id: "evt-1", delta: 1 });

@@ -72,7 +72,7 @@ export async function listDocumentsByOrganization(
   return (data ?? []) as DocumentRecord[];
 }
 
-export async function createDocumentRecord(
+export async function insertDocumentRecord(
   supabase: SupabaseClient,
   input: UploadDocumentInput & { storage_path: string; organization_id?: string | null; uploaded_by_user_id: string },
 ): Promise<DocumentRecord> {
@@ -134,7 +134,7 @@ export async function lockDocumentRecord(
   } as Partial<DocumentRecord>);
 }
 
-export async function createDocumentVersionRecord(
+export async function insertDocumentVersionRecord(
   supabase: SupabaseClient,
   documentId: string,
   oldData: Pick<DocumentRecord, "storage_path" | "file_name" | "file_size" | "mime_type">,

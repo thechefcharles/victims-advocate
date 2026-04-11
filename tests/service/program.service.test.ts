@@ -34,7 +34,7 @@ vi.mock("@/lib/catalog/loadCatalog", () => ({
   loadIlVictimAssistanceCatalog: vi.fn().mockReturnValue([]),
 }));
 
-vi.mock("@/lib/server/org/catalogOrgFields", () => ({
+vi.mock("@/lib/server/organizations/catalogOrgFields", () => ({
   orgRowFromCatalogEntry: vi.fn().mockReturnValue({
     name: "Test Org — Advocacy",
     type: "nonprofit",
@@ -97,7 +97,7 @@ import {
 } from "@/lib/server/programs";
 import { evaluateProgram, intakeFromApplication } from "@/lib/server/routing/evaluate";
 import { serializeProgramDefinition } from "@/lib/server/serializers/program.serializer";
-import { orgRowFromCatalogEntry } from "@/lib/server/org/catalogOrgFields";
+import { orgRowFromCatalogEntry } from "@/lib/server/organizations/catalogOrgFields";
 import type { ProgramDefinitionRow } from "@/lib/server/routing/types";
 
 // ---------------------------------------------------------------------------

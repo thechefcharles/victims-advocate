@@ -16,8 +16,8 @@ import { emitSignal } from "@/lib/server/trustSignal/signalEmitter";
 import {
   getConsentGrantById,
   listConsentGrantsByApplicant,
-  createConsentGrantRecord,
-  createConsentScopeRecord,
+  insertConsentGrantRecord,
+  insertConsentScopeRecord,
   revokeConsentGrantRecord,
 } from "./consentRepository";
 import {
@@ -52,8 +52,8 @@ export async function createConsentGrant(
     throw new AppError("FORBIDDEN", decision.message ?? "Consent creation denied.", 403);
   }
 
-  const grant = await createConsentGrantRecord(supabase, input);
-  const scope = await createConsentScopeRecord(supabase, grant.id, input.scope);
+  const grant = await insertConsentGrantRecord(supabase, input);
+  const scope = await insertConsentScopeRecord(supabase, grant.id, input.scope);
 
   logEvent({
     ctx: null,

@@ -8,7 +8,7 @@ import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
-import { listVictimsForOrganization } from "@/lib/server/org/listVictimsForOrganization";
+import { listApplicantsForOrganization } from "@/lib/server/organizations/listApplicantsForOrganization";
 
 export async function GET(req: Request) {
   try {
@@ -29,9 +29,9 @@ export async function GET(req: Request) {
       return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
-    const victims = await listVictimsForOrganization({ organizationId: orgId });
+    const applicants = await listApplicantsForOrganization({ organizationId: orgId });
 
-    return apiOk({ victims, organization_id: orgId });
+    return apiOk({ applicants, organization_id: orgId });
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("org.victims.list.error", { code: appErr.code, message: appErr.message });

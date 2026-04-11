@@ -8,7 +8,7 @@ import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
-import { orgHasVictimCase } from "@/lib/server/profile/victimPersonalAccess";
+import { orgHasVictimCase } from "@/lib/server/profile/applicantPersonalAccess";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function GET(

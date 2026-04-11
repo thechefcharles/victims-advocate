@@ -7,7 +7,7 @@ export const es: I18nDict = {
     ========================== */
     nav: {
         dashboard: "Panel",
-        dashboardVictim: "Mis casos",
+        dashboardApplicant: "Mis casos",
         dashboardAdvocate: "Mis clientes",
         login: "Iniciar sesión",
         logout: "Cerrar sesión",
@@ -91,7 +91,7 @@ export const es: I18nDict = {
         signInLink: "Iniciar sesión",
     },
 
-    victimDashboard: {
+    applicantDashboard: {
         eyebrow: "Mi panel",
         title: "Mi panel",
         welcomeTitle: "Bienvenido/a, {name}",
@@ -431,7 +431,7 @@ export const es: I18nDict = {
         },
     },
 
-    victimMessages: {
+    applicantMessages: {
         backDashboard: "Volver a Mi panel",
         eyebrow: "Mensajería segura",
         title: "Mensajes",
@@ -552,8 +552,14 @@ export const es: I18nDict = {
 
     compensationConnectAdvocate: {
         title: "Conectar con un/a defensor/a",
+        // FIXME: English copy was updated 2026-04-11 — Spanish needs human review.
+        // Do not machine-translate. New English meaning: "An advocate can guide you through your application and help you gather what you need. Search our verified directory or connect by email if you already know one."
+        // Stale until a native Spanish speaker approves a replacement.
         subtitle:
             "Encuentra programas cerca de ti o envía una solicitud si ya conoces el correo de tu defensor/a. Las organizaciones provienen de nuestro directorio (perfiles verificados con zonas de servicio y formas de contacto).",
+        // FIXME: English copy was updated 2026-04-11 — Spanish needs human review.
+        // Do not machine-translate. New English meaning: "To connect an advocate, you'll first need an application started. Open your dashboard to begin or continue one."
+        // Stale until a native Spanish speaker approves a replacement.
         caseRequiredHint:
             "Las solicitudes de conexión están ligadas a un caso específico. Abre Mi panel, selecciona tu caso y vuelve a elegir Conectar con un/a defensor/a.",
         caseLinkedNote:
@@ -863,7 +869,7 @@ export const es: I18nDict = {
         signIn: "Iniciar sesión",
 
         newHere: "¿Nuevo aquí?",
-        createVictimAccount: "Crear cuenta de víctima",
+        createApplicantAccount: "Crear cuenta de víctima",
         workAsAdvocate: "¿Trabajas como defensor/a?",
         createAdvocateAccount: "Crear cuenta de defensor/a de víctimas",
         needHelp: "¿Necesitas ayuda?",
@@ -1912,7 +1918,7 @@ export const es: I18nDict = {
         applicant: {
             title: "Información del solicitante",
             description: "Esta es la persona que solicita la compensación.",
-            isVictimAlsoApplicantLabel: "¿La persona afectada también es el solicitante?",
+            isApplicantAlsoApplicantLabel: "¿La persona afectada también es el solicitante?",
             sameAsVictimNote:
                 "En el siguiente paso ingresarás los datos de la persona afectada; los copiaremos al solicitante al continuar a Incidente y detalles.",
 
@@ -2666,7 +2672,7 @@ export const es: I18nDict = {
                 phone: "Teléfono",
                 email: "Correo electrónico",
                 address: "Dirección",
-                isVictimAlsoApplicant: "La persona afectada también es solicitante",
+                isApplicantAlsoApplicant: "La persona afectada también es solicitante",
                 relationshipToVictim: "Relación con la persona afectada",
                 date: "Fecha",
                 time: "Hora",

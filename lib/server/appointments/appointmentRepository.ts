@@ -158,7 +158,7 @@ export async function findConflictingAppointments(params: {
 // Appointment writes
 // ---------------------------------------------------------------------------
 
-export async function createAppointment(
+export async function insertAppointment(
   input: CreateAppointmentInput & { created_by: string },
 ): Promise<AppointmentRow> {
   const supabase = getSupabaseAdmin();
@@ -217,7 +217,7 @@ export async function updateAppointmentFields(params: {
  * Creates the rescheduled appointment row and marks the original as rescheduled.
  * Returns the new appointment. rescheduled_from_id links the chain.
  */
-export async function createRescheduledAppointment(params: {
+export async function insertRescheduledAppointment(params: {
   originalId: string;
   originalRow: AppointmentRow;
   newStart: string;
@@ -282,7 +282,7 @@ export async function updateReminderState(
 // Appointment events
 // ---------------------------------------------------------------------------
 
-export async function createAppointmentEvent(params: {
+export async function insertAppointmentEvent(params: {
   appointment_id: string;
   event_type: AppointmentEventType;
   previous_status?: string | null;

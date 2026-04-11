@@ -25,7 +25,7 @@ export async function listApplicantBookmarks(
   return (data ?? []) as ApplicantBookmarkRecord[];
 }
 
-export async function createApplicantBookmark(
+export async function insertApplicantBookmark(
   applicantUserId: string,
   targetType: BookmarkTargetType,
   targetId: string,

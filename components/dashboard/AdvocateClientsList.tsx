@@ -165,7 +165,7 @@ export function AdvocateClientsList({ email, token, hideSignedInLine, onClientRe
           <div>
             <h2 className="text-sm font-semibold text-white">My clients</h2>
             <p className="text-[11px] text-[var(--color-muted)] mt-0.5">
-              Victims who have connected or invited you to their cases
+              Applicants who have connected or invited you to their cases
             </p>
           </div>
           <button
@@ -190,7 +190,7 @@ export function AdvocateClientsList({ email, token, hideSignedInLine, onClientRe
           <p className="text-[11px] text-red-300">{err}</p>
         ) : clients.length === 0 ? (
           <p className="text-[11px] text-[var(--color-muted)]">
-            No clients yet. Victims can connect with you from the compensation page, or invite you to their case.
+            No applicants yet. They can connect with you from their dashboard, or invite you to their case.
           </p>
         ) : (
           <div className="grid gap-3">

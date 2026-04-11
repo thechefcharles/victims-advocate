@@ -11,7 +11,7 @@ import {
   listReferralsForSourceOrg,
   listReferralsForTargetOrg,
   listReferralsForApplicantSafeView,
-  createReferral as dbCreateReferral,
+  insertReferral as dbCreateReferral,
   updateReferralStatus,
   recordReferralEvent,
 } from "./referralRepository";

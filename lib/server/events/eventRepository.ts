@@ -122,7 +122,7 @@ export async function listProviderScopedEvents(
 // Event writes
 // ---------------------------------------------------------------------------
 
-export async function createEvent(
+export async function insertEvent(
   input: CreateEventInput & { created_by: string },
 ): Promise<EventRow> {
   const supabase = getSupabaseAdmin();
@@ -212,7 +212,7 @@ export async function incrementRegisteredCount(params: {
 // Registration reads + writes
 // ---------------------------------------------------------------------------
 
-export async function createEventRegistration(params: {
+export async function insertEventRegistration(params: {
   event_id: string;
   participant_id: string;
 }): Promise<EventRegistrationRow> {

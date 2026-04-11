@@ -70,7 +70,7 @@ export async function GET(req: Request, context: RouteParams) {
     const { data: pendingRows } = await supabaseAdmin
       .from("advocate_connection_requests")
       .select("case_id")
-      .eq("victim_user_id", ctx.userId)
+      .eq("applicant_user_id", ctx.userId)
       .eq("status", "pending");
 
     const advocateConnectionPending = (pendingRows ?? []).some((row) => {

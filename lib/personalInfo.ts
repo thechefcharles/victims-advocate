@@ -141,7 +141,7 @@ export function victimHasDisplayName(info: VictimPersonalInfo | null): boolean {
 }
 
 /**
- * Name + at least one phone + city — minimum for advocates/orgs to reach the victim.
+ * Name + at least one phone + city — minimum for advocates/orgs to reach the applicant.
  */
 export function victimProfileCompleteEnough(info: VictimPersonalInfo | null): boolean {
   if (!victimHasDisplayName(info)) return false;

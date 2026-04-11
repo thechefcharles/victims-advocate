@@ -123,7 +123,7 @@ export async function findActiveGrantForPair(params: {
 // Grant writes
 // ---------------------------------------------------------------------------
 
-export async function createTrustedHelperAccess(
+export async function insertTrustedHelperAccess(
   input: CreateTrustedHelperAccessInput & { granted_by_user_id: string },
 ): Promise<TrustedHelperAccessRow> {
   const supabase = getSupabaseAdmin();
@@ -194,7 +194,7 @@ export async function updateTrustedHelperAccessScope(params: {
 // Audit events (append-only)
 // ---------------------------------------------------------------------------
 
-export async function createTrustedHelperEvent(params: {
+export async function insertTrustedHelperEvent(params: {
   grant_id: string;
   event_type: TrustedHelperEventType;
   previous_status?: string | null;

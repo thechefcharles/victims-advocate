@@ -477,8 +477,8 @@ describe("Domain 3.1 — Service (10 tests)", () => {
     }
   });
 
-  // Test 24: createApplicantBookmark prevents duplicates
-  it("24. createApplicantBookmark returns existing on duplicate target", async () => {
+  // Test 24: insertApplicantBookmark prevents duplicates
+  it("24. insertApplicantBookmark returns existing on duplicate target", async () => {
     // Two bookmarks with same target should deduplicate
     const bookmarkSet = new Set(
       mockBookmarks.map((b) => `${b.target_type}:${b.target_id}`),

@@ -66,7 +66,7 @@ export async function findActiveConsentGrant(
   return grant;
 }
 
-export async function createConsentGrantRecord(
+export async function insertConsentGrantRecord(
   supabase: SupabaseClient,
   input: CreateConsentGrantInput,
 ): Promise<ConsentGrantRecord> {
@@ -87,7 +87,7 @@ export async function createConsentGrantRecord(
   return data as ConsentGrantRecord;
 }
 
-export async function createConsentScopeRecord(
+export async function insertConsentScopeRecord(
   supabase: SupabaseClient,
   grantId: string,
   scope: ConsentScopeInput,

@@ -39,45 +39,45 @@ function ConnectAdvocateForm() {
 
   const mapCopy = useMemo(
     () => ({
-      mapIntro: t("victimDashboard.findOrganizationsPage.mapIntro"),
-      shareLocation: t("victimDashboard.findOrganizationsPage.shareLocation"),
-      sharing: t("victimDashboard.findOrganizationsPage.sharing"),
-      tryAgain: t("victimDashboard.findOrganizationsPage.tryAgain"),
-      locationDenied: t("victimDashboard.findOrganizationsPage.locationDenied"),
-      locationUnavailable: t("victimDashboard.findOrganizationsPage.locationUnavailable"),
-      locationTimeout: t("victimDashboard.findOrganizationsPage.locationTimeout"),
-      positionUnavailable: t("victimDashboard.findOrganizationsPage.positionUnavailable"),
-      locationNotSupported: t("victimDashboard.findOrganizationsPage.locationNotSupported"),
-      locationNeedsHttps: t("victimDashboard.findOrganizationsPage.locationNeedsHttps"),
-      yourLocation: t("victimDashboard.findOrganizationsPage.yourLocation"),
-      approximateNote: t("victimDashboard.findOrganizationsPage.approximateNote"),
-      milesAway: t("victimDashboard.findOrganizationsPage.milesAway"),
-      accepting: t("victimDashboard.findOrganizationsPage.accepting"),
-      notAccepting: t("victimDashboard.findOrganizationsPage.notAccepting"),
-      capacity: t("victimDashboard.findOrganizationsPage.capacity"),
-      noOrgs: t("victimDashboard.findOrganizationsPage.noOrgs"),
-      loadError: t("victimDashboard.findOrganizationsPage.loadError"),
-      privacyNote: t("victimDashboard.findOrganizationsPage.privacyNote"),
-      sendReferral: t("victimDashboard.findOrganizationsPage.sendReferral"),
-      sendReferralSending: t("victimDashboard.findOrganizationsPage.sendReferralSending"),
-      sendReferralDone: t("victimDashboard.findOrganizationsPage.sendReferralDone"),
-      sendReferralFailed: t("victimDashboard.findOrganizationsPage.sendReferralFailed"),
-      sendReferralDuplicate: t("victimDashboard.findOrganizationsPage.sendReferralDuplicate"),
-      learnMoreTitle: t("victimDashboard.findOrganizationsPage.learnMoreTitle"),
-      learnMore: t("victimDashboard.findOrganizationsPage.learnMore"),
-      learnMoreClose: t("victimDashboard.findOrganizationsPage.learnMoreClose"),
-      organizationProfile: t("victimDashboard.findOrganizationsPage.organizationProfile"),
-      connectWithOrg: t("victimDashboard.findOrganizationsPage.connectWithOrg"),
-      externalDirectoryNote: t("victimDashboard.findOrganizationsPage.externalDirectoryNote"),
-      profileUnavailableExternal: t("victimDashboard.findOrganizationsPage.profileUnavailableExternal"),
-      connectUnavailableExternal: t("victimDashboard.findOrganizationsPage.connectUnavailableExternal"),
-      directoryProgramType: t("victimDashboard.findOrganizationsPage.directoryProgramType"),
-      directoryAddress: t("victimDashboard.findOrganizationsPage.directoryAddress"),
-      directoryPhone: t("victimDashboard.findOrganizationsPage.directoryPhone"),
-      directoryWebsite: t("victimDashboard.findOrganizationsPage.directoryWebsite"),
-      fieldPendingExternal: t("victimDashboard.findOrganizationsPage.fieldPendingExternal"),
-      fieldPendingFallback: t("victimDashboard.findOrganizationsPage.fieldPendingFallback"),
-      directoryContactHeading: t("victimDashboard.findOrganizationsPage.directoryContactHeading"),
+      mapIntro: t("applicantDashboard.findOrganizationsPage.mapIntro"),
+      shareLocation: t("applicantDashboard.findOrganizationsPage.shareLocation"),
+      sharing: t("applicantDashboard.findOrganizationsPage.sharing"),
+      tryAgain: t("applicantDashboard.findOrganizationsPage.tryAgain"),
+      locationDenied: t("applicantDashboard.findOrganizationsPage.locationDenied"),
+      locationUnavailable: t("applicantDashboard.findOrganizationsPage.locationUnavailable"),
+      locationTimeout: t("applicantDashboard.findOrganizationsPage.locationTimeout"),
+      positionUnavailable: t("applicantDashboard.findOrganizationsPage.positionUnavailable"),
+      locationNotSupported: t("applicantDashboard.findOrganizationsPage.locationNotSupported"),
+      locationNeedsHttps: t("applicantDashboard.findOrganizationsPage.locationNeedsHttps"),
+      yourLocation: t("applicantDashboard.findOrganizationsPage.yourLocation"),
+      approximateNote: t("applicantDashboard.findOrganizationsPage.approximateNote"),
+      milesAway: t("applicantDashboard.findOrganizationsPage.milesAway"),
+      accepting: t("applicantDashboard.findOrganizationsPage.accepting"),
+      notAccepting: t("applicantDashboard.findOrganizationsPage.notAccepting"),
+      capacity: t("applicantDashboard.findOrganizationsPage.capacity"),
+      noOrgs: t("applicantDashboard.findOrganizationsPage.noOrgs"),
+      loadError: t("applicantDashboard.findOrganizationsPage.loadError"),
+      privacyNote: t("applicantDashboard.findOrganizationsPage.privacyNote"),
+      sendReferral: t("applicantDashboard.findOrganizationsPage.sendReferral"),
+      sendReferralSending: t("applicantDashboard.findOrganizationsPage.sendReferralSending"),
+      sendReferralDone: t("applicantDashboard.findOrganizationsPage.sendReferralDone"),
+      sendReferralFailed: t("applicantDashboard.findOrganizationsPage.sendReferralFailed"),
+      sendReferralDuplicate: t("applicantDashboard.findOrganizationsPage.sendReferralDuplicate"),
+      learnMoreTitle: t("applicantDashboard.findOrganizationsPage.learnMoreTitle"),
+      learnMore: t("applicantDashboard.findOrganizationsPage.learnMore"),
+      learnMoreClose: t("applicantDashboard.findOrganizationsPage.learnMoreClose"),
+      organizationProfile: "View details",
+      connectWithOrg: "Connect this advocate",
+      externalDirectoryNote: t("applicantDashboard.findOrganizationsPage.externalDirectoryNote"),
+      profileUnavailableExternal: t("applicantDashboard.findOrganizationsPage.profileUnavailableExternal"),
+      connectUnavailableExternal: t("applicantDashboard.findOrganizationsPage.connectUnavailableExternal"),
+      directoryProgramType: t("applicantDashboard.findOrganizationsPage.directoryProgramType"),
+      directoryAddress: t("applicantDashboard.findOrganizationsPage.directoryAddress"),
+      directoryPhone: t("applicantDashboard.findOrganizationsPage.directoryPhone"),
+      directoryWebsite: t("applicantDashboard.findOrganizationsPage.directoryWebsite"),
+      fieldPendingExternal: t("applicantDashboard.findOrganizationsPage.fieldPendingExternal"),
+      fieldPendingFallback: t("applicantDashboard.findOrganizationsPage.fieldPendingFallback"),
+      directoryContactHeading: t("applicantDashboard.findOrganizationsPage.directoryContactHeading"),
     }),
     [t]
   );
@@ -86,12 +86,12 @@ function ConnectAdvocateForm() {
     e.preventDefault();
     setGeocodeErr(null);
     if (!canUseApis) {
-      setGeocodeErr(t("victimDashboard.findOrganizationsPage.loadError"));
+      setGeocodeErr(t("applicantDashboard.findOrganizationsPage.loadError"));
       return;
     }
     setGeocodeLoading(true);
     try {
-      const res = await fetch("/api/victim/geocode-address", {
+      const res = await fetch("/api/applicant/geocode-address", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -157,7 +157,7 @@ function ConnectAdvocateForm() {
       }
 
       setAdvocateEmail("");
-      router.replace(ROUTES.victimDashboard);
+      router.replace(ROUTES.applicantDashboard);
       router.refresh();
     } finally {
       setEmailLoading(false);
@@ -352,8 +352,8 @@ function ConnectAdvocateForm() {
           <Link
             href={
               caseId
-                ? `${ROUTES.victimFindOrganizations}?case=${encodeURIComponent(caseId)}`
-                : ROUTES.victimFindOrganizations
+                ? `${ROUTES.applicantFindOrganizations}?case=${encodeURIComponent(caseId)}`
+                : ROUTES.applicantFindOrganizations
             }
             className="text-emerald-400 hover:text-emerald-300 underline"
           >

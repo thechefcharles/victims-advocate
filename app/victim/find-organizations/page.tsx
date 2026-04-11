@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ROUTES, victimCasePaths } from "@/lib/routes/pageRegistry";
+import { ROUTES, applicantCasePaths } from "@/lib/routes/pageRegistry";
 import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { FindOrganizationsMapSection } from "@/app/victim/find-organizations/FindOrganizationsMapSection";
@@ -14,68 +14,68 @@ function VictimFindOrganizationsContent() {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("case")?.trim() ?? "";
 
-  const backHref = caseId ? victimCasePaths.organization(caseId) : ROUTES.victimDashboard;
+  const backHref = caseId ? applicantCasePaths.organization(caseId) : ROUTES.applicantDashboard;
   const backLabel = caseId
-    ? t("victimDashboard.caseOrgManage.back")
-    : t("victimDashboard.findOrganizationsPage.back");
+    ? t("applicantDashboard.caseOrgManage.back")
+    : t("applicantDashboard.findOrganizationsPage.back");
 
   const mapCopy = {
-    mapIntro: t("victimDashboard.findOrganizationsPage.mapIntro"),
-    shareLocation: t("victimDashboard.findOrganizationsPage.shareLocation"),
-    sharing: t("victimDashboard.findOrganizationsPage.sharing"),
-    tryAgain: t("victimDashboard.findOrganizationsPage.tryAgain"),
-    locationDenied: t("victimDashboard.findOrganizationsPage.locationDenied"),
-    locationUnavailable: t("victimDashboard.findOrganizationsPage.locationUnavailable"),
-    locationTimeout: t("victimDashboard.findOrganizationsPage.locationTimeout"),
-    positionUnavailable: t("victimDashboard.findOrganizationsPage.positionUnavailable"),
-    locationNotSupported: t("victimDashboard.findOrganizationsPage.locationNotSupported"),
-    locationNeedsHttps: t("victimDashboard.findOrganizationsPage.locationNeedsHttps"),
-    yourLocation: t("victimDashboard.findOrganizationsPage.yourLocation"),
-    approximateNote: t("victimDashboard.findOrganizationsPage.approximateNote"),
-    milesAway: t("victimDashboard.findOrganizationsPage.milesAway"),
-    accepting: t("victimDashboard.findOrganizationsPage.accepting"),
-    notAccepting: t("victimDashboard.findOrganizationsPage.notAccepting"),
-    capacity: t("victimDashboard.findOrganizationsPage.capacity"),
-    noOrgs: t("victimDashboard.findOrganizationsPage.noOrgs"),
-    loadError: t("victimDashboard.findOrganizationsPage.loadError"),
-    privacyNote: t("victimDashboard.findOrganizationsPage.privacyNote"),
-    sendReferral: t("victimDashboard.findOrganizationsPage.sendReferral"),
-    sendReferralSending: t("victimDashboard.findOrganizationsPage.sendReferralSending"),
-    sendReferralDone: t("victimDashboard.findOrganizationsPage.sendReferralDone"),
-    sendReferralFailed: t("victimDashboard.findOrganizationsPage.sendReferralFailed"),
-    sendReferralDuplicate: t("victimDashboard.findOrganizationsPage.sendReferralDuplicate"),
-    learnMoreTitle: t("victimDashboard.findOrganizationsPage.learnMoreTitle"),
-    learnMore: t("victimDashboard.findOrganizationsPage.learnMore"),
-    learnMoreClose: t("victimDashboard.findOrganizationsPage.learnMoreClose"),
-    organizationProfile: t("victimDashboard.findOrganizationsPage.organizationProfile"),
-    connectWithOrg: t("victimDashboard.findOrganizationsPage.connectWithOrg"),
-    externalDirectoryNote: t("victimDashboard.findOrganizationsPage.externalDirectoryNote"),
-    profileUnavailableExternal: t("victimDashboard.findOrganizationsPage.profileUnavailableExternal"),
-    connectUnavailableExternal: t("victimDashboard.findOrganizationsPage.connectUnavailableExternal"),
-    directoryProgramType: t("victimDashboard.findOrganizationsPage.directoryProgramType"),
-    directoryAddress: t("victimDashboard.findOrganizationsPage.directoryAddress"),
-    directoryPhone: t("victimDashboard.findOrganizationsPage.directoryPhone"),
-    directoryWebsite: t("victimDashboard.findOrganizationsPage.directoryWebsite"),
-    fieldPendingExternal: t("victimDashboard.findOrganizationsPage.fieldPendingExternal"),
-    fieldPendingFallback: t("victimDashboard.findOrganizationsPage.fieldPendingFallback"),
-    directoryContactHeading: t("victimDashboard.findOrganizationsPage.directoryContactHeading"),
+    mapIntro: t("applicantDashboard.findOrganizationsPage.mapIntro"),
+    shareLocation: t("applicantDashboard.findOrganizationsPage.shareLocation"),
+    sharing: t("applicantDashboard.findOrganizationsPage.sharing"),
+    tryAgain: t("applicantDashboard.findOrganizationsPage.tryAgain"),
+    locationDenied: t("applicantDashboard.findOrganizationsPage.locationDenied"),
+    locationUnavailable: t("applicantDashboard.findOrganizationsPage.locationUnavailable"),
+    locationTimeout: t("applicantDashboard.findOrganizationsPage.locationTimeout"),
+    positionUnavailable: t("applicantDashboard.findOrganizationsPage.positionUnavailable"),
+    locationNotSupported: t("applicantDashboard.findOrganizationsPage.locationNotSupported"),
+    locationNeedsHttps: t("applicantDashboard.findOrganizationsPage.locationNeedsHttps"),
+    yourLocation: t("applicantDashboard.findOrganizationsPage.yourLocation"),
+    approximateNote: t("applicantDashboard.findOrganizationsPage.approximateNote"),
+    milesAway: t("applicantDashboard.findOrganizationsPage.milesAway"),
+    accepting: t("applicantDashboard.findOrganizationsPage.accepting"),
+    notAccepting: t("applicantDashboard.findOrganizationsPage.notAccepting"),
+    capacity: t("applicantDashboard.findOrganizationsPage.capacity"),
+    noOrgs: t("applicantDashboard.findOrganizationsPage.noOrgs"),
+    loadError: t("applicantDashboard.findOrganizationsPage.loadError"),
+    privacyNote: t("applicantDashboard.findOrganizationsPage.privacyNote"),
+    sendReferral: t("applicantDashboard.findOrganizationsPage.sendReferral"),
+    sendReferralSending: t("applicantDashboard.findOrganizationsPage.sendReferralSending"),
+    sendReferralDone: t("applicantDashboard.findOrganizationsPage.sendReferralDone"),
+    sendReferralFailed: t("applicantDashboard.findOrganizationsPage.sendReferralFailed"),
+    sendReferralDuplicate: t("applicantDashboard.findOrganizationsPage.sendReferralDuplicate"),
+    learnMoreTitle: t("applicantDashboard.findOrganizationsPage.learnMoreTitle"),
+    learnMore: t("applicantDashboard.findOrganizationsPage.learnMore"),
+    learnMoreClose: t("applicantDashboard.findOrganizationsPage.learnMoreClose"),
+    organizationProfile: t("applicantDashboard.findOrganizationsPage.organizationProfile"),
+    connectWithOrg: t("applicantDashboard.findOrganizationsPage.connectWithOrg"),
+    externalDirectoryNote: t("applicantDashboard.findOrganizationsPage.externalDirectoryNote"),
+    profileUnavailableExternal: t("applicantDashboard.findOrganizationsPage.profileUnavailableExternal"),
+    connectUnavailableExternal: t("applicantDashboard.findOrganizationsPage.connectUnavailableExternal"),
+    directoryProgramType: t("applicantDashboard.findOrganizationsPage.directoryProgramType"),
+    directoryAddress: t("applicantDashboard.findOrganizationsPage.directoryAddress"),
+    directoryPhone: t("applicantDashboard.findOrganizationsPage.directoryPhone"),
+    directoryWebsite: t("applicantDashboard.findOrganizationsPage.directoryWebsite"),
+    fieldPendingExternal: t("applicantDashboard.findOrganizationsPage.fieldPendingExternal"),
+    fieldPendingFallback: t("applicantDashboard.findOrganizationsPage.fieldPendingFallback"),
+    directoryContactHeading: t("applicantDashboard.findOrganizationsPage.directoryContactHeading"),
   };
 
   return (
     <main className={APP_PAGE_MAIN}>
       <div className="relative max-w-3xl mx-auto space-y-6">
         <PageHeader
-          title={t("victimDashboard.findOrganizationsPage.title")}
+          title={t("applicantDashboard.findOrganizationsPage.title")}
           subtitle={
             caseId ? (
               <>
-                {t("victimDashboard.findOrganizationsPage.subtitle")}{" "}
+                {t("applicantDashboard.findOrganizationsPage.subtitle")}{" "}
                 <span className="block mt-2 text-[var(--color-muted)]">
-                  {t("victimDashboard.caseOrgManage.intro")}
+                  {t("applicantDashboard.caseOrgManage.intro")}
                 </span>
               </>
             ) : (
-              t("victimDashboard.findOrganizationsPage.subtitle")
+              t("applicantDashboard.findOrganizationsPage.subtitle")
             )
           }
           backLink={{
@@ -87,12 +87,12 @@ function VictimFindOrganizationsContent() {
         {caseId ? (
           <div className={`${APP_CARD} text-sm text-[var(--color-muted)]`}>
             <p>
-              {t("victimDashboard.caseOrgManage.changeOrganization")} —{" "}
+              {t("applicantDashboard.caseOrgManage.changeOrganization")} —{" "}
               <Link
-                href={victimCasePaths.organization(caseId)}
+                href={applicantCasePaths.organization(caseId)}
                 className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
               >
-                {t("victimDashboard.caseOrgManage.title")}
+                {t("applicantDashboard.caseOrgManage.title")}
               </Link>
             </p>
           </div>

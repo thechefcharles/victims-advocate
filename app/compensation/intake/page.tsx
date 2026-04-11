@@ -42,7 +42,7 @@ import {
 } from "../../../lib/intake/fieldState";
 import { canSkip, canDefer } from "../../../lib/intake/fieldConfig";
 import { getReviewStatus } from "../../../lib/intake/reviewStatus";
-import { ROUTES, victimCaseMessagesUrl } from "@/lib/routes/pageRegistry";
+import { ROUTES, applicantCaseMessagesUrl } from "@/lib/routes/pageRegistry";
 import { ExplainThisButton } from "@/components/ExplainThis";
 import { GroundingPauseBanner } from "@/components/applicant/GroundingPauseBanner";
 import {
@@ -1509,7 +1509,7 @@ title={
         setSaveToast(t("intake.pathwaySafety.saveReturnToast"));
         window.setTimeout(() => {
           setSaveToast(null);
-          router.push(ROUTES.victimDashboard);
+          router.push(ROUTES.applicantDashboard);
         }, 2200);
       }}
       disabled={saveNowLoading}
@@ -2139,7 +2139,7 @@ function ApplicantForm({
 
       <div className="space-y-2 text-xs">
         <p className="text-[var(--color-charcoal)]">
-          {t("forms.applicant.isVictimAlsoApplicantLabel")}
+          {t("forms.applicant.isApplicantAlsoApplicantLabel")}
         </p>
 
         <label className="flex items-center gap-2">
@@ -4951,7 +4951,7 @@ setInviteResult(
           <>
             <p className="text-xs text-[var(--color-slate)]">{t("forms.summary.checkpoint.messagesOpenTool")}</p>
             <Link
-              href={victimCaseMessagesUrl(caseId)}
+              href={applicantCaseMessagesUrl(caseId)}
               className="inline-flex items-center justify-center rounded-full bg-emerald-600/90 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500 transition"
             >
               {t("forms.summary.checkpoint.messagesOpenToolCta")}

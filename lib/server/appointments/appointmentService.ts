@@ -7,7 +7,7 @@
  *   1. Validate case_id present (throw VALIDATION_ERROR if missing)
  *   2. checkAppointmentConflicts (throw CONFLICT if overlap)
  *   3. repo.createAppointment (DB write)
- *   4. createAppointmentEvent (audit trail)
+ *   4. insertAppointmentEvent (audit trail)
  *
  * Reminder state updates are fire-and-forget — callers must NOT await them
  * in the main request path.
@@ -27,12 +27,12 @@ import {
   listAppointmentsForApplicant,
   listAppointmentsForProviderScope,
   listAppointmentsForCase,
-  createAppointment as dbCreateAppointment,
+  insertAppointment as dbCreateAppointment,
   updateAppointmentStatus,
   updateAppointmentFields,
-  createRescheduledAppointment,
+  insertRescheduledAppointment,
   updateReminderState,
-  createAppointmentEvent,
+  insertAppointmentEvent,
 } from "./appointmentRepository";
 import { validateAppointmentTransition } from "./appointmentStateMachine";
 import { checkAppointmentConflicts, getAvailabilityForScheduling } from "./availabilityService";
@@ -78,7 +78,7 @@ export async function createAppointment(params: {
   const appointment = await dbCreateAppointment({ ...input, created_by: ctx.userId });
 
   // 4. Audit event
-  await createAppointmentEvent({
+  await insertAppointmentEvent({
     appointment_id: appointment.id,
     event_type: "created",
     new_status: "scheduled",
@@ -151,7 +151,7 @@ export async function rescheduleAppointment(params: {
     excludeId: id,
   });
 
-  const newAppointment = await createRescheduledAppointment({
+  const newAppointment = await insertRescheduledAppointment({
     originalId: id,
     originalRow: original,
     newStart: input.scheduled_start,
@@ -160,7 +160,7 @@ export async function rescheduleAppointment(params: {
     createdBy: ctx.userId,
   });
 
-  await createAppointmentEvent({
+  await insertAppointmentEvent({
     appointment_id: id,
     event_type: "rescheduled",
     previous_status: original.status,
@@ -191,7 +191,7 @@ export async function cancelAppointment(params: {
 
   const updated = await updateAppointmentStatus({ id: params.id, status: "cancelled" });
 
-  await createAppointmentEvent({
+  await insertAppointmentEvent({
     appointment_id: params.id,
     event_type: "cancelled",
     previous_status: appointment.status,
@@ -218,7 +218,7 @@ export async function completeAppointment(params: {
 
   const updated = await updateAppointmentStatus({ id: params.id, status: "completed" });
 
-  await createAppointmentEvent({
+  await insertAppointmentEvent({
     appointment_id: params.id,
     event_type: "completed",
     previous_status: appointment.status,
@@ -244,7 +244,7 @@ export async function updateAppointmentMetadata(params: {
   const updated = await updateAppointmentFields({ id: params.id, fields: params.fields });
 
   if (params.fields.notes !== undefined) {
-    await createAppointmentEvent({
+    await insertAppointmentEvent({
       appointment_id: params.id,
       event_type: "notes_updated",
       actor_id: params.ctx.userId,

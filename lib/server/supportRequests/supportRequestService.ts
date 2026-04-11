@@ -27,7 +27,7 @@ import {
   listSupportRequestsByApplicant,
   listSupportRequestsByOrganization,
   findActiveSupportRequestForApplicant,
-  createSupportRequestRecord,
+  insertSupportRequestRecord,
   updateSupportRequestRecord,
 } from "./supportRequestRepository";
 import {
@@ -115,7 +115,7 @@ export async function createSupportRequest(
   const decision = await can("support_request:create", actor, resource);
   if (!decision.allowed) denyForbidden(decision.message);
 
-  const record = await createSupportRequestRecord(supabase, {
+  const record = await insertSupportRequestRecord(supabase, {
     applicant_id: ctx.userId,
     organization_id: input.organization_id,
     program_id: input.program_id ?? null,

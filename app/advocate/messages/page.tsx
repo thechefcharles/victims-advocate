@@ -25,7 +25,7 @@ type MessageRow = {
 
 type QueueItem = {
   caseId: string;
-  victimLabel: string;
+  applicantLabel: string;
   unreadCount: number;
   lastAt: string | null;
   preview: string;
@@ -136,7 +136,7 @@ function AdvocateMessagesContent() {
 
           queue.push({
             caseId: c.id,
-            victimLabel: displayNameForCase(c),
+            applicantLabel: displayNameForCase(c),
             unreadCount,
             lastAt,
             preview: preview || "New Secure Message",
@@ -195,7 +195,7 @@ function AdvocateMessagesContent() {
           <p className="text-[11px] uppercase tracking-[0.25em] text-[var(--color-muted)]">Advocate</p>
           <h1 className="text-2xl font-semibold text-[var(--color-navy)]">Messages</h1>
           <p className="text-sm text-[var(--color-muted)] max-w-xl">
-            Use this triage list to spot new victim updates quickly. Open the case view to read
+            Use this triage list to spot new applicant updates quickly. Open the case view to read
             and reply.
           </p>
           <p className="text-[11px] text-[var(--color-muted)]">
@@ -213,7 +213,7 @@ function AdvocateMessagesContent() {
           <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 px-5 py-8 text-center space-y-4">
             <p className="text-sm text-[var(--color-slate)]">No unread or recent secure messages to show.</p>
             <p className="text-xs text-[var(--color-muted)] max-w-md mx-auto">
-              When a victim sends a message or a thread is active, the case will appear here. You
+              When an applicant sends a message or a thread is active, the case will appear here. You
               can continue case updates from My Dashboard.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -242,7 +242,7 @@ function AdvocateMessagesContent() {
                   <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-[var(--color-navy)] truncate">
-                        {row.victimLabel}
+                        {row.applicantLabel}
                       </span>
                       {row.unreadCount > 0 && (
                         <span className="text-[10px] font-semibold uppercase tracking-wide rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40 px-2 py-0.5">
@@ -251,7 +251,7 @@ function AdvocateMessagesContent() {
                       )}
                     </div>
                     <p className="text-[11px] text-[var(--color-muted)]">
-                      Latest victim update · {formatDate(row.lastAt)}
+                      Latest applicant update · {formatDate(row.lastAt)}
                     </p>
                     <p className="text-xs text-[var(--color-muted)] line-clamp-2">{row.preview}</p>
                   </div>

@@ -55,12 +55,12 @@ export async function GET(req: Request) {
     // Include victims from accepted connection requests (even without a case)
     const { data: connections } = await supabase
       .from("advocate_connection_requests")
-      .select("victim_user_id, updated_at")
+      .select("applicant_user_id, updated_at")
       .eq("advocate_user_id", ctx.userId)
       .eq("status", "accepted");
 
     const victimIdsToFetch = (connections ?? [])
-      .map((r) => r.victim_user_id)
+      .map((r) => r.applicant_user_id)
       .filter((id) => !byOwner.has(id));
 
     const allVictimIds = Array.from(byOwner.keys());
@@ -79,7 +79,7 @@ export async function GET(req: Request) {
     }
 
     for (const conn of connections ?? []) {
-      const victimId = conn.victim_user_id as string;
+      const victimId = conn.applicant_user_id as string;
       if (byOwner.has(victimId)) continue;
       const updatedAt = conn.updated_at ?? new Date().toISOString();
       byOwner.set(victimId, {

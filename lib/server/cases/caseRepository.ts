@@ -102,7 +102,7 @@ export async function listCasesByAdvocate(
 // ---------------------------------------------------------------------------
 
 /** Inserts a new case row. Returns the created record. */
-export async function createCaseRecord(
+export async function insertCaseRecord(
   supabase: SupabaseClient,
   input: {
     owner_user_id: string;

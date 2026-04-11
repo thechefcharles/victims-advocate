@@ -7,8 +7,8 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type PendingRequest = {
   id: string;
-  victim_user_id: string;
-  victim_email: string | null;
+  applicant_user_id: string;
+  applicant_email: string | null;
   status: string;
   created_at: string;
 };
@@ -118,7 +118,7 @@ export default function AdvocateConnectionRequestsPage() {
           </Link>
           <h1 className="text-2xl font-bold">Connection requests</h1>
           <p className="text-sm text-[var(--color-slate)] mt-2">
-            Victims can request to connect with you as their advocate. Accept to add them as a
+            Applicants can request to connect with you as their advocate. Accept to add them as a
             client. Once accepted, they can invite you to their cases.
           </p>
         </header>
@@ -135,7 +135,7 @@ export default function AdvocateConnectionRequestsPage() {
           <div className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-6 text-center">
             <p className="text-[var(--color-slate)]">No pending connection requests.</p>
             <p className="text-sm text-[var(--color-muted)] mt-2">
-              When a victim sends you a request, it will appear here.
+              When an applicant sends you a request, it will appear here.
             </p>
           </div>
         )}
@@ -149,7 +149,7 @@ export default function AdvocateConnectionRequestsPage() {
               >
                 <div>
                   <p className="font-medium text-[var(--color-navy)]">
-                    {r.victim_email ?? "Unknown"} wants to connect
+                    {r.applicant_email ?? "Unknown"} wants to connect
                   </p>
                   <p className="text-xs text-[var(--color-muted)] mt-0.5">
                     {new Date(r.created_at).toLocaleString()}

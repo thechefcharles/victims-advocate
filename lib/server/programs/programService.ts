@@ -8,7 +8,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { getCatalogProgramById } from "@/lib/catalog/loadCatalog";
-import { orgRowFromCatalogEntry } from "@/lib/server/org/catalogOrgFields";
+import { orgRowFromCatalogEntry } from "@/lib/server/organizations/catalogOrgFields";
 import type { ProgramDefinitionRow } from "@/lib/server/routing/types";
 import type { AuthContext } from "@/lib/server/auth";
 import { updateProviderSearchIndexFromProgram } from "@/lib/server/search/programSearchSync";

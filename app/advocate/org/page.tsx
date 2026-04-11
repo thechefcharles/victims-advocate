@@ -947,7 +947,7 @@ export default function AdvocateOrgPage() {
                 <section className="rounded-2xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/85 p-5 space-y-4 text-xs">
                   <h2 className="text-sm font-semibold text-[var(--color-charcoal)]">Services & languages</h2>
                   <p className="text-[11px] text-[var(--color-muted)]">
-                    Service types, languages, and how victims reach you.
+                    Service types, languages, and how applicants reach you.
                   </p>
               <div>
                 <p className="text-[var(--color-muted)] mb-2">Service types</p>

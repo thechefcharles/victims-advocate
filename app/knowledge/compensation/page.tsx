@@ -77,7 +77,7 @@ export default function CompensationKnowledgePage() {
                 <li>Pain and suffering</li>
                 <li>Property losses like phones, cars, or jewelry</li>
                 <li>Expenses already fully paid by insurance</li>
-                <li>Situations where the victim was committing a crime</li>
+                <li>Situations where the applicant was committing a crime</li>
               </ul>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function CompensationKnowledgePage() {
             </li>
             <li>
               For loss of support, information about dependents who relied on
-              the victim&apos;s income.
+              the applicant&apos;s income.
             </li>
           </ul>
           <p className="text-[11px] text-[var(--color-muted)]">

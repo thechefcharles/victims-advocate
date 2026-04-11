@@ -70,9 +70,9 @@ export async function listCaseTimeline(params: {
   if (error) throw new AppError("INTERNAL", "Failed to list timeline", undefined, 500);
 
   const rows = (data ?? []) as TimelineEventRow[];
-  const isVictim = result.access.role === "owner";
+  const isApplicant = result.access.role === "owner";
 
-  if (!isVictim) return rows;
+  if (!isApplicant) return rows;
 
   return rows.map((e) => {
     if (e.event_type === "case.note_added" || e.event_type === "case.note_edited") {

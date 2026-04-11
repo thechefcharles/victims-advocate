@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ROUTES, compensationIntakeMessagesUrl, victimCasePaths } from "@/lib/routes/pageRegistry";
+import { ROUTES, compensationIntakeMessagesUrl, applicantCasePaths } from "@/lib/routes/pageRegistry";
 import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -74,13 +74,13 @@ export default function VictimCaseAdvocateManagePage() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(getApiErrorMessage(json, t("victimDashboard.caseAdvocateManage.removeFailed")));
+        setErr(getApiErrorMessage(json, t("applicantDashboard.caseAdvocateManage.removeFailed")));
         return;
       }
-      setToast(t("victimDashboard.caseAdvocateManage.removed"));
+      setToast(t("applicantDashboard.caseAdvocateManage.removed"));
       await load();
     } catch {
-      setErr(t("victimDashboard.caseAdvocateManage.removeFailed"));
+      setErr(t("applicantDashboard.caseAdvocateManage.removeFailed"));
     } finally {
       setBusyId(null);
     }
@@ -93,11 +93,11 @@ export default function VictimCaseAdvocateManagePage() {
     <main className={APP_PAGE_MAIN}>
       <div className="relative max-w-2xl mx-auto space-y-6">
         <PageHeader
-          title={t("victimDashboard.caseAdvocateManage.title")}
-          subtitle={t("victimDashboard.caseAdvocateManage.intro")}
+          title={t("applicantDashboard.caseAdvocateManage.title")}
+          subtitle={t("applicantDashboard.caseAdvocateManage.intro")}
           backLink={{
-            href: ROUTES.victimDashboard,
-            label: t("victimDashboard.caseAdvocateManage.back"),
+            href: ROUTES.applicantDashboard,
+            label: t("applicantDashboard.caseAdvocateManage.back"),
           }}
           className={APP_CARD}
         />
@@ -114,11 +114,11 @@ export default function VictimCaseAdvocateManagePage() {
             href={connectHref}
             className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#14b8a6] to-[#0d9488] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-900/30 hover:brightness-110"
           >
-            {t("victimDashboard.caseAdvocateManage.connectDifferent")}
+            {t("applicantDashboard.caseAdvocateManage.connectDifferent")}
           </Link>
 
           {loading ? (
-            <p className="text-sm text-[var(--color-muted)]">{t("victimDashboard.supportTeamLoading")}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t("applicantDashboard.supportTeamLoading")}</p>
           ) : team?.advocates && team.advocates.length > 0 ? (
             <ul className="space-y-3">
               {team.advocates.map((a) => (
@@ -132,7 +132,7 @@ export default function VictimCaseAdvocateManagePage() {
                       href={messagesHref}
                       className="inline-flex items-center justify-center rounded-full border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-charcoal)] hover:bg-[var(--color-warm-cream)]/90"
                     >
-                      {t("victimDashboard.caseAdvocateManage.sendMessage")}
+                      {t("applicantDashboard.caseAdvocateManage.sendMessage")}
                     </Link>
                     <button
                       type="button"
@@ -141,7 +141,7 @@ export default function VictimCaseAdvocateManagePage() {
                         if (
                           typeof window !== "undefined" &&
                           window.confirm(
-                            `${t("victimDashboard.caseAdvocateManage.removeConfirmTitle")}\n\n${t("victimDashboard.caseAdvocateManage.removeConfirmBody")}`
+                            `${t("applicantDashboard.caseAdvocateManage.removeConfirmTitle")}\n\n${t("applicantDashboard.caseAdvocateManage.removeConfirmBody")}`
                           )
                         ) {
                           void removeAdvocate(a.id);
@@ -149,20 +149,20 @@ export default function VictimCaseAdvocateManagePage() {
                       }}
                       className="inline-flex items-center justify-center rounded-full border border-red-500/40 px-3 py-1.5 text-[11px] font-semibold text-red-200/95 hover:bg-red-950/40 disabled:opacity-50"
                     >
-                      {t("victimDashboard.caseAdvocateManage.remove")}
+                      {t("applicantDashboard.caseAdvocateManage.remove")}
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-[var(--color-muted)]">{t("victimDashboard.supportTeamNoAdvocates")}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t("applicantDashboard.supportTeamNoAdvocates")}</p>
           )}
         </div>
 
         <p className="text-[11px] text-[var(--color-muted)]">
-          <Link href={victimCasePaths.organization(caseId)} className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline">
-            {t("victimDashboard.caseOrgManage.title")}
+          <Link href={applicantCasePaths.organization(caseId)} className="text-[var(--color-muted)] hover:text-[var(--color-charcoal)] underline">
+            {t("applicantDashboard.caseOrgManage.title")}
           </Link>
         </p>
       </div>

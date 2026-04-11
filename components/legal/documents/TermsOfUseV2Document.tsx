@@ -38,7 +38,7 @@ export function TermsOfUseV2Document() {
       <h3 className="text-base font-medium text-[var(--color-charcoal)]">1.1 What NxtStps Is</h3>
       <p>
         NxtStps is a compliance-first administrative infrastructure platform designed to help
-        victims of crime, victim advocates, and victim services organizations navigate the crime
+        victims of crime, victim advocates, and applicant services organizations navigate the crime
         victim compensation application process. The Platform provides guided intake, document
         management, eligibility guidance, case tracking, and compliance reporting tools.
       </p>
@@ -61,11 +61,11 @@ export function TermsOfUseV2Document() {
         (a) Applicants are victims or survivors of violent crime, or their authorized representatives,
         who access the Platform directly to prepare and submit crime victim compensation applications.
         Applicants access the Platform at no cost. Where these Terms refer to &quot;you&quot; in the
-        context of a victim completing a personal application, those provisions apply to Applicants.
+        context of an applicant completing a personal application, those provisions apply to Applicants.
       </p>
       <p>
         (b) Providers are victim service organizations — including community-based organizations,
-        hospital-based victim intervention programs, law enforcement victim services units, faith-based
+        hospital-based victim intervention programs, law enforcement applicant services units, faith-based
         organizations, and educational institutions — and the advocates, case managers, and
         administrative staff authorized to use the Platform on their behalf. Providers access the
         Platform through their organization&apos;s multi-user account under a paid license agreement
@@ -172,7 +172,7 @@ export function TermsOfUseV2Document() {
       <h3 className="text-base font-medium text-[var(--color-charcoal)]">3.6 Minor Users</h3>
       <p>
         The Platform may be used in connection with crime victim compensation applications involving
-        minors. Where a victim is under 18, the application must be completed and submitted by a
+        minors. Where an applicant is under 18, the application must be completed and submitted by a
         parent, legal guardian, or authorized representative. Such representative accepts these Terms
         on the minor&apos;s behalf and bears sole responsibility for the accuracy of all information
         submitted.
@@ -187,7 +187,7 @@ export function TermsOfUseV2Document() {
       <p>
         The Platform provides administrative, clerical, and informational tools designed to support
         Users in gathering documentation, organizing information, preparing application materials, and
-        facilitating submission to third-party victim services programs and state agencies. All
+        facilitating submission to third-party applicant services programs and state agencies. All
         Platform functionality, including AI-assisted systems, operates exclusively as non-advisory,
         non-interpretive informational support.
       </p>
@@ -478,7 +478,7 @@ export function TermsOfUseV2Document() {
       </h3>
       <p>
         NxtStps is not liable for unauthorized access, disclosure, or use of User data caused by third
-        parties, including state agencies, victim services organizations, or other recipients of
+        parties, including state agencies, applicant services organizations, or other recipients of
         User-directed submissions.
       </p>
       <h3 className="text-base font-medium text-[var(--color-charcoal)]">

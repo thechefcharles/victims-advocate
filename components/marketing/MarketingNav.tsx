@@ -84,9 +84,6 @@ export function MarketingNav() {
           <a href="#problem" className={navLinkClass}>
             {t("home.mkt.nav.problem")}
           </a>
-          <a href="#about" className={navLinkClass}>
-            {t("home.mkt.nav.about")}
-          </a>
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -101,11 +98,11 @@ export function MarketingNav() {
               <option value="es">ES</option>
             </select>
           </label>
-          <a href="#convert" className={ctaPrimary}>
-            {t("home.mkt.nav.requestDemo")}
-          </a>
-          <Link href={ROUTES.compensationIntake} className={ctaGhost}>
-            {t("home.mkt.nav.startApplication")}
+          <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors">
+            Sign in
+          </Link>
+          <Link href="/signup" className={ctaPrimary}>
+            Create account
           </Link>
         </div>
 
@@ -151,14 +148,11 @@ export function MarketingNav() {
             <a href="#problem" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
               {t("home.mkt.nav.problem")}
             </a>
-            <a href="#about" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
-              {t("home.mkt.nav.about")}
-            </a>
-            <a href="#convert" className={ctaPrimary} onClick={closeDrawer}>
-              {t("home.mkt.nav.requestDemo")}
-            </a>
-            <Link href={ROUTES.compensationIntake} className={ctaGhost} onClick={closeDrawer}>
-              {t("home.mkt.nav.startApplication")}
+            <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors" onClick={closeDrawer}>
+              Sign in
+            </Link>
+            <Link href="/signup" className={ctaPrimary} onClick={closeDrawer}>
+              Create account
             </Link>
           </div>
         </div>

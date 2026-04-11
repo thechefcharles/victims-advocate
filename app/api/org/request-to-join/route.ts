@@ -1,95 +1,13 @@
 /**
- * Org rep (role: organization) requests to join an existing org.
- * Domain 3.2: auth via can("org:request_to_join"). Thin route — DB logic preserved for
- * org_rep_join_requests table (distinct from advocate_org_join_requests).
+ * POST /api/org/request-to-join — Org rep requests to join an existing organization.
  */
 
-import {
-  getAuthContext,
-  requireAuth,
-  requireFullAccess,
-  type AuthContext,
-} from "@/lib/server/auth";
+import { getAuthContext, requireAuth, requireFullAccess } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
-import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
-import { createNotification } from "@/lib/server/notifications/create";
-import { getAdvocateDisplayForNotification } from "@/lib/server/notifications/advocateDisplay";
-import { logEvent } from "@/lib/server/audit/logEvent";
-import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
-
-function appBaseUrl(req: Request): string {
-  return (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
-    req.headers.get("origin") ||
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
-}
-
-async function fetchPlatformAdminUserIds(supabase: ReturnType<typeof getSupabaseAdmin>): Promise<string[]> {
-  const { data, error } = await supabase.from("profiles").select("id").eq("is_admin", true);
-  if (error) throw new Error(error.message);
-  return [...new Set((data ?? []).map((r) => r.id as string))];
-}
-
-async function notifyOrgApprovers(params: {
-  ctx: AuthContext;
-  req: Request;
-  organizationId: string;
-  organizationName: string;
-  requestId: string;
-  userId: string;
-  displayName: string;
-  email: string | null;
-}) {
-  const { ctx, req, organizationId, organizationName, requestId, userId, displayName, email } =
-    params;
-  const supabase = getSupabaseAdmin();
-  const { data: members, error } = await supabase
-    .from("org_memberships")
-    .select("user_id")
-    .eq("organization_id", organizationId)
-    .eq("status", "active")
-    .in("org_role", [...ORG_LEADERSHIP_ROLES]);
-
-  if (error) throw new Error(error.message);
-
-  const adminIds = await fetchPlatformAdminUserIds(supabase);
-
-  const base = appBaseUrl(req);
-  const actionUrl = `${base}/notifications`;
-  const identity = `${displayName}${email ? ` · ${email}` : ""}`;
-  const body = `${identity}\n\nRequested to join ${organizationName} as an organization representative. Approve or decline in Updates, or ask a platform admin to review in Admin → Organizations.`;
-
-  const recipients = [
-    ...new Set([...(members ?? []).map((m) => m.user_id), ...adminIds]),
-  ];
-  await Promise.all(
-    recipients.map((memberUserId) =>
-      createNotification(
-        {
-          userId: memberUserId,
-          organizationId,
-          type: "org_rep_join_request",
-          title: "Organization representative join request",
-          body,
-          actionUrl,
-          previewSafe: true,
-          metadata: {
-            request_id: requestId,
-            user_id: userId,
-            organization_id: organizationId,
-            organization_name: organizationName,
-          },
-        },
-        ctx
-      )
-    )
-  );
-}
+import { createOrgJoinRequest } from "@/lib/server/organizations/orgJoinRequestService";
 
 export async function POST(req: Request) {
   try {
@@ -97,126 +15,22 @@ export async function POST(req: Request) {
     requireAuth(ctx);
     requireFullAccess(ctx, req);
 
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return apiFail("VALIDATION_ERROR", "We couldn't read that request. Refresh the page and try again.", undefined, 422);
-    }
+    const body = await req.json().catch(() => null);
+    if (!body) return apiFail("VALIDATION_ERROR", "We couldn't read that request.", undefined, 422);
 
-    const organizationId =
-      typeof (body as { organization_id?: unknown })?.organization_id === "string"
-        ? String((body as { organization_id: string }).organization_id).trim()
-        : "";
-
-    if (!organizationId) {
-      return apiFail("VALIDATION_ERROR", "organization_id is required", undefined, 422);
-    }
+    const organizationId = typeof (body as Record<string, unknown>)?.organization_id === "string"
+      ? String((body as Record<string, unknown>).organization_id).trim() : "";
+    if (!organizationId) return apiFail("VALIDATION_ERROR", "organization_id is required", undefined, 422);
 
     const actor = buildActor(ctx);
-    const decision = await can("org:request_to_join", actor, {
-      type: "org",
-      id: organizationId,
-      ownerId: organizationId,
-    });
-    if (!decision.allowed) {
-      return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
-    }
+    const decision = await can("org:request_to_join", actor, { type: "org", id: organizationId, ownerId: organizationId });
+    if (!decision.allowed) return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
 
-    const supabase = getSupabaseAdmin();
-
-    const { data: existingMem } = await supabase
-      .from("org_memberships")
-      .select("id")
-      .eq("user_id", ctx.userId)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (existingMem) {
-      return apiFail("VALIDATION_ERROR", "You already belong to an organization", undefined, 409);
-    }
-
-    const { data: pending } = await supabase
-      .from("org_rep_join_requests")
-      .select("id, organization_id")
-      .eq("user_id", ctx.userId)
-      .eq("status", "pending")
-      .maybeSingle();
-
-    if (pending) {
-      return apiFail(
-        "VALIDATION_ERROR",
-        "You already have a pending organization request. Wait for a response or contact support.",
-        { request_id: pending.id, organization_id: pending.organization_id },
-        409
-      );
-    }
-
-    const { data: org, error: orgErr } = await supabase
-      .from("organizations")
-      .select("id,name,status")
-      .eq("id", organizationId)
-      .maybeSingle();
-
-    if (orgErr) throw new Error(orgErr.message);
-    if (!org || org.status !== "active") {
-      return apiFail("NOT_FOUND", "Organization not found", undefined, 404);
-    }
-
-    const { data: inserted, error: insErr } = await supabase
-      .from("org_rep_join_requests")
-      .insert({
-        user_id: ctx.userId,
-        organization_id: organizationId,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (insErr) {
-      if (insErr.code === "23505") {
-        return apiFail(
-          "VALIDATION_ERROR",
-          "A pending request already exists for your account",
-          undefined,
-          409
-        );
-      }
-      throw new Error(insErr.message);
-    }
-
-    const requestId = inserted!.id as string;
-    const orgName = String(org.name ?? "Organization");
-    const { displayName, email } = await getAdvocateDisplayForNotification(ctx.userId);
-
-    await notifyOrgApprovers({
-      ctx,
-      req,
-      organizationId,
-      organizationName: orgName,
-      requestId,
-      userId: ctx.userId,
-      displayName,
-      email,
-    });
-
-    await logEvent({
-      ctx,
-      action: "org.rep_join_request.created",
-      resourceType: "org_rep_join_request",
-      resourceId: requestId,
-      organizationId,
-      metadata: { organization_name: orgName },
-      req,
-    });
-
-    return apiOk({ requestId, organizationId, organizationName: orgName });
+    const result = await createOrgJoinRequest(ctx, organizationId, req);
+    return apiOk(result);
   } catch (err) {
     const appErr = toAppError(err);
-    logger.error("org.request_to_join.error", {
-      code: appErr.code,
-      message: appErr.message,
-    });
+    logger.error("org.request_to_join.error", { code: appErr.code, message: appErr.message });
     return apiFailFromError(appErr);
   }
 }

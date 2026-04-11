@@ -1,4 +1,4 @@
-import RequireVictimRole from "@/components/auth/RequireVictimRole";
+import RequireVictimRole from "@/components/auth/RequireApplicantRole";
 
 export default function VictimOrganizationProfileLayout({
   children,
