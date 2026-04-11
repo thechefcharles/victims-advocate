@@ -108,14 +108,14 @@ export function ApplicantFunnelStepper({
                   {skipped ? "!" : done ? "✓" : index + 1}
                 </span>
                 <span
-                  className={`line-clamp-2 text-[11px] font-semibold leading-snug sm:text-xs ${
+                  className={`text-xs font-semibold leading-snug ${
                     skipped
                       ? "text-red-300/90"
                       : done
-                        ? "text-emerald-200 font-semibold"
+                        ? "text-emerald-200"
                         : active
-                          ? "text-blue-100 font-semibold"
-                          : "text-[var(--color-muted)]"
+                          ? "text-blue-100"
+                          : "text-[var(--color-charcoal)]"
                   }`}
                 >
                   {short}

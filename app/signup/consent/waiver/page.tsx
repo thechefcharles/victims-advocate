@@ -103,7 +103,7 @@ export default function SignupConsentWaiverPage() {
       }
       await refetchMe();
       if (isProduction) {
-        router.push(`/signup/consent/ready?${redirectQuery}`);
+        router.push(redirectTo);
       } else {
         router.push(`/signup/consent/beta?${redirectQuery}`);
       }

@@ -31,6 +31,13 @@ export default function CompensationHubPage() {
   return (
     <main className="min-h-screen bg-[var(--color-warm-white)] text-[var(--color-navy)] px-4 sm:px-8 py-8 sm:py-10">
       <div className="max-w-3xl mx-auto space-y-8">
+        {user && (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 flex items-center justify-between">
+            <p className="text-sm text-[var(--color-charcoal)]">
+              You&apos;re signed in — <Link href={ROUTES.applicantDashboard} className="font-medium text-[var(--color-teal)] hover:underline">continue in your dashboard</Link>.
+            </p>
+          </div>
+        )}
         <PageHeader
           contextLine={t("compensationHub.contextLine")}
           eyebrow={t("compensationHub.eyebrow")}

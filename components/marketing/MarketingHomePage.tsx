@@ -118,17 +118,6 @@ export function MarketingHomePage() {
                 >
                   Apply now
                 </Link>
-                {!user && (
-                  <div className="flex items-center gap-3 text-sm text-[var(--color-slate)]">
-                    <Link href="/login" className="font-medium text-[var(--color-teal)] hover:underline">
-                      Sign in
-                    </Link>
-                    <span className="text-[var(--color-muted)]">or</span>
-                    <Link href="/signup" className="font-medium text-[var(--color-teal)] hover:underline">
-                      Create account
-                    </Link>
-                  </div>
-                )}
               </div>
               <p className="mt-3 text-[13px] text-[var(--color-muted)]">Free for applicants. No account required to explore.</p>
             </div>

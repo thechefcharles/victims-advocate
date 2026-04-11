@@ -552,8 +552,14 @@ export const es: I18nDict = {
 
     compensationConnectAdvocate: {
         title: "Conectar con un/a defensor/a",
+        // FIXME: English copy was updated 2026-04-11 — Spanish needs human review.
+        // Do not machine-translate. New English meaning: "An advocate can guide you through your application and help you gather what you need. Search our verified directory or connect by email if you already know one."
+        // Stale until a native Spanish speaker approves a replacement.
         subtitle:
             "Encuentra programas cerca de ti o envía una solicitud si ya conoces el correo de tu defensor/a. Las organizaciones provienen de nuestro directorio (perfiles verificados con zonas de servicio y formas de contacto).",
+        // FIXME: English copy was updated 2026-04-11 — Spanish needs human review.
+        // Do not machine-translate. New English meaning: "To connect an advocate, you'll first need an application started. Open your dashboard to begin or continue one."
+        // Stale until a native Spanish speaker approves a replacement.
         caseRequiredHint:
             "Las solicitudes de conexión están ligadas a un caso específico. Abre Mi panel, selecciona tu caso y vuelve a elegir Conectar con un/a defensor/a.",
         caseLinkedNote:

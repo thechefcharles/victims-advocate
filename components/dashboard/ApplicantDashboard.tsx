@@ -74,7 +74,15 @@ function getCaseDisplayName(c: CaseRow): string {
     const full = `${first} ${last}`.trim();
     if (full) return full;
   }
-  return `Case ${c.id.slice(0, 8)}…`;
+  // Human-readable fallback — never show raw UUID
+  const stateCode = (c as Record<string, unknown>).state_code as string | undefined;
+  if (stateCode === "IL") return "Illinois Application";
+  if (stateCode === "IN") return "Indiana Application";
+  const created = (c as Record<string, unknown>).created_at as string | undefined;
+  if (created) {
+    try { return `Application — ${new Date(created).toLocaleDateString()}`; } catch { /* fall through */ }
+  }
+  return "My Application";
 }
 
 function safeGetItem(key: string) {
@@ -887,7 +895,7 @@ export default function ApplicantDashboard({
                         >
                           {cases.map((c) => (
                             <option key={c.id} value={c.id}>
-                              {strictPreviews ? `Case ${c.id.slice(0, 8)}…` : getCaseDisplayName(c)}
+                              {strictPreviews ? getCaseDisplayName(c) : getCaseDisplayName(c)}
                             </option>
                           ))}
                         </select>
@@ -914,7 +922,7 @@ export default function ApplicantDashboard({
                               setDeleteTarget({
                                 id: focusCase.id,
                                 displayName: strictPreviews
-                                  ? `Case ${focusCase.id.slice(0, 8)}…`
+                                  ? getCaseDisplayName(focusCase)
                                   : getCaseDisplayName(focusCase),
                               })
                             }

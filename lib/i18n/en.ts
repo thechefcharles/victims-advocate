@@ -164,7 +164,7 @@ export const en: I18nDict = {
       ariaLabel: "Your three steps",
       stepEligibility: "Check Eligibility",
       stepApplication: "Apply",
-      stepSupport: "Track",
+      stepSupport: "Get Support",
       stepHint:
         "Tap a step to open it. Eligibility is part of starting your application; if you skipped it, the first step shows in red but you can still apply and track.",
     },
@@ -258,9 +258,9 @@ export const en: I18nDict = {
       hintOrganizations: "Map and distance sorting when you share location.",
     },
     findOrganizationsPage: {
-      title: "Organizations Near You",
+      title: "Find support near you",
       subtitle:
-        "Explore service organizations in your area. Your exact location stays on this device—we sort distances here, not on our servers.",
+        "Browse organizations that help crime victims in Illinois and Indiana. Your location stays on your device.",
       back: "← Back To My Dashboard",
       mapIntro:
         "Use the map to see organizations near you. Tap the button below only when you are ready to share your location with this browser session.",
@@ -302,9 +302,9 @@ export const en: I18nDict = {
         "Weighted areas and data points partners can complete over time. Scores and tiers summarize trust signals—not clinical or legal advice.",
       learnMore: "How scores and tiers work",
       learnMoreClose: "Close",
-      organizationProfile: "Organization Profile",
+      organizationProfile: "Learn more",
       visitWebsite: "Visit website",
-      connectWithOrg: "Connect with organization",
+      connectWithOrg: "View organization",
       connectSending: "Sending…",
       connectDone: "The organization’s team has been notified.",
       connectFailed: "Could not send your request. Try again.",
@@ -498,7 +498,7 @@ export const en: I18nDict = {
   compensationHub: {
     contextLine: "My Dashboard → Compensation",
     eyebrow: "Crime Victims Compensation",
-    title: "Compensation help",
+    title: "Crime Victims Compensation — we'll guide you through it.",
     subtitle: "Illinois or Indiana Crime Victims Compensation—in plain language, at your pace.",
     primaryCta: "Start My Application",
     primaryHint: "This will guide you step by step.",
@@ -535,9 +535,9 @@ export const en: I18nDict = {
   compensationConnectAdvocate: {
     title: "Connect with an advocate",
     subtitle:
-      "Find programs near you, or send a request if you already know your advocate’s email. Organizations come from our directory (verified profiles with service areas and contact paths).",
+      "An advocate can guide you through your application and help you gather what you need. Search our verified directory or connect by email if you already know one.",
     caseRequiredHint:
-      "Connection requests are tied to a specific case. Open My Dashboard, select your case, then choose Connect with an advocate again.",
+      "To connect an advocate, you'll first need an application started. Open your dashboard to begin or continue one.",
     caseLinkedNote:
       "Case selected: referrals and requests apply to this application only.",
     addressStepTitle: "Where are you located?",

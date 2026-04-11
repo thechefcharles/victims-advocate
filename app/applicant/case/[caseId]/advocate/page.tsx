@@ -156,7 +156,18 @@ export default function VictimCaseAdvocateManagePage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-[var(--color-muted)]">{t("applicantDashboard.supportTeamNoAdvocates")}</p>
+            <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/80 px-5 py-6 text-center space-y-3">
+              <p className="text-base font-semibold text-[var(--color-navy)]">No advocate connected yet</p>
+              <p className="text-sm text-[var(--color-slate)]">
+                An advocate from your organization can help guide you through your application. You can request one below.
+              </p>
+              <Link
+                href={connectHref}
+                className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
+              >
+                Connect with an advocate
+              </Link>
+            </div>
           )}
         </div>
 

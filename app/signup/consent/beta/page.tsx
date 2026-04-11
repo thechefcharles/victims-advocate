@@ -58,7 +58,7 @@ export default function SignupConsentBetaPage() {
         (d.pilotAckAcceptedAt as string).length > 0;
 
       if (pilotAckComplete) {
-        router.replace(`/signup/consent/ready?${redirectQuery}`);
+        router.replace(redirectTo);
         return;
       }
 
@@ -95,7 +95,7 @@ export default function SignupConsentBetaPage() {
         return;
       }
       await refetchMe();
-      router.push(`/signup/consent/ready?${redirectQuery}`);
+      router.push(redirectTo);
     } finally {
       setSubmitting(false);
     }
