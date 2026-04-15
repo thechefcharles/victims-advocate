@@ -9,7 +9,11 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
-import { loadOrganizationsMapRows } from "@/lib/server/organizations/organizationsMapData";
+import {
+  loadOrganizationsMapRows,
+  loadOrganizationsMapRowsNear,
+} from "@/lib/server/organizations/organizationsMapData";
+import { parseGeoOriginParams } from "@/lib/server/organizations/geoOriginParams";
 
 export async function GET(req: Request) {
   try {
@@ -26,7 +30,10 @@ export async function GET(req: Request) {
       return apiFail("FORBIDDEN", decision.message ?? "Access denied.", undefined, 403);
     }
 
-    const organizations = await loadOrganizationsMapRows();
+    const origin = parseGeoOriginParams(new URL(req.url).searchParams);
+    const organizations = origin
+      ? await loadOrganizationsMapRowsNear(origin)
+      : await loadOrganizationsMapRows();
     return apiOk({ organizations });
   } catch (err) {
     const appErr = toAppError(err);

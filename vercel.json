@@ -1,0 +1,33 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/analytics-aggregates",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/analytics-ecosystem",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/referrals-auto-cancel",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/score-review-expire",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/intake-reminders",
+      "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/dispute-sla-escalations",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/partnership-renewals",
+      "schedule": "0 7 * * *"
+    }
+  ]
+}

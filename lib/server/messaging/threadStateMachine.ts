@@ -11,7 +11,7 @@
  * Archived states  — thread is fully archived; no sends or edits.
  */
 
-import type { CaseStatus, MessageThreadStatus } from "@/lib/registry";
+import type { CaseStatus, MessageThreadStatus } from "@nxtstps/registry";
 
 /** Case states where the messaging thread is fully active. */
 export const CASE_STATES_MESSAGING_ACTIVE = new Set<CaseStatus>([

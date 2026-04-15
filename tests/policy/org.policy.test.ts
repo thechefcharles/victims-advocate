@@ -28,7 +28,7 @@ vi.mock("@/lib/server/audit/logEvent", () => ({
 
 import { can } from "@/lib/server/policy/policyEngine";
 import type { PolicyActor, PolicyResource } from "@/lib/server/policy/policyTypes";
-import type { ProviderRole } from "@/lib/registry/authTypes";
+import type { ProviderRole } from "@nxtstps/registry/authTypes";
 
 // ---------------------------------------------------------------------------
 // Actor helpers

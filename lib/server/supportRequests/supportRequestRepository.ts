@@ -10,7 +10,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SupportRequestRecord } from "./supportRequestTypes";
-import type { SupportRequestStatus } from "@/lib/registry";
+import type { SupportRequestStatus } from "@nxtstps/registry";
 
 const TABLE = "support_requests" as const;
 

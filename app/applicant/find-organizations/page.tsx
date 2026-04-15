@@ -111,7 +111,17 @@ export default function VictimFindOrganizationsPage() {
     <Suspense
       fallback={
         <main className={APP_PAGE_MAIN}>
-          <div className="max-w-3xl mx-auto text-[var(--color-muted)] text-sm">Loading…</div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            <div className="h-8 w-48 rounded-lg bg-[var(--color-light-sand)] animate-pulse" />
+            <div className="h-4 w-72 rounded bg-[var(--color-light-sand)] animate-pulse" />
+            <div className="h-48 w-full rounded-xl bg-[var(--color-light-sand)] animate-pulse" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="h-24 rounded-xl bg-[var(--color-light-sand)] animate-pulse" />
+              <div className="h-24 rounded-xl bg-[var(--color-light-sand)] animate-pulse" />
+              <div className="h-24 rounded-xl bg-[var(--color-light-sand)] animate-pulse" />
+              <div className="h-24 rounded-xl bg-[var(--color-light-sand)] animate-pulse" />
+            </div>
+          </div>
         </main>
       }
     >

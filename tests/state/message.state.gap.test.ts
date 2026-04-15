@@ -7,7 +7,7 @@ import {
   deriveThreadStatusFromCaseStatus,
   CASE_STATES_MESSAGING_ARCHIVED,
 } from "@/lib/server/messaging/threadStateMachine";
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 describe("message thread state machine — invalid transitions", () => {
   it("closed case → thread is archived (cannot go back to active)", () => {

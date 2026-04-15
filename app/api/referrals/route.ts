@@ -4,7 +4,8 @@ import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { createReferral, listReferrals, listReferralsForApplicant } from "@/lib/server/referrals/referralService";
-import { serializeForSourceOrg, serializeForTargetOrg, serializeForApplicant, serializeForAdmin } from "@/lib/server/referrals/referralSerializer";
+import { serializeForSourceOrg, serializeForApplicant, serializeForAdmin } from "@/lib/server/referrals/referralSerializer";
+import { buildTargetOrgView } from "@/lib/server/referrals/referralViews";
 import { z } from "zod";
 
 const createReferralBodySchema = z.object({
@@ -55,8 +56,9 @@ export async function GET(req: Request) {
     const serialized = ctx.isAdmin
       ? rows.map(serializeForAdmin)
       : direction === "outgoing"
-      ? rows.map((r) => serializeForSourceOrg(r))
-      : rows.map((r) => serializeForTargetOrg(r));
+        ? rows.map((r) => serializeForSourceOrg(r))
+        : // Receiving inbox — status-branched masking enforced per row.
+          await Promise.all(rows.map((r) => buildTargetOrgView(r.id)));
 
     return apiOk({ referrals: serialized, direction });
   } catch (err) {

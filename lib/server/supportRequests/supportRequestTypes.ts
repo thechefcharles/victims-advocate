@@ -6,7 +6,7 @@
  * surface-facing shapes are the *View variants.
  */
 
-import type { SupportRequestStatus } from "@/lib/registry";
+import type { SupportRequestStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shape

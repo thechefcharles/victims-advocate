@@ -2,6 +2,11 @@
   "name": "victims-advocate",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.6.1",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
@@ -19,6 +24,8 @@
     "directory:cbo-va": "node scripts/build-il-cbo-va-directory.mjs"
   },
   "dependencies": {
+    "@nxtstps/registry": "*",
+    "@nxtstps/types": "*",
     "@anthropic-ai/sdk": "^0.86.1",
     "@hookform/resolvers": "^5.2.2",
     "@notionhq/client": "^5.16.0",
@@ -55,6 +62,7 @@
     "pdf-parse": "^1.1.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "turbo": "latest",
     "vitest": "^3.2.4",
     "xlsx": "^0.18.5"
   }

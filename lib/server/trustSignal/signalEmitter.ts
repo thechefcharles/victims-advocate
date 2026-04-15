@@ -19,6 +19,50 @@ import { TRUST_SIGNAL_TYPES } from "./signalTypes";
 import { refreshAggregates } from "./signalAggregator";
 
 /**
+ * Keys that are banned from `metadata` because they either are PII directly or
+ * commonly carry PII as values. The emitter rejects any event whose metadata
+ * contains one of these keys so that signal logs stay within Data Class B
+ * (operational; no person-identifying content).
+ *
+ * The check is a denylist over top-level key names only — nested objects are
+ * not inspected since the domain services always pass flat metadata.
+ */
+const PII_KEYS = new Set<string>([
+  "userId",
+  "user_id",
+  "applicantId",
+  "applicant_id",
+  "victimId",
+  "victim_id",
+  "name",
+  "firstName",
+  "first_name",
+  "lastName",
+  "last_name",
+  "displayName",
+  "display_name",
+  "email",
+  "phone",
+  "phoneNumber",
+  "phone_number",
+  "contactInfo",
+  "contact_info",
+  "address",
+]);
+
+function assertNoPiiMetadata(metadata: Record<string, unknown> | undefined): void {
+  if (!metadata) return;
+  for (const key of Object.keys(metadata)) {
+    if (PII_KEYS.has(key)) {
+      throw new Error(
+        `emitSignal: metadata contains PII-sensitive key "${key}". ` +
+          `Signal logs must only carry org-scoped identifiers and counts.`,
+      );
+    }
+  }
+}
+
+/**
  * Emits a trust signal event for an organization.
  *
  * @param params   - Signal parameters including org, type, value, actor, and idempotency key.
@@ -39,6 +83,12 @@ export async function emitSignal(
   if (!TRUST_SIGNAL_TYPES.has(signalType)) {
     return { success: false, reason: "INVALID_SIGNAL_TYPE" };
   }
+
+  // 1a. Reject metadata containing PII-sensitive keys. Signals are operational
+  //     aggregate inputs; Phase 6 scoring must never ingest person-identifying
+  //     values. Violation is a programming error, so we throw rather than
+  //     silently drop the event.
+  assertNoPiiMetadata(metadata);
 
   try {
     // 2. Insert into trust_signal_events.

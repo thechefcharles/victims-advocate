@@ -6,7 +6,7 @@
  * Never return a *Record directly from a route — always pass through a serializer.
  */
 
-import type { IntakeSessionStatus } from "@/lib/registry";
+import type { IntakeSessionStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shapes
@@ -102,7 +102,7 @@ export type AmendIntakeSubmissionInput = {
  * Typed search attributes derived from a submitted intake.
  *
  * This is the only shape buildSearchAttributesFromIntake() may return.
- * It MUST NOT contain raw CompensationApplication fields, organization
+ * It MUST NOT contain raw legacy intake payload fields, organization
  * data, or anything routed through searchService.ts. (Search Law — Rule 12.)
  *
  * safetyModeEnabled is intentionally NOT part of this shape — it is a

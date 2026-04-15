@@ -72,8 +72,8 @@ beforeEach(() => {
   vi.mocked(repo.getAppointmentById).mockResolvedValue(mockAppointment);
   vi.mocked(repo.insertAppointment).mockResolvedValue(mockAppointment);
   vi.mocked(repo.insertAppointmentEvent).mockResolvedValue({} as never);
-  vi.mocked(repo.updateAppointmentStatus).mockImplementation(({ status }) =>
-    Promise.resolve({ ...mockAppointment, status } as AppointmentRow),
+  vi.mocked(repo.updateAppointmentStatus).mockImplementation(({ toStatus }) =>
+    Promise.resolve({ ...mockAppointment, status: toStatus } as AppointmentRow),
   );
   vi.mocked(repo.insertRescheduledAppointment).mockResolvedValue({
     ...mockAppointment,
@@ -145,7 +145,16 @@ describe("appointment service", () => {
 
   it("cancelAppointment accepts optional reason and writes history event", async () => {
     await cancelAppointment({ ctx, id: "appt-1", reason: "Staff unavailable" });
-    expect(repo.updateAppointmentStatus).toHaveBeenCalledWith({ id: "appt-1", status: "cancelled" });
+    expect(repo.updateAppointmentStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "appt-1",
+        fromStatus: "scheduled",
+        toStatus: "cancelled",
+        actorUserId: "user-1",
+        actorAccountType: "provider",
+        reason: "Staff unavailable",
+      }),
+    );
     expect(repo.insertAppointmentEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event_type: "cancelled",

@@ -119,9 +119,11 @@ describe("buildSearchAttributesFromIntake — needs map", () => {
         },
       }),
     );
+    // Phase E: needs keys flow through the canonical answer normalizer, so
+    // camelCase loss flags surface as snake_case in the search profile.
     expect(profile.needs).toEqual({
-      medicalBills: true,
-      mentalHealth: true,
+      medical_bills: true,
+      mental_health: true,
       relocation: false,
     });
   });

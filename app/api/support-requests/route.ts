@@ -14,7 +14,7 @@ import {
   createSupportRequest,
   listSupportRequests,
 } from "@/lib/server/supportRequests/supportRequestService";
-import type { SupportRequestStatus } from "@/lib/registry";
+import type { SupportRequestStatus } from "@nxtstps/registry";
 
 export async function GET(req: Request) {
   try {

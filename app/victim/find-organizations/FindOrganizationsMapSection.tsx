@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
 import { OrganizationLearnMoreModal } from "@/components/victim/OrganizationLearnMoreModal";
@@ -40,6 +39,8 @@ export type OrgFromApi = {
   website?: string | null;
   program_type?: string | null;
   response_accessibility?: ResponseAccessibilityPublic | null;
+  /** Server-computed (PostGIS for index rows; haversine on the server for external directory rows). */
+  distance_miles?: number | null;
 };
 
 type Copy = {
@@ -183,7 +184,12 @@ export function FindOrganizationsMapSection({
         return;
       }
       try {
-        const res = await fetch("/api/victim/organizations-map", {
+        // Search Law: pass the user's position (geolocation or geocoded preset)
+        // to the server so PostGIS can filter + sort. No client-side geo math.
+        const url = mapCenterPos
+          ? `/api/victim/organizations-map?lat=${mapCenterPos.lat}&lng=${mapCenterPos.lng}`
+          : "/api/victim/organizations-map";
+        const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json().catch(() => ({}));
@@ -200,7 +206,7 @@ export function FindOrganizationsMapSection({
     return () => {
       cancelled = true;
     };
-  }, [copy.loadError, retryKey]);
+  }, [copy.loadError, retryKey, mapCenterPos]);
 
   const requestLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -248,14 +254,13 @@ export function FindOrganizationsMapSection({
     });
   }, [copy]);
 
+  // Server already sorted + attached distance_miles when a geo origin was sent.
   const sorted = useMemo(() => {
     if (!raw || !mapCenterPos) return null;
-    const withDist = raw.map((o) => ({
+    return raw.map((o) => ({
       ...o,
-      distanceMiles: distanceMiles(mapCenterPos.lat, mapCenterPos.lng, o.lat, o.lng),
+      distanceMiles: typeof o.distance_miles === "number" ? o.distance_miles : 0,
     }));
-    withDist.sort((a, b) => a.distanceMiles - b.distanceMiles);
-    return withDist;
   }, [raw, mapCenterPos]);
 
   const mapOrgs: MapOrgMarker[] = useMemo(() => {
@@ -281,10 +286,9 @@ export function FindOrganizationsMapSection({
 
   if (loadErr) {
     return (
-      <div className="space-y-3">
-        <div className="rounded-xl border border-red-900/40 bg-red-950/25 px-4 py-3 text-sm text-red-200">
-          {loadErr}
-        </div>
+      <div className="rounded-xl border border-red-900/30 bg-red-950/10 px-5 py-6 text-center space-y-3">
+        <p className="text-base font-semibold text-[var(--color-navy)]">We couldn&apos;t load providers right now</p>
+        <p className="text-sm text-[var(--color-slate)]">This might be a connection issue. Try refreshing the page.</p>
         <button
           type="button"
           onClick={() => {
@@ -292,9 +296,9 @@ export function FindOrganizationsMapSection({
             setRaw(null);
             setRetryKey((k) => k + 1);
           }}
-          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)] px-4 py-2 text-sm font-medium text-[var(--color-charcoal)] hover:bg-[var(--color-teal-deep)]"
+          className="inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
         >
-          {copy.tryAgain}
+          Refresh
         </button>
       </div>
     );
@@ -309,10 +313,20 @@ export function FindOrganizationsMapSection({
       <div className="space-y-4">
         <p className="text-sm text-[var(--color-slate)] leading-relaxed">{copy.mapIntro}</p>
         <div
-          className="rounded-xl border border-[var(--color-border)] bg-white/92 px-4 py-3 text-sm text-[var(--color-slate)]"
+          className="rounded-xl border border-[var(--color-border)] bg-[var(--color-warm-cream)]/80 px-5 py-6 text-center"
           role="status"
         >
-          {copy.noOrgs}
+          <p className="text-base font-semibold text-[var(--color-navy)]">No providers found nearby</p>
+          <p className="mt-2 text-sm text-[var(--color-slate)]">
+            Try expanding your search area, or browse all providers in Illinois.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 inline-flex items-center rounded-lg bg-[var(--color-teal-deep)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--color-teal)] transition-colors"
+          >
+            Browse all providers
+          </button>
         </div>
         <p className="text-xs text-[var(--color-muted)] leading-relaxed">{copy.privacyNote}</p>
       </div>

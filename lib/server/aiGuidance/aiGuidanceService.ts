@@ -33,6 +33,9 @@ import {
   listMessagesForSession,
 } from "./aiGuidanceRepository";
 import { detectEscalationNeeds, escalateAIGuidanceSession } from "./aiEscalationService";
+import { orchestrate } from "@/lib/server/aiOps/aiOrchestrator";
+import { resolveModelInvoker } from "@/lib/server/aiOps/modelInvoker";
+import { resolveAIMode, buildAIContext } from "./aiContextBuilder";
 
 // ---------------------------------------------------------------------------
 // Session management
@@ -135,21 +138,31 @@ export async function sendAIGuidanceMessage(params: {
     return { message: escalationMsg, escalation };
   }
 
-  // 2. Permission-filter context
+  // 2. Permission-filter context (legacy — still used by the guardrails step).
   const context = await resolveAIGuidanceContext(params.actor, session, supabase);
 
-  // 3. Constraint profile
+  // 3. Constraint profile (legacy — still used by applyAIGovernanceGuardrails).
   const constraints = resolveAIConstraintProfile(params.actor, session);
+  void context;
 
-  // 4. Build prompt bundle
-  const history = await listMessagesForSession(params.sessionId, supabase);
-  const promptBundle = buildAIGuidancePromptBundle(context, constraints, history);
+  // 4. Orchestrated model call. Replaces the prior direct Anthropic fetch.
+  //    orchestrate() runs the canonical 11-step flow: mode → prompt registry
+  //    → context bundle → model invoker → tool allowlist → 5-layer safety
+  //    pipeline. Every applicant message that reaches the model now passes
+  //    through that pipeline.
+  const orch = await orchestrate(
+    {
+      mode: resolveAIMode(session),
+      userMessage: params.content,
+      context: buildAIContext(session, params.actor),
+      actor: { userId: params.actor.userId, accountType: params.actor.accountType },
+      sessionId: params.sessionId,
+    },
+    resolveModelInvoker(),
+  );
 
-  // 5. Call model server-side (placeholder — actual API call deferred)
-  const aiContent = await callAIModel(promptBundle);
-
-  // 6. Governance guardrails
-  const safeOutput = applyAIGovernanceGuardrails(aiContent, constraints);
+  // 6. Governance guardrails (legacy layer — operates on top of Layer 4).
+  const safeOutput = applyAIGovernanceGuardrails(orch.response, constraints);
 
   // 7. Save assistant message
   const assistantMsg = await insertMessage(

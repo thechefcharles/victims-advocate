@@ -19,7 +19,7 @@ import type {
   ReportingSubmission,
   ReportingSubmissionStatus,
 } from "./agencyTypes";
-import type { AgencyRole } from "@/lib/registry";
+import type { AgencyRole } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Row mappers

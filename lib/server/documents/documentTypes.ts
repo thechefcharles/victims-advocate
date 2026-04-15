@@ -5,7 +5,7 @@
  * CRITICAL: storage_path must NEVER appear in any view type or API response.
  */
 
-import type { DocumentStatus } from "@/lib/registry";
+import type { DocumentStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shape — internal only, never returned to client

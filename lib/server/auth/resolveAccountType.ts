@@ -1,4 +1,4 @@
-import type { AccountType } from "@/lib/registry";
+import type { AccountType } from "@nxtstps/registry";
 
 /**
  * Maps legacy profile fields to the 2.0 AccountType.

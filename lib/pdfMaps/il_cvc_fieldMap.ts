@@ -1,5 +1,5 @@
 // lib/pdfMaps/il_cvc_fieldMap.ts
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 /**
  * Simple helper to join first + last safely
@@ -34,14 +34,14 @@ const phoneParts = (phone?: string) => {
 
 /**
  * Map of PDF form field names -> function that pulls the right value
- * from CompensationApplication.
+ * from LegacyIntakePayload.
  * 
  * Field names are based on the actual IL CVC PDF form structure.
  * Multiple entries use "Row1", "Row2", etc. suffixes.
  */
 export const IL_CVC_FIELD_MAP: Record<
   string,
-  (app: CompensationApplication) => string | boolean | undefined
+  (app: LegacyIntakePayload) => string | boolean | undefined
 > = {
   // ============================================
   // SECTION 1: VICTIM INFORMATION

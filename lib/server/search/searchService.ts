@@ -12,7 +12,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SearchFilter, SearchResult, GeoFilter } from "./searchTypes";
 import { querySearchIndex } from "./searchRepository";
-import { distanceMiles } from "@/lib/geo/haversine";
+import { distanceMiles } from "@/lib/server/geo/haversine";
 
 /**
  * Search providers using any combination of text, geo, state, and service filters.

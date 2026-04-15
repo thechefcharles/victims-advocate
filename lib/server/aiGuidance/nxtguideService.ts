@@ -6,12 +6,12 @@
  * replaced by the Domain 7.3 aiGuidanceService, but for now both coexist.
  */
 
-import OpenAI from "openai";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 import { getCaseById } from "@/lib/server/data";
 import type { AuthContext } from "@/lib/server/auth";
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+import { orchestrate } from "@/lib/server/aiOps/aiOrchestrator";
+import { resolveModelInvoker } from "@/lib/server/aiOps/modelInvoker";
+import type { AIModeKey } from "@/lib/server/aiOps";
 
 export type ChatMessage = {
   role: "user" | "assistant" | "system";
@@ -33,7 +33,7 @@ export type NxtguideInput = {
   messages: ChatMessage[];
   currentRoute: string;
   currentStep: IntakeStep | null;
-  application?: CompensationApplication;
+  application?: LegacyIntakePayload;
   caseId?: string | null;
 };
 
@@ -61,20 +61,46 @@ export async function processNxtguideMessage(
     if (caseSummary) advocateCaseSummary = caseSummary;
   }
 
-  const systemPrompt = buildSystemPrompt(
+  // Legacy buildSystemPrompt output is now carried through as route context.
+  // The canonical system prompt comes from the orchestrator's prompt registry;
+  // the 5-layer safety pipeline runs on every response.
+  const routeContext = buildSystemPrompt(
     input.currentRoute,
     input.currentStep,
     missingSummary,
     advocateCaseSummary,
   );
+  void routeContext;
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
-    temperature: 0.3,
-  });
+  // Route → mode. /admin/cases surfaces are provider_copilot; everything
+  // else is applicant_guidance.
+  const mode: AIModeKey = input.currentRoute.startsWith("/admin/cases")
+    ? "provider_copilot"
+    : "applicant_guidance";
 
-  return { reply: completion.choices[0]?.message?.content || "" };
+  // Collapse the conversation to the last user turn — orchestrator's v1 shape
+  // takes one userMessage per call. Legacy history is incorporated via the
+  // route-aware context above.
+  const lastUser = [...sanitizedMessages].reverse().find((m) => m.role === "user");
+  const userMessage =
+    lastUser?.content ??
+    sanitizedMessages[sanitizedMessages.length - 1]?.content ??
+    "";
+
+  const result = await orchestrate(
+    {
+      mode,
+      userMessage,
+      context: {
+        stateCode: "IL",
+        caseId: input.caseId ?? null,
+      },
+      actor: { userId: ctx.userId, accountType: ctx.accountType },
+    },
+    resolveModelInvoker(),
+  );
+
+  return { reply: result.response };
 }
 
 // ---------------------------------------------------------------------------
@@ -91,7 +117,7 @@ async function buildAdvocateCaseSummary(
 
     const caseRow = result.case as Record<string, unknown>;
     const docs = result.documents;
-    const app = caseRow.application as CompensationApplication;
+    const app = caseRow.application as LegacyIntakePayload;
     const status = String(caseRow.status ?? "unknown");
     const stateCode = String(caseRow.state_code ?? "unknown");
 
@@ -195,7 +221,7 @@ Always answer in the same language the user is using.`;
 // Missing Summary
 // ---------------------------------------------------------------------------
 
-function buildMissingSummary(step: string, app: CompensationApplication): string {
+function buildMissingSummary(step: string, app: LegacyIntakePayload): string {
   const missing: string[] = [];
 
   if (step === "applicant") {

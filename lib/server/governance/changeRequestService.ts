@@ -2,12 +2,15 @@
  * Domain 7.1 — Change request service.
  *
  * Governed changes to system-critical objects. Only targets in
- * GOVERNED_TARGETS are allowed. Lifecycle:
- *   draft → pending_approval → approved | rejected
- *   approved → rolled_back (creates NEW audit event, does NOT delete history)
+ * GOVERNED_TARGETS are allowed. Canonical 7-state lifecycle from the
+ * Master System Document:
  *
- * Rollback creates a new change request + audit event — it never deletes
- * the original approval history.
+ *   draft → submitted → under_review → approved | rejected
+ *   approved → rolled_back
+ *   draft | submitted | under_review → closed  (withdraw-style terminal)
+ *
+ * Rollback creates a NEW audit event — it never deletes the original
+ * approval history.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -35,11 +38,13 @@ function assertGovernedTarget(targetType: string): asserts targetType is Governe
 }
 
 const CHANGE_REQUEST_TRANSITIONS: Record<string, string[]> = {
-  draft: ["pending_approval"],
-  pending_approval: ["approved", "rejected"],
+  draft: ["submitted", "closed"],
+  submitted: ["under_review", "closed"],
+  under_review: ["approved", "rejected", "closed"],
   approved: ["rolled_back"],
   rejected: [],
   rolled_back: [],
+  closed: [],
 };
 
 function assertTransition(from: string, to: string): void {
@@ -86,6 +91,9 @@ export async function createChangeRequest(params: {
   return cr;
 }
 
+/**
+ * Transition: draft → submitted.
+ */
 export async function submitChangeRequest(params: {
   id: string;
   actorId: string;
@@ -94,8 +102,75 @@ export async function submitChangeRequest(params: {
   const supabase = params.supabase ?? getSupabaseAdmin();
   const existing = await getChangeRequestById(params.id, supabase);
   if (!existing) throw new AppError("NOT_FOUND", "Change request not found.", undefined, 404);
-  assertTransition(existing.status, "pending_approval");
-  return updateChangeRequestStatus(params.id, "pending_approval", supabase);
+  assertTransition(existing.status, "submitted");
+  const updated = await updateChangeRequestStatus(params.id, "submitted", supabase);
+  void logAuditEvent({
+    actorId: params.actorId,
+    action: "change_request:submit",
+    resourceType: "change_request",
+    resourceId: params.id,
+    eventCategory: "governance_change",
+    metadata: { target_type: existing.targetType, target_id: existing.targetId },
+  });
+  return updated;
+}
+
+/**
+ * Transition: submitted → under_review. Marks a change request as actively
+ * being reviewed by an admin. Approvals/rejections must come from here.
+ */
+export async function startChangeRequestReview(params: {
+  id: string;
+  reviewerUserId: string;
+  supabase?: SupabaseClient;
+}): Promise<ChangeRequest> {
+  const supabase = params.supabase ?? getSupabaseAdmin();
+  const existing = await getChangeRequestById(params.id, supabase);
+  if (!existing) throw new AppError("NOT_FOUND", "Change request not found.", undefined, 404);
+  assertTransition(existing.status, "under_review");
+  const updated = await updateChangeRequestStatus(params.id, "under_review", supabase);
+  void logAuditEvent({
+    actorId: params.reviewerUserId,
+    action: "change_request:review_start",
+    resourceType: "change_request",
+    resourceId: params.id,
+    eventCategory: "governance_change",
+    metadata: { target_type: existing.targetType, target_id: existing.targetId },
+  });
+  return updated;
+}
+
+/**
+ * Transition: draft | submitted | under_review → closed.
+ * Withdraw-style finalizer for change requests that are abandoned before
+ * resolution. Approved / rejected / rolled_back are already terminal and
+ * cannot close through this path.
+ */
+export async function closeChangeRequest(params: {
+  id: string;
+  actorId: string;
+  reason?: string;
+  supabase?: SupabaseClient;
+}): Promise<ChangeRequest> {
+  const supabase = params.supabase ?? getSupabaseAdmin();
+  const existing = await getChangeRequestById(params.id, supabase);
+  if (!existing) throw new AppError("NOT_FOUND", "Change request not found.", undefined, 404);
+  assertTransition(existing.status, "closed");
+  const updated = await updateChangeRequestStatus(params.id, "closed", supabase);
+  void logAuditEvent({
+    actorId: params.actorId,
+    action: "change_request:close",
+    resourceType: "change_request",
+    resourceId: params.id,
+    eventCategory: "governance_change",
+    metadata: {
+      target_type: existing.targetType,
+      target_id: existing.targetId,
+      reason: params.reason ?? "no reason provided",
+      from_state: existing.status,
+    },
+  });
+  return updated;
 }
 
 export async function approveChangeRequest(params: {

@@ -17,7 +17,7 @@
  * is the applicant-facing curated guidance layer.
  */
 
-import type { AccountType } from "@/lib/registry";
+import type { AccountType } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Reason codes

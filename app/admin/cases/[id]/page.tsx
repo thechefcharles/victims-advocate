@@ -39,7 +39,7 @@ interface SavedCase {
   id: string;
   createdAt: string;
   status: CaseStatus;
-  application: any; // matches CompensationApplication shape
+  application: any; // matches LegacyIntakePayload shape
   documents?: UploadedDoc[];
   eligibility_result?: EligibilityResult | null;
   assigned_advocate_id?: string | null;

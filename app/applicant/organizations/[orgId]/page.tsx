@@ -250,7 +250,12 @@ export default function VictimOrganizationPublicProfilePage() {
                   ))}
                 </ul>
               </div>
-            ) : null}
+            ) : (
+              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/60 px-4 py-4 text-center">
+                <p className="text-sm font-medium text-[var(--color-navy)]">This organization hasn&apos;t listed their programs yet.</p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">Contact them directly to learn more about their services.</p>
+              </div>
+            )}
 
             <OrganizationTransparencyFramework
               external={false}

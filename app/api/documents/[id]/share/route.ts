@@ -3,9 +3,8 @@
  * Share a document with another org. Consent-gated — isSharingAllowed() is called in service.
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -25,14 +24,14 @@ export async function POST(req: Request, context: RouteParams) {
 
     const { recipient_org_id, purpose, consent_grant_id } = body as Record<string, string>;
     if (!recipient_org_id || !purpose) {
-      return NextResponse.json({ error: "recipient_org_id and purpose are required" }, { status: 400 });
+      return apiFail("VALIDATION_ERROR", "recipient_org_id and purpose are required");
     }
 
     const supabase = getSupabaseAdmin();
     const actor = buildActor(ctx);
     const doc = await shareDocument(actor, id, { recipient_org_id, purpose, consent_grant_id }, supabase);
 
-    return NextResponse.json({ data: doc, error: null });
+    return apiOk(doc);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("documents.share.error", { code: appErr.code, message: appErr.message });

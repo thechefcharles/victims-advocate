@@ -11,20 +11,20 @@ import { AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { appendCaseTimelineEvent } from "@/lib/server/data";
 import { logEvent } from "@/lib/server/audit/logEvent";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 type CaseStatus = "draft" | "ready_for_review" | "submitted" | "closed";
 
-function normalizeApplication(raw: unknown): CompensationApplication | null {
+function normalizeApplication(raw: unknown): LegacyIntakePayload | null {
   if (!raw) return null;
-  if (typeof raw === "object") return raw as CompensationApplication;
+  if (typeof raw === "object") return raw as LegacyIntakePayload;
   if (typeof raw === "string") {
     try {
       const once = JSON.parse(raw);
-      if (typeof once === "object" && once) return once as CompensationApplication;
+      if (typeof once === "object" && once) return once as LegacyIntakePayload;
       if (typeof once === "string") {
         const twice = JSON.parse(once);
-        if (typeof twice === "object" && twice) return twice as CompensationApplication;
+        if (typeof twice === "object" && twice) return twice as LegacyIntakePayload;
       }
     } catch { return null; }
   }
@@ -75,7 +75,10 @@ export async function createCaseFromIntakeSubmission(
   const { data: newCase, error: caseError } = await supabase
     .from("cases").insert({ owner_user_id: ctx.userId, organization_id: orgId, status, state_code, name: name ?? undefined, application })
     .select("*").single();
-  if (caseError || !newCase) throw new AppError("INTERNAL", "Failed to save case", undefined, 500);
+  if (caseError || !newCase) {
+    console.error("[createCaseFromIntake] Supabase insert error:", caseError?.message, caseError?.details, caseError?.hint, caseError?.code);
+    throw new AppError("INTERNAL", `Failed to save case: ${caseError?.message ?? "unknown"}`, undefined, 500);
+  }
 
   const { error: accessError } = await supabase.from("case_access").insert({
     case_id: newCase.id, user_id: ctx.userId, organization_id: orgId, role: "owner", can_view: true, can_edit: true,

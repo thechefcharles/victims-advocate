@@ -12,7 +12,7 @@ import {
   listTranslationMappingSets,
   createTranslationMappingSet,
 } from "@/lib/server/translation";
-import type { LocaleCode } from "@/lib/registry";
+import type { LocaleCode } from "@nxtstps/registry";
 
 export async function GET(req: Request) {
   try {

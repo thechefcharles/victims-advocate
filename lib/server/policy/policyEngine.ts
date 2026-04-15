@@ -18,7 +18,7 @@
  * pre-fetched and injected by the caller via PolicyContext.
  */
 
-import type { PolicyDecisionReasonCode } from "@/lib/registry";
+import type { PolicyDecisionReasonCode } from "@nxtstps/registry";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import type { PolicyActor, PolicyResource, PolicyContext, PolicyDecision } from "./policyTypes";
 import type { PolicyAction } from "./actionRegistry";

@@ -1,0 +1,15 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nxtstps/registry": ["../../packages/registry/src"],
+      "@nxtstps/registry/*": ["../../packages/registry/src/*"],
+      "@nxtstps/types": ["../../packages/types/src"],
+      "@nxtstps/types/*": ["../../packages/types/src/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

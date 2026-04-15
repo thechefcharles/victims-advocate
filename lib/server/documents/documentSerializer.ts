@@ -11,7 +11,7 @@ import type {
   DocumentProviderView,
   DocumentAdminView,
 } from "./documentTypes";
-import type { DocumentStatus } from "@/lib/registry";
+import type { DocumentStatus } from "@nxtstps/registry";
 
 /** Coerce DB status to the canonical DocumentStatus union (active/locked/archived). */
 function toDocumentStatus(status: string): DocumentStatus {

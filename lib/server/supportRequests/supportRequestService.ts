@@ -20,6 +20,7 @@ import { AppError } from "@/lib/server/api";
 import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
 import { transition } from "@/lib/server/workflow/engine";
+import { emitSignal } from "@/lib/server/trustSignal";
 import type { AuthContext } from "@/lib/server/auth/context";
 import type { PolicyResource } from "@/lib/server/policy/policyTypes";
 import {
@@ -45,7 +46,7 @@ import type {
   SupportRequestAdminView,
   SupportRequestRecord,
 } from "./supportRequestTypes";
-import type { SupportRequestStatus } from "@/lib/registry";
+import type { SupportRequestStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -202,6 +203,19 @@ export async function submitSupportRequest(
   );
   if (!updated) throw new AppError("FORBIDDEN", "Request was modified by another action.");
 
+  void emitSignal(
+    {
+      orgId: record.organization_id,
+      signalType: "support_request.submitted",
+      value: 0,
+      actorUserId: ctx.userId,
+      actorAccountType: ctx.accountType,
+      idempotencyKey: `${record.organization_id}:support_request.submitted:${requestId}`,
+      metadata: { support_request_id: requestId },
+    },
+    supabase,
+  );
+
   return serializeForApplicant(updated);
 }
 
@@ -250,6 +264,19 @@ export async function acceptSupportRequest(
     record.status,
   );
   if (!updated) throw new AppError("FORBIDDEN", "Request was modified by another action.");
+
+  void emitSignal(
+    {
+      orgId: record.organization_id,
+      signalType: "support_request.accepted",
+      value: 0,
+      actorUserId: ctx.userId,
+      actorAccountType: ctx.accountType,
+      idempotencyKey: `${record.organization_id}:support_request.accepted:${requestId}`,
+      metadata: { support_request_id: requestId },
+    },
+    supabase,
+  );
 
   return serializeForProvider(updated);
 }
@@ -310,6 +337,19 @@ export async function declineSupportRequest(
     record.status,
   );
   if (!updated) throw new AppError("FORBIDDEN", "Request was modified by another action.");
+
+  void emitSignal(
+    {
+      orgId: record.organization_id,
+      signalType: "support_request.declined",
+      value: 0,
+      actorUserId: ctx.userId,
+      actorAccountType: ctx.accountType,
+      idempotencyKey: `${record.organization_id}:support_request.declined:${requestId}`,
+      metadata: { support_request_id: requestId },
+    },
+    supabase,
+  );
 
   return serializeForProvider(updated);
 }
@@ -478,6 +518,19 @@ export async function closeSupportRequest(
     record.status,
   );
   if (!updated) throw new AppError("FORBIDDEN", "Request was modified by another action.");
+
+  void emitSignal(
+    {
+      orgId: record.organization_id,
+      signalType: "support_request.closed",
+      value: 0,
+      actorUserId: ctx.userId,
+      actorAccountType: ctx.accountType,
+      idempotencyKey: `${record.organization_id}:support_request.closed:${requestId}`,
+      metadata: { support_request_id: requestId, terminal_from_state: record.status },
+    },
+    supabase,
+  );
 
   return serializeForProvider(updated);
 }

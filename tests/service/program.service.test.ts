@@ -34,7 +34,7 @@ vi.mock("@/lib/catalog/loadCatalog", () => ({
   loadIlVictimAssistanceCatalog: vi.fn().mockReturnValue([]),
 }));
 
-vi.mock("@/lib/server/org/catalogOrgFields", () => ({
+vi.mock("@/lib/server/organizations/catalogOrgFields", () => ({
   orgRowFromCatalogEntry: vi.fn().mockReturnValue({
     name: "Test Org — Advocacy",
     type: "nonprofit",

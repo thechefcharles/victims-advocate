@@ -9,7 +9,6 @@ import { ProgramCatalogSelect } from "@/components/programs/ProgramCatalogSelect
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { PublicBottomCta } from "@/components/public/PublicBottomCta";
 
 /**
  * The 2.0 signup model: Applicant or Provider.
@@ -314,8 +313,6 @@ export function SignupPageClient({ initialAccountType }: Props) {
           Already have an account?{" "}
           <Link href="/login" className="underline hover:text-[var(--color-charcoal)]">Sign in</Link>
         </p>
-
-        <PublicBottomCta />
       </div>
     </main>
   );

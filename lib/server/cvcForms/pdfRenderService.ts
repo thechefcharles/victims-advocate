@@ -16,7 +16,7 @@
 import { PDFDocument, StandardFonts } from "pdf-lib";
 import { readFile } from "fs/promises";
 import path from "path";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 import { IN_CVC_COORDS } from "@/lib/pdfMaps/in_cvc_coords";
 
@@ -66,18 +66,18 @@ async function translateToEnglishOpenAI(input: string): Promise<string> {
  * preferred Spanish. Behavior copied verbatim from the legacy IL route.
  */
 export async function translateNarrativeFieldsForOutput(
-  app: CompensationApplication,
-): Promise<CompensationApplication> {
+  app: LegacyIntakePayload,
+): Promise<LegacyIntakePayload> {
   const prefersEnglish = app?.contact?.prefersEnglish ?? true;
   const preferredLanguage = (app?.contact?.preferredLanguage ?? "").toLowerCase();
   const shouldTranslate =
     !prefersEnglish && (preferredLanguage === "spanish" || preferredLanguage === "es");
   if (!shouldTranslate) return app;
 
-  const out: CompensationApplication =
+  const out: LegacyIntakePayload =
     typeof structuredClone === "function"
       ? structuredClone(app)
-      : (JSON.parse(JSON.stringify(app)) as CompensationApplication);
+      : (JSON.parse(JSON.stringify(app)) as LegacyIntakePayload);
 
   if (typeof out.crime?.crimeDescription === "string" && out.crime.crimeDescription.trim()) {
     out.crime.crimeDescription = await translateToEnglishOpenAI(out.crime.crimeDescription);
@@ -178,7 +178,7 @@ export async function translateNarrativeFieldsForOutput(
 // Renderers
 // ---------------------------------------------------------------------------
 
-async function renderIlPdf(app: CompensationApplication): Promise<Uint8Array> {
+async function renderIlPdf(app: LegacyIntakePayload): Promise<Uint8Array> {
   // 1) Translate narrative fields (preserved from legacy route)
   const translatedApp = await translateNarrativeFieldsForOutput(app);
 
@@ -219,7 +219,7 @@ async function renderIlPdf(app: CompensationApplication): Promise<Uint8Array> {
   return pdfDoc.save();
 }
 
-async function renderInPdf(app: CompensationApplication): Promise<Uint8Array> {
+async function renderInPdf(app: LegacyIntakePayload): Promise<Uint8Array> {
   const templatePath = path.join(process.cwd(), "public", "pdf", "indiana_cvc_application.pdf");
   const templateBytes = await readFile(templatePath);
 
@@ -254,12 +254,12 @@ async function renderInPdf(app: CompensationApplication): Promise<Uint8Array> {
  * Renders a CVC PDF for the given template id and application data.
  *
  * @param templateId — 'il_cvc' or 'in_cvc'
- * @param application — the resolved CompensationApplication payload
+ * @param application — the resolved LegacyIntakePayload payload
  * @returns PDF bytes
  */
 export async function renderCvcPdf(
   templateId: string,
-  application: CompensationApplication,
+  application: LegacyIntakePayload,
 ): Promise<Uint8Array> {
   if (templateId === "il_cvc") return renderIlPdf(application);
   if (templateId === "in_cvc") return renderInPdf(application);

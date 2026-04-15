@@ -6,7 +6,7 @@
  * Never return a CaseRecord directly from a route — always pass through a serializer.
  */
 
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shape

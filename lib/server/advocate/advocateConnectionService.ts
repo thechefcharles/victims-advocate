@@ -10,7 +10,7 @@ import type { AuthContext } from "@/lib/server/auth";
 import { AppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
-import { getVictimDisplayForNotification } from "@/lib/server/notifications/applicantDisplay";
+import { getApplicantDisplayForNotification } from "@/lib/server/notifications/applicantDisplay";
 import { upsertAdvocateCaseAccess } from "@/lib/server/advocate/grantAdvocateCaseAccess";
 
 export type ConnectionRequestInput = {
@@ -125,7 +125,7 @@ async function notifyBothParties(
   ctx: AuthContext, req: Request, advocateUserId: string,
   advocateEmail: string, requestId: string, caseId: string,
 ): Promise<void> {
-  const { displayName, email } = await getVictimDisplayForNotification(ctx.userId);
+  const { displayName, email } = await getApplicantDisplayForNotification(ctx.userId);
   const base = connectionRequestsBaseUrl(req);
 
   await createNotification({

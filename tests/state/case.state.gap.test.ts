@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { isValidCaseTransition } from "@/lib/server/cases/caseStateMachine";
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 describe("case state machine — invalid transitions", () => {
   it("closed → in_progress DENIED (cannot reopen closed case)", () => {

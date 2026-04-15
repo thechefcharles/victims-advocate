@@ -107,6 +107,21 @@ export const VALID_TRANSITIONS: Record<WorkflowEntityType, string[][]> = {
   ],
 
   /**
+   * appointments.status (Domain 4.2)
+   * scheduled ↔ rescheduled → cancelled | completed | no_show (all terminal)
+   */
+  appointment_status: [
+    ["scheduled", "rescheduled"],
+    ["scheduled", "cancelled"],
+    ["scheduled", "completed"],
+    ["scheduled", "no_show"],
+    ["rescheduled", "rescheduled"],
+    ["rescheduled", "cancelled"],
+    ["rescheduled", "completed"],
+    ["rescheduled", "no_show"],
+  ],
+
+  /**
    * state_workflow_configs.status (Domain 2.2)
    * draft → active (publish) → deprecated (terminal)
    * No path from deprecated back to active — a new draft must be created.

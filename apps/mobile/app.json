@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "NxtStps",
+    "slug": "nxtstps",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "nxtstps",
+    "platforms": ["ios", "android"],
+    "assetBundlePatterns": ["**/*"]
+  }
+}

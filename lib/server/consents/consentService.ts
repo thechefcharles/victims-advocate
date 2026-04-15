@@ -82,6 +82,19 @@ export async function createConsentGrant(
       },
       supabase,
     ).catch(() => {});
+    // Canonical lifecycle alias (Master System Document).
+    emitSignal(
+      {
+        orgId: actor.tenantId,
+        signalType: "consent_grant_creation",
+        value: 0,
+        actorUserId: actor.userId,
+        actorAccountType: actor.accountType,
+        idempotencyKey: `${actor.tenantId}:consent_grant_creation:${grant.id}`,
+        metadata: { consent_grant_id: grant.id, purpose_code: grant.purpose_code },
+      },
+      supabase,
+    ).catch(() => {});
   }
 
   return serializeForApplicant(grant, scope);
@@ -181,6 +194,19 @@ export async function revokeConsentGrant(
       },
       supabase,
     ).catch(() => {});
+    // Canonical lifecycle alias (Master System Document).
+    emitSignal(
+      {
+        orgId: actor.tenantId,
+        signalType: "consent.revoked",
+        value: 0,
+        actorUserId: actor.userId,
+        actorAccountType: actor.accountType,
+        idempotencyKey: `${actor.tenantId}:consent.revoked:${grantId}`,
+        metadata: { consent_grant_id: grantId },
+      },
+      supabase,
+    ).catch(() => {});
   }
 
   return { data: { revoked: true }, error: null };
@@ -217,7 +243,26 @@ export async function requestConsent(
         actorUserId: actor.userId,
         actorAccountType: actor.accountType,
         idempotencyKey: `${actor.tenantId}:consent_request_response_time:${requestInput.linkedObjectId}:${Date.now()}`,
-        metadata: { applicant_id: requestInput.applicantId, purpose_code: requestInput.purposeCode },
+        metadata: {
+          linked_object_id: requestInput.linkedObjectId,
+          purpose_code: requestInput.purposeCode,
+        },
+      },
+      supabase,
+    ).catch(() => {});
+    // Canonical lifecycle alias (Master System Document).
+    emitSignal(
+      {
+        orgId: actor.tenantId,
+        signalType: "consent.requested",
+        value: 0,
+        actorUserId: actor.userId,
+        actorAccountType: actor.accountType,
+        idempotencyKey: `${actor.tenantId}:consent.requested:${requestInput.linkedObjectId}:${Date.now()}`,
+        metadata: {
+          linked_object_id: requestInput.linkedObjectId,
+          purpose_code: requestInput.purposeCode,
+        },
       },
       supabase,
     ).catch(() => {});

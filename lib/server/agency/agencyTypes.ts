@@ -12,7 +12,7 @@
  *   5. No applicant-identifying data in any agency response
  */
 
-import type { AgencyRole } from "@/lib/registry";
+import type { AgencyRole } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Re-export for convenience
