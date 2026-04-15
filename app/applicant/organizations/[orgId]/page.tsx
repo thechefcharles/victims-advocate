@@ -41,7 +41,17 @@ function formatServiceKey(k: string): string {
 export default function VictimOrganizationPublicProfilePage() {
   const { t } = useI18n();
   const params = useParams();
-  const orgId = typeof params?.orgId === "string" ? params.orgId : "";
+  // useParams() may return the route segment URL-encoded (especially for
+  // ids containing characters like ':'). Decode once so downstream fetch
+  // calls don't double-encode (e.g. ext:cbo-2026:77 → ext%253Acbo-2026%253A77).
+  const rawOrgId = typeof params?.orgId === "string" ? params.orgId : "";
+  const orgId = (() => {
+    try {
+      return decodeURIComponent(rawOrgId);
+    } catch {
+      return rawOrgId;
+    }
+  })();
 
   const [org, setOrg] = useState<OrgPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
