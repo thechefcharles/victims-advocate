@@ -1,12 +1,26 @@
 /**
- * Victim-authenticated: public-safe organization profile for “full profile” page.
+ * Applicant-authenticated: public-safe organization profile for the unified profile page.
+ *
+ * v2 (locked 2026-04-15): supports two id sources.
+ *   - Internal (UUID): NxtStps-onboarded org. Returns verified=true.
+ *   - External ("ext:" prefix): row from data/il-cbo-va-2026.json directory.
+ *     Returns verified=false; only directory fields populated.
+ *
+ * Survivors should be able to see *some* version of every org listed in search.
+ * Hiding profile pages behind "no NxtStps record" was a trust-breaking moment;
+ * this route fixes that. The verification banner on the page tells the
+ * applicant which kind of profile they're looking at.
  */
 
 import { getAuthContext, requireAuth, requireRole } from "@/lib/server/auth";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
-import { isOrganizationMapListable } from "@/lib/server/organizations/organizationsMapData";
+import {
+  isOrganizationMapListable,
+  isExternalDirectoryId,
+  getExternalOrganizationById,
+} from "@/lib/server/organizations/organizationsMapData";
 import { buildResponseAccessibilitySnapshot } from "@/lib/server/organizations/responseAccessibilitySnapshot";
 import {
   countiesFromCoverage,
@@ -28,8 +42,55 @@ export async function GET(
 
     const { organizationId: rawId } = await params;
     const organizationId = (rawId ?? "").trim();
-    if (!organizationId || !UUID_RE.test(organizationId)) {
-      return apiFail("VALIDATION_ERROR", "We couldn't match that organization. Open it again from your list or dashboard.", undefined, 422);
+    if (!organizationId) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        "We couldn't match that organization. Open it again from your list or dashboard.",
+        undefined,
+        422,
+      );
+    }
+
+    // -----------------------------------------------------------------------
+    // External directory path (unverified)
+    // -----------------------------------------------------------------------
+    if (isExternalDirectoryId(organizationId)) {
+      const ext = getExternalOrganizationById(organizationId);
+      if (!ext) {
+        return apiFail("NOT_FOUND", "Organization not found", undefined, 404);
+      }
+      return apiOk({
+        organization: {
+          id: ext.id,
+          name: ext.name,
+          verified: false,
+          source: "directory" as const,
+          // Fields we have for external orgs:
+          address: ext.address ?? null,
+          phone: ext.phone ?? null,
+          website: ext.website ?? null,
+          program_type: ext.program_type ?? null,
+          region_label: ext.region_label,
+          // Fields we do NOT have for external orgs (UI hides their sections):
+          service_types: [],
+          special_populations: [],
+          accepting_clients: false,
+          capacity_status: "unknown",
+          response_accessibility: null,
+        },
+      });
+    }
+
+    // -----------------------------------------------------------------------
+    // Internal NxtStps org path (verified)
+    // -----------------------------------------------------------------------
+    if (!UUID_RE.test(organizationId)) {
+      return apiFail(
+        "VALIDATION_ERROR",
+        "We couldn't match that organization. Open it again from your list or dashboard.",
+        undefined,
+        422,
+      );
     }
 
     const supabase = getSupabaseAdmin();
@@ -73,6 +134,8 @@ export async function GET(
       organization: {
         id: org.id,
         name: org.name,
+        verified: true,
+        source: "nxtstps" as const,
         service_types: Array.isArray(org.service_types) ? org.service_types : [],
         special_populations: Array.isArray(org.special_populations)
           ? org.special_populations.filter((x): x is string => typeof x === "string")
@@ -83,6 +146,7 @@ export async function GET(
         address: listingAddress,
         phone: listingPhone,
         website: listingWebsite,
+        program_type: null,
         response_accessibility: buildResponseAccessibilitySnapshot({
           languages: org.languages,
           intake_methods: org.intake_methods,

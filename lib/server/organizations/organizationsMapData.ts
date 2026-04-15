@@ -88,6 +88,26 @@ function regionLabelForExternal(address: string, states: string[]): string {
   return address.length > 90 ? `${address.slice(0, 87)}…` : address;
 }
 
+/**
+ * Returns true for IDs that belong to the external CBO/VA directory
+ * (prefix-based — internal NxtStps orgs use UUIDs and never collide with this prefix).
+ */
+export function isExternalDirectoryId(id: string): boolean {
+  return typeof id === "string" && id.startsWith("ext:");
+}
+
+/**
+ * Loads a single external directory entry by id. Returns null if the
+ * directory file is missing, the id is not present, or the entry is not geocoded.
+ * The map view depends on geocode_ok being true; we keep that requirement here
+ * for consistency, since a non-geocoded row would not be reachable from the map.
+ */
+export function getExternalOrganizationById(id: string): OrganizationMapRow | null {
+  if (!isExternalDirectoryId(id)) return null;
+  const rows = loadCboVaMapRows();
+  return rows.find((r) => r.id === id) ?? null;
+}
+
 function loadCboVaMapRows(): OrganizationMapRow[] {
   const jsonPath = path.join(process.cwd(), "data", "il-cbo-va-2026.json");
   if (!fs.existsSync(jsonPath)) return [];

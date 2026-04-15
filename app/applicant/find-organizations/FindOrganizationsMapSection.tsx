@@ -434,21 +434,19 @@ export function FindOrganizationsMapSection({
                   >
                     {copy.learnMore}
                   </button>
-                  {!o.external ? (
-                    <Link
-                      href={ROUTES.applicantOrganization(o.id)}
-                      className="inline-flex items-center justify-center rounded-lg border border-[var(--color-muted)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
-                    >
-                      {copy.organizationProfile}
-                    </Link>
-                  ) : (
-                    <span
-                      className="inline-flex items-center rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-muted)] cursor-not-allowed"
-                      title={copy.profileUnavailableExternal}
-                    >
-                      {copy.organizationProfile}
-                    </span>
-                  )}
+                  {/*
+                   * Profile link is enabled for all orgs (locked 2026-04-15).
+                   * External orgs render an unverified-version of the profile page
+                   * with a banner explaining the data source. This replaced a
+                   * disabled gray span that looked nearly identical to active
+                   * buttons — a trust-breaking UX moment for survivors.
+                   */}
+                  <Link
+                    href={ROUTES.applicantOrganization(o.id)}
+                    className="inline-flex items-center justify-center rounded-lg border border-[var(--color-muted)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-[11px] font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
+                  >
+                    {copy.organizationProfile}
+                  </Link>
                   {!o.external ? (
                     <Link
                       href={applicantConnectOrganizationHelpUrl({

@@ -342,6 +342,13 @@ export type I18nDict = {
       orgProfileContact: string;
       orgProfilePopulations: string;
       orgProfileFooter: string;
+      orgProfileVerifiedBanner: string;
+      orgProfileUnverifiedBanner: string;
+      orgProfileUnverifiedFooter: string;
+      orgProfileVisitWebsite: string;
+      orgProfileCall: string;
+      orgProfileGetDirections: string;
+      orgProfileProgramType: string;
       directoryProgramType: string;
       directoryAddress: string;
       directoryPhone: string;

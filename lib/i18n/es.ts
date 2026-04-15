@@ -358,6 +358,17 @@ export const es: I18nDict = {
             orgProfilePopulations: "Enfoque",
             orgProfileFooter:
                 "Los datos los reporta la organización. Si algo no coincide, puedes contactarla con los datos del listado del mapa.",
+            // FIXME 2026-04-15 — Verification banner keys: needs native Spanish review.
+            orgProfileVerifiedBanner:
+                "[ES FIXME] This profile is verified. The organization manages and updates this information themselves.",
+            orgProfileUnverifiedBanner:
+                "[ES FIXME] We're showing you what's listed publicly about this organization. NxtStps hasn't verified these details — call ahead to confirm hours and services.",
+            orgProfileUnverifiedFooter:
+                "[ES FIXME] This information comes from a public directory. To make sure it's still accurate, call or visit the website before going in person.",
+            orgProfileVisitWebsite: "[ES FIXME] Visit website",
+            orgProfileCall: "[ES FIXME] Call",
+            orgProfileGetDirections: "[ES FIXME] Get directions",
+            orgProfileProgramType: "[ES FIXME] Program type",
             directoryProgramType: "Tipo de programa",
             directoryAddress: "Dirección",
             directoryPhone: "Teléfono",

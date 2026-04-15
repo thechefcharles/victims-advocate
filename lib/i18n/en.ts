@@ -347,6 +347,18 @@ export const en: I18nDict = {
       orgProfilePopulations: "Focus",
       orgProfileFooter:
         "Details are self-reported by the organization. If something looks wrong, you can still reach them using the contact options on the map list.",
+      // Verification banner for the unified organization profile page (locked 2026-04-15).
+      // 6th-8th grade reading level, trauma-informed (no red, no urgency).
+      orgProfileVerifiedBanner:
+        "This profile is verified. The organization manages and updates this information themselves.",
+      orgProfileUnverifiedBanner:
+        "We're showing you what's listed publicly about this organization. NxtStps hasn't verified these details — call ahead to confirm hours and services.",
+      orgProfileUnverifiedFooter:
+        "This information comes from a public directory. To make sure it's still accurate, call or visit the website before going in person.",
+      orgProfileVisitWebsite: "Visit website",
+      orgProfileCall: "Call",
+      orgProfileGetDirections: "Get directions",
+      orgProfileProgramType: "Program type",
       directoryProgramType: "Program type",
       directoryAddress: "Address",
       directoryPhone: "Phone",

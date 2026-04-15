@@ -15,6 +15,9 @@ import { OrganizationTransparencyFramework } from "@/components/victim/Organizat
 type OrgPayload = {
   id: string;
   name: string;
+  /** True for NxtStps-onboarded orgs; false for external public-directory rows. */
+  verified: boolean;
+  source: "nxtstps" | "directory";
   service_types: string[];
   special_populations: string[];
   accepting_clients: boolean;
@@ -23,7 +26,9 @@ type OrgPayload = {
   address: string | null;
   phone: string | null;
   website: string | null;
-  response_accessibility: ResponseAccessibilityPublic;
+  /** Only populated for external (directory) orgs — taken from the source spreadsheet. */
+  program_type: string | null;
+  response_accessibility: ResponseAccessibilityPublic | null;
 };
 
 function formatServiceKey(k: string): string {
@@ -98,6 +103,8 @@ export default function VictimOrganizationPublicProfilePage() {
             setOrg({
               id: o.id,
               name: o.name ?? "",
+              verified: Boolean(o.verified),
+              source: o.source === "directory" ? "directory" : "nxtstps",
               service_types: Array.isArray(o.service_types) ? o.service_types : [],
               special_populations: Array.isArray(o.special_populations) ? o.special_populations : [],
               accepting_clients: Boolean(o.accepting_clients),
@@ -106,7 +113,9 @@ export default function VictimOrganizationPublicProfilePage() {
               address: o.address ?? null,
               phone: o.phone ?? null,
               website: o.website ?? null,
-              response_accessibility: o.response_accessibility as ResponseAccessibilityPublic,
+              program_type: o.program_type ?? null,
+              response_accessibility:
+                (o.response_accessibility as ResponseAccessibilityPublic | null) ?? null,
             });
           } else setErr(t("applicantDashboard.findOrganizationsPage.loadError"));
         }
@@ -151,26 +160,62 @@ export default function VictimOrganizationPublicProfilePage() {
 
         {org && !loading ? (
           <div className={`${APP_CARD} space-y-6`}>
+            {/*
+             * Verification banner — locked 2026-04-15.
+             * Trauma Rule 7: never red for non-errors. Unverified uses neutral amber/sand.
+             */}
+            {org.verified ? (
+              <div
+                role="status"
+                className="rounded-xl border border-emerald-700/40 bg-emerald-900/15 px-4 py-3 text-sm text-emerald-200"
+              >
+                <span className="font-semibold">✓ </span>
+                {t("applicantDashboard.findOrganizationsPage.orgProfileVerifiedBanner")}
+              </div>
+            ) : (
+              <div
+                role="status"
+                className="rounded-xl border border-amber-700/40 bg-amber-900/15 px-4 py-3 text-sm text-amber-100"
+              >
+                {t("applicantDashboard.findOrganizationsPage.orgProfileUnverifiedBanner")}
+              </div>
+            )}
+
+            {/*
+             * Status row — only verified orgs have meaningful capacity / accepting_clients
+             * data. For external orgs, just show region.
+             */}
             <div className="text-sm text-[var(--color-muted)]">
               <span className="text-[var(--color-muted)]">{org.region_label}</span>
-              <span className="text-[var(--color-slate)]"> · </span>
-              {org.accepting_clients ? (
-                <span className="text-emerald-400/90">
-                  {t("applicantDashboard.findOrganizationsPage.accepting")}
-                </span>
-              ) : (
-                <span className="text-[var(--color-muted)]">
-                  {t("applicantDashboard.findOrganizationsPage.notAccepting")}
-                </span>
-              )}
-              <span className="text-[var(--color-slate)]"> · </span>
-              <span className="text-[var(--color-muted)]">
-                {t("applicantDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
-              </span>
+              {org.verified ? (
+                <>
+                  <span className="text-[var(--color-slate)]"> · </span>
+                  {org.accepting_clients ? (
+                    <span className="text-emerald-400/90">
+                      {t("applicantDashboard.findOrganizationsPage.accepting")}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--color-muted)]">
+                      {t("applicantDashboard.findOrganizationsPage.notAccepting")}
+                    </span>
+                  )}
+                  <span className="text-[var(--color-slate)]"> · </span>
+                  <span className="text-[var(--color-muted)]">
+                    {t("applicantDashboard.findOrganizationsPage.capacity")}: {org.capacity_status}
+                  </span>
+                </>
+              ) : org.program_type ? (
+                <>
+                  <span className="text-[var(--color-slate)]"> · </span>
+                  <span className="text-[var(--color-muted)]">
+                    {t("applicantDashboard.findOrganizationsPage.orgProfileProgramType")}: {org.program_type}
+                  </span>
+                </>
+              ) : null}
             </div>
 
             {(org.address || org.phone || org.website) ? (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)]">
                   {t("applicantDashboard.findOrganizationsPage.orgProfileContact")}
                 </h2>
@@ -189,7 +234,10 @@ export default function VictimOrganizationPublicProfilePage() {
                         {t("applicantDashboard.findOrganizationsPage.directoryPhone")}
                       </dt>
                       <dd>
-                        <a href={`tel:${org.phone.replace(/\D/g, "")}`} className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline">
+                        <a
+                          href={`tel:${org.phone.replace(/\D/g, "")}`}
+                          className="text-[var(--color-teal)] hover:text-[var(--color-teal-deep)] underline"
+                        >
                           {org.phone}
                         </a>
                       </dd>
@@ -213,58 +261,109 @@ export default function VictimOrganizationPublicProfilePage() {
                     </div>
                   ) : null}
                 </dl>
+
+                {/*
+                 * Action buttons — present for both verified and unverified orgs.
+                 * Trauma Rule 10: applicant-direct contact is a first-class path.
+                 */}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {org.website ? (
+                    <a
+                      href={org.website.startsWith("http") ? org.website : `https://${org.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
+                    >
+                      {t("applicantDashboard.findOrganizationsPage.orgProfileVisitWebsite")}
+                    </a>
+                  ) : null}
+                  {org.phone ? (
+                    <a
+                      href={`tel:${org.phone.replace(/\D/g, "")}`}
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
+                    >
+                      {t("applicantDashboard.findOrganizationsPage.orgProfileCall")}
+                    </a>
+                  ) : null}
+                  {org.address ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(org.address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-light-sand)]/90 px-3 py-1.5 text-xs font-semibold text-[var(--color-navy)] hover:bg-[var(--color-teal-deep)]"
+                    >
+                      {t("applicantDashboard.findOrganizationsPage.orgProfileGetDirections")}
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ) : null}
 
-            {org.special_populations?.length ? (
-              <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
-                  {t("applicantDashboard.findOrganizationsPage.orgProfilePopulations")}
-                </h2>
-                <ul className="flex flex-wrap gap-2">
-                  {org.special_populations.map((s) => (
-                    <li
-                      key={s}
-                      className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
-                    >
-                      {formatServiceKey(s)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {/*
+             * NxtStps-only sections (populations, services, transparency framework).
+             * External orgs don't have this structured data — hide rather than show empty.
+             */}
+            {org.verified ? (
+              <>
+                {org.special_populations?.length ? (
+                  <div>
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
+                      {t("applicantDashboard.findOrganizationsPage.orgProfilePopulations")}
+                    </h2>
+                    <ul className="flex flex-wrap gap-2">
+                      {org.special_populations.map((s) => (
+                        <li
+                          key={s}
+                          className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
+                        >
+                          {formatServiceKey(s)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {org.service_types.length > 0 ? (
+                  <div>
+                    <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
+                      {t("applicantDashboard.findOrganizationsPage.orgProfileServices")}
+                    </h2>
+                    <ul className="flex flex-wrap gap-2">
+                      {org.service_types.map((s) => (
+                        <li
+                          key={s}
+                          className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
+                        >
+                          {formatServiceKey(s)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/60 px-4 py-4 text-center">
+                    <p className="text-sm font-medium text-[var(--color-navy)]">
+                      This organization hasn&apos;t listed their programs yet.
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      Contact them directly to learn more about their services.
+                    </p>
+                  </div>
+                )}
+
+                {org.response_accessibility ? (
+                  <OrganizationTransparencyFramework
+                    external={false}
+                    responseAccessibility={org.response_accessibility}
+                    copy={frameworkCopy}
+                  />
+                ) : null}
+              </>
             ) : null}
-
-            {org.service_types.length > 0 ? (
-              <div>
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-muted)] mb-2">
-                  {t("applicantDashboard.findOrganizationsPage.orgProfileServices")}
-                </h2>
-                <ul className="flex flex-wrap gap-2">
-                  {org.service_types.map((s) => (
-                    <li
-                      key={s}
-                      className="rounded-full border border-[var(--color-border)] bg-white/92 px-3 py-1 text-xs text-[var(--color-charcoal)]"
-                    >
-                      {formatServiceKey(s)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-warm-cream)]/60 px-4 py-4 text-center">
-                <p className="text-sm font-medium text-[var(--color-navy)]">This organization hasn&apos;t listed their programs yet.</p>
-                <p className="mt-1 text-xs text-[var(--color-muted)]">Contact them directly to learn more about their services.</p>
-              </div>
-            )}
-
-            <OrganizationTransparencyFramework
-              external={false}
-              responseAccessibility={org.response_accessibility}
-              copy={frameworkCopy}
-            />
 
             <p className="text-xs text-[var(--color-muted)] leading-relaxed">
-              {t("applicantDashboard.findOrganizationsPage.orgProfileFooter")}
+              {org.verified
+                ? t("applicantDashboard.findOrganizationsPage.orgProfileFooter")
+                : t("applicantDashboard.findOrganizationsPage.orgProfileUnverifiedFooter")}
             </p>
 
             <Link
