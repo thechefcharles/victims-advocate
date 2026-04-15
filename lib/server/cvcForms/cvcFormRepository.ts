@@ -182,6 +182,15 @@ export async function insertCvcFormField(
       font_size: input.font_size ?? null,
       required: input.required ?? false,
       source_path: input.source_path ?? null,
+      section_key: input.section_key ?? null,
+      display_order: input.display_order ?? null,
+      help_text: input.help_text ?? null,
+      placeholder: input.placeholder ?? null,
+      input_options: input.input_options ?? null,
+      conditional_on: input.conditional_on ?? null,
+      validation_rules: input.validation_rules ?? null,
+      is_visible_to_applicant: input.is_visible_to_applicant ?? true,
+      is_readonly: input.is_readonly ?? false,
     })
     .select("*")
     .single();

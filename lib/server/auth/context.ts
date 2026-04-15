@@ -9,7 +9,7 @@ import { config } from "@/lib/config";
 import { AppError } from "@/lib/server/api";
 import type { SimpleOrgRole } from "@/lib/auth/simpleOrgRole";
 import { mapDbOrgRoleToSimple } from "@/lib/auth/simpleOrgRole";
-import type { AccountType } from "@/lib/registry";
+import type { AccountType } from "@nxtstps/registry";
 import { resolveAccountType } from "./resolveAccountType";
 import { logEvent } from "@/lib/server/audit/logEvent";
 

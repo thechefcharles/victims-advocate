@@ -58,10 +58,12 @@ export type PolicyDocumentStatus = (typeof POLICY_DOCUMENT_STATUSES)[number];
 
 export const CHANGE_REQUEST_STATUSES = [
   "draft",
-  "pending_approval",
+  "submitted",
+  "under_review",
   "approved",
   "rejected",
   "rolled_back",
+  "closed",
 ] as const;
 export type ChangeRequestStatus = (typeof CHANGE_REQUEST_STATUSES)[number];
 

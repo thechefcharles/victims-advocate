@@ -16,12 +16,12 @@ export interface FieldStateEntry {
   previous_value?: unknown; // only when status === "amended"
 }
 
-/** Key used inside application JSON to store per-field state. Must not conflict with CompensationApplication keys. */
+/** Key used inside application JSON to store per-field state. Must not conflict with legacy intake payload keys. */
 export const FIELD_STATE_KEY = "_fieldState" as const;
 
 export type FieldStateMap = Record<string, FieldStateEntry>;
 
-/** Stored application = CompensationApplication + optional _fieldState (server/client agree on shape). */
+/** Stored application = legacy intake payload + optional _fieldState (server/client agree on shape). */
 export type StoredApplication = Record<string, unknown> & {
   _fieldState?: FieldStateMap;
 };
@@ -78,7 +78,7 @@ export function setFieldState(
 }
 
 /**
- * Remove _fieldState from application for PDF/export. Returns clean CompensationApplication-like object.
+ * Remove _fieldState from application for PDF/export. Returns clean legacy intake payload-like object.
  */
 export function stripFieldState(app: StoredApplication): Record<string, unknown> {
   const out = { ...app };

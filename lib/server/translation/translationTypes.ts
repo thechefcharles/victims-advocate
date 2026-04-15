@@ -16,7 +16,7 @@ import type {
   LocaleCode,
   TranslationMappingSetStatus,
   ExplanationRequestStatus,
-} from "@/lib/registry";
+} from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Re-exports from registry for module-internal convenience

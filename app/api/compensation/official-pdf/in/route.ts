@@ -5,9 +5,8 @@
  * URL and HTTP method preserved so existing callers continue to work.
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError, AppError } from "@/lib/server/api";
+import { apiOk, apiFailFromError, toAppError, AppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { generateCvcForm } from "@/lib/server/cvcForms";
 
@@ -27,7 +26,7 @@ export async function POST(req: Request) {
     const supabase = getSupabaseAdmin();
     const job = await generateCvcForm(ctx, caseId, supabase);
 
-    return NextResponse.json({ data: job, error: null });
+    return apiOk(job);
   } catch (err) {
     return apiFailFromError(toAppError(err));
   }

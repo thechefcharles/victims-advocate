@@ -158,6 +158,8 @@ export async function rescheduleAppointment(params: {
     newEnd: input.scheduled_end,
     timezone: input.timezone,
     createdBy: ctx.userId,
+    actorAccountType: ctx.accountType,
+    reason: input.reason ?? null,
   });
 
   await insertAppointmentEvent({
@@ -189,7 +191,15 @@ export async function cancelAppointment(params: {
 
   validateAppointmentTransition(appointment.status, "cancelled");
 
-  const updated = await updateAppointmentStatus({ id: params.id, status: "cancelled" });
+  const updated = await updateAppointmentStatus({
+    id: params.id,
+    fromStatus: appointment.status,
+    toStatus: "cancelled",
+    actorUserId: params.ctx.userId,
+    actorAccountType: params.ctx.accountType,
+    tenantId: appointment.organization_id ?? null,
+    reason: params.reason ?? null,
+  });
 
   await insertAppointmentEvent({
     appointment_id: params.id,
@@ -216,7 +226,14 @@ export async function completeAppointment(params: {
 
   validateAppointmentTransition(appointment.status, "completed");
 
-  const updated = await updateAppointmentStatus({ id: params.id, status: "completed" });
+  const updated = await updateAppointmentStatus({
+    id: params.id,
+    fromStatus: appointment.status,
+    toStatus: "completed",
+    actorUserId: params.ctx.userId,
+    actorAccountType: params.ctx.accountType,
+    tenantId: appointment.organization_id ?? null,
+  });
 
   await insertAppointmentEvent({
     appointment_id: params.id,

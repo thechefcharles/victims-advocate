@@ -4,9 +4,8 @@
  * POST — create a new consent grant
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -21,7 +20,7 @@ export async function GET(req: Request) {
     const actor = buildActor(ctx);
     const grants = await listConsentGrants(actor, ctx.userId, supabase);
 
-    return NextResponse.json({ data: grants, error: null });
+    return apiOk(grants);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("consents.get.error", { code: appErr.code, message: appErr.message });
@@ -51,7 +50,7 @@ export async function POST(req: Request) {
       supabase,
     );
 
-    return NextResponse.json({ data: grant, error: null }, { status: 201 });
+    return apiOk(grant, undefined, 201);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("consents.post.error", { code: appErr.code, message: appErr.message });

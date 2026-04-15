@@ -38,12 +38,30 @@ export async function refreshAggregates(orgId: string, supabase: SupabaseClient)
   try {
     const { data: events, error } = await supabase
       .from("trust_signal_events")
-      .select("signal_type, value, created_at")
+      .select("id, signal_type, value, created_at")
       .eq("org_id", orgId);
 
     if (error || !events) return;
 
-    const rows = events as SignalEventRow[];
+    // Anti-join against signal_event_exclusions: resolved_removed dispute
+    // outcomes add a row here, which must exclude the signal from scoring.
+    const eventIds = (events as Array<{ id: string }>).map((e) => e.id);
+    let excluded = new Set<string>();
+    if (eventIds.length > 0) {
+      const { data: exclusions } = await supabase
+        .from("signal_event_exclusions")
+        .select("signal_event_id")
+        .in("signal_event_id", eventIds);
+      if (exclusions) {
+        excluded = new Set(
+          (exclusions as Array<{ signal_event_id: string }>).map((x) => x.signal_event_id),
+        );
+      }
+    }
+
+    const rows = (events as Array<SignalEventRow & { id: string }>).filter(
+      (e) => !excluded.has(e.id),
+    );
 
     // Group by signal_type
     const grouped = new Map<

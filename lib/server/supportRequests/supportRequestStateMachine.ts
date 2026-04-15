@@ -9,7 +9,7 @@
  * authoritative validator — never skip it for actual status changes.
  */
 
-import type { SupportRequestStatus } from "@/lib/registry";
+import type { SupportRequestStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Terminal and active status sets

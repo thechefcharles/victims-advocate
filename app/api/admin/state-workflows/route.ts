@@ -14,7 +14,7 @@ import {
   listStateWorkflowConfigs,
   createStateWorkflowConfig,
 } from "@/lib/server/stateWorkflows";
-import type { StateWorkflowConfigStatus } from "@/lib/registry";
+import type { StateWorkflowConfigStatus } from "@nxtstps/registry";
 
 export async function GET(req: Request) {
   try {

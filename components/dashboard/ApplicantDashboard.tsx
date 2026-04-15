@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { logAuthEvent } from "@/lib/auditClient";
-import { emptyCompensationApplication } from "@/lib/compensationSchema";
+import { emptyLegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 import { useSafetySettings } from "@/lib/client/safety/useSafetySettings";
 import {
   ROUTES,
@@ -501,7 +501,7 @@ export default function ApplicantDashboard({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          application: emptyCompensationApplication,
+          application: emptyLegacyIntakePayload,
           name: null,
         }),
       });
@@ -582,7 +582,7 @@ export default function ApplicantDashboard({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          application: emptyCompensationApplication,
+          application: emptyLegacyIntakePayload,
           name: null,
           state_code: programState,
         }),
@@ -612,7 +612,7 @@ export default function ApplicantDashboard({
               },
               body: JSON.stringify({
                 application: {
-                  ...emptyCompensationApplication,
+                  ...emptyLegacyIntakePayload,
                   ...parsed,
                   _dashboard: { ...prevDash, skippedEligibility: true },
                 },

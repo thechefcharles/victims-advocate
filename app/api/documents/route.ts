@@ -4,9 +4,8 @@
  * storage_path is never returned to the client.
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -24,14 +23,15 @@ export async function POST(req: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "File is required" }, { status: 400 });
+      return apiFail("VALIDATION_ERROR", "File is required");
     }
 
     const validation = validateUpload(file);
     if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.errors[0] ?? "File validation failed", errors: validation.errors },
-        { status: 422 },
+      return apiFail(
+        "VALIDATION_ERROR",
+        validation.errors[0] ?? "File validation failed",
+        { errors: validation.errors },
       );
     }
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
     if (uploadError) {
       logger.error("documents.post.storage_error", { error: uploadError.message });
-      return NextResponse.json({ error: "File upload failed" }, { status: 500 });
+      return apiFail("INTERNAL", "File upload failed");
     }
 
     const actor = buildActor(ctx);
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       supabase,
     );
 
-    return NextResponse.json({ data: doc, error: null });
+    return apiOk(doc, undefined, 201);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("documents.post.error", { code: appErr.code, message: appErr.message });

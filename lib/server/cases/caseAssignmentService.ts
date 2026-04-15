@@ -16,6 +16,9 @@ import { AppError } from "@/lib/server/api";
 import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
 import { transition } from "@/lib/server/workflow/engine";
+import { emitSignal } from "@/lib/server/trustSignal";
+import { deliverSurvey } from "@/lib/server/surveys";
+import { logger } from "@/lib/server/logging";
 import type { AuthContext } from "@/lib/server/auth/context";
 import type { PolicyResource } from "@/lib/server/policy/policyTypes";
 import { getCaseRecordById, updateCaseRecord, updateCaseFields } from "./caseRepository";
@@ -78,6 +81,21 @@ export async function assignCase(
   );
   if (!updated) throw new AppError("FORBIDDEN", "Case was modified by another action.");
 
+  // Category 4 survey: first advocate interaction trigger. Fire-and-forget —
+  // a survey delivery failure must never block case assignment. Swallow errors
+  // (log only) since the applicant will still get other survey invites.
+  if (updated.organization_id) {
+    deliverSurvey(updated.organization_id, "first_advocate_interaction", supabase).catch(
+      (err: unknown) => {
+        logger.warn("survey.deliver.first_advocate_interaction.failed", {
+          organization_id: updated.organization_id,
+          case_id: updated.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      },
+    );
+  }
+
   return serializeCaseForProvider(updated);
 }
 
@@ -102,6 +120,24 @@ export async function reassignCase(
     assigned_advocate_id: advocateId,
   });
   if (!updated) throw new AppError("INTERNAL", "Failed to reassign case.");
+
+  // Counter signal: every reassignment is a +1 event. Idempotency key includes
+  // a timestamp so each reassignment records distinctly. Advocate ids are org
+  // members — safe to carry in metadata (not applicant PII).
+  if (record.organization_id) {
+    void emitSignal(
+      {
+        orgId: record.organization_id,
+        signalType: "case_reassignment_frequency",
+        value: 1,
+        actorUserId: ctx.userId,
+        actorAccountType: ctx.accountType,
+        idempotencyKey: `${record.organization_id}:case_reassignment_frequency:${caseId}:${Date.now()}`,
+        metadata: { case_id: caseId },
+      },
+      supabase,
+    );
+  }
 
   return serializeCaseForProvider(updated);
 }

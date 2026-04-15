@@ -35,6 +35,19 @@ vi.mock("@/lib/server/referrals/referralRepository", () => ({
   recordReferralEvent: vi.fn().mockResolvedValue({}),
 }));
 
+// Trust-signal emission + applicant notification in accept/reject/cancel
+// reach for the admin supabase client and the notification writer. Mock both
+// so the service tests stay isolated from infrastructure.
+vi.mock("@/lib/supabaseAdmin", () => ({
+  getSupabaseAdmin: () => ({}) as never,
+}));
+vi.mock("@/lib/server/trustSignal", () => ({
+  emitSignal: vi.fn().mockResolvedValue({ success: true }),
+}));
+vi.mock("@/lib/server/notifications/create", () => ({
+  createNotification: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/server/referrals/referralStateMachine", () => ({
   validateReferralTransition: vi.fn(),
   validateReferralConsent: vi.fn().mockResolvedValue(undefined),

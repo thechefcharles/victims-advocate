@@ -38,14 +38,12 @@ export const MATCHING_THRESHOLDS = {
 
 /** Max points added to fit score from designation (out of 100 total scale). */
 export const MAX_DESIGNATION_SCORE_BOOST = 3;
-/** Boost when tier is comprehensive and confidence is medium/high. */
+// Aligned with V2 quality tier mapping (comprehensive=1.0, established=0.75,
+// developing/data_pending=0.50) scaled to legacy 0..3 point band.
 export const BOOST_COMPREHENSIVE_MED_HIGH = 3;
-/** Boost when tier is established and confidence is medium/high. */
-export const BOOST_ESTABLISHED_MED_HIGH = 1;
-/** Foundational should stay neutral. */
-export const BOOST_FOUNDATIONAL_MED_HIGH = 0;
-/** Low confidence or insufficient_data: neutral. */
-export const BOOST_NEUTRAL = 0;
+export const BOOST_ESTABLISHED_MED_HIGH = 2.25;
+export const BOOST_FOUNDATIONAL_MED_HIGH = 1.5;
+export const BOOST_NEUTRAL = 1.5;
 
 /**
  * Tie-break is allowed only when fit scores are almost identical.

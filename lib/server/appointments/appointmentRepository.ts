@@ -5,6 +5,7 @@
 
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { AppError } from "@/lib/server/api";
+import { transition } from "@/lib/server/workflow/engine";
 import type {
   AppointmentRow,
   AvailabilityRuleRow,
@@ -185,16 +186,51 @@ export async function insertAppointment(
 
 export async function updateAppointmentStatus(params: {
   id: string;
-  status: AppointmentStatus;
+  fromStatus: AppointmentStatus;
+  toStatus: AppointmentStatus;
+  actorUserId: string;
+  actorAccountType: string;
+  tenantId?: string | null;
+  reason?: string | null;
 }): Promise<AppointmentRow> {
   const supabase = getSupabaseAdmin();
+
+  // Rule 16 (Transition Law): every status write must pass through the
+  // workflow transition engine, which validates the edge and appends an
+  // actor-stamped row to workflow_state_log before any DB mutation.
+  const result = await transition(
+    {
+      entityType: "appointment_status",
+      entityId: params.id,
+      fromState: params.fromStatus,
+      toState: params.toStatus,
+      actorUserId: params.actorUserId,
+      actorAccountType: params.actorAccountType,
+      tenantId: params.tenantId ?? undefined,
+      metadata: params.reason ? { reason: params.reason } : undefined,
+    },
+    supabase,
+  );
+  if (!result.success) {
+    throw new AppError(
+      result.reason === "STATE_INVALID" ? "VALIDATION_ERROR" : "INTERNAL",
+      `Appointment transition ${params.fromStatus} → ${params.toStatus} failed: ${result.reason}`,
+      undefined,
+      result.reason === "STATE_INVALID" ? 422 : 500,
+    );
+  }
+
+  // Optimistic-concurrency guard: only flip status if it is still fromStatus.
   const { data, error } = await supabase
     .from("appointments")
-    .update({ status: params.status })
+    .update({ status: params.toStatus })
     .eq("id", params.id)
+    .eq("status", params.fromStatus)
     .select()
     .single();
-  if (error) throw new AppError("INTERNAL", "Failed to update appointment status", undefined, 500);
+  if (error || !data) {
+    throw new AppError("INTERNAL", "Failed to update appointment status", undefined, 500);
+  }
   return asAppointmentRow(data as Record<string, unknown>);
 }
 
@@ -224,17 +260,45 @@ export async function insertRescheduledAppointment(params: {
   newEnd: string;
   timezone?: string;
   createdBy: string;
+  actorAccountType: string;
+  reason?: string | null;
 }): Promise<AppointmentRow> {
   const supabase = getSupabaseAdmin();
 
-  // 1. Mark original as rescheduled
+  // 1. Gate the original's status flip through the workflow transition engine.
+  //    This records actor + reason in workflow_state_log before any DB mutation.
+  const result = await transition(
+    {
+      entityType: "appointment_status",
+      entityId: params.originalId,
+      fromState: params.originalRow.status,
+      toState: "rescheduled",
+      actorUserId: params.createdBy,
+      actorAccountType: params.actorAccountType,
+      tenantId: params.originalRow.organization_id ?? undefined,
+      metadata: params.reason ? { reason: params.reason } : undefined,
+    },
+    supabase,
+  );
+  if (!result.success) {
+    throw new AppError(
+      result.reason === "STATE_INVALID" ? "VALIDATION_ERROR" : "INTERNAL",
+      `Appointment transition ${params.originalRow.status} → rescheduled failed: ${result.reason}`,
+      undefined,
+      result.reason === "STATE_INVALID" ? 422 : 500,
+    );
+  }
+
+  // 2. Flip the original's status (optimistic concurrency via fromStatus eq).
   const { error: origErr } = await supabase
     .from("appointments")
     .update({ status: "rescheduled" })
-    .eq("id", params.originalId);
+    .eq("id", params.originalId)
+    .eq("status", params.originalRow.status);
   if (origErr) throw new AppError("INTERNAL", "Failed to mark original appointment rescheduled", undefined, 500);
 
-  // 2. Insert new appointment linked via rescheduled_from_id
+  // 3. Insert new appointment linked via rescheduled_from_id
+  //    (initial state — not a transition, no workflow log entry needed).
   const { data, error } = await supabase
     .from("appointments")
     .insert({

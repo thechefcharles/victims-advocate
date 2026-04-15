@@ -6,7 +6,7 @@
  * Never return a *Record directly from a route — always pass through a serializer.
  */
 
-import type { StateWorkflowConfigStatus } from "@/lib/registry";
+import type { StateWorkflowConfigStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shapes

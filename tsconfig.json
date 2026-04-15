@@ -25,6 +25,18 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@nxtstps/registry": [
+        "./packages/registry/src/index.ts"
+      ],
+      "@nxtstps/registry/*": [
+        "./packages/registry/src/*"
+      ],
+      "@nxtstps/types": [
+        "./packages/types/src/index.ts"
+      ],
+      "@nxtstps/types/*": [
+        "./packages/types/src/*"
       ]
     }
   },

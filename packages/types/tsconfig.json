@@ -1,0 +1,13 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../../*"],
+      "@nxtstps/registry": ["../registry/src/index.ts"],
+      "@nxtstps/registry/*": ["../registry/src/*"]
+    }
+  },
+  "include": ["src/**/*"]
+}

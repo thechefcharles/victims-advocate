@@ -8,7 +8,7 @@
  *   linked_object_type, linked_object_id, thread_type
  */
 
-import type { MessageThreadStatus } from "@/lib/registry";
+import type { MessageThreadStatus } from "@nxtstps/registry";
 
 /** Alias for MessageThreadStatus — "active" | "read_only" | "archived". */
 export type ConversationStatus = MessageThreadStatus;

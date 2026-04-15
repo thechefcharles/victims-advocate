@@ -15,7 +15,7 @@ import type {
   ProviderRole,
   AgencyRole,
   PolicyDecisionReasonCode,
-} from "@/lib/registry";
+} from "@nxtstps/registry";
 import type { AuthContext } from "@/lib/server/auth/context";
 
 // ---------------------------------------------------------------------------

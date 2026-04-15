@@ -5,7 +5,7 @@
  * All consent records are owned by the applicant and must never be hard-deleted.
  */
 
-import type { ConsentGrantStatus } from "@/lib/registry";
+import type { ConsentGrantStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // DB row shapes (mirrors table definitions in migration 20260502200000)

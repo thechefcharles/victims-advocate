@@ -15,6 +15,7 @@ export type WorkflowEntityType =
   | "advocate_connection"
   | "referral"
   | "support_request"
+  | "appointment_status"
   | "state_workflow_config_status"
   | "cvc_form_template_status"
   | "translation_mapping_set_status";

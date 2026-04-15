@@ -5,7 +5,7 @@
  * The shared transition engine remains the authoritative validator — never skip it.
  */
 
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Terminal states

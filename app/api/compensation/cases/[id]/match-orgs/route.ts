@@ -1,5 +1,9 @@
 /**
- * Phase B: Organization matching for a case (GET latest run, POST run + persist).
+ * Organization matching for a case — V2 engine (Domain 3.4).
+ *
+ * GET returns the latest persisted run, split into grassroots + social-service
+ * cohorts. POST runs the V2 engine, persists into organization_match_runs
+ * (metadata.engine='v2'), and returns both cohorts.
  */
 
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
@@ -7,12 +11,13 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { getCaseById, appendCaseTimelineEvent } from "@/lib/server/data";
+import { buildIntakeMatchProfile } from "@/lib/server/matching/v2/intakeProfileBuilder";
+import { loadOrgsForMatching } from "@/lib/server/matching/v2/orgLoader";
+import { rankOrgs } from "@/lib/server/matching/v2/rank";
 import {
-  runCaseOrganizationMatching,
-  persistOrganizationMatchRun,
-  getLatestOrganizationMatchesForCase,
-} from "@/lib/server/matching/service";
-import { matchRunRowToApi } from "@/lib/server/matching/apiPayload";
+  persistV2MatchRun,
+  getV2MatchResults,
+} from "@/lib/server/matching/v2/matchRunAdapter";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -27,16 +32,17 @@ export async function GET(req: Request, context: RouteParams) {
       return apiFail("VALIDATION_ERROR", "Missing case id", undefined, 400);
     }
 
-    const data = await getLatestOrganizationMatchesForCase({ caseId: id, ctx });
-    if (data === null) {
+    const caseResult = await getCaseById({ caseId: id, ctx });
+    if (!caseResult) {
       return apiFail("FORBIDDEN", "Access denied", undefined, 403);
     }
 
+    const results = await getV2MatchResults(id);
     return apiOk({
-      run_group_id: data.run_group_id,
-      created_at: data.created_at,
-      matches: data.matches.map((m) => matchRunRowToApi(m)),
-      global_flags: data.global_flags,
+      run_group_id: results.runGroupId,
+      created_at: results.createdAt,
+      grassroots: results.grassroots,
+      socialService: results.socialService,
     });
   } catch (err) {
     const appErr = toAppError(err);
@@ -66,7 +72,7 @@ export async function POST(req: Request, context: RouteParams) {
         "FORBIDDEN",
         "Only advocates or admins can run organization matching",
         undefined,
-        403
+        403,
       );
     }
     if (!caseResult.access.can_edit && !ctx.isAdmin) {
@@ -84,27 +90,25 @@ export async function POST(req: Request, context: RouteParams) {
       resourceType: "case",
       resourceId: id,
       organizationId: scopeOrgId,
-      metadata: {
-        case_id: id,
-        services_needed_summary: (caseResult.case as any).application
-          ? "from_application"
-          : "minimal",
-      },
+      metadata: { case_id: id, engine: "v2" },
       req,
     }).catch(() => {});
 
-    let runResult;
+    let runGroupId: string;
+    let resultSet: Awaited<ReturnType<typeof rankOrgs>>;
     try {
-      runResult = await runCaseOrganizationMatching({ caseId: id, ctx });
-      await persistOrganizationMatchRun({
+      const intake = await buildIntakeMatchProfile(id);
+      const stateCode = (caseResult.case as { state_code?: string | null }).state_code ?? null;
+      const orgs = await loadOrgsForMatching({ stateCode });
+      resultSet = rankOrgs(orgs, intake);
+
+      const persisted = await persistV2MatchRun({
         caseId: id,
         scopeOrganizationId: scopeOrgId,
-        runGroupId: runResult.run_group_id,
         actorUserId: ctx.userId,
-        input: runResult.input,
-        matches: runResult.matches,
-        designation_meta: runResult.designation_meta,
+        resultSet,
       });
+      runGroupId = persisted.runGroupId;
     } catch (err) {
       await logEvent({
         ctx,
@@ -118,6 +122,8 @@ export async function POST(req: Request, context: RouteParams) {
       throw err;
     }
 
+    const matchCount = resultSet.grassroots.length + resultSet.socialService.length;
+
     await logEvent({
       ctx,
       action: "matching.run_completed",
@@ -126,11 +132,12 @@ export async function POST(req: Request, context: RouteParams) {
       organizationId: scopeOrgId,
       metadata: {
         case_id: id,
-        match_count: runResult.match_count,
-        intake_sparse: runResult.input.intake_sparse,
-        designation_integration: true,
-        designation_policy_version: runResult.designation_meta.policy_version,
-        designations_loaded: runResult.designation_meta.designations_loaded,
+        engine: "v2",
+        match_count: matchCount,
+        grassroots_count: resultSet.grassroots.length,
+        social_service_count: resultSet.socialService.length,
+        geography_expanded: resultSet.geographyExpanded,
+        total_evaluated: resultSet.totalEvaluated,
       },
       req,
     }).catch(() => {});
@@ -142,22 +149,23 @@ export async function POST(req: Request, context: RouteParams) {
       eventType: "case.organization_matching_evaluated",
       title: "Recommended organizations evaluated",
       description:
-        runResult.match_count === 0
+        matchCount === 0
           ? "No matching organizations found for current criteria"
-          : `${runResult.match_count} organization(s) suggested based on case needs`,
+          : `${matchCount} organization(s) suggested based on case needs`,
       metadata: {
-        run_group_id: runResult.run_group_id,
-        match_count: runResult.match_count,
+        run_group_id: runGroupId,
+        match_count: matchCount,
+        engine: "v2",
       },
     }).catch(() => {});
 
-    const latest = await getLatestOrganizationMatchesForCase({ caseId: id, ctx });
     return apiOk({
-      run_group_id: runResult.run_group_id,
-      match_count: runResult.match_count,
-      intake_sparse: runResult.input.intake_sparse,
-      matches: latest?.matches.map((m) => matchRunRowToApi(m)) ?? [],
-      global_flags: latest?.global_flags ?? [],
+      run_group_id: runGroupId,
+      match_count: matchCount,
+      grassroots: resultSet.grassroots,
+      socialService: resultSet.socialService,
+      geographyExpanded: resultSet.geographyExpanded,
+      totalEvaluated: resultSet.totalEvaluated,
     });
   } catch (err) {
     const appErr = toAppError(err);

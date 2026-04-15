@@ -25,7 +25,7 @@
 import { IL_CVC_FIELD_MAP } from "@/lib/pdfMaps/il_cvc_fieldMap";
 import { IN_CVC_COORDS } from "@/lib/pdfMaps/in_cvc_coords";
 import { emptyEligibilityAnswersIN } from "@/lib/eligibilitySchemaIN";
-import { emptyCompensationApplication } from "@/lib/compensationSchema";
+import { emptyLegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 // ---------------------------------------------------------------------------
 // Plan derivation — pure, no DB calls
@@ -62,7 +62,7 @@ function buildIntakeSchemaPayload(): Record<string, unknown> {
   // Walk the empty application as the structural blueprint. Top-level keys
   // are the canonical step keys; nested object keys become field paths.
   const steps: Array<{ stepKey: string; fieldPaths: string[] }> = [];
-  for (const [stepKey, stepValue] of Object.entries(emptyCompensationApplication)) {
+  for (const [stepKey, stepValue] of Object.entries(emptyLegacyIntakePayload)) {
     if (stepValue === null || typeof stepValue !== "object") {
       steps.push({ stepKey, fieldPaths: [stepKey] });
       continue;
@@ -78,7 +78,7 @@ function buildIntakeSchemaPayload(): Record<string, unknown> {
   }
   return {
     schema_version: "v1",
-    derived_from: "lib/compensationSchema.ts:emptyCompensationApplication",
+    derived_from: "lib/compensationSchema.ts:emptyLegacyIntakePayload",
     steps,
     field_count: steps.reduce((sum, s) => sum + s.fieldPaths.length, 0),
   };

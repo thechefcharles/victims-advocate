@@ -2,7 +2,7 @@
 // Indiana State Form 23776 – coordinate-based placement (no AcroForm fields).
 // Origin: bottom-left. Letter 612×792 pt. Approximate positions from form layout.
 
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 const fullName = (first?: string, last?: string) =>
   `${first ?? ""} ${last ?? ""}`.trim() || "";
@@ -17,7 +17,7 @@ export type INCoordItem = {
   pageIndex: number;
   x: number;
   y: number;
-  getValue: (app: CompensationApplication) => string;
+  getValue: (app: LegacyIntakePayload) => string;
   fontSize?: number;
 };
 

@@ -26,7 +26,7 @@ import { logEvent } from "@/lib/server/audit/logEvent";
 import { getCaseRecordById } from "@/lib/server/cases/caseRepository";
 import type { AuthContext } from "@/lib/server/auth/context";
 import type { PolicyResource } from "@/lib/server/policy/policyTypes";
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 import {
   getSessionById,
   insertSession,
@@ -43,6 +43,13 @@ import {
 import { resolveActiveStateWorkflowConfig } from "@/lib/server/stateWorkflows/resolvers";
 import { resolveActiveTranslationMappingSet } from "@/lib/server/translation";
 import { validateSubmissionReadiness, validateIntakeStep } from "./intakeValidation";
+import {
+  runDenialCheck,
+  buildDenialCheckInput,
+  extractMissingItems,
+  scheduleReminders,
+  type DenialCheckResult,
+} from "@/lib/server/denialPrevention";
 import { buildSearchAttributesFromIntake } from "./buildSearchAttributesFromIntake";
 import { serializeForApplicant, serializeForProvider } from "./intakeSerializer";
 import type {
@@ -227,6 +234,46 @@ export async function saveIntakeDraft(
 }
 
 // ---------------------------------------------------------------------------
+// loadNormalizedDraft — version-aware read path for v2 consumers
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the draft payload as a flat `Record<field_key, value>` regardless
+ * of the underlying row's `intake_schema_version`. v1 rows are normalized
+ * on the fly (the row on disk is not modified — the backfill script owns
+ * persistent conversion). v2 rows pass through.
+ */
+export async function loadNormalizedDraft(
+  ctx: AuthContext,
+  sessionId: string,
+  supabase: SupabaseClient,
+): Promise<{
+  sessionId: string;
+  version: "v1" | "v2";
+  answers: Record<string, unknown>;
+}> {
+  const session = await getSessionById(supabase, sessionId);
+  if (!session) throw new AppError("NOT_FOUND", "Intake session not found.");
+  const actor = buildActor(ctx);
+  const decision = await can("intake:view", actor, sessionToResource(session));
+  if (!decision.allowed) denyForbidden(decision.message);
+
+  const raw = (session.draft_payload ?? {}) as Record<string, unknown>;
+  const stored = (session.intake_schema_version ?? "v1") as "v1" | "v2";
+  const { normalizeIntakeAnswers, detectAnswerVersion } = await import(
+    "./intakeAnswerAdapter"
+  );
+  // If the row is marked v1 but the payload already looks flat (backfill
+  // interrupted, test fixture), trust the shape detector over the label.
+  const effective = stored === "v2" ? "v2" : detectAnswerVersion(raw);
+  return {
+    sessionId: session.id,
+    version: effective,
+    answers: effective === "v1" ? normalizeIntakeAnswers(raw, "v1") : raw,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // submitIntake — two-phase: snapshot + state transition
 // ---------------------------------------------------------------------------
 
@@ -253,6 +300,70 @@ export async function submitIntake(
       `Intake is not ready for submission. Missing steps: ${readiness.missingSteps.join(", ")}`,
       { missingSteps: readiness.missingSteps },
     );
+  }
+
+  // ---------- Denial prevention gate ----------------------------------------
+  // BLOCKING → reject submission immediately. HIGH / MEDIUM / LOW → persist
+  // the risk record and continue. Infrastructure failures (missing active
+  // state config, mocked supabase) are tolerated so this gate can't bring
+  // down the submission when supporting tables aren't yet seeded.
+  let denialCheckResult: DenialCheckResult | null = null;
+  let denialCheckMissingItems: string[] = [];
+  try {
+    const denialInput = await buildDenialCheckInput(
+      {
+        id: session.id,
+        state_code: session.state_code,
+        draft_payload: session.draft_payload as Record<string, unknown>,
+      },
+      supabase,
+    );
+    denialCheckResult = runDenialCheck(denialInput);
+    denialCheckMissingItems = extractMissingItems(denialInput);
+  } catch (err) {
+    console.warn(
+      "[intakeService.submitIntake] denial check input build failed:",
+      err instanceof Error ? err.message : String(err),
+    );
+  }
+
+  if (denialCheckResult?.overallRiskLevel === "blocking") {
+    throw new AppError(
+      "VALIDATION_ERROR",
+      "Application cannot be submitted — blocking issues must be resolved first.",
+      {
+        blockingCategories: denialCheckResult.blockingCategories,
+        checks: denialCheckResult.checks.filter((c) => c.severity === "BLOCKING"),
+      },
+    );
+  }
+
+  // Persist the risk snapshot + schedule reminders. Both best-effort.
+  if (denialCheckResult) {
+    try {
+      await supabase.from("denial_risk_checks").insert({
+        intake_session_id: session.id,
+        case_id: session.case_id,
+        organization_id: session.organization_id,
+        overall_risk_level: denialCheckResult.overallRiskLevel,
+        blocking_categories: denialCheckResult.blockingCategories,
+        warning_categories: denialCheckResult.warningCategories,
+        passed_all: denialCheckResult.passedAll,
+        details: { checks: denialCheckResult.checks },
+      });
+    } catch {
+      /* best-effort */
+    }
+    if (denialCheckMissingItems.length > 0) {
+      scheduleReminders({
+        intakeSessionId: session.id,
+        applicantUserId: session.owner_user_id,
+        missingItems: denialCheckMissingItems,
+        supabase,
+      }).catch(() => {
+        /* best-effort */
+      });
+    }
   }
 
   // ---------- PHASE A: snapshot + status update -----------------------------
@@ -304,6 +415,19 @@ export async function submitIntake(
         actorUserId: ctx.userId,
         actorAccountType: ctx.accountType,
         idempotencyKey: `intake_time_to_complete:${submission.id}`,
+        metadata: { session_id: session.id, submission_id: submission.id },
+      },
+      supabase,
+    );
+    // Canonical name alias (Master System Document): emit ms instead of minutes.
+    void emitSignal(
+      {
+        orgId: session.organization_id,
+        signalType: "intake_completion_time",
+        value: Math.max(0, submittedAtMs - startedAt),
+        actorUserId: ctx.userId,
+        actorAccountType: ctx.accountType,
+        idempotencyKey: `${session.organization_id}:intake_completion_time:${submission.id}`,
         metadata: { session_id: session.id, submission_id: submission.id },
       },
       supabase,

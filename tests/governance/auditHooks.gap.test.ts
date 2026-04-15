@@ -66,7 +66,7 @@ describe("audit hook gap closure", () => {
   it("change request approve → logAuditEvent with governance_change", async () => {
     vi.mocked(govRepo.getChangeRequestById).mockResolvedValueOnce({
       id: "cr-1", targetType: "ScoreMethodology", targetId: "sm-1",
-      requestedChange: {}, reason: "test", status: "pending_approval",
+      requestedChange: {}, reason: "test", status: "under_review",
       requestedByUserId: "u", submittedAt: "2026-04-10", resolvedAt: null,
       createdAt: "2026-04-10", updatedAt: "2026-04-10",
     } as never);

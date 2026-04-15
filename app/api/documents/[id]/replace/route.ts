@@ -3,9 +3,8 @@
  * Replace a document with a new file (preserves document id, archives old version).
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -28,14 +27,15 @@ export async function POST(req: Request, context: RouteParams) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "File is required" }, { status: 400 });
+      return apiFail("VALIDATION_ERROR", "File is required");
     }
 
     const validation = validateUpload(file);
     if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.errors[0] ?? "File validation failed" },
-        { status: 422 },
+      return apiFail(
+        "VALIDATION_ERROR",
+        validation.errors[0] ?? "File validation failed",
+        { errors: validation.errors },
       );
     }
 
@@ -48,7 +48,7 @@ export async function POST(req: Request, context: RouteParams) {
       .upload(storagePath, file, { cacheControl: "3600", upsert: false, contentType: file.type || "application/octet-stream" });
 
     if (uploadError) {
-      return NextResponse.json({ error: "File upload failed" }, { status: 500 });
+      return apiFail("INTERNAL", "File upload failed");
     }
 
     const actor = buildActor(ctx);
@@ -59,7 +59,7 @@ export async function POST(req: Request, context: RouteParams) {
       supabase,
     );
 
-    return NextResponse.json({ data: doc, error: null });
+    return apiOk(doc);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("documents.replace.error", { code: appErr.code, message: appErr.message });

@@ -124,6 +124,7 @@ describe("Category 1: Valid transitions", () => {
       advocate_connection: ["pending", "accepted"],
       referral: ["pending", "accepted"],
       support_request: ["draft", "submitted"],
+      appointment_status: ["scheduled", "rescheduled"],
       state_workflow_config_status: ["draft", "active"],
       cvc_form_template_status: ["draft", "active"],
       translation_mapping_set_status: ["draft", "active"],

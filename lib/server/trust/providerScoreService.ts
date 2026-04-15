@@ -50,6 +50,13 @@ import {
   insertSnapshot,
   updateSearchIndexReliabilityTier,
 } from "./trustRepository";
+import { getSurveyAggregate } from "@/lib/server/surveys";
+
+/**
+ * Category key convention for the survey-powered victim experience category.
+ * Only applied when the active methodology declares a category with this key.
+ */
+const VICTIM_EXPERIENCE_CATEGORY_KEY = "victim_experience";
 
 // ---------------------------------------------------------------------------
 // Tier thresholds (deterministic, methodology-agnostic in v1)
@@ -291,7 +298,54 @@ export async function recalculateProviderScore(params: {
     );
   }
 
-  const inputs = await aggregateScoreInputs(params.organizationId, methodology, supabase);
+  let inputs = await aggregateScoreInputs(params.organizationId, methodology, supabase);
+
+  // Category 4 — Victim Experience survey integration. Only active when the
+  // methodology declares a `victim_experience` category. Backwards compatible:
+  // methodologies without that category are unaffected.
+  const victimCategory = methodology.categoryDefinitions.find(
+    (c) => c.key === VICTIM_EXPERIENCE_CATEGORY_KEY,
+  );
+  if (victimCategory) {
+    const categoryWeight = methodology.weights[victimCategory.key] ?? 0;
+    // Drop any existing victim_experience inputs from the signal pipeline —
+    // survey data supersedes aggregate-table derivations for this category.
+    inputs = inputs.filter((i) => i.category !== victimCategory.key);
+
+    const survey = await getSurveyAggregate(params.organizationId, supabase);
+    if (survey.meetsThreshold && survey.averages && categoryWeight > 0) {
+      // Normalize 1–5 Likert scale to 0–1: (avg - 1) / 4.
+      const avgAll =
+        (survey.averages.feltHeard +
+          survey.averages.advocateClarity +
+          survey.averages.feltSafe +
+          survey.averages.rightsExplained +
+          survey.averages.likelihoodToRecommend) /
+        5;
+      const normalized = Math.max(0, Math.min(1, (avgAll - 1) / 4));
+      inputs.push({
+        organizationId: params.organizationId,
+        category: victimCategory.key,
+        signalType: "survey.victim_experience",
+        rawValue: avgAll,
+        normalizedValue: normalized,
+        weight: categoryWeight,
+        contribution: normalized * categoryWeight,
+        source: "org_survey_responses",
+      });
+    } else if (categoryWeight > 0 && categoryWeight < 1) {
+      // Below-threshold: renormalize remaining category contributions so the
+      // remaining weights sum to 1 (100%). Example: if victim_experience was
+      // 0.15, scale all others by 1/0.85.
+      const renormScale = 1 / (1 - categoryWeight);
+      inputs = inputs.map((i) => ({
+        ...i,
+        weight: i.weight * renormScale,
+        contribution: i.contribution * renormScale,
+      }));
+    }
+  }
+
   const snapshot = await computeProviderScoreSnapshot({
     organizationId: params.organizationId,
     methodology,

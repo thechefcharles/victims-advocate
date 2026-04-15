@@ -34,13 +34,14 @@ import { logEvent } from "@/lib/server/audit/logEvent";
 import { emitSignal } from "@/lib/server/trustSignal";
 import { getCaseRecordById } from "@/lib/server/cases/caseRepository";
 import { uploadDocument } from "@/lib/server/documents/documentService";
+import { getStateConfig } from "@/lib/server/stateWorkflows/stateWorkflowConfigService";
 import {
   getEligibilityForCase,
   isEligibilityCompleted,
 } from "@/lib/server/eligibility/eligibilityService";
 import type { AuthContext } from "@/lib/server/auth/context";
 import type { PolicyResource } from "@/lib/server/policy/policyTypes";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 import {
   getActiveCvcFormTemplate,
   getCvcFormFieldsByTemplateId,
@@ -155,7 +156,7 @@ function applyTransform(
 // ---------------------------------------------------------------------------
 
 export function resolveCanonicalOutputData(
-  application: CompensationApplication,
+  application: LegacyIntakePayload,
   fields: CvcFormFieldRecord[],
   mappings: FormAlignmentMappingRecord[],
   eligibilityAnswers: Record<string, unknown> | null,
@@ -206,7 +207,7 @@ export function resolveCanonicalOutputData(
 export function validateCvcGenerationReadiness(
   fields: CvcFormFieldRecord[],
   mappings: FormAlignmentMappingRecord[],
-  application: CompensationApplication,
+  application: LegacyIntakePayload,
 ): { ready: boolean; missingFields: string[] } {
   const missing: string[] = [];
   const mappingsByFieldId = new Map<string, FormAlignmentMappingRecord>();
@@ -496,7 +497,9 @@ async function storeGeneratedCvcOutput(
   const docView = await uploadDocument(
     actor,
     {
-      doc_type: stateCode === "IL" ? "cvc_generated_il" : "cvc_generated_in",
+      doc_type:
+        (await getStateConfig(stateCode, supabase)).generatedDocType ??
+        `cvc_generated_${stateCode.toLowerCase()}`,
       file_name: fileName,
       mime_type: "application/pdf",
       file_size: pdfBytes.byteLength,
@@ -552,7 +555,7 @@ export async function getCvcFormGenerationStatus(
 async function loadCaseApplication(
   supabase: SupabaseClient,
   caseId: string,
-): Promise<CompensationApplication> {
+): Promise<LegacyIntakePayload> {
   // First try the legacy cases.application column (still the primary source today).
   const { data, error } = await supabase
     .from("cases")
@@ -562,11 +565,11 @@ async function loadCaseApplication(
   if (error) throw new Error(`loadCaseApplication: ${error.message}`);
 
   const raw = (data as { application: unknown } | null)?.application ?? null;
-  if (raw && typeof raw === "object") return raw as CompensationApplication;
+  if (raw && typeof raw === "object") return raw as LegacyIntakePayload;
   if (typeof raw === "string") {
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object") return parsed as CompensationApplication;
+      if (parsed && typeof parsed === "object") return parsed as LegacyIntakePayload;
     } catch {
       // fall through
     }

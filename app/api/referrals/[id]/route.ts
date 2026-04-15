@@ -6,10 +6,10 @@ import { logger } from "@/lib/server/logging";
 import { getReferral } from "@/lib/server/referrals/referralService";
 import {
   serializeForSourceOrg,
-  serializeForTargetOrg,
   serializeForApplicant,
   serializeForAdmin,
 } from "@/lib/server/referrals/referralSerializer";
+import { buildTargetOrgView } from "@/lib/server/referrals/referralViews";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -47,7 +47,11 @@ export async function GET(req: Request, context: RouteParams) {
     } else if (ctx.orgId === referral.source_organization_id) {
       serialized = serializeForSourceOrg(referral);
     } else {
-      serialized = serializeForTargetOrg(referral);
+      // Receiving (target) org — status-branched masking enforced by
+      // buildTargetOrgView: preview while pending_acceptance, governed
+      // share package once accepted, minimal {id, status} on any
+      // rejected/cancelled/closed/draft row (no applicant data leak).
+      serialized = await buildTargetOrgView(referral.id);
     }
 
     return apiOk({ referral: serialized });

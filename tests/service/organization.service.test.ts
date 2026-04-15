@@ -97,10 +97,10 @@ describe("organization service", () => {
   it("org enums exported from central registry", () => {
     // Verify the 4 org enums are accessible from the registry.
     // This test imports them to confirm they exist.
-    type TestOrgStatus = import("@/lib/registry").OrganizationStatus;
-    type TestLifecycle = import("@/lib/registry").OrgLifecycleStatus;
-    type TestProfile = import("@/lib/registry").OrgPublicProfileStatus;
-    type TestCapacity = import("@/lib/registry").CapacityStatus;
+    type TestOrgStatus = import("@nxtstps/registry").OrganizationStatus;
+    type TestLifecycle = import("@nxtstps/registry").OrgLifecycleStatus;
+    type TestProfile = import("@nxtstps/registry").OrgPublicProfileStatus;
+    type TestCapacity = import("@nxtstps/registry").CapacityStatus;
     // Type-level assertions — if these compile, the enums are exported.
     const s: TestOrgStatus = "active";
     const l: TestLifecycle = "managed";

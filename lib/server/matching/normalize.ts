@@ -2,7 +2,7 @@
  * Phase B: Map compensation application + case row → MatchingInput (deterministic, no guessing).
  */
 
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 import type { MatchingInput } from "./types";
 
 const SERVICE_KEYS = new Set([
@@ -21,7 +21,7 @@ function normalizeState(s: string | undefined | null): string | null {
   return u.length === 2 && /^[A-Z]{2}$/.test(u) ? u : null;
 }
 
-function normalizePreferredLanguage(contact: CompensationApplication["contact"]): string | null {
+function normalizePreferredLanguage(contact: LegacyIntakePayload["contact"]): string | null {
   if (!contact) return null;
   const raw = contact.preferredLanguage?.trim();
   if (raw) {
@@ -44,7 +44,7 @@ function normalizePreferredLanguage(contact: CompensationApplication["contact"])
   return null;
 }
 
-function collectServicesFromLosses(losses: CompensationApplication["losses"]): string[] {
+function collectServicesFromLosses(losses: LegacyIntakePayload["losses"]): string[] {
   const out = new Set<string>();
   if (!losses) return [];
   if (losses.counseling) out.add("therapy");
@@ -66,7 +66,7 @@ function collectServicesFromLosses(losses: CompensationApplication["losses"]): s
   return [...out].filter((s) => SERVICE_KEYS.has(s));
 }
 
-function collectAccessibilityNeeds(app: CompensationApplication): string[] {
+function collectAccessibilityNeeds(app: LegacyIntakePayload): string[] {
   const needs = new Set<string>();
   if (app.victim?.hasDisability && app.victim.disabilityType === "physical") {
     needs.add("wheelchair_access");
@@ -80,7 +80,7 @@ function collectAccessibilityNeeds(app: CompensationApplication): string[] {
   return [...needs];
 }
 
-function collectSpecialPopulations(app: CompensationApplication): string[] {
+function collectSpecialPopulations(app: LegacyIntakePayload): string[] {
   const flags = new Set<string>();
   if (app.crime?.sexualAssaultKitPerformed) flags.add("sexual_assault");
   if (app.protectionAndCivil?.hasOrderOfProtection) flags.add("domestic_violence");
@@ -93,7 +93,7 @@ function collectSpecialPopulations(app: CompensationApplication): string[] {
 }
 
 export function buildMatchingInputFromApplication(
-  app: CompensationApplication | null,
+  app: LegacyIntakePayload | null,
   caseExtras?: { state_code?: string | null }
 ): MatchingInput {
   const services = new Set<string>(["victim_compensation"]);
@@ -140,18 +140,18 @@ export function buildMatchingInputFromApplication(
   };
 }
 
-export function parseCaseApplication(raw: unknown): CompensationApplication | null {
+export function parseCaseApplication(raw: unknown): LegacyIntakePayload | null {
   if (!raw) return null;
   if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
-    return raw as CompensationApplication;
+    return raw as LegacyIntakePayload;
   }
   if (typeof raw === "string") {
     try {
       const once = JSON.parse(raw);
-      if (typeof once === "object" && once) return once as CompensationApplication;
+      if (typeof once === "object" && once) return once as LegacyIntakePayload;
       if (typeof once === "string") {
         const twice = JSON.parse(once);
-        if (typeof twice === "object" && twice) return twice as CompensationApplication;
+        if (typeof twice === "object" && twice) return twice as LegacyIntakePayload;
       }
     } catch {
       return null;

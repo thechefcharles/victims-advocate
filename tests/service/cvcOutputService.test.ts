@@ -86,7 +86,7 @@ import type {
   FormAlignmentMappingRecord,
   OutputGenerationJobRecord,
 } from "@/lib/server/cvcForms/cvcFormTypes";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 function makeTemplate(): CvcFormTemplateRecord {
   return {
@@ -120,6 +120,15 @@ function makeField(overrides: Partial<CvcFormFieldRecord> = {}): CvcFormFieldRec
     font_size: null,
     required: true,
     source_path: "victim.firstName",
+    section_key: null,
+    display_order: null,
+    help_text: null,
+    placeholder: null,
+    input_options: null,
+    conditional_on: null,
+    validation_rules: null,
+    is_visible_to_applicant: true,
+    is_readonly: false,
     created_at: "2026-04-01T00:00:00Z",
     ...overrides,
   };
@@ -205,7 +214,7 @@ describe("validateCvcGenerationReadiness", () => {
   it("returns ready when all required fields have mapped non-empty values", () => {
     const fields = [makeField({ required: true })];
     const mappings = [makeMapping()];
-    const app = { victim: { firstName: "Alice" } } as unknown as CompensationApplication;
+    const app = { victim: { firstName: "Alice" } } as unknown as LegacyIntakePayload;
     const result = validateCvcGenerationReadiness(fields, mappings, app);
     expect(result.ready).toBe(true);
     expect(result.missingFields).toEqual([]);
@@ -214,7 +223,7 @@ describe("validateCvcGenerationReadiness", () => {
   it("flags missing required fields when value is empty", () => {
     const fields = [makeField({ required: true })];
     const mappings = [makeMapping()];
-    const app = { victim: { firstName: "" } } as unknown as CompensationApplication;
+    const app = { victim: { firstName: "" } } as unknown as LegacyIntakePayload;
     const result = validateCvcGenerationReadiness(fields, mappings, app);
     expect(result.ready).toBe(false);
     expect(result.missingFields).toContain("Victims Name");
@@ -222,7 +231,7 @@ describe("validateCvcGenerationReadiness", () => {
 
   it("flags required fields with no mapping at all", () => {
     const fields = [makeField({ required: true })];
-    const result = validateCvcGenerationReadiness(fields, [], {} as CompensationApplication);
+    const result = validateCvcGenerationReadiness(fields, [], {} as LegacyIntakePayload);
     expect(result.ready).toBe(false);
   });
 });
@@ -231,7 +240,7 @@ describe("resolveCanonicalOutputData", () => {
   it("walks intake mappings and resolves dotted paths into resolvedFields", () => {
     const fields = [makeField({ field_key: "Victims Name" })];
     const mappings = [makeMapping({ canonical_field_key: "victim.firstName" })];
-    const app = { victim: { firstName: "Alice" } } as unknown as CompensationApplication;
+    const app = { victim: { firstName: "Alice" } } as unknown as LegacyIntakePayload;
     const result = resolveCanonicalOutputData(app, fields, mappings, null);
     expect(result.resolvedFields["Victims Name"]).toBe("Alice");
   });
@@ -245,7 +254,7 @@ describe("resolveCanonicalOutputData", () => {
         transform_type: "date_reformat",
       }),
     ];
-    const app = { victim: { dateOfBirth: "2026-01-15" } } as unknown as CompensationApplication;
+    const app = { victim: { dateOfBirth: "2026-01-15" } } as unknown as LegacyIntakePayload;
     const result = resolveCanonicalOutputData(app, fields, mappings, null);
     expect(result.resolvedFields["DOB"]).toBe("01/15/2026");
   });
@@ -260,7 +269,7 @@ describe("resolveCanonicalOutputData", () => {
         transform_config: { part: "area" },
       }),
     ];
-    const app = { victim: { cellPhone: "708-555-1234" } } as unknown as CompensationApplication;
+    const app = { victim: { cellPhone: "708-555-1234" } } as unknown as LegacyIntakePayload;
     const result = resolveCanonicalOutputData(app, fields, mappings, null);
     expect(result.resolvedFields["Phone Area"]).toBe("708");
   });

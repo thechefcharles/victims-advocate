@@ -21,6 +21,8 @@ import { can } from "@/lib/server/policy/policyEngine";
 import { buildActor } from "@/lib/server/policy/policyTypes";
 import { transition } from "@/lib/server/workflow/engine";
 import { emitSignal } from "@/lib/server/trustSignal";
+import { deliverSurvey } from "@/lib/server/surveys";
+import { logger as surveyLogger } from "@/lib/server/logging";
 import { linkSupportRequestToCase } from "@/lib/server/supportRequests/supportRequestRepository";
 import type { AuthContext } from "@/lib/server/auth/context";
 import type { PolicyResource } from "@/lib/server/policy/policyTypes";
@@ -45,7 +47,7 @@ import type {
   UpdateCaseFieldsInput,
   RecordOutcomeInput,
 } from "./caseTypes";
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -393,6 +395,77 @@ async function _transitionCase(
     record.status,
   );
   if (!updated) throw new AppError("FORBIDDEN", "Case was modified by another action.");
+
+  // Emit case_progress_latency on every successful transition — Phase 6 uses the
+  // delta between transition events to score flow health.
+  if (record.organization_id) {
+    const ms = Math.max(
+      0,
+      new Date().getTime() - new Date(record.updated_at ?? record.created_at).getTime(),
+    );
+    void emitSignal(
+      {
+        orgId: record.organization_id,
+        signalType: "case_progress_latency",
+        value: ms,
+        actorUserId: ctx.userId,
+        actorAccountType: ctx.accountType,
+        idempotencyKey: `${record.organization_id}:case_progress_latency:${caseId}:${toState}`,
+        metadata: { case_id: caseId, from_state: record.status, to_state: toState },
+      },
+      supabase,
+    );
+
+    // cvc_application_success / cvc_application_error — state outcome signal.
+    // approved/denied are the platform's proxy for state-agency acceptance/
+    // rejection of the CVC filing.
+    if (toState === "approved" || toState === "denied") {
+      void emitSignal(
+        {
+          orgId: record.organization_id,
+          signalType:
+            toState === "approved" ? "cvc_application_success" : "cvc_application_error",
+          value: 0,
+          actorUserId: ctx.userId,
+          actorAccountType: ctx.accountType,
+          idempotencyKey: `${record.organization_id}:cvc_application_outcome:${caseId}`,
+          metadata: { case_id: caseId, outcome: toState },
+        },
+        supabase,
+      );
+    }
+
+    // Category 4 survey: application_submission trigger. Fire-and-forget.
+    if (toState === "submitted") {
+      deliverSurvey(record.organization_id, "application_submission", supabase).catch(
+        (err: unknown) => {
+          surveyLogger.warn("survey.deliver.application_submission.failed", {
+            organization_id: record.organization_id,
+            case_id: caseId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        },
+      );
+    }
+
+    // document_completion_rate — when a case is marked ready for submission the
+    // provider has certified the doc set is complete. Emit as lifecycle marker
+    // (value=1.0) so Phase 6 aggregates know to recompute.
+    if (toState === "ready_for_submission") {
+      void emitSignal(
+        {
+          orgId: record.organization_id,
+          signalType: "document_completion_rate",
+          value: 1,
+          actorUserId: ctx.userId,
+          actorAccountType: ctx.accountType,
+          idempotencyKey: `${record.organization_id}:document_completion_rate:${caseId}`,
+          metadata: { case_id: caseId },
+        },
+        supabase,
+      );
+    }
+  }
 
   return serializeCaseForProvider(updated);
 }

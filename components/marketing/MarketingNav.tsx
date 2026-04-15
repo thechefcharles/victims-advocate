@@ -11,7 +11,8 @@ import { ROUTES } from "@/lib/routes/pageRegistry";
 
 export function MarketingNav() {
   const { t, lang, setLang } = useI18n();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isSignedIn = !authLoading && user !== null;
   const [drawerOpen, setDrawerOpen] = useState(false);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
@@ -98,12 +99,20 @@ export function MarketingNav() {
               <option value="es">ES</option>
             </select>
           </label>
-          <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors">
-            Sign in
-          </Link>
-          <Link href="/signup" className={ctaPrimary}>
-            Create account
-          </Link>
+          {authLoading ? null : isSignedIn ? (
+            <Link href={ROUTES.dashboard} className={ctaPrimary}>
+              My Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors">
+                Sign in
+              </Link>
+              <Link href="/signup" className={ctaPrimary}>
+                Create account
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="ml-auto flex items-center gap-2 md:hidden">
@@ -148,12 +157,20 @@ export function MarketingNav() {
             <a href="#problem" className={`${navLinkClass} py-2`} onClick={closeDrawer}>
               {t("home.mkt.nav.problem")}
             </a>
-            <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors" onClick={closeDrawer}>
-              Sign in
-            </Link>
-            <Link href="/signup" className={ctaPrimary} onClick={closeDrawer}>
-              Create account
-            </Link>
+            {authLoading ? null : isSignedIn ? (
+              <Link href={ROUTES.dashboard} className={ctaPrimary} onClick={closeDrawer}>
+                My Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="inline-flex h-11 min-h-[44px] items-center justify-center rounded-[var(--radius-sm)] border-[1.5px] border-[var(--color-teal)] px-4 text-sm font-medium text-[var(--color-teal)] hover:bg-[var(--color-teal-light)] transition-colors" onClick={closeDrawer}>
+                  Sign in
+                </Link>
+                <Link href="/signup" className={ctaPrimary} onClick={closeDrawer}>
+                  Create account
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

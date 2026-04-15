@@ -4,7 +4,7 @@ import { buildActor } from "@/lib/server/policy/policyTypes";
 import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getReferral, rejectReferral } from "@/lib/server/referrals/referralService";
-import { serializeForTargetOrg } from "@/lib/server/referrals/referralSerializer";
+import { buildTargetOrgView } from "@/lib/server/referrals/referralViews";
 import { z } from "zod";
 
 interface RouteParams {
@@ -45,7 +45,7 @@ export async function POST(req: Request, context: RouteParams) {
     }
 
     const updated = await rejectReferral({ ctx, id: id.trim(), reason: parsed.data.reason });
-    return apiOk({ referral: serializeForTargetOrg(updated) });
+    return apiOk({ referral: await buildTargetOrgView(updated.id) });
   } catch (err) {
     const appErr = toAppError(err);
     if (appErr.code === "INTERNAL") {

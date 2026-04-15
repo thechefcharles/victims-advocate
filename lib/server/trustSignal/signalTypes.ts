@@ -84,7 +84,33 @@ export type TrustSignalType =
   | "cvc_template_activated"
   | "cvc_template_deprecated"
   | "cvc_form_generated"
-  | "cvc_form_generation_failed";
+  | "cvc_form_generation_failed"
+  // --- Master System Document — canonical lifecycle + rate signals ---
+  // SupportRequest lifecycle (Domain 1.1)
+  | "support_request.submitted"
+  | "support_request.accepted"
+  | "support_request.declined"
+  | "support_request.closed"
+  // Case lifecycle (Domain 1.2)
+  | "case_progress_latency"
+  | "case_reassignment_frequency"
+  // Messaging aggregates (Domain 1.3 — emitted on thread archive)
+  | "message_response_rate"
+  | "thread_participation_rate"
+  // Consent lifecycle (Domain 1.4 — canonical event names)
+  | "consent.requested"
+  | "consent.revoked"
+  | "consent_grant_creation"
+  // Intake lifecycle (Domain 2.1 — canonical naming)
+  | "intake_completion_time"
+  // CVC claim outcomes (Domain 2.3)
+  | "cvc_application_success"
+  | "cvc_application_error"
+  // Referral lifecycle (Domain 4.1)
+  | "referral.response_time"
+  | "referral.acceptance_rate"
+  // Org Programs (Domain 3.6)
+  | "program.capacity_updated";
 
 /** All valid TrustSignalType values as a set — used for runtime validation. */
 export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
@@ -123,6 +149,24 @@ export const TRUST_SIGNAL_TYPES = new Set<TrustSignalType>([
   "cvc_template_deprecated",
   "cvc_form_generated",
   "cvc_form_generation_failed",
+  // --- Master System Document canonical additions ---
+  "support_request.submitted",
+  "support_request.accepted",
+  "support_request.declined",
+  "support_request.closed",
+  "case_progress_latency",
+  "case_reassignment_frequency",
+  "message_response_rate",
+  "thread_participation_rate",
+  "consent.requested",
+  "consent.revoked",
+  "consent_grant_creation",
+  "intake_completion_time",
+  "cvc_application_success",
+  "cvc_application_error",
+  "referral.response_time",
+  "referral.acceptance_rate",
+  "program.capacity_updated",
 ]);
 
 /** Read model for a row in trust_signal_events. */

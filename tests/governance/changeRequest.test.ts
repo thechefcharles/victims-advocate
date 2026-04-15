@@ -85,7 +85,7 @@ describe("change request", () => {
     // No delete was called — only an update to status.
   });
 
-  it("approveChangeRequest requires pending_approval status", async () => {
+  it("approveChangeRequest requires under_review status", async () => {
     vi.mocked(repo.getChangeRequestById).mockResolvedValueOnce(
       mockCR({ id: "cr-1", status: "draft" }),
     );

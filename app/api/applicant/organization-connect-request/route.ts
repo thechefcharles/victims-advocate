@@ -13,7 +13,7 @@ import { apiOk, apiFail, apiFailFromError, toAppError } from "@/lib/server/api";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { logger } from "@/lib/server/logging";
 import { createNotification } from "@/lib/server/notifications/create";
-import { getVictimDisplayForNotification } from "@/lib/server/notifications/applicantDisplay";
+import { getApplicantDisplayForNotification } from "@/lib/server/notifications/applicantDisplay";
 import { logEvent } from "@/lib/server/audit/logEvent";
 import { ORG_LEADERSHIP_ROLES } from "@/lib/server/auth/orgRoles";
 import { isOrganizationMapListable } from "@/lib/server/organizations/organizationsMapData";
@@ -196,7 +196,7 @@ export async function POST(req: Request) {
 
     const requestId = inserted!.id as string;
     const orgName = String(org.name ?? "Organization");
-    const { displayName, email } = await getVictimDisplayForNotification(ctx.userId);
+    const { displayName, email } = await getApplicantDisplayForNotification(ctx.userId);
     const helpNeedsSummary = formatHelpNeedsForOrgNotification(helpNeeds, NEED_LABELS_EN);
 
     await notifyOrgLeadership({

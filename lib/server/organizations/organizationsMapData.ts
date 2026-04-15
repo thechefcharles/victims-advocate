@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { regionLabelForOrg } from "@/lib/server/ecosystem/regions";
+import { distanceMiles, milesToMeters, metersToMiles } from "@/lib/server/geo/haversine";
 import type { ResponseAccessibilityPublic } from "@/lib/organizations/responseAccessibilityPublic";
 
 export type OrganizationMapRow = {
@@ -33,6 +34,22 @@ export type OrganizationMapRow = {
   program_type?: string | null;
   /** Populated for NxtStps organizations; null for external directory rows. */
   response_accessibility?: ResponseAccessibilityPublic | null;
+  /**
+   * Populated only when the caller provided an origin (lat/lng) to
+   * loadOrganizationsMapRowsNear. Derived from PostGIS ST_Distance for index
+   * rows and from a server-side haversine for static directory rows. Never
+   * computed client-side.
+   */
+  distance_miles?: number | null;
+};
+
+export type GeoOrigin = {
+  lat: number;
+  lng: number;
+  /** Radius in miles. Defaults to 50mi (~80km) when omitted. */
+  radiusMiles?: number;
+  /** Result cap. Defaults to 500. */
+  limit?: number;
 };
 
 type CboVaFile = {
@@ -160,4 +177,69 @@ export async function loadOrganizationsMapRows(): Promise<OrganizationMapRow[]> 
 
   const cboRows = loadCboVaMapRows();
   return [...dbRows, ...cboRows];
+}
+
+/**
+ * Geo-aware variant: PostGIS filters + sorts index rows by distance from origin,
+ * and the static CBO/VA directory rows are distance-computed server-side and
+ * merged in. Returns rows sorted by ascending distance.
+ *
+ * Search Law: geo filtering never happens in the browser — callers must pass
+ * origin coords that came from a server-side geocode or a user-granted
+ * geolocation, and the frontend consumes the already-filtered result.
+ */
+export async function loadOrganizationsMapRowsNear(
+  origin: GeoOrigin,
+): Promise<OrganizationMapRow[]> {
+  const radiusMiles = origin.radiusMiles ?? 50;
+  const radiusMeters = milesToMeters(radiusMiles);
+  const limit = origin.limit ?? 500;
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.rpc("search_providers_near", {
+    p_lat: origin.lat,
+    p_lng: origin.lng,
+    p_radius_meters: radiusMeters,
+    p_limit: limit,
+  });
+  if (error) throw new Error(error.message);
+
+  const dbRows: OrganizationMapRow[] = (data ?? []).map(
+    (row: Record<string, unknown>) => ({
+      id: row.org_id as string,
+      name: row.name as string,
+      lat: typeof row.lat === "number" ? row.lat : 0,
+      lng: typeof row.lng === "number" ? row.lng : 0,
+      approximate: Boolean(row.approximate),
+      accepting_clients: Boolean(row.accepting_clients),
+      capacity_status: (row.capacity_status as string | null) ?? "unknown",
+      region_label: regionLabelForOrg(
+        Array.isArray(row.state_codes) ? (row.state_codes as string[]) : [],
+        [],
+      ),
+      states: Array.isArray(row.state_codes) ? (row.state_codes as string[]) : [],
+      address: (row.address as string | null) ?? null,
+      phone: (row.phone as string | null) ?? null,
+      website: (row.website as string | null) ?? null,
+      response_accessibility: null,
+      distance_miles:
+        typeof row.distance_meters === "number"
+          ? metersToMiles(row.distance_meters)
+          : null,
+    }),
+  );
+
+  // Static directory rows: not in PostGIS, so distance is computed server-side.
+  const cboRows = loadCboVaMapRows()
+    .map((row) => ({
+      ...row,
+      distance_miles: distanceMiles(origin.lat, origin.lng, row.lat, row.lng),
+    }))
+    .filter((row) => (row.distance_miles ?? Infinity) <= radiusMiles);
+
+  return [...dbRows, ...cboRows].sort((a, b) => {
+    const da = a.distance_miles ?? Infinity;
+    const db = b.distance_miles ?? Infinity;
+    return da - db;
+  });
 }

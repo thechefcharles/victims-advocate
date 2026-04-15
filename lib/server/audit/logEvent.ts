@@ -159,7 +159,14 @@ export type AuditAction =
   | "trust.signal_emitted"
   // Domain 3.3 — Program Domain
   | "program.catalog_entry_linked"
-  | "profile.affiliation_updated";
+  | "profile.affiliation_updated"
+  // Domain 7.5 — Org Partnerships
+  | "partnership.created"
+  | "partnership.status_changed"
+  | "partnership.renewal_notified"
+  | "voca.outcome_report_generated"
+  // Domain 2.3 — CVC PDF ingestion
+  | "cvc_template.pdf_ingested";
 
 export type AuditSeverity = "info" | "warning" | "security";
 

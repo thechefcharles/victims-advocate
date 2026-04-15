@@ -63,7 +63,7 @@ export function validateIntakeStep(
   }
 
   // Step-specific required field hints. Server-side enforcement is intentionally
-  // narrow — full schemas live in lib/compensationSchema.ts (Base Truth, untouched).
+  // narrow — full legacy schemas live in lib/archive/compensationSchema.legacy.ts.
   const requiredByStep: Record<string, string[]> = {
     victim: ["firstName", "lastName"],
     applicant: ["isSameAsVictim"],

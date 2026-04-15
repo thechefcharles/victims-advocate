@@ -23,59 +23,50 @@
  */
 
 import type { IntakeSubmissionRecord, ApplicantSearchProfile } from "./intakeTypes";
+import {
+  detectAnswerVersion,
+  normalizeIntakeAnswers,
+  getAnswerValue,
+  type NormalizedAnswers,
+} from "./intakeAnswerAdapter";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-function pickString(payload: Record<string, unknown>, path: string[]): string | null {
-  let cursor: unknown = payload;
-  for (const key of path) {
-    if (!cursor || typeof cursor !== "object") return null;
-    cursor = (cursor as Record<string, unknown>)[key];
-  }
-  if (typeof cursor !== "string") return null;
-  const trimmed = cursor.trim();
-  return trimmed.length > 0 ? trimmed : null;
+function asString(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.length > 0 ? t : null;
 }
 
-function pickBoolean(payload: Record<string, unknown>, path: string[]): boolean {
-  let cursor: unknown = payload;
-  for (const key of path) {
-    if (!cursor || typeof cursor !== "object") return false;
-    cursor = (cursor as Record<string, unknown>)[key];
-  }
-  return cursor === true;
+function asBoolean(v: unknown): boolean {
+  return v === true;
 }
 
-function deriveUrgency(payload: Record<string, unknown>): "high" | "medium" | "low" {
-  const hasOrderOfProtection = pickBoolean(payload, [
-    "protectionAndCivil",
-    "hasOrderOfProtection",
-  ]);
-  if (hasOrderOfProtection) return "high";
-
-  const dateOfCrime = pickString(payload, ["crime", "dateOfCrime"]);
+function deriveUrgency(answers: NormalizedAnswers): "high" | "medium" | "low" {
+  if (asBoolean(getAnswerValue(answers, "protection_and_civil_has_order_of_protection"))) {
+    return "high";
+  }
+  const dateOfCrime = asString(getAnswerValue(answers, "crime_date_of_crime"));
   if (!dateOfCrime) return "low";
-
   const parsed = Date.parse(dateOfCrime);
   if (Number.isNaN(parsed)) return "low";
-
   const ageDays = (Date.now() - parsed) / MS_PER_DAY;
   if (ageDays < 30) return "high";
   if (ageDays <= 90) return "medium";
   return "low";
 }
 
-function deriveNeeds(payload: Record<string, unknown>): Record<string, boolean> {
-  const losses = (payload.losses ?? null) as Record<string, unknown> | null;
-  if (!losses || typeof losses !== "object") return {};
-
+/**
+ * Loss flags live as `losses_<key>` after normalization. We collect every
+ * boolean answer key prefixed with `losses_` and re-emit it under the legacy
+ * un-prefixed key so downstream `needs` consumers (matching) keep working.
+ */
+function deriveNeeds(answers: NormalizedAnswers): Record<string, boolean> {
   const needs: Record<string, boolean> = {};
-  for (const [key, value] of Object.entries(losses)) {
-    // Only pass through boolean flags. Numeric loss amounts and free-text fields
-    // are not part of the search profile (defer canonical service-tag enum to Domain 2.2).
-    if (typeof value === "boolean") {
-      needs[key] = value;
-    }
+  for (const [key, value] of Object.entries(answers)) {
+    if (!key.startsWith("losses_")) continue;
+    if (typeof value !== "boolean") continue;
+    needs[key.slice("losses_".length)] = value;
   }
   return needs;
 }
@@ -91,13 +82,15 @@ export function buildSearchAttributesFromIntake(
   submission: IntakeSubmissionRecord,
 ): ApplicantSearchProfile {
   const payload = submission.submitted_payload ?? {};
+  const version = detectAnswerVersion(payload);
+  const answers = normalizeIntakeAnswers(payload, version);
 
   return {
     state: submission.state_code,
-    county: pickString(payload, ["crime", "crimeCounty"]),
-    language: pickString(payload, ["contact", "preferredLanguage"]),
-    needs: deriveNeeds(payload),
-    urgencyLevel: deriveUrgency(payload),
-    advocateAssisted: pickBoolean(payload, ["contact", "workingWithAdvocate"]),
+    county: asString(getAnswerValue(answers, "crime_crime_county")),
+    language: asString(getAnswerValue(answers, "contact_preferred_language")),
+    needs: deriveNeeds(answers),
+    urgencyLevel: deriveUrgency(answers),
+    advocateAssisted: asBoolean(getAnswerValue(answers, "contact_working_with_advocate")),
   };
 }

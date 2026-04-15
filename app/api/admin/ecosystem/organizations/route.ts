@@ -19,18 +19,26 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const filters = parseEcosystemFilters(url.searchParams);
     const limit = Math.min(500, Math.max(1, parseInt(url.searchParams.get("limit") || "200", 10)));
-    const offset = Math.max(0, parseInt(url.searchParams.get("offset") || "0", 10));
+    const cursor = url.searchParams.get("cursor");
 
+    // Cursor-based pagination: cursor is the id of the last row returned in the
+    // previous page. The list is already sorted deterministically by
+    // buildEcosystemOrgList, so we slice after the cursor row's position.
     const all = await buildEcosystemOrgList(filters);
-    const slice = all.slice(offset, offset + limit);
+    const startIdx = cursor ? all.findIndex((o) => o.organization_id === cursor) + 1 : 0;
+    const window = all.slice(startIdx, startIdx + limit + 1);
+    const hasMore = window.length > limit;
+    const page = hasMore ? window.slice(0, limit) : window;
+    const nextCursor = hasMore ? page[page.length - 1]?.organization_id ?? null : null;
 
-    return apiOk({
-      filters,
-      total: all.length,
-      limit,
-      offset,
-      organizations: slice,
-    });
+    return apiOk(
+      {
+        filters,
+        total: all.length,
+        organizations: page,
+      },
+      { nextCursor, limit },
+    );
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("admin.ecosystem.organizations.error", {

@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
 import { orgMatchesSelectedState, US_STATE_OPTIONS } from "@/lib/geo/usStates";
@@ -34,6 +33,8 @@ export type OrgFromApi = {
   phone?: string | null;
   website?: string | null;
   program_type?: string | null;
+  /** Server-computed (PostGIS for index rows; haversine on the server for external directory rows). */
+  distance_miles?: number | null;
 };
 
 type Copy = {
@@ -128,7 +129,13 @@ export function AdvocateConnectOrganizationsSection({
         return;
       }
       try {
-        const res = await fetch("/api/advocate/organizations-map", {
+        // Search Law: if the user has shared their location, pass it to the
+        // server so PostGIS can filter + sort by distance. The frontend never
+        // performs any geographic computation on its own.
+        const url = userPos
+          ? `/api/advocate/organizations-map?lat=${userPos.lat}&lng=${userPos.lng}`
+          : "/api/advocate/organizations-map";
+        const res = await fetch(url, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         const json = await res.json().catch(() => ({}));
@@ -145,7 +152,7 @@ export function AdvocateConnectOrganizationsSection({
     return () => {
       cancelled = true;
     };
-  }, [accessToken, copy.loadError, retryKey]);
+  }, [accessToken, copy.loadError, retryKey, userPos]);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -209,14 +216,15 @@ export function AdvocateConnectOrganizationsSection({
     });
   }, [copy]);
 
+  // Server returns rows already sorted by distance when a geo origin was sent.
+  // Frontend only pulls the server-computed distance_miles forward for display.
   const sorted = useMemo(() => {
     if (!stateFiltered || !userPos) return null;
-    const withDist = stateFiltered.map((o) => ({
+    return stateFiltered.map((o) => ({
       ...o,
-      distanceMiles: distanceMiles(userPos.lat, userPos.lng, o.lat, o.lng),
+      distanceMiles:
+        typeof o.distance_miles === "number" ? o.distance_miles : undefined,
     }));
-    withDist.sort((a, b) => a.distanceMiles - b.distanceMiles);
-    return withDist;
   }, [stateFiltered, userPos]);
 
   const mapOrgs: MapOrgMarker[] = useMemo(() => {

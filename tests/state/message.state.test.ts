@@ -12,7 +12,7 @@ import {
   CASE_STATES_MESSAGING_READ_ONLY,
   CASE_STATES_MESSAGING_ARCHIVED,
 } from "@/lib/server/messaging/threadStateMachine";
-import type { CaseStatus } from "@/lib/registry";
+import type { CaseStatus } from "@nxtstps/registry";
 
 const ALL_CASE_STATUSES: CaseStatus[] = [
   "open",

@@ -14,6 +14,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { AppError } from "@/lib/server/api";
+import { emitSignal } from "@/lib/server/trustSignal";
 import type { CaseConversationRow } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -120,14 +121,56 @@ export async function createWorkflowThread(params: {
 export async function archiveThread(params: {
   threadId: string;
   supabase: SupabaseClient;
+  actorUserId?: string;
+  actorAccountType?: string;
 }): Promise<void> {
-  const { threadId, supabase } = params;
+  const { threadId, supabase, actorUserId, actorAccountType } = params;
+
+  // Fetch the thread first so we have the org id for signal emission.
+  const { data: thread, error: loadErr } = await supabase
+    .from("case_conversations")
+    .select("id, organization_id, case_id")
+    .eq("id", threadId)
+    .maybeSingle();
+  if (loadErr) throw new AppError("INTERNAL", "Failed to load thread", undefined, 500);
+
   const { error } = await supabase
     .from("case_conversations")
     .update({ status: "archived", updated_at: new Date().toISOString() })
     .eq("id", threadId);
 
   if (error) throw new AppError("INTERNAL", "Failed to archive thread", undefined, 500);
+
+  // message_response_rate + thread_participation_rate are emitted as lifecycle
+  // markers on archive; Phase 6 aggregates compute the actual ratios from the
+  // raw message history. Emission is best-effort — fire-and-forget.
+  const row = thread as { organization_id?: string | null; case_id?: string | null } | null;
+  if (row?.organization_id && actorUserId && actorAccountType) {
+    void emitSignal(
+      {
+        orgId: row.organization_id,
+        signalType: "message_response_rate",
+        value: 0,
+        actorUserId,
+        actorAccountType,
+        idempotencyKey: `${row.organization_id}:message_response_rate:${threadId}`,
+        metadata: { thread_id: threadId, case_id: row.case_id ?? null },
+      },
+      supabase,
+    );
+    void emitSignal(
+      {
+        orgId: row.organization_id,
+        signalType: "thread_participation_rate",
+        value: 0,
+        actorUserId,
+        actorAccountType,
+        idempotencyKey: `${row.organization_id}:thread_participation_rate:${threadId}`,
+        metadata: { thread_id: threadId, case_id: row.case_id ?? null },
+      },
+      supabase,
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------

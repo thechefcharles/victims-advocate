@@ -12,7 +12,7 @@ import {
   listCvcFormTemplatesAdmin,
   createCvcFormTemplate,
 } from "@/lib/server/cvcForms";
-import type { CvcFormTemplateStatus } from "@/lib/registry";
+import type { CvcFormTemplateStatus } from "@nxtstps/registry";
 
 export async function GET(req: Request) {
   try {

@@ -1,4 +1,4 @@
-import type { SessionContext, UserAccountStatus, ProviderRole } from "@/lib/registry";
+import type { SessionContext, UserAccountStatus, ProviderRole } from "@nxtstps/registry";
 import type { AuthContext, AccountStatus } from "./context";
 import { resolveAccountType } from "./resolveAccountType";
 

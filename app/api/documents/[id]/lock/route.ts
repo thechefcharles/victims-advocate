@@ -3,9 +3,8 @@
  * Lock a document (immutable). CASE_LEADERSHIP only. SOC 2 audit event fires.
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -25,7 +24,7 @@ export async function POST(req: Request, context: RouteParams) {
     const actor = buildActor(ctx);
 
     const doc = await lockDocument(actor, id, supabase);
-    return NextResponse.json({ data: doc, error: null });
+    return apiOk(doc);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("documents.lock.error", { code: appErr.code, message: appErr.message });

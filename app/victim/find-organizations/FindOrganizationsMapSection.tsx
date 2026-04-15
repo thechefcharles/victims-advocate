@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { distanceMiles } from "@/lib/geo/haversine";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import type { MapOrgMarker } from "@/components/victim/OrganizationsMap";
 import { OrganizationLearnMoreModal } from "@/components/victim/OrganizationLearnMoreModal";
@@ -40,6 +39,8 @@ export type OrgFromApi = {
   website?: string | null;
   program_type?: string | null;
   response_accessibility?: ResponseAccessibilityPublic | null;
+  /** Server-computed (PostGIS for index rows; haversine on the server for external directory rows). */
+  distance_miles?: number | null;
 };
 
 type Copy = {
@@ -183,7 +184,12 @@ export function FindOrganizationsMapSection({
         return;
       }
       try {
-        const res = await fetch("/api/victim/organizations-map", {
+        // Search Law: pass the user's position (geolocation or geocoded preset)
+        // to the server so PostGIS can filter + sort. No client-side geo math.
+        const url = mapCenterPos
+          ? `/api/victim/organizations-map?lat=${mapCenterPos.lat}&lng=${mapCenterPos.lng}`
+          : "/api/victim/organizations-map";
+        const res = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const json = await res.json().catch(() => ({}));
@@ -200,7 +206,7 @@ export function FindOrganizationsMapSection({
     return () => {
       cancelled = true;
     };
-  }, [copy.loadError, retryKey]);
+  }, [copy.loadError, retryKey, mapCenterPos]);
 
   const requestLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -248,14 +254,13 @@ export function FindOrganizationsMapSection({
     });
   }, [copy]);
 
+  // Server already sorted + attached distance_miles when a geo origin was sent.
   const sorted = useMemo(() => {
     if (!raw || !mapCenterPos) return null;
-    const withDist = raw.map((o) => ({
+    return raw.map((o) => ({
       ...o,
-      distanceMiles: distanceMiles(mapCenterPos.lat, mapCenterPos.lng, o.lat, o.lng),
+      distanceMiles: typeof o.distance_miles === "number" ? o.distance_miles : 0,
     }));
-    withDist.sort((a, b) => a.distanceMiles - b.distanceMiles);
-    return withDist;
   }, [raw, mapCenterPos]);
 
   const mapOrgs: MapOrgMarker[] = useMemo(() => {

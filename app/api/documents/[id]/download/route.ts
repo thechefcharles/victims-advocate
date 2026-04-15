@@ -6,9 +6,8 @@
  * Every download generates a separate audit event (document.download).
  */
 
-import { NextResponse } from "next/server";
 import { getAuthContext, requireFullAccess } from "@/lib/server/auth";
-import { apiFailFromError, toAppError } from "@/lib/server/api";
+import { apiOk, apiFailFromError, toAppError } from "@/lib/server/api";
 import { logger } from "@/lib/server/logging";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { buildActor } from "@/lib/server/policy/policyTypes";
@@ -28,7 +27,7 @@ export async function GET(req: Request, context: RouteParams) {
     const actor = buildActor(ctx);
 
     const result = await downloadDocument(actor, id, supabase);
-    return NextResponse.json({ data: result, error: null });
+    return apiOk(result);
   } catch (err) {
     const appErr = toAppError(err);
     logger.error("documents.download.error", { code: appErr.code, message: appErr.message });

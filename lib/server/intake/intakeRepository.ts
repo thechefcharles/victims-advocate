@@ -86,7 +86,9 @@ export async function insertSession(
       state_code: input.state_code,
       status: "draft",
       draft_payload: {},
-      intake_schema_version: "v1",
+      // Phase F: new sessions are canonical field_key (v2) from the start.
+      // Pre-backfill rows keep their stored value.
+      intake_schema_version: "v2",
       state_workflow_config_id: input.state_workflow_config_id ?? null,
       translation_mapping_set_id: input.translation_mapping_set_id ?? null,
     })

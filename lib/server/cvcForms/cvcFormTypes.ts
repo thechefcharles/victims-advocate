@@ -9,8 +9,8 @@
  * Never return a *Record directly from a route — always pass through a serializer.
  */
 
-import type { CvcFormTemplateStatus, OutputGenerationJobStatus } from "@/lib/registry";
-import type { CompensationApplication } from "@/lib/compensationSchema";
+import type { CvcFormTemplateStatus, OutputGenerationJobStatus } from "@nxtstps/registry";
+import type { LegacyIntakePayload } from "@/lib/archive/compensationSchema.legacy";
 
 // ---------------------------------------------------------------------------
 // DB row shapes
@@ -39,7 +39,23 @@ export type CvcFormFieldType =
   | "checkbox"
   | "date"
   | "currency"
-  | "signature";
+  | "signature"
+  | "repeating_rows";
+
+export type CvcFormFieldInputOption = { value: string; label: string };
+
+export type CvcFormFieldConditional = {
+  field_key: string;
+  operator: "eq" | "neq" | "in" | "not_in";
+  value: string | number | boolean | Array<string | number | boolean>;
+};
+
+export type CvcFormFieldValidationRules = {
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
+  patternMessage?: string;
+};
 
 export type CvcFormFieldRecord = {
   id: string;
@@ -53,6 +69,16 @@ export type CvcFormFieldRecord = {
   font_size: number | null;
   required: boolean;
   source_path: string | null;
+  // Renderer metadata (Domain 2.3 — 20260606000000_cvc_form_fields_renderer_meta).
+  section_key: string | null;
+  display_order: number | null;
+  help_text: string | null;
+  placeholder: string | null;
+  input_options: CvcFormFieldInputOption[] | null;
+  conditional_on: CvcFormFieldConditional | null;
+  validation_rules: CvcFormFieldValidationRules | null;
+  is_visible_to_applicant: boolean;
+  is_readonly: boolean;
   created_at: string;
 };
 
@@ -117,6 +143,16 @@ export type CreateCvcFormFieldInput = {
   font_size?: number | null;
   required?: boolean;
   source_path?: string | null;
+  // Optional renderer metadata.
+  section_key?: string | null;
+  display_order?: number | null;
+  help_text?: string | null;
+  placeholder?: string | null;
+  input_options?: CvcFormFieldInputOption[] | null;
+  conditional_on?: CvcFormFieldConditional | null;
+  validation_rules?: CvcFormFieldValidationRules | null;
+  is_visible_to_applicant?: boolean;
+  is_readonly?: boolean;
 };
 
 export type CreateFormAlignmentMappingInput = {
@@ -139,7 +175,7 @@ export type CreateFormAlignmentMappingInput = {
  * needs to fill the form. Not persisted today; recomputed on every generation.
  */
 export type OutputPayload = {
-  application: CompensationApplication;
+  application: LegacyIntakePayload;
   /** Map from cvc_form_field.field_key → resolved string/boolean value. */
   resolvedFields: Record<string, string | boolean | null>;
   warnings: string[];

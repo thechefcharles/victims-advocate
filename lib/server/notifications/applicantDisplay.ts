@@ -4,13 +4,13 @@ import { getPersonalInfoForUserId } from "@/lib/server/profile/getPersonalInfo";
 /**
  * Display strings for in-app notifications when an applicant initiates contact (e.g. advocate connection).
  */
-export async function getVictimDisplayForNotification(victimUserId: string): Promise<{
+export async function getApplicantDisplayForNotification(applicantUserId: string): Promise<{
   displayName: string;
   email: string | null;
 }> {
   let nameFromProfile: string | null = null;
   try {
-    const pi = await getPersonalInfoForUserId(victimUserId);
+    const pi = await getPersonalInfoForUserId(applicantUserId);
     const preferred = pi.preferred_name?.trim() ?? "";
     const legalFirst = pi.legal_first_name?.trim() ?? "";
     const legalLast = pi.legal_last_name?.trim() ?? "";
@@ -21,11 +21,11 @@ export async function getVictimDisplayForNotification(victimUserId: string): Pro
   }
 
   const supabase = getSupabaseAdmin();
-  const { data: u } = await supabase.auth.admin.getUserById(victimUserId);
+  const { data: u } = await supabase.auth.admin.getUserById(applicantUserId);
   const email = u?.user?.email ?? null;
 
   const displayName =
-    nameFromProfile || (email ? (email.split("@")[0] ?? "").trim() : "") || "Victim";
+    nameFromProfile || (email ? (email.split("@")[0] ?? "").trim() : "") || "Applicant";
 
   return { displayName, email };
 }

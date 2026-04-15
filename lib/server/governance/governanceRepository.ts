@@ -324,8 +324,13 @@ export async function updateChangeRequestStatus(
   supabase: SupabaseClient,
 ): Promise<ChangeRequest> {
   const updates: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
-  if (status === "pending_approval") updates.submitted_at = new Date().toISOString();
-  if (status === "approved" || status === "rejected" || status === "rolled_back") {
+  if (status === "submitted") updates.submitted_at = new Date().toISOString();
+  if (
+    status === "approved" ||
+    status === "rejected" ||
+    status === "rolled_back" ||
+    status === "closed"
+  ) {
     updates.resolved_at = new Date().toISOString();
   }
   const { data, error } = await supabase
