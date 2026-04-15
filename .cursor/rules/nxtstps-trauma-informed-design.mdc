@@ -1,6 +1,6 @@
 ---
 description: NxtStps Phase 3 — SAMHSA-aligned trauma-informed design for applicant pathway
-globs: app/victim/**/*,app/compensation/**/*,app/start/**/*,app/consent/**/*,components/applicant/**/*
+globs: app/applicant/**/*,app/compensation/**/*,app/start/**/*,app/consent/**/*,components/applicant/**/*
 alwaysApply: false
 ---
 

@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useI18n } from "@/components/i18n/i18nProvider";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { ROUTES } from "@/lib/routes/pageRegistry";
-import { FindOrganizationsMapSection } from "@/app/victim/find-organizations/FindOrganizationsMapSection";
+import { FindOrganizationsMapSection } from "@/app/applicant/find-organizations/FindOrganizationsMapSection";
 import { US_STATE_OPTIONS } from "@/lib/geo/usStates";
 
 const STATE_SELECT_OPTIONS = US_STATE_OPTIONS.filter((o) => o.value !== "");

@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { ROUTES, applicantCasePaths } from "@/lib/routes/pageRegistry";
 import { APP_CARD, APP_PAGE_MAIN } from "@/lib/ui/appSurface";
 import { useI18n } from "@/components/i18n/i18nProvider";
-import { FindOrganizationsMapSection } from "@/app/victim/find-organizations/FindOrganizationsMapSection";
+import { FindOrganizationsMapSection } from "@/app/applicant/find-organizations/FindOrganizationsMapSection";
 
 function VictimFindOrganizationsContent() {
   const { t } = useI18n();
